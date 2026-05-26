@@ -23,6 +23,10 @@ public class Booking {
     @JoinColumn(name = "showtime_id")
     private Showtime showtime;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promotion_id")
+    private Promotion promotion;
+
     @Column(name = "total_price", nullable = false)
     private Long totalPrice;
 
@@ -37,6 +41,12 @@ public class Booking {
 
     @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Payment payment;
+
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
+    private List<FoodOrder> foodOrders;
+
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
+    private List<PromotionUsage> promotionUsages;
 
     @PrePersist
     protected void onCreate() {
