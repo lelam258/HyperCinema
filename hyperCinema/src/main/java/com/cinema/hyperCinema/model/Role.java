@@ -3,7 +3,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
 @Entity
-@Table(name = "[Role]")
+@Table(name = "Role")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Role {
