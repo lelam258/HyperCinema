@@ -14,6 +14,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer userId;
 
+    @Column(nullable = false, length = 100)
+    @org.hibernate.annotations.Nationalized
+    private String name;
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;
 
@@ -33,6 +36,11 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    @Column(length = 20)
+    private String status = "Active";
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
     @Column(nullable = false, length = 50)
     private String status = "Active";
 

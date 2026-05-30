@@ -1,7 +1,9 @@
 package com.cinema.hyperCinema.model;
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
+
 @Entity
 @Table(name = "Role")
 @Getter @Setter
@@ -16,5 +18,6 @@ public class Role {
     private String name;
 
     @OneToMany(mappedBy = "role", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<User> users;
 }
