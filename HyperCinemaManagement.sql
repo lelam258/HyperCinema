@@ -65,6 +65,8 @@ CREATE TABLE [User] (
     [password] VARCHAR(255) NOT NULL,
     [phone] VARCHAR(20),
     [role_id] INT FOREIGN KEY REFERENCES [Role]([role_id]),
+    [status] VARCHAR(20) DEFAULT 'Active',
+    [last_login] DATETIME,
     [created_at] DATETIME DEFAULT GETDATE()
 );
 

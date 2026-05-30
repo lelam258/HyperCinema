@@ -15,6 +15,7 @@ public class User {
     private Integer userId;
 
     @Column(nullable = false, length = 100)
+    @org.hibernate.annotations.Nationalized
     private String name;
 
     @Column(nullable = false, unique = true, length = 100)
@@ -32,6 +33,12 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id")
     private Role role;
+
+    @Column(length = 20)
+    private String status = "Active";
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
