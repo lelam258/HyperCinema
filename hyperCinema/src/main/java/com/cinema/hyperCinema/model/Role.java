@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 @Entity
-@Table(name = "[Role]")
+@Table(name = "Role")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Role {
