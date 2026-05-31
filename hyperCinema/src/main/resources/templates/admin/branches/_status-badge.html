@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+    Branch status badge fragment.
+
+    Usage:
+        <th:block th:replace="~{admin/branches/_status-badge :: statusBadge(${branch.status})}"></th:block>
+
+    Renders a single coloured <span> badge for one of the three branch
+    statuses, with a distinct colour palette per value:
+
+        Active      -> green / success  (#30d158)
+        Maintenance -> amber / warning  (#ff9f0a)
+        Inactive    -> grey  / muted    (#aaaaaa)
+
+    The status text is escaped via th:text (never th:utext) so any
+    untrusted value is safely rendered.
+
+    Trace: Requirement 7.5
+-->
+<th:block th:fragment="statusBadge(status)" th:switch="${status}">
+
+    <span th:case="'Active'"
+          style="display: inline-block;
+                 padding: 4px 10px;
+                 border-radius: 999px;
+                 font-family: 'Inter', sans-serif;
+                 font-size: 12px;
+                 font-weight: 600;
+                 line-height: 1;
+                 letter-spacing: 0.3px;
+                 text-transform: uppercase;
+                 background-color: rgba(48, 209, 88, 0.15);
+                 color: #30d158;
+                 border: 1px solid rgba(48, 209, 88, 0.35);"
+          th:text="${status}">Active</span>
+
+    <span th:case="'Maintenance'"
+          style="display: inline-block;
+                 padding: 4px 10px;
+                 border-radius: 999px;
+                 font-family: 'Inter', sans-serif;
+                 font-size: 12px;
+                 font-weight: 600;
+                 line-height: 1;
+                 letter-spacing: 0.3px;
+                 text-transform: uppercase;
+                 background-color: rgba(255, 159, 10, 0.15);
+                 color: #ff9f0a;
+                 border: 1px solid rgba(255, 159, 10, 0.35);"
+          th:text="${status}">Maintenance</span>
+
+    <span th:case="'Inactive'"
+          style="display: inline-block;
+                 padding: 4px 10px;
+                 border-radius: 999px;
+                 font-family: 'Inter', sans-serif;
+                 font-size: 12px;
+                 font-weight: 600;
+                 line-height: 1;
+                 letter-spacing: 0.3px;
+                 text-transform: uppercase;
+                 background-color: rgba(170, 170, 170, 0.15);
+                 color: #aaaaaa;
+                 border: 1px solid rgba(170, 170, 170, 0.35);"
+          th:text="${status}">Inactive</span>
+
+    <span th:case="*"
+          style="display: inline-block;
+                 padding: 4px 10px;
+                 border-radius: 999px;
+                 font-family: 'Inter', sans-serif;
+                 font-size: 12px;
+                 font-weight: 600;
+                 line-height: 1;
+                 letter-spacing: 0.3px;
+                 text-transform: uppercase;
+                 background-color: rgba(170, 170, 170, 0.15);
+                 color: #aaaaaa;
+                 border: 1px solid rgba(170, 170, 170, 0.35);"
+          th:text="${status} ?: 'Unknown'">Unknown</span>
+
+</th:block>
+
+</body>
+</html>
