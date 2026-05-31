@@ -41,7 +41,8 @@ public class User {
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
-
+    @Column(nullable = false, length = 50)
+    private String status = "Active";
 
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
