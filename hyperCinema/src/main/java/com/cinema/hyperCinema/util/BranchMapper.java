@@ -1,4 +1,4 @@
-package util;
+package com.cinema.hyperCinema.util;
 
 import com.cinema.hyperCinema.dto.admin.branch.response.BranchDetailView;
 import com.cinema.hyperCinema.dto.admin.branch.response.HallSummary;
