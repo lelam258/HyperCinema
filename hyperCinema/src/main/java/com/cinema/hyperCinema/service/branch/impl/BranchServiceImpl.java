@@ -20,7 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import util.BranchMapper;
+import com.cinema.hyperCinema.util.BranchMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
