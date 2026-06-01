@@ -24,18 +24,18 @@ public class AdminUserRestController {
     public ResponseEntity<?> createUser(@RequestBody UserRequest request) {
         try {
             User user = new User();
-            user.setName(request.getName());
+//            user.setName(request.getName());
             user.setUsername(request.getUsername());
             user.setEmail(request.getEmail());
-            user.setPassword(request.getPassword()); // In production, hash it
+            user.setPasswordHash(request.getPassword()); // In production, hash it
             user.setPhone(request.getPhone());
-            
+
             if (request.getRoleId() != null) {
                 Role role = new Role();
                 role.setRoleId(request.getRoleId());
                 user.setRole(role);
             }
-            
+
             user.setStatus(request.getStatus() != null ? request.getStatus() : "Active");
 
             User created = userService.createUser(user);
@@ -49,7 +49,7 @@ public class AdminUserRestController {
     public ResponseEntity<?> updateUser(@PathVariable("id") Integer id, @RequestBody UserRequest request) {
         try {
             User userDetails = new User();
-            userDetails.setName(request.getName());
+//            userDetails.setName(request.getName());
             userDetails.setUsername(request.getUsername());
             userDetails.setEmail(request.getEmail());
             userDetails.setPhone(request.getPhone());
@@ -103,7 +103,7 @@ public class AdminUserRestController {
     }
 
     @Getter @Setter
-    public static class UserRequest {
+    public static class     UserRequest {
         private String name;
         private String username;
         private String email;

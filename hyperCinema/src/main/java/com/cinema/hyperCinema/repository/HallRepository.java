@@ -1,13 +1,15 @@
 package com.cinema.hyperCinema.repository;
 
 import com.cinema.hyperCinema.model.Hall;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface HallRepository extends JpaRepository<Hall, Integer> {
+public interface HallRepository extends JpaRepository<Hall, Integer>, JpaSpecificationExecutor<Hall> {
+
     /**
      * Check whether at least one Hall is linked to the given branch.
      * Used by branch deletion guard (Requirement 5.5) and validation flows
@@ -27,4 +29,8 @@ public interface HallRepository extends JpaRepository<Hall, Integer> {
      */
     List<Hall> findByBranch_BranchId(Integer branchId);
 
+    boolean existsByBranch_BranchIdAndNameIgnoreCase(Integer branchId, String name);
+
+    boolean existsByBranch_BranchIdAndNameIgnoreCaseAndHallIdNot(
+            Integer branchId, String name, Integer hallId);
 }

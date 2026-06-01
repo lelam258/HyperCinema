@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
                     String q = query.toLowerCase().trim();
                     return (u.getUsername() != null && u.getUsername().toLowerCase().contains(q))
                             || (u.getEmail() != null && u.getEmail().toLowerCase().contains(q))
-                            || (u.getName() != null && u.getName().toLowerCase().contains(q))
+//                            || (u.getName() != null && u.getName().toLowerCase().contains(q))
                             || (u.getRole() != null && u.getRole().getName().toLowerCase().contains(q));
                 })
                 .filter(u -> {
@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new IllegalArgumentException("Email already exists: " + user.getEmail());
         }
-        
+
         if (user.getRole() == null || user.getRole().getRoleId() == null) {
             // Default to Viewer if no role specified
             Role defaultRole = roleRepository.findByName("Viewer")
@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
         if (user.getStatus() == null) {
             user.setStatus("Active");
         }
-        
+
         return userRepository.save(user);
     }
 
@@ -99,11 +99,11 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Email already exists: " + userDetails.getEmail());
         }
 
-        user.setName(userDetails.getName());
+//        user.setName(userDetails.getName());
         user.setUsername(userDetails.getUsername());
         user.setEmail(userDetails.getEmail());
         user.setPhone(userDetails.getPhone());
-        
+
         if (userDetails.getRole() != null && userDetails.getRole().getRoleId() != null) {
             Role role = roleRepository.findById(userDetails.getRole().getRoleId())
                     .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + userDetails.getRole().getRoleId()));
@@ -146,7 +146,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User resetUserPassword(Integer id, String newPassword) {
         User user = getUserById(id);
-        user.setPassword(newPassword); // In production, this would be encrypted
+        user.setPasswordHash(newPassword); // In production, this would be encrypted
         return userRepository.save(user);
     }
 

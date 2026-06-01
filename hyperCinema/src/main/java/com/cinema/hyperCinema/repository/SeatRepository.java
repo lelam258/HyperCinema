@@ -6,4 +6,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SeatRepository extends JpaRepository<Seat, Integer> {
+
+    long countByHall_HallId(Integer hallId);
+
+    boolean existsByHall_HallId(Integer hallId);
 }
