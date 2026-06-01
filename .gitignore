@@ -36,3 +36,13 @@ hyperCinema/.m2
 AGENTS.md
 docs
 hyperCinema/CONFIGURATION.md
+.kiro
+.tmp
+.vscode
+design-system
+hyperCinema/src/test/resources/golden
+hyperCinema/.jqwik-database
+hyperCinema/check-jar.ps1
+hyperCinema/deps.txt
+*.zip
+hyperCinema/src/test/java
