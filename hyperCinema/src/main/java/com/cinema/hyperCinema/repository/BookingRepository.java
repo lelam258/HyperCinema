@@ -12,6 +12,26 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    /**
+     * Top N phim theo số booking (không tính Cancelled).
+     * Returns: [movieTitle, bookingCount]
+     */
+    @Query(value = "SELECT m.title, COUNT(b) AS cnt "
+            + "FROM Booking b JOIN b.showtime s JOIN s.movie m "
+            + "WHERE b.status <> 'Cancelled' "
+            + "GROUP BY m.title ORDER BY cnt DESC LIMIT :limit")
+    List<Object[]> findTopMoviesByBookingCount(@Param("limit") int limit);
+
+    /**
+     * Tổng số vé bán (không tính Cancelled).
+     */
+    @Query("SELECT COUNT(t) FROM Ticket t JOIN t.booking b "
+            + "WHERE b.status <> 'Cancelled' AND b.createdAt BETWEEN :start AND :end")
+    long countTicketsByBookingStatusAndCreatedAtBetween(@Param("start") LocalDateTime start,
+                                                        @Param("end") LocalDateTime end);
+
     @Query("SELECT COUNT(b) FROM Booking b JOIN b.showtime s JOIN s.hall h "
             + "WHERE h.branch.branchId = :branchId "
             + "AND b.createdAt BETWEEN :start AND :end")

@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 
 @Repository
 public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
+
     /**
      * Check whether the given branch has at least one Showtime whose
      * start time is strictly after the supplied moment.
@@ -21,4 +22,19 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
      * {@link Showtime#getHall()} → {@code Hall.branch} → {@code Branch.branchId}.
      */
     boolean existsByHall_Branch_BranchIdAndStartTimeAfter(Integer branchId, LocalDateTime now);
+
+    boolean existsByMovie_MovieIdAndStartTimeAfter(Integer movieId, LocalDateTime now);
+
+    boolean existsByMovie_MovieId(Integer movieId);
+
+    boolean existsByMovie_MovieIdAndHall_Branch_BranchIdAndStartTimeAfter(
+            Integer movieId, Integer branchId, LocalDateTime now);
+
+    long countByMovie_MovieIdAndStartTimeAfter(Integer movieId, LocalDateTime now);
+
+    long countByMovie_MovieIdAndStartTimeLessThanEqual(Integer movieId, LocalDateTime now);
+
+    long countByHall_HallId(Integer hallId);
+
+    boolean existsByHall_HallId(Integer hallId);
 }

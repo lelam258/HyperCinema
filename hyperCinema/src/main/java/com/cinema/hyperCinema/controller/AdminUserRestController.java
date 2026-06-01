@@ -29,7 +29,6 @@ public class AdminUserRestController {
             user.setUsername(request.getUsername());
             user.setEmail(request.getEmail());
             user.setPasswordHash(request.getPassword()); // Sửa lỗi: Đổi từ setPassword sang setPasswordHash
-
             user.setPhone(request.getPhone());
 
             if (request.getRoleId() != null) {
@@ -106,7 +105,7 @@ public class AdminUserRestController {
     }
 
     @Getter @Setter
-    public static class UserRequest {
+    public static class     UserRequest {
         private String name;
         private String username;
         private String email;
