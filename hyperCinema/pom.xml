@@ -28,7 +28,20 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<jqwik.version>1.9.2</jqwik.version>
+		<testcontainers.version>1.20.4</testcontainers.version>
 	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.testcontainers</groupId>
+				<artifactId>testcontainers-bom</artifactId>
+				<version>${testcontainers.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -90,6 +103,29 @@
 			<artifactId>spring-boot-starter-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Property-based testing -->
+		<dependency>
+			<groupId>net.jqwik</groupId>
+			<artifactId>jqwik</artifactId>
+			<version>${jqwik.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Testcontainers (MySQL) cho JPA slice tests -->
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>mysql</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -141,6 +177,25 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<!--
+				Surefire configuration: bao gồm các pattern tên file test mặc định của JUnit
+				cùng với pattern *Properties.java / *PropertyTests.java mà jqwik thường sử dụng,
+				đảm bảo engine jqwik (JUnit Platform) được pickup khi chạy `mvn test`.
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<includes>
+						<include>**/Test*.java</include>
+						<include>**/*Test.java</include>
+						<include>**/*Tests.java</include>
+						<include>**/*TestCase.java</include>
+						<include>**/*Properties.java</include>
+						<include>**/*PropertyTests.java</include>
+					</includes>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
