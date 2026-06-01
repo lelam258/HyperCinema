@@ -1,0 +1,373 @@
+<!--
+    =====================================================================
+    PLACEHOLDER TEMPLATE — admin/branches/assign-staff.html
+    =====================================================================
+    Template này hiện chưa được render bởi bất kỳ endpoint nào trong
+    BranchController: hiện tại form gán Staff được nhúng trực tiếp vào
+    toolbar của `branch-detail.html` (xem task 15.4) và submit thẳng tới
+    POST /admin/branches/{branchId}/staff.
+
+    Template này tồn tại để hỗ trợ một endpoint tương lai (ví dụ
+    GET /admin/branches/{branchId}/staff/assign) cần render trang riêng
+    với danh sách candidate được pre-load. Khi endpoint đó được thêm,
+    nó cần đẩy các attribute sau vào Model:
+
+        * branch              — BranchDetailView (branchId, name, city, ...)
+        * staffCandidates     — List<UserSummary> Staff với role=Staff &
+                                User.branch == null (chưa được gán)
+        * managerCandidates   — List<UserSummary> Manager với role=Manager &
+                                User.branch.branchId == branchId (đang quản lý
+                                đúng Chi nhánh này, để đảm bảo invariant
+                                staff.branch == staff.manager.branch — REQ 10.3)
+        * assignStaffRequest  — AssignStaffRequest trống cho th:object
+                                (fields: userId, managerId)
+
+    Form action: POST /admin/branches/{branchId}/staff (REQ 10.1).
+
+    Toàn bộ block render đều bọc bằng `th:if` kiểm tra null trên các
+    collection để template không vỡ khi được render với model trống —
+    điều này cho phép smoke-test render mà chưa cần endpoint thật.
+
+    Trace: Requirements 9.1, 10.1, 10.2, 10.3, 11.2.
+    =====================================================================
+-->
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="|Gán Staff cho Chi nhánh: ${branch != null ? branch.name : ''} - HyperCinema|">Gán Staff - HyperCinema</title>
+
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --surface-elevated: #252525;
+            --primary-color: #ff3b30;
+            --primary-hover: #e0352b;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --border-color: #333333;
+            --success-color: #30d158;
+            --warning-color: #ff9f0a;
+            --error-color: #ff3b30;
+            --info-color: #0a84ff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .page-container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 32px 24px 64px;
+        }
+
+        .breadcrumb {
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .breadcrumb a:hover { color: var(--primary-color); }
+        .breadcrumb .separator { margin: 0 8px; }
+
+        h1 {
+            margin: 0 0 8px 0;
+            font-size: 26px;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        /* ----------------------- Flash messages ----------------------- */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            border: 1px solid transparent;
+        }
+        .alert-success {
+            background-color: rgba(48, 209, 88, 0.1);
+            color: var(--success-color);
+            border-color: rgba(48, 209, 88, 0.25);
+        }
+        .alert-error {
+            background-color: rgba(255, 59, 48, 0.1);
+            color: var(--primary-color);
+            border-color: rgba(255, 59, 48, 0.25);
+        }
+        .alert-warning {
+            background-color: rgba(255, 159, 10, 0.1);
+            color: var(--warning-color);
+            border-color: rgba(255, 159, 10, 0.25);
+        }
+
+        /* ----------------------- Card / panel ------------------------- */
+        .panel {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-bottom: 24px;
+        }
+        .panel h2 {
+            margin: 0 0 18px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* ----------------------- Form fields -------------------------- */
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background-color: #2a2a2a;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .form-group select.is-invalid {
+            border-color: var(--error-color);
+        }
+        .form-group .help-text {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .field-error {
+            display: block;
+            margin-top: 6px;
+            color: var(--error-color);
+            font-size: 13px;
+        }
+
+        /* ----------------------- Buttons / actions -------------------- */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            text-decoration: none;
+            border: 1px solid var(--border-color);
+            background-color: var(--surface-elevated);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .btn:hover {
+            background-color: #303030;
+            border-color: #444444;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+        .btn-primary[disabled] {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+
+    <!-- Breadcrumb — chỉ render khi `branch` đã được nạp vào model. -->
+    <nav class="breadcrumb" aria-label="Breadcrumb" th:if="${branch != null}">
+        <a th:href="@{/admin/branches}">Quản lý Chi nhánh</a>
+        <span class="separator">/</span>
+        <a th:href="@{/admin/branches/{id}(id=${branch.branchId})}"
+           th:text="${branch.name}">Tên chi nhánh</a>
+        <span class="separator">/</span>
+        <span>Gán Staff</span>
+    </nav>
+
+    <h1 th:if="${branch != null}"
+        th:text="|Gán Staff cho Chi nhánh: ${branch.name}|">
+        Gán Staff cho Chi nhánh
+    </h1>
+    <h1 th:if="${branch == null}">Gán Staff cho Chi nhánh</h1>
+    <div class="subtitle" th:if="${branch != null}">
+        <span th:text="${branch.city}">Thành phố</span>
+        <span th:if="${branch.address}"> · </span>
+        <span th:if="${branch.address}" th:text="${branch.address}">Địa chỉ</span>
+    </div>
+
+    <!--
+        Flash messages — controller đẩy errorKey / successKey vào
+        RedirectAttributes; resolve qua message bundle bằng #{${key}}.
+    -->
+    <div th:if="${successKey}" class="alert alert-success" role="status"
+         th:text="#{${successKey}}">Thành công</div>
+    <div th:if="${errorKey}" class="alert alert-error" role="alert"
+         th:text="#{${errorKey}}">Lỗi</div>
+
+    <!--
+        Banner cảnh báo khi template được render mà chưa có endpoint
+        cấp model đầy đủ. Hiển thị cho dev biết trạng thái placeholder.
+    -->
+    <div th:if="${branch == null or staffCandidates == null or managerCandidates == null}"
+         class="alert alert-warning" role="status">
+        Trang đang ở trạng thái placeholder: cần endpoint controller
+        cung cấp <code>branch</code>, <code>staffCandidates</code>,
+        <code>managerCandidates</code> và <code>assignStaffRequest</code>
+        trước khi sử dụng.
+    </div>
+
+    <!--
+        Form chính — POST /admin/branches/{branchId}/staff (REQ 10.1).
+        Bọc bằng th:if để chỉ render khi có đầy đủ branch + DTO bind.
+        Defensive: nếu staffCandidates / managerCandidates null, các
+        khối <select> tương ứng cũng được wrap riêng và hiển thị empty
+        state thay vì NullPointerException.
+    -->
+    <form th:if="${branch != null and assignStaffRequest != null}"
+          method="post"
+          th:action="@{|/admin/branches/${branch.branchId}/staff|}"
+          th:object="${assignStaffRequest}">
+
+        <section class="panel" aria-labelledby="staff-form-heading">
+            <h2 id="staff-form-heading">Thông tin gán Staff</h2>
+
+            <!--
+                Staff dropdown — REQ 10.1, 10.2.
+                Nguồn: staffCandidates (User.role = "Staff", User.branch
+                IS NULL). Submit field name = "userId" theo
+                AssignStaffRequest.
+            -->
+            <div class="form-group">
+                <label for="staff-userId">Nhân viên (Staff)</label>
+                <select id="staff-userId"
+                        th:field="*{userId}"
+                        th:classappend="${#fields.hasErrors('userId')} ? 'is-invalid' : ''"
+                        required>
+                    <option value="" th:text="'-- Chọn Staff chưa được gán --'">
+                        -- Chọn Staff chưa được gán --
+                    </option>
+                    <option th:if="${staffCandidates != null}"
+                            th:each="staff : ${staffCandidates}"
+                            th:value="${staff.userId}"
+                            th:text="|${staff.fullName} (${staff.email})|">
+                        Họ tên (email)
+                    </option>
+                </select>
+                <span class="help-text"
+                      th:if="${staffCandidates != null and #lists.isEmpty(staffCandidates)}">
+                    Không có Staff nào chưa được gán.
+                </span>
+                <span class="help-text" th:if="${staffCandidates == null}">
+                    Danh sách Staff chưa được nạp.
+                </span>
+                <span class="field-error"
+                      th:if="${#fields.hasErrors('userId')}"
+                      th:errors="*{userId}">Lỗi xác thực userId</span>
+            </div>
+
+            <!--
+                Manager dropdown — REQ 10.3 (Manager phải đang quản lý
+                cùng branchId). Nguồn: managerCandidates đã được lọc
+                bởi service trước khi đưa vào model. Submit field name
+                = "managerId".
+            -->
+            <div class="form-group">
+                <label for="staff-managerId">Quản lý của Chi nhánh (Manager)</label>
+                <select id="staff-managerId"
+                        th:field="*{managerId}"
+                        th:classappend="${#fields.hasErrors('managerId')} ? 'is-invalid' : ''"
+                        required>
+                    <option value="" th:text="'-- Chọn Manager của Chi nhánh --'">
+                        -- Chọn Manager của Chi nhánh --
+                    </option>
+                    <option th:if="${managerCandidates != null}"
+                            th:each="manager : ${managerCandidates}"
+                            th:value="${manager.userId}"
+                            th:text="|${manager.fullName} (${manager.email})|">
+                        Họ tên (email)
+                    </option>
+                </select>
+                <span class="help-text"
+                      th:if="${managerCandidates != null and #lists.isEmpty(managerCandidates)}">
+                    Chi nhánh chưa có Manager. Vui lòng gán Manager trước.
+                </span>
+                <span class="help-text" th:if="${managerCandidates == null}">
+                    Danh sách Manager chưa được nạp.
+                </span>
+                <span class="field-error"
+                      th:if="${#fields.hasErrors('managerId')}"
+                      th:errors="*{managerId}">Lỗi xác thực managerId</span>
+            </div>
+        </section>
+
+        <!--
+            Actions — Submit disable khi một trong hai danh sách rỗng.
+            Cancel quay về detail của branch hiện tại.
+        -->
+        <div class="form-actions">
+            <a class="btn"
+               th:href="@{/admin/branches/{id}(id=${branch.branchId})}">Hủy</a>
+            <button type="submit" class="btn btn-primary"
+                    th:disabled="${staffCandidates == null
+                                   or #lists.isEmpty(staffCandidates)
+                                   or managerCandidates == null
+                                   or #lists.isEmpty(managerCandidates)}">
+                Gán Staff
+            </button>
+        </div>
+    </form>
+
+</div>
+
+</body>
+</html>
