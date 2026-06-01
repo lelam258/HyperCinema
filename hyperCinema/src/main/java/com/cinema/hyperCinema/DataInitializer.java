@@ -41,16 +41,17 @@ public class DataInitializer implements CommandLineRunner {
 
             User admin = new User();
             admin.setName("John Admin");
+            admin.setFullName("John Admin"); // Bổ sung fullName tránh lỗi ràng buộc DB
             admin.setUsername("john.admin");
             admin.setEmail("john.admin@company.com");
-            admin.setPassword("admin123"); // Note: In a production app, this would be BCrypt encoded
+            admin.setPasswordHash("admin123");
             admin.setPhone("0123456789");
             admin.setRole(adminRole);
             admin.setStatus("Active");
             admin.setLastLogin(LocalDateTime.now().minusDays(1).withHour(9).withMinute(30).withSecond(0));
 
             userRepository.save(admin);
-            
+
             // Seed a few other mock users for the dashboard grid as shown in wireframe 2
             seedMockUsers();
         }
@@ -64,9 +65,10 @@ public class DataInitializer implements CommandLineRunner {
         if (managerRole != null && userRepository.findByUsername("sarah.manager").isEmpty()) {
             User user = new User();
             user.setName("Sarah Manager");
+            user.setFullName("Sarah Manager"); // Bổ sung
             user.setUsername("sarah.manager");
             user.setEmail("sarah.m@company.com");
-            user.setPassword("password123");
+            user.setPasswordHash("password123"); // ĐÃ SỬA: setPassword -> setPasswordHash
             user.setPhone("0987654321");
             user.setRole(managerRole);
             user.setStatus("Active");
@@ -77,9 +79,10 @@ public class DataInitializer implements CommandLineRunner {
         if (userRole != null && userRepository.findByUsername("mike.user").isEmpty()) {
             User user = new User();
             user.setName("Mike User");
+            user.setFullName("Mike User"); // Bổ sung
             user.setUsername("mike.user");
             user.setEmail("mike.user@company.com");
-            user.setPassword("password123");
+            user.setPasswordHash("password123"); // ĐÃ SỬA: setPassword -> setPasswordHash
             user.setPhone("0111222333");
             user.setRole(userRole);
             user.setStatus("Active");
@@ -90,9 +93,10 @@ public class DataInitializer implements CommandLineRunner {
         if (viewerRole != null && userRepository.findByUsername("emma.viewer").isEmpty()) {
             User user = new User();
             user.setName("Emma Viewer");
+            user.setFullName("Emma Viewer"); // Bổ sung
             user.setUsername("emma.viewer");
             user.setEmail("emma.v@company.com");
-            user.setPassword("password123");
+            user.setPasswordHash("password123"); // ĐÃ SỬA: setPassword -> setPasswordHash
             user.setPhone("0222333444");
             user.setRole(viewerRole);
             user.setStatus("Inactive");
@@ -103,9 +107,10 @@ public class DataInitializer implements CommandLineRunner {
         if (managerRole != null && userRepository.findByUsername("david.manager").isEmpty()) {
             User user = new User();
             user.setName("David Manager");
+            user.setFullName("David Manager"); // Bổ sung
             user.setUsername("david.manager");
             user.setEmail("david.m@company.com");
-            user.setPassword("password123");
+            user.setPasswordHash("password123"); // ĐÃ SỬA: setPassword -> setPasswordHash
             user.setPhone("0333444555");
             user.setRole(managerRole);
             user.setStatus("Active");
