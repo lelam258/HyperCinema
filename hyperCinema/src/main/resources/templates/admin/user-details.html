@@ -71,7 +71,7 @@
                     <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
                     <span>Back to Users</span>
                 </a>
-                <h1 th:text="'User Profile: ' + ${user.name}">John Admin</h1>
+                <h1 th:text="'User Profile: ' + ${user.fullName}">John Admin</h1>
                 <p>Monitor user activity, access privileges, and account status details</p>
             </div>
         </div>
@@ -80,8 +80,8 @@
         <div class="detail-grid">
             <!-- Left Column: Profile Card -->
             <section class="profile-card">
-                <div class="avatar-wrapper" th:text="${#strings.substring(user.name, 0, 2).toUpperCase()}">JO</div>
-                <h2 th:text="${user.name}">John Admin</h2>
+                <div class="avatar-wrapper" th:text="${#strings.substring(user.fullName, 0, 2).toUpperCase()}">JO</div>
+                <h2 th:text="${user.fullName}">John Admin</h2>
                 <div class="email" th:text="${user.email}">john.admin@company.com</div>
                 
                 <div class="info-list">
@@ -116,7 +116,7 @@
                 </div>
 
                 <div class="detail-actions">
-                    <button class="btn-primary btn" th:onclick="openEditModal([[${user.userId}]], [[${user.name}]], [[${user.username}]], [[${user.email}]], [[${user.phone}]], [[${user.role != null ? user.role.roleId : null}]], [[${user.status}]])">
+                    <button class="btn-primary btn" th:onclick="openEditModal([[${user.userId}]], [[${user.fullName}]], [[${user.username}]], [[${user.email}]], [[${user.phone}]], [[${user.role != null ? user.role.roleId : null}]], [[${user.status}]])">
                         <i data-lucide="edit"></i>
                         <span>Update User</span>
                     </button>
