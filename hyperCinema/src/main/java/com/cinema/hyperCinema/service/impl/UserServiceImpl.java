@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
                     String q = query.toLowerCase().trim();
                     return (u.getUsername() != null && u.getUsername().toLowerCase().contains(q))
                             || (u.getEmail() != null && u.getEmail().toLowerCase().contains(q))
-                            || (u.getName() != null && u.getName().toLowerCase().contains(q))
+//                            || (u.getName() != null && u.getName().toLowerCase().contains(q))
                             || (u.getRole() != null && u.getRole().getName().toLowerCase().contains(q));
                 })
                 .filter(u -> {

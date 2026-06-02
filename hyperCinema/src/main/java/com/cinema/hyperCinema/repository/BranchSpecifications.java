@@ -1,13 +1,15 @@
 package com.cinema.hyperCinema.repository;
 
-import com.cinema.hyperCinema.dto.admin.branch.request.BranchSearchCriteria;
-import com.cinema.hyperCinema.model.Branch;
-import jakarta.persistence.criteria.Predicate;
-import org.springframework.data.jpa.domain.Specification;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import org.springframework.data.jpa.domain.Specification;
+
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchSearchCriteria;
+import com.cinema.hyperCinema.model.Branch;
+
+import jakarta.persistence.criteria.Predicate;
 
 public final class BranchSpecifications {
 

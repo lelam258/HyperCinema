@@ -83,7 +83,7 @@
                 <div class="avatar-wrapper" th:text="${#strings.substring(user.fullName, 0, 2).toUpperCase()}">JO</div>
                 <h2 th:text="${user.fullName}">John Admin</h2>
                 <div class="email" th:text="${user.email}">john.admin@company.com</div>
-                
+
                 <div class="info-list">
                     <div class="info-item">
                         <span class="info-label">User ID</span>
@@ -130,7 +130,7 @@
             <!-- Right Column: Access & Permissions -->
             <section class="permissions-card">
                 <h3>Permissions & Access</h3>
-                
+
                 <div class="permission-row" th:each="perm : ${permissions}">
                     <div class="permission-info">
                         <h4 th:text="${perm.key}">Dashboard Access</h4>
