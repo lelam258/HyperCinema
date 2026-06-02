@@ -12,6 +12,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Integer userId;
 
     @Column(name = "full_name", nullable = false, length = 150)
@@ -29,7 +30,7 @@ public class User {
     @Column(nullable = false, length = 20)
     private String phone;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Role role;
 
@@ -75,6 +76,9 @@ public class User {
 
     @Column(nullable = false, length = 50)
     private String status = "Active";
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

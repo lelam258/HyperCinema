@@ -21,7 +21,8 @@ public class Movie {
     @Column(nullable = false)
     private Integer duration;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
+    @Column
     private String description;
 
     @Column(name = "release_date")

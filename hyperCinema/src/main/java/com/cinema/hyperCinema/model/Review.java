@@ -25,7 +25,8 @@ public class Review {
     @Column
     private Integer rating;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
+    @Column
     private String comment;
 
     @Column(name = "created_at", updatable = false)
