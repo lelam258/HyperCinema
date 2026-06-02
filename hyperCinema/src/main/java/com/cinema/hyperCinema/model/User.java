@@ -100,11 +100,22 @@ public class User {
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
+    @Column(nullable = false, length = 50)
+    private String status = "Active";
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public String getName() {
+        return this.fullName;
+    }
+
+    public void setName(String name) {
+        this.fullName = name;
+    }
 
     @PrePersist
     protected void onCreate() {

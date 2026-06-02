@@ -42,7 +42,7 @@ public class Movie {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "language_id",
-                insertable = false, updatable = false)
+            insertable = false, updatable = false)
     private Language language;
 
     @Column(name = "created_at", nullable = false, updatable = false)

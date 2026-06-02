@@ -5,20 +5,46 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
 import com.cinema.hyperCinema.model.User;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository cho entity {@link User}, được mở rộng phục vụ module
+ * Branch Management.
+ *
+ * <p>Các truy vấn manager / staff được dùng bởi {@code BranchValidator} và
+ * {@code BranchServiceImpl} để kiểm tra ràng buộc và xây dựng view chi tiết
+ * chi nhánh. Trace requirement: REQ 5.6, 8.3, 9.1, 9.4, 9.6 — xem
+ * {@code .kiro/specs/branch-management/design.md} mục B.1.3.</p>
+ */
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
-/*
-    Optional<User> findByUsername(String username);
-*/
-
     Optional<User> findByUsername(String username);
     Optional<User> findByEmail(String email);
+
+    /**
+     * Tìm User theo username kèm eager-load Role.
+     *
+     * <p>Dùng cho authentication flow để tránh LazyInitializationException
+     * khi truy cập role.name ngoài Hibernate session.</p>
+     */
+    @Query("SELECT u FROM User u JOIN FETCH u.role WHERE u.username = :username")
+    Optional<User> findByUsernameWithRole(@Param("username") String username);
+
+    /**
+     * Tìm User theo email kèm eager-load Role.
+     *
+     * <p>Dùng cho authentication flow để tránh LazyInitializationException
+     * khi truy cập role.name ngoài Hibernate session.</p>
+     */
+    @Query("SELECT u FROM User u JOIN FETCH u.role WHERE u.email = :email")
+    Optional<User> findByEmailWithRole(@Param("email") String email);
+
     boolean existsByUsername(String username);
+
     boolean existsByEmail(String email);
 
     /**
@@ -62,6 +88,16 @@ public interface UserRepository extends JpaRepository<User, Integer> {
             + "AND u.branch IS NULL")
     List<User> findUnassignedManagers();
 
+    @Query("SELECT u FROM User u "
+            + "WHERE u.role.name = 'Staff' "
+            + "AND u.branch IS NULL")
+    List<User> findUnassignedStaff();
+
+    @Query("SELECT u FROM User u "
+            + "WHERE u.role.name = 'Manager' "
+            + "AND u.branch.branchId = :branchId")
+    List<User> findManagersByBranchId(@Param("branchId") Integer branchId);
+
     /**
      * Bỏ gán cột {@code manager_id} cho mọi staff đang trỏ tới manager này.
      *
@@ -92,4 +128,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
             + "AND u.role.name = :roleName")
     List<User> findByBranchIdAndRoleName(@Param("branchId") Integer branchId,
                                          @Param("roleName") String roleName);
+
+    // ── Dashboard aggregate queries ──
+
+    long countByStatus(String status);
+
+    @Query("SELECT u.role.name, COUNT(u) FROM User u GROUP BY u.role.name")
+    List<Object[]> countUsersByRole();
 }
