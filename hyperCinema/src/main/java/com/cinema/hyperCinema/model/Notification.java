@@ -22,7 +22,6 @@ public class Notification {
     private String title;
 
     @Lob
-    @Column
     private String message;
 
     @Column(length = 50)

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Table(name = "Movie")
@@ -23,8 +24,6 @@ public class Movie {
     private Integer duration;
 
     @Lob
-    @Column
-    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "release_date", nullable = false)
@@ -52,6 +51,14 @@ public class Movie {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @ManyToMany
+    @JoinTable(
+            name = "MovieGenre",
+            joinColumns = @JoinColumn(name = "movie_id"),
+            inverseJoinColumns = @JoinColumn(name = "genre_id")
+    )
+    private Set<Genre> genres;
 
     @PrePersist
     protected void onCreate() {

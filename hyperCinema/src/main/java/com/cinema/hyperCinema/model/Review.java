@@ -26,7 +26,6 @@ public class Review {
     private Integer rating;
 
     @Lob
-    @Column
     private String comment;
 
     @Column(name = "created_at", updatable = false)

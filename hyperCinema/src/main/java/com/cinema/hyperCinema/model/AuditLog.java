@@ -28,7 +28,6 @@ public class AuditLog {
     private String action;
 
     @Lob
-    @Column
     private String details;
 
     @Column(name = "created_at", updatable = false)
