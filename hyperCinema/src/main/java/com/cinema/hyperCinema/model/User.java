@@ -12,9 +12,11 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
     private Integer userId;
 
+    //    @Column(nullable = false, length = 100)
+//    @org.hibernate.annotations.Nationalized
+//    private String name;
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;
 
@@ -30,10 +32,15 @@ public class User {
     @Column(nullable = false, length = 20)
     private String phone;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id")
     private Role role;
 
+    @Column(length = 20)
+    private String status = "Active";
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
     /**
      * Chi nhánh mà người dùng thuộc về.
      *
@@ -74,25 +81,11 @@ public class User {
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
-    @Column(nullable = false, length = 50)
-    private String status = "Active";
-
-    @Column(name = "last_login")
-    private LocalDateTime lastLogin;
-
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    public String getName() {
-        return this.fullName;
-    }
-
-    public void setName(String name) {
-        this.fullName = name;
-    }
 
     @PrePersist
     protected void onCreate() {
