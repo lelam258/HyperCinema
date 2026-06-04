@@ -5,36 +5,39 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Audit_Log")
+@Table(name = "AuditLog")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class AuditLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "log_id")
     private Integer logId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "entity_type", nullable = false, length = 50)
+    @Column(name = "entity_type", nullable = false, length = 100)
     private String entityType;
 
-    @Column(name = "entity_id")
+    @Column(name = "entity_id", nullable = false)
     private Integer entityId;
 
-    @Column(nullable = false, length = 50)
+    @Column(name = "action", nullable = false, length = 50)
     private String action;
 
-    @Lob
+    @Column(name = "details", nullable = false, columnDefinition = "TEXT")
     private String details;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
     }
 }
