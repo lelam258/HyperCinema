@@ -21,16 +21,16 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         for (GrantedAuthority authority : authentication.getAuthorities()) {
             String role = authority.getAuthority();
             if (role.equals("ROLE_ADMIN")) {
-                targetUrl = "/admin/users";
+                targetUrl = "/admin/dashboard";
                 break;
             } else if (role.equals("ROLE_MANAGER")) {
-                targetUrl = "/manager/branches";
+                targetUrl = "/manager/dashboard";
                 break;
             } else if (role.equals("ROLE_BRANCH_MANAGER") || role.equals("ROLE_BRANCHMANAGER")) {
-                targetUrl = "/branch/halls";
+                targetUrl = "/branch/dashboard";
                 break;
             } else if (role.equals("ROLE_STAFF")) {
-                targetUrl = "/staff/booking";
+                targetUrl = "/staff/dashboard";
                 break;
             } else if (role.equals("ROLE_CUSTOMER")) {
                 targetUrl = "/my/dashboard";
