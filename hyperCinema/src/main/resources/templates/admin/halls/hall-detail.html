@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(|Chi tiết phòng chiếu - ${hall.name} - HyperCinema|)}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="${hallContext.admin} ? ~{fragments/layout :: adminSidebar('halls')} : (${hallContext.sidebar == 'manager'} ? ~{fragments/layout :: managerSidebar('halls')} : ~{fragments/layout :: branchSidebar('halls')})"></nav>
+
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-5xl mx-auto px-6 py-8">
+        <nav class="flex items-center gap-2 text-sm text-slate-400 mb-6" aria-label="Breadcrumb">
+            <a th:href="@{/admin/halls}" class="text-slate-400 hover:text-primary transition-colors no-underline">Quản lý phòng chiếu</a>
+            <span class="text-slate-600">/</span>
+            <span class="text-slate-200" th:text="${hall.name}">Hall</span>
+        </nav>
+
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <div class="glass-card p-6 mb-6">
+            <div class="flex flex-wrap justify-between items-start gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-white" th:text="${hall.name}">Hall</h1>
+                    <p class="text-sm text-slate-400 mt-1" th:text="|${hall.branchName} - ${hall.city}|">Branch</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <a th:href="@{|/admin/halls/${hall.hallId}/edit|}" class="px-4 py-2 text-sm font-medium text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Chỉnh sửa</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="glass-card p-6">
+                <h2 class="text-lg font-semibold text-white mb-4">Thông tin phòng</h2>
+                <div class="space-y-4">
+                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Mã phòng</span><span class="text-white tabular-nums" th:text="${hall.hallId}">1</span></div>
+                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Tên phòng</span><span class="text-white" th:text="${hall.name}">Hall</span></div>
+                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Loại phòng</span><span class="text-white" th:text="${hall.hallType}">2D</span></div>
+                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Trạng thái</span><span class="text-white" th:text="${hall.status}">Active</span></div>
+                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Sức chứa</span><span class="text-white tabular-nums" th:text="${hall.capacity}">0</span></div>
+                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Số ghế</span><span class="text-white tabular-nums" th:text="${hall.seatCount}">0</span></div>
+                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Số suất chiếu</span><span class="text-white tabular-nums" th:text="${hall.showtimeCount}">0</span></div>
+                </div>
+            </div>
+            <div class="glass-card p-6">
+                <h2 class="text-lg font-semibold text-white mb-4">Chi nhánh</h2>
+                <div class="space-y-4">
+                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Tên chi nhánh</span><span class="text-white" th:text="${hall.branchName}">Branch</span></div>
+                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Thành phố</span><span class="text-white" th:text="${hall.city}">City</span></div>
+                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Địa chỉ</span><span class="text-white" th:text="${hall.address}">Address</span></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>
