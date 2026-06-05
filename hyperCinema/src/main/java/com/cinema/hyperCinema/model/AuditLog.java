@@ -28,7 +28,7 @@ public class AuditLog {
     @Column(name = "action", nullable = false, length = 50)
     private String action;
 
-    @Lob
+    @Column(name = "details", nullable = false, columnDefinition = "TEXT")
     private String details;
 
     @Column(name = "created_at", nullable = false, updatable = false)

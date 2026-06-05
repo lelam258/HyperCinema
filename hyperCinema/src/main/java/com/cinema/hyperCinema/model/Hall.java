@@ -21,6 +21,15 @@ public class Hall {
     @Column(nullable = false, length = 50)
     private String name;
 
+    @Column(name = "capacity", nullable = false)
+    private Integer capacity;
+
+    @Column(name = "hall_type", nullable = false, length = 50)
+    private String hallType;
+
+    @Column(nullable = false, length = 50)
+    private String status;
+
     @OneToMany(mappedBy = "hall", cascade = CascadeType.ALL)
     private List<Seat> seats;
 }
