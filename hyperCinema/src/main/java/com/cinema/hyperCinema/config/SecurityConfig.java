@@ -32,6 +32,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate", "/api/auth/verify-email").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/movies/**", "/movies").permitAll()
+                .requestMatchers("/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/manager/**").hasRole("MANAGER")
                 .requestMatchers("/branch/**").hasAnyRole("BRANCH_MANAGER", "BRANCHMANAGER")

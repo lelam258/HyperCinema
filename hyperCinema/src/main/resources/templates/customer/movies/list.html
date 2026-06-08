@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Danh sách phim - HyperCinema')}"></head>
+<body class="min-h-screen flex flex-col bg-[#050508]">
+
+    <!-- Header / Navbar công cộng -->
+    <header class="border-b border-white/[0.06] bg-[#0A0A0F]/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
+                <a th:href="@{/movies}" class="text-xl font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight no-underline">HyperCinema</a>
+            </div>
+            <nav class="flex items-center gap-6">
+                <a th:href="@{/movies(status='NowShowing')}" class="text-sm font-medium transition-colors hover:text-primary no-underline" th:classappend="${criteria.status == 'NowShowing'} ? 'text-primary' : 'text-slate-300'">Phim đang chiếu</a>
+                <a th:href="@{/movies(status='ComingSoon')}" class="text-sm font-medium transition-colors hover:text-primary no-underline" th:classappend="${criteria.status == 'ComingSoon'} ? 'text-primary' : 'text-slate-300'">Phim sắp chiếu</a>
+            </nav>
+            <div class="flex items-center gap-3">
+                <a th:href="@{/login}" class="px-4 py-2 text-sm font-semibold text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline">Đăng nhập</a>
+                <a th:href="@{/register}" class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all no-underline">Đăng ký</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-6 py-10">
+        
+        <!-- Welcome Banner -->
+        <div class="mb-10 text-center sm:text-left">
+            <h1 class="text-4xl font-extrabold text-white tracking-tight mb-2 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Góc Điện Ảnh</h1>
+            <p class="text-sm text-slate-400 max-w-2xl">Khám phá thế giới điện ảnh đỉnh cao tại HyperCinema. Cập nhật lịch chiếu, thể loại và thông tin chi tiết của các bộ phim bom tấn mới nhất.</p>
+        </div>
+
+        <!-- Filter Card -->
+        <div class="glass-card p-6 mb-10">
+            <form th:action="@{/movies}" method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <input type="hidden" name="status" th:value="${criteria.status}">
+                
+                <div>
+                    <label for="keyword" class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Tìm kiếm</label>
+                    <input type="text" id="keyword" name="keyword" placeholder="Nhập tên phim..." th:value="${criteria.keyword}"
+                           class="w-full px-4 py-2.5 bg-white/[0.06] border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                </div>
+                <div>
+                    <label for="genreId" class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Thể loại</label>
+                    <select id="genreId" name="genreId" class="w-full px-4 py-2.5 bg-white/[0.06] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer appearance-none">
+                        <option value="">Tất cả thể loại</option>
+                        <option th:each="genre : ${genres}" th:value="${genre.genreId}" th:text="${genre.name}" th:selected="${criteria.genreId == genre.genreId}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label for="languageId" class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Ngôn ngữ</label>
+                    <select id="languageId" name="languageId" class="w-full px-4 py-2.5 bg-white/[0.06] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer appearance-none">
+                        <option value="">Tất cả ngôn ngữ</option>
+                        <option th:each="lang : ${languages}" th:value="${lang.languageId}" th:text="${lang.name}" th:selected="${criteria.languageId == lang.languageId}"></option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <a th:href="@{/movies(status=${criteria.status})}" class="flex-1 text-center py-2.5 text-sm font-semibold text-slate-300 bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Xoá lọc</a>
+                    <button type="submit" class="flex-1 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 cursor-pointer">Lọc phim</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Movie Grid -->
+        <div th:if="${page == null or #lists.isEmpty(page.content)}" class="text-center py-20 glass-card">
+            <svg class="w-16 h-16 text-slate-600 mx-auto mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+            <h3 class="text-lg font-bold text-slate-300">Không tìm thấy phim nào</h3>
+            <p class="text-slate-500 text-sm mt-1">Vui lòng thử lại với từ khóa hoặc bộ lọc khác.</p>
+        </div>
+
+        <div th:unless="${page == null or #lists.isEmpty(page.content)}" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div th:each="item : ${page.content}" class="group relative flex flex-col bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden hover:border-primary/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5">
+                
+                <!-- Poster Image Area -->
+                <div class="aspect-[2/3] relative overflow-hidden bg-white/5">
+                    <img th:if="${item.posterUrl != null and not #strings.isEmpty(item.posterUrl)}" 
+                         th:src="${item.posterUrl}" 
+                         th:alt="${item.title}" 
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
+                    <div th:unless="${item.posterUrl != null and not #strings.isEmpty(item.posterUrl)}" 
+                         class="w-full h-full flex flex-col items-center justify-center text-slate-600 text-xs">
+                        <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        NO IMAGE
+                    </div>
+                    
+                    <!-- Duration Badge -->
+                    <span th:if="${item.duration != null}" 
+                          class="absolute bottom-3 right-3 px-2 py-1 text-[10px] font-bold bg-black/75 backdrop-blur-sm text-slate-300 rounded-md"
+                          th:text="|${item.duration} Phút|">120 Phút</span>
+                          
+                    <!-- Hover overlay with detailed button -->
+                    <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
+                        <a th:href="@{|/movies/${item.movieId}|}" 
+                           class="px-5 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl hover:scale-105 transition-all no-underline shadow-lg shadow-primary/20">
+                            Xem Chi Tiết
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Info Area -->
+                <div class="p-4 flex flex-col flex-grow">
+                    <!-- Genre Tags -->
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        <span th:each="genre : ${item.genreNames}" 
+                              th:text="${genre}" 
+                              class="text-[9px] font-semibold text-slate-400 bg-white/[0.06] px-1.5 py-0.5 rounded"></span>
+                    </div>
+                    
+                    <!-- Title -->
+                    <a th:href="@{|/movies/${item.movieId}|}" 
+                       th:text="${item.title}" 
+                       class="text-sm font-bold text-white line-clamp-2 hover:text-primary transition-colors no-underline mb-2 leading-snug"></a>
+                    
+                    <!-- Meta -->
+                    <div class="mt-auto pt-2 border-t border-white/5 flex justify-between items-center text-[11px] text-slate-500">
+                        <span th:text="${item.languageName}">Tiếng Anh</span>
+                        <span th:text="${item.releaseDate != null ? #temporals.format(item.releaseDate, 'dd/MM/yyyy') : ''}">01/01/2026</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-between gap-4 mt-12 py-5 border-t border-white/[0.08] flex-wrap" th:if="${page != null and page.totalPages > 1}">
+            <div class="text-sm text-slate-400">Trang <strong class="text-slate-200" th:text="${page.number + 1}">1</strong> / <strong class="text-slate-200" th:text="${page.totalPages}">1</strong></div>
+            <div class="inline-flex items-center gap-1 flex-wrap">
+                <a th:if="${not page.first}" th:href="@{/movies(keyword=${criteria.keyword},genreId=${criteria.genreId},languageId=${criteria.languageId},status=${criteria.status},page=${page.number - 1})}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 border border-white/10 rounded-lg text-sm text-slate-200 bg-white/[0.04] cursor-pointer transition-all hover:bg-white/10 no-underline">‹ Trước</a>
+                <span th:if="${page.first}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 text-sm text-slate-600 cursor-not-allowed">‹ Trước</span>
+                
+                <th:block th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}">
+                    <span th:if="${i == page.number}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-primary to-amber-500 border border-white/20 shadow-lg shadow-primary/20" th:text="${i + 1}">1</span>
+                    <a th:if="${i != page.number}" th:href="@{/movies(keyword=${criteria.keyword},genreId=${criteria.genreId},languageId=${criteria.languageId},status=${criteria.status},page=${i})}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 border border-white/10 rounded-lg text-sm text-slate-200 bg-white/[0.04] cursor-pointer transition-all hover:bg-white/10 no-underline" th:text="${i + 1}">1</a>
+                </th:block>
+                
+                <a th:if="${not page.last}" th:href="@{/movies(keyword=${criteria.keyword},genreId=${criteria.genreId},languageId=${criteria.languageId},status=${criteria.status},page=${page.number + 1})}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 border border-white/10 rounded-lg text-sm text-slate-200 bg-white/[0.04] cursor-pointer transition-all hover:bg-white/10 no-underline">Sau ›</a>
+                <span th:if="${page.last}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 text-sm text-slate-600 cursor-not-allowed">Sau ›</span>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

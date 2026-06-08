@@ -1,0 +1,19 @@
+/*
+ * HyperCinema — Minimal Theme CSS (Tailwind Companion)
+ * =====================================================
+ * Toàn bộ styling đã chuyển sang Tailwind CSS v4 CDN inline.
+ * File này chỉ giữ lại những gì KHÔNG thể xử lý bằng Tailwind:
+ *   - Scrollbar styling (browser-specific)
+ *   - Reduced motion media query
+ *   - Chart.js canvas helpers
+ *
+ * KHÔNG THÊM component CSS mới vào đây.
+ * Dùng Tailwind utilities trực tiếp trong HTML templates.
+ */
+
+/* ── Chart.js canvas wrapper ── */
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 280px;
+}
