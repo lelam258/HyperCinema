@@ -1,633 +1,137 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="|Chi tiết Chi nhánh - ${branch.name} - HyperCinema|">Chi tiết Chi nhánh - HyperCinema</title>
-
-    <!--
-        =====================================================================
-        Branch_Detail_View — admin/branches/branch-detail.html
-        =====================================================================
-        Render trang chi tiết một Chi nhánh. Gồm 4 panel theo design A.7:
-
-            (1) Header  : tên chi nhánh + status badge + toolbar (admin)
-            (2) General : thông tin chung của Chi nhánh
-            (3) Halls   : bảng phòng chiếu trực thuộc (REQ 5.5)
-            (4) People  : Manager và Staff được gán vào Chi nhánh (REQ 5.6)
-
-        Toolbar bị ẩn hoàn toàn khi flag `readOnly = true` (REQ 11.3 — view
-        chỉ-đọc cho Manager-of-branch). Các action xoá / đổi trạng thái /
-        bỏ gán dùng form POST + hidden `_method=delete` để tận dụng
-        HiddenHttpMethodFilter (xem task 13.2).
-
-        SECURITY: mọi giá trị text từ entity được render bằng `th:text` —
-        không dùng `th:utext` ở bất kỳ vị trí nào — để Thymeleaf escape an
-        toàn HTML special chars (REQ 5.4 — "Escape an toàn mọi field text").
-
-        Trace: REQ 5.4, 5.5, 5.6, 7.5, 8.1, 11.3.
-        =====================================================================
-    -->
-    <style>
-        :root {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --surface-elevated: #252525;
-            --primary-color: #ff3b30;
-            --primary-hover: #e0352b;
-            --text-primary: #ffffff;
-            --text-secondary: #aaaaaa;
-            --border-color: #333333;
-            --success-color: #30d158;
-            --warning-color: #ff9f0a;
-            --info-color: #0a84ff;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            margin: 0;
-            min-height: 100vh;
-        }
-
-        .page-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 32px 24px 64px;
-        }
-
-        .breadcrumb {
-            margin-bottom: 16px;
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-        .breadcrumb a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .breadcrumb a:hover { color: var(--primary-color); }
-        .breadcrumb .separator { margin: 0 8px; }
-
-        /* ----------------------- Flash messages ----------------------- */
-        .alert {
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            border: 1px solid transparent;
-        }
-        .alert-success {
-            background-color: rgba(48, 209, 88, 0.1);
-            color: var(--success-color);
-            border-color: rgba(48, 209, 88, 0.25);
-        }
-        .alert-error {
-            background-color: rgba(255, 59, 48, 0.1);
-            color: var(--primary-color);
-            border-color: rgba(255, 59, 48, 0.25);
-        }
-        .alert-info {
-            background-color: rgba(10, 132, 255, 0.1);
-            color: var(--info-color);
-            border-color: rgba(10, 132, 255, 0.25);
-        }
-        .alert-warning {
-            background-color: rgba(255, 159, 10, 0.1);
-            color: var(--warning-color);
-            border-color: rgba(255, 159, 10, 0.25);
-        }
-
-        /* ----------------------- Header panel ------------------------- */
-        .header-panel {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px 28px;
-            margin-bottom: 24px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-        .header-panel .title-block {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .header-panel h1 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-        .header-panel .status-line {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        /* ----------------------- Toolbar ------------------------------ */
-        .toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-        }
-        .toolbar form { margin: 0; }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            font-family: inherit;
-            text-decoration: none;
-            border: 1px solid var(--border-color);
-            background-color: var(--surface-elevated);
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-        }
-        .btn:hover {
-            background-color: #303030;
-            border-color: #444444;
-        }
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: #ffffff;
-        }
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-            border-color: var(--primary-hover);
-        }
-        .btn-danger {
-            background-color: transparent;
-            border-color: rgba(255, 59, 48, 0.45);
-            color: var(--primary-color);
-        }
-        .btn-danger:hover {
-            background-color: rgba(255, 59, 48, 0.1);
-            border-color: var(--primary-color);
-        }
-        .btn-sm {
-            padding: 5px 10px;
-            font-size: 12px;
-        }
-
-        .inline-form {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background-color: var(--surface-elevated);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 4px 6px 4px 10px;
-        }
-        .inline-form select,
-        .inline-form input[type="text"],
-        .inline-form input[type="number"] {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 6px 8px;
-            font-size: 12px;
-            font-family: inherit;
-            min-width: 90px;
-        }
-        .inline-form select:focus,
-        .inline-form input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-        .inline-form label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-        }
-
-        /* ----------------------- Generic panel ------------------------ */
-        .panel {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px 28px;
-            margin-bottom: 24px;
-        }
-        .panel h2 {
-            margin: 0 0 18px 0;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .panel h2 .panel-count {
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-        .panel h3 {
-            margin: 24px 0 12px 0;
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .panel h3:first-child { margin-top: 0; }
-        .panel h3 .panel-count {
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        /* ----------------------- Definition list ---------------------- */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 18px 32px;
-        }
-        .info-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            min-width: 0;
-        }
-        .info-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .info-value {
-            font-size: 15px;
-            color: var(--text-primary);
-            word-break: break-word;
-        }
-
-        /* ----------------------- Tables ------------------------------- */
-        .table-wrapper {
-            overflow-x: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        thead th {
-            text-align: left;
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-secondary);
-            padding: 12px 14px;
-            background-color: var(--surface-elevated);
-            border-bottom: 1px solid var(--border-color);
-        }
-        tbody td {
-            padding: 12px 14px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-primary);
-            vertical-align: middle;
-        }
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr:hover { background-color: rgba(255, 255, 255, 0.02); }
-
-        .empty-state {
-            padding: 28px;
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 14px;
-            background-color: var(--surface-elevated);
-            border: 1px dashed var(--border-color);
-            border-radius: 8px;
-        }
-    </style>
+<head th:replace="~{fragments/layout :: head(|Chi tiết Chi nhánh - ${branch.name} - HyperCinema|)}">
+    <title>Chi tiết Chi nhánh - ${branch.name} - HyperCinema</title>
 </head>
-<body>
+<body class="min-h-screen">
 
-<div class="page-container">
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('branches')}"></nav>
 
-    <!-- Breadcrumb -->
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a th:href="@{/admin/branches}">Quản lý Chi nhánh</a>
-        <span class="separator">/</span>
-        <span th:text="${branch.name}">Tên chi nhánh</span>
-    </nav>
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-6xl mx-auto px-6 py-8">
 
-    <!--
-        Flash messages — render khi controller (hoặc ExceptionHandler) đẩy
-        các khoá i18n vào RedirectAttributes. Nội dung được resolve qua
-        message bundle bằng `#{${key}}` — toàn bộ hiển thị qua `th:text` để
-        đảm bảo escape (REQ 5.4 áp dụng cho mọi text trên trang).
-    -->
-    <div th:if="${successKey}" class="alert alert-success" role="status"
-         th:text="#{${successKey}}">Thành công</div>
-    <div th:if="${errorKey}" class="alert alert-error" role="alert"
-         th:text="#{${errorKey}}">Lỗi</div>
-    <div th:if="${infoKey}" class="alert alert-info" role="status"
-         th:text="#{${infoKey}}">Thông báo</div>
-    <div th:if="${warningKey}" class="alert alert-warning" role="status"
-         th:text="#{${warningKey}}">Cảnh báo</div>
+        <nav class="flex items-center gap-2 text-sm text-slate-400 mb-6" aria-label="Breadcrumb">
+            <a th:href="@{/admin/branches}" class="text-slate-400 hover:text-primary transition-colors no-underline">Quản lý Chi nhánh</a>
+            <span class="text-slate-600">/</span>
+            <span class="text-slate-200" th:text="${branch.name}">Tên chi nhánh</span>
+        </nav>
 
-    <!-- =================================================================
-         Panel 1 — Header: tên chi nhánh + status badge + toolbar
-         Toolbar ẩn khi readOnly = true (REQ 11.3, REQ 8.1 cho action xoá).
-         ================================================================= -->
-    <section class="header-panel" aria-labelledby="branch-title">
-        <div class="title-block">
-            <h1 id="branch-title" th:text="${branch.name}">Tên chi nhánh</h1>
-            <div class="status-line">
-                <span>Trạng thái:</span>
-                <th:block th:replace="~{admin/branches/_status-badge :: statusBadge(${branch.status})}"></th:block>
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <div class="glass-card p-6 mb-6">
+            <div class="flex flex-wrap justify-between items-start gap-4">
+                <div class="flex flex-col gap-2">
+                    <h1 class="text-2xl font-bold text-white" th:text="${branch.name}">Tên chi nhánh</h1>
+                    <div class="flex items-center gap-2 text-sm text-slate-400">
+                        <span>Trạng thái:</span>
+                        <th:block th:replace="~{fragments/components :: statusBadge(${branch.status})}"></th:block>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2" th:if="${!readOnly}" role="toolbar" aria-label="Thao tác Chi nhánh">
+                    <form class="flex items-center gap-1.5" method="post" th:action="@{/admin/branches/{id}/status(id=${branch.branchId})}">
+                        <select name="status" th:id="|status-${branch.branchId}|"
+                                class="px-3 py-2 bg-white/[0.06] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary cursor-pointer appearance-none">
+                            <option value="Active" th:selected="${branch.status == 'Active'}">Active</option>
+                            <option value="Inactive" th:selected="${branch.status == 'Inactive'}">Inactive</option>
+                            <option value="Maintenance" th:selected="${branch.status == 'Maintenance'}">Maintenance</option>
+                        </select>
+                        <button type="submit" class="px-3 py-2 text-sm font-medium text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all cursor-pointer">Đổi</button>
+                    </form>
+
+                    <a th:href="@{/admin/branches/{id}/managers/assign(id=${branch.branchId})}"
+                       class="px-4 py-2 text-sm font-medium text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Gán Manager</a>
+
+                    <a th:href="@{/admin/branches/{id}/staff/assign(id=${branch.branchId})}"
+                       class="px-4 py-2 text-sm font-medium text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Gán Staff</a>
+                </div>
             </div>
         </div>
 
-        <!--
-            Toolbar — chỉ render với Admin (readOnly = false). Manager-of-
-            branch xem chế độ chỉ đọc, không thấy nút thao tác (REQ 11.3).
-        -->
-        <div class="toolbar" th:if="${!readOnly}" role="toolbar"
-             aria-label="Thao tác Chi nhánh">
-
-            <!-- Edit — REQ 6.1 -->
-            <a class="btn"
-               th:href="@{/admin/branches/{id}/edit(id=${branch.branchId})}">
-                Chỉnh sửa
-            </a>
-
-            <!--
-                Change Status form — POST /admin/branches/{id}/status với
-                <select name="status">. Các option khớp tập whitelist
-                {Active, Inactive, Maintenance} (REQ 7.1, 7.2). Option đang
-                là status hiện tại được set selected để tránh submit nhầm.
-            -->
-            <form class="inline-form" method="post"
-                  th:action="@{/admin/branches/{id}/status(id=${branch.branchId})}">
-                <label th:for="|status-${branch.branchId}|">Trạng thái</label>
-                <select name="status" th:id="|status-${branch.branchId}|">
-                    <option value="Active"
-                            th:selected="${branch.status == 'Active'}">Active</option>
-                    <option value="Inactive"
-                            th:selected="${branch.status == 'Inactive'}">Inactive</option>
-                    <option value="Maintenance"
-                            th:selected="${branch.status == 'Maintenance'}">Maintenance</option>
-                </select>
-                <button type="submit" class="btn btn-sm">Đổi</button>
-            </form>
-
-            <!-- Assign Manager — REQ 9.1 -->
-            <a class="btn"
-               th:href="@{/admin/branches/{id}/managers/assign(id=${branch.branchId})}">
-                Gán Manager
-            </a>
-
-            <!--
-                Assign Staff — REQ 10.1.
-                Lưu ý: model hiện tại (xem BranchController.detail) chưa
-                cung cấp danh sách candidate Staff / Manager-of-branch. Theo
-                kế hoạch task 15.5 sẽ pre-populate hai dropdown này. Tạm
-                thời render input text cho `userId` + `managerId` để form
-                vẫn hoạt động và có thể test thủ công. Khi 15.5 hoàn thiện,
-                hai input dưới sẽ được thay bằng <select> nạp từ model.
-            -->
-            <form class="inline-form" method="post"
-                  th:action="@{/admin/branches/{id}/staff(id=${branch.branchId})}">
-                <label th:for="|staff-userId-${branch.branchId}|">Staff</label>
-                <input type="number" min="1" name="userId" required
-                       placeholder="userId"
-                       th:id="|staff-userId-${branch.branchId}|">
-                <label th:for="|staff-managerId-${branch.branchId}|">Manager</label>
-                <input type="number" min="1" name="managerId" required
-                       placeholder="managerId"
-                       th:id="|staff-managerId-${branch.branchId}|">
-                <button type="submit" class="btn btn-sm">Gán Staff</button>
-            </form>
-
-            <!--
-                Delete form — POST /admin/branches/{id} kèm hidden
-                _method=delete (HiddenHttpMethodFilter ép sang DELETE).
-                onsubmit confirm để giảm rủi ro xoá nhầm — REQ 8.1.
-            -->
-            <form method="post"
-                  th:action="@{/admin/branches/{id}(id=${branch.branchId})}"
-                  onsubmit="return confirm('Bạn có chắc chắn muốn xoá Chi nhánh này? Hành động không thể hoàn tác.');">
-                <input type="hidden" name="_method" value="delete">
-                <button type="submit" class="btn btn-danger">Xoá</button>
-            </form>
-        </div>
-    </section>
-
-    <!-- =================================================================
-         Panel 2 — Thông tin chung (REQ 5.4)
-         ================================================================= -->
-    <section class="panel" aria-labelledby="general-heading">
-        <h2 id="general-heading">Thông tin chung</h2>
-        <div class="info-grid">
-            <div class="info-item">
-                <span class="info-label">Tên Chi nhánh</span>
-                <span class="info-value" th:text="${branch.name}">Tên chi nhánh</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Thành phố</span>
-                <span class="info-value" th:text="${branch.city}">Thành phố</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Địa chỉ</span>
-                <span class="info-value" th:text="${branch.address}">Địa chỉ</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Số điện thoại</span>
-                <span class="info-value" th:text="${branch.phone}">0xxxxxxxxx</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Trạng thái</span>
-                <span class="info-value">
-                    <th:block th:replace="~{admin/branches/_status-badge :: statusBadge(${branch.status})}"></th:block>
-                </span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Giờ mở cửa</span>
-                <span class="info-value"
-                      th:text="${branch.openingTime != null} ? ${#temporals.format(branch.openingTime, 'HH:mm')} : '—'">--:--</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Giờ đóng cửa</span>
-                <span class="info-value"
-                      th:text="${branch.closingTime != null} ? ${#temporals.format(branch.closingTime, 'HH:mm')} : '—'">--:--</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Ngày tạo</span>
-                <span class="info-value"
-                      th:text="${branch.createdAt != null} ? ${#temporals.format(branch.createdAt, 'dd/MM/yyyy HH:mm')} : '—'">--/--/---- --:--</span>
+        <div class="glass-card p-6 mb-6">
+            <h2 class="text-lg font-semibold text-white mb-4">Thông tin chung</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Tên Chi nhánh</span><span class="text-white" th:text="${branch.name}">Tên chi nhánh</span></div>
+                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Thành phố</span><span class="text-white" th:text="${branch.city}">Thành phố</span></div>
+                <div class="md:col-span-2"><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Địa chỉ</span><span class="text-white" th:text="${branch.address}">Địa chỉ</span></div>
+                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Số điện thoại</span><span class="text-white" th:text="${branch.phone}">0xxxxxxxxx</span></div>
+                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Trạng thái</span><th:block th:replace="~{fragments/components :: statusBadge(${branch.status})}"></th:block></div>
+                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Giờ mở cửa</span><span class="text-white" th:text="${branch.openingTime != null} ? ${#temporals.format(branch.openingTime, 'HH:mm')} : '—'">--:--</span></div>
+                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Giờ đóng cửa</span><span class="text-white" th:text="${branch.closingTime != null} ? ${#temporals.format(branch.closingTime, 'HH:mm')} : '—'">--:--</span></div>
+                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Ngày tạo</span><span class="text-white" th:text="${branch.createdAt != null} ? ${#temporals.format(branch.createdAt, 'dd/MM/yyyy HH:mm')} : '—'">--/--/---- --:--</span></div>
             </div>
         </div>
-    </section>
 
-    <!-- =================================================================
-         Panel 3 — Halls (REQ 5.5)
-         ================================================================= -->
-    <section class="panel" aria-labelledby="halls-heading">
-        <h2 id="halls-heading">
-            Phòng chiếu
-            <span class="panel-count"
-                  th:text="|${branch.halls != null ? #lists.size(branch.halls) : 0} phòng|">0 phòng</span>
-        </h2>
-
-        <div th:if="${branch.halls == null or #lists.isEmpty(branch.halls)}"
-             class="empty-state">
-            Chi nhánh chưa có phòng chiếu nào.
+        <div class="glass-card p-6 mb-6 overflow-hidden">
+            <h2 class="text-lg font-semibold text-white mb-4">
+                Phòng chiếu <span class="text-sm font-normal text-slate-400" th:text="|${branch.halls != null ? #lists.size(branch.halls) : 0} phòng|">0 phòng</span>
+            </h2>
+            <div th:if="${branch.halls == null or #lists.isEmpty(branch.halls)}" class="text-sm text-slate-500 py-4 text-center">Chi nhánh chưa có phòng chiếu nào.</div>
+            <div th:if="${branch.halls != null and !#lists.isEmpty(branch.halls)}" class="overflow-x-auto -mx-6 px-6">
+                <table class="w-full text-sm">
+                    <thead><tr class="border-b border-white/[0.08]"><th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Mã phòng</th><th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Tên phòng</th></tr></thead>
+                    <tbody class="divide-y divide-white/[0.06]">
+                        <tr th:each="hall : ${branch.halls}" class="hover:bg-white/[0.04] transition-colors">
+                            <td class="px-4 py-3 text-slate-400 tabular-nums" th:text="${hall.hallId}">1</td>
+                            <td class="px-4 py-3 text-white" th:text="${hall.name}">Hall A</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div th:if="${branch.halls != null and !#lists.isEmpty(branch.halls)}"
-             class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Tên phòng</th>
-                        <th>Sức chứa</th>
-                        <th>Loại</th>
-                        <th>Trạng thái</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="hall : ${branch.halls}">
-                        <td th:text="${hall.name}">Hall A</td>
-                        <td th:text="${hall.capacity}">100</td>
-                        <td th:text="${hall.hallType}">2D</td>
-                        <td>
-                            <th:block th:replace="~{admin/branches/_status-badge :: statusBadge(${hall.status})}"></th:block>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass-card p-6 overflow-hidden">
+                <h2 class="text-lg font-semibold text-white mb-4">
+                    Quản lý <span class="text-sm font-normal text-slate-400" th:text="|${branch.managers != null ? #lists.size(branch.managers) : 0} người|">0 người</span>
+                </h2>
+                <div th:if="${branch.managers == null or #lists.isEmpty(branch.managers)}" class="text-sm text-slate-500 py-4 text-center">Chi nhánh chưa có Manager.</div>
+                <div th:if="${branch.managers != null and !#lists.isEmpty(branch.managers)}" class="overflow-x-auto -mx-6 px-6">
+                    <table class="w-full text-sm">
+                        <thead><tr class="border-b border-white/[0.08]"><th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Họ tên</th><th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Email</th><th th:if="${!readOnly}" class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Thao tác</th></tr></thead>
+                        <tbody class="divide-y divide-white/[0.06]">
+                            <tr th:each="manager : ${branch.managers}" class="hover:bg-white/[0.04] transition-colors">
+                                <td class="px-4 py-3 text-white" th:text="${manager.fullName}">Họ tên</td>
+                                <td class="px-4 py-3 text-slate-400" th:text="${manager.email}">email@example.com</td>
+                                <td th:if="${!readOnly}" class="px-4 py-3 text-right">
+                                    <form method="post" th:action="@{/admin/branches/{branchId}/managers/{userId}/unassign(branchId=${branch.branchId},userId=${manager.userId})}" onsubmit="return confirm('Bỏ gán Manager này khỏi Chi nhánh?');">
+                                        <button type="submit" class="px-3 py-1.5 text-xs font-medium text-danger bg-danger/10 border border-danger/25 rounded-lg hover:bg-danger/20 transition-all cursor-pointer">Bỏ gán</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-    <!-- =================================================================
-         Panel 4 — People: Managers + Staff (REQ 5.6)
-         ================================================================= -->
-    <section class="panel" aria-labelledby="people-heading">
-        <h2 id="people-heading">Nhân sự Chi nhánh</h2>
-
-        <!-- Managers section -->
-        <h3>
-            Quản lý
-            <span class="panel-count"
-                  th:text="|${branch.managers != null ? #lists.size(branch.managers) : 0} người|">0 người</span>
-        </h3>
-
-        <div th:if="${branch.managers == null or #lists.isEmpty(branch.managers)}"
-             class="empty-state">
-            Chi nhánh chưa có Manager.
-        </div>
-
-        <div th:if="${branch.managers != null and !#lists.isEmpty(branch.managers)}"
-             class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Họ và tên</th>
-                        <th>Email</th>
-                        <th>Số điện thoại</th>
-                        <th>Trạng thái</th>
-                        <th th:if="${!readOnly}" style="width: 1%; white-space: nowrap;">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="manager : ${branch.managers}">
-                        <td th:text="${manager.fullName}">Họ và tên</td>
-                        <td th:text="${manager.email}">email@example.com</td>
-                        <td th:text="${manager.phone}">0xxxxxxxxx</td>
-                        <td>
-                            <th:block th:replace="~{admin/branches/_status-badge :: statusBadge(${manager.status})}"></th:block>
-                        </td>
-                        <!--
-                            Hành động bỏ gán — chỉ admin mới thấy (REQ 11.3).
-                            POST /admin/branches/{branchId}/managers/{userId}/unassign.
-                        -->
-                        <td th:if="${!readOnly}">
-                            <form method="post"
-                                  th:action="@{/admin/branches/{branchId}/managers/{userId}/unassign(branchId=${branch.branchId},userId=${manager.userId})}"
-                                  onsubmit="return confirm('Bỏ gán Manager này khỏi Chi nhánh?');">
-                                <button type="submit" class="btn btn-sm btn-danger">Bỏ gán</button>
-                            </form>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="glass-card p-6 overflow-hidden">
+                <h2 class="text-lg font-semibold text-white mb-4">
+                    Nhân viên <span class="text-sm font-normal text-slate-400" th:text="|${branch.staffMembers != null ? #lists.size(branch.staffMembers) : 0} người|">0 người</span>
+                </h2>
+                <div th:if="${branch.staffMembers == null or #lists.isEmpty(branch.staffMembers)}" class="text-sm text-slate-500 py-4 text-center">Chi nhánh chưa có Nhân viên.</div>
+                <div th:if="${branch.staffMembers != null and !#lists.isEmpty(branch.staffMembers)}" class="overflow-x-auto -mx-6 px-6">
+                    <table class="w-full text-sm">
+                        <thead><tr class="border-b border-white/[0.08]"><th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Họ tên</th><th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Email</th><th th:if="${!readOnly}" class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Thao tác</th></tr></thead>
+                        <tbody class="divide-y divide-white/[0.06]">
+                            <tr th:each="staff : ${branch.staffMembers}" class="hover:bg-white/[0.04] transition-colors">
+                                <td class="px-4 py-3 text-white" th:text="${staff.fullName}">Họ tên</td>
+                                <td class="px-4 py-3 text-slate-400" th:text="${staff.email}">email@example.com</td>
+                                <td th:if="${!readOnly}" class="px-4 py-3 text-right">
+                                    <form method="post" th:action="@{/admin/branches/{branchId}/staff/{userId}/unassign(branchId=${branch.branchId},userId=${staff.userId})}" onsubmit="return confirm('Bỏ gán Nhân viên này khỏi Chi nhánh?');">
+                                        <button type="submit" class="px-3 py-1.5 text-xs font-medium text-danger bg-danger/10 border border-danger/25 rounded-lg hover:bg-danger/20 transition-all cursor-pointer">Bỏ gán</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
-        <!-- Staff section -->
-        <h3>
-            Nhân viên
-            <span class="panel-count"
-                  th:text="|${branch.staffMembers != null ? #lists.size(branch.staffMembers) : 0} người|">0 người</span>
-        </h3>
-
-        <div th:if="${branch.staffMembers == null or #lists.isEmpty(branch.staffMembers)}"
-             class="empty-state">
-            Chi nhánh chưa có Nhân viên.
-        </div>
-
-        <div th:if="${branch.staffMembers != null and !#lists.isEmpty(branch.staffMembers)}"
-             class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Họ và tên</th>
-                        <th>Email</th>
-                        <th>Số điện thoại</th>
-                        <th>Trạng thái</th>
-                        <th th:if="${!readOnly}" style="width: 1%; white-space: nowrap;">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="staff : ${branch.staffMembers}">
-                        <td th:text="${staff.fullName}">Họ và tên</td>
-                        <td th:text="${staff.email}">email@example.com</td>
-                        <td th:text="${staff.phone}">0xxxxxxxxx</td>
-                        <td>
-                            <th:block th:replace="~{admin/branches/_status-badge :: statusBadge(${staff.status})}"></th:block>
-                        </td>
-                        <!--
-                            Hành động bỏ gán Staff — chỉ admin (REQ 11.3).
-                            POST /admin/branches/{branchId}/staff/{userId}/unassign.
-                        -->
-                        <td th:if="${!readOnly}">
-                            <form method="post"
-                                  th:action="@{/admin/branches/{branchId}/staff/{userId}/unassign(branchId=${branch.branchId},userId=${staff.userId})}"
-                                  onsubmit="return confirm('Bỏ gán Nhân viên này khỏi Chi nhánh?');">
-                                <button type="submit" class="btn btn-sm btn-danger">Bỏ gán</button>
-                            </form>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-</div>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
 
 </body>
 </html>

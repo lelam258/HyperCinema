@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Staff Dashboard - HyperCinema')}">
+    <title>Staff Dashboard - HyperCinema</title>
+</head>
+<body class="min-h-screen">
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: staffSidebar('dashboard')}"></nav>
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-1" th:text="'Xin chào, ' + ${staffName}">Xin chào, Staff</h1>
+            <p class="text-sm text-slate-400" th:text="'Ca làm việc tại: ' + ${branchName}">Ca làm việc tại: Chi nhánh 1</p>
+        </div>
+        <div class="mb-8">
+            <h2 class="text-base font-semibold text-white mb-4">Nhiệm vụ nghiệp vụ</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <a th:href="@{/staff/booking}" class="glass-card p-5 flex items-center gap-4 cursor-pointer no-underline transition-all duration-300 hover:border-primary/50 hover:bg-white/[0.06] group">
+                    <div class="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary/25 transition-colors"><svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                    <div><span class="block text-sm font-semibold text-white">Bán vé tại quầy</span><span class="text-xs text-slate-400">Tạo booking mới</span></div>
+                </a>
+                <a th:href="@{/staff/orders}" class="glass-card p-5 flex items-center gap-4 cursor-pointer no-underline transition-all duration-300 hover:border-primary/50 hover:bg-white/[0.06] group">
+                    <div class="w-10 h-10 rounded-xl bg-info/15 flex items-center justify-center shrink-0 group-hover:bg-info/25 transition-colors"><svg class="w-5 h-5 text-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+                    <div><span class="block text-sm font-semibold text-white">Soát vé / Nhận order</span><span class="text-xs text-slate-400">Kiểm tra vé khách hàng</span></div>
+                </a>
+                <a th:href="@{/staff/schedule}" class="glass-card p-5 flex items-center gap-4 cursor-pointer no-underline transition-all duration-300 hover:border-primary/50 hover:bg-white/[0.06] group">
+                    <div class="w-10 h-10 rounded-xl bg-success/15 flex items-center justify-center shrink-0 group-hover:bg-success/25 transition-colors"><svg class="w-5 h-5 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                    <div><span class="block text-sm font-semibold text-white">Lịch chiếu hôm nay</span><span class="text-xs text-slate-400">Xem suất chiếu hiện tại</span></div>
+                </a>
+            </div>
+        </div>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+</body>
+</html>

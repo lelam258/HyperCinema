@@ -1,17 +1,20 @@
 package com.cinema.hyperCinema.validation;
 
+import java.util.Optional;
+import java.util.Set;
+
+import org.springframework.stereotype.Component;
+
 import com.cinema.hyperCinema.dto.admin.branch.request.BranchCreateRequest;
 import com.cinema.hyperCinema.dto.admin.branch.request.BranchUpdateRequest;
 import com.cinema.hyperCinema.exception.branch.BranchValidationException;
+import com.cinema.hyperCinema.model.Branch;
 import com.cinema.hyperCinema.model.Role;
 import com.cinema.hyperCinema.model.User;
 import com.cinema.hyperCinema.repository.BranchRepository;
 import com.cinema.hyperCinema.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-import java.util.Set;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor

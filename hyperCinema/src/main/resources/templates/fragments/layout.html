@@ -14,7 +14,9 @@
       - mobileToggle             : Nút hamburger cho mobile
 
     Cách dùng trong trang:
-        <head th:replace="~{fragments/layout :: head('Title')}"></head>
+        <head th:replace="~{fragments/layout :: head('Title')}">
+    <title>title</title>
+</head>
         <nav th:replace="~{fragments/layout :: adminSidebar('dashboard')}"></nav>
         <footer th:replace="~{fragments/layout :: footer}"></footer>
 -->

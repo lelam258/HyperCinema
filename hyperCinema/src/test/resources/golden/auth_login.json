@@ -1,0 +1,37 @@
+{
+  "view": "auth/login",
+  "title": "Đăng Nhập - HyperCinema",
+  "links": [
+    "/forgot-password",
+    "/register"
+  ],
+  "i18nKeys": [],
+  "forms": [
+    {
+      "action": "/login",
+      "method": "post",
+      "fields": [
+        "username(text)=",
+        "password(password)=",
+        "submit:Đăng Nhập"
+      ]
+    }
+  ],
+  "tables": [],
+  "pagination": null,
+  "text": [
+    "HyperCinema",
+    "Tên đăng nhập hoặc mật khẩu không đúng.",
+    "Bạn đã đăng xuất thành công.",
+    "Dang ky thanh cong! Vui long kiem tra email de kich hoat tai khoan.",
+    "Mat khau da duoc cap nhat. Vui long dang nhap lai.",
+    "Tai khoan da duoc kich hoat thanh cong.",
+    "Ma kich hoat khong dung hoac da het han.",
+    "Tên đăng nhập hoặc Email",
+    "Mật khẩu",
+    "Đăng Nhập",
+    "Quên mật khẩu?",
+    "Chưa có tài khoản?",
+    "Đăng ký ngay"
+  ]
+}

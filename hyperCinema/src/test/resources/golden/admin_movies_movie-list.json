@@ -1,0 +1,119 @@
+{
+  "view": "admin/movies/movie-list",
+  "title": "Quản lý Phim - HyperCinema",
+  "links": [
+    "/admin/movies",
+    "/admin/movies/101",
+    "/admin/movies/102",
+    "/admin/movies/new",
+    "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=createdAt&amp;direction=ASC",
+    "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=releaseDate&amp;direction=ASC",
+    "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=status&amp;direction=ASC",
+    "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=title&amp;direction=ASC&amp;page=1&amp;size=10",
+    "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=title&amp;direction=DESC"
+  ],
+  "i18nKeys": [
+    "#{${errorKey}}",
+    "#{${infoKey}}",
+    "#{${successKey}}",
+    "#{${warningKey}}"
+  ],
+  "forms": [
+    {
+      "action": "/admin/movies",
+      "method": "get",
+      "fields": [
+        "keyword(text)=aveng",
+        "releaseDateFrom(date)=",
+        "releaseDateTo(date)=",
+        "select:status=options[|ComingSoon|NowShowing|Ended];selected=NowShowing",
+        "select:languageId=options[|1|2];selected=",
+        "select:genreId=options[|1|2];selected=",
+        "submit:Tìm kiếm"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "columnCount": 8,
+      "headers": [
+        "Poster",
+        "Tên phim",
+        "Thời lượng",
+        "Ngôn ngữ",
+        "Thể loại",
+        "Ngày phát hành",
+        "Trạng thái",
+        "Ngày tạo"
+      ]
+    }
+  ],
+  "pagination": {
+    "info": "Trang 1 / 2 — tổng 12 phim",
+    "controls": [
+      "page-disabled:‹ Trước",
+      "page-current:1",
+      "a:2(page=1)",
+      "a:Sau ›(page=1)"
+    ]
+  },
+  "text": [
+    "Quản lý Phim",
+    "+ Tạo mới",
+    "Tạo phim thành công.",
+    "Bộ lọc trạng thái không hợp lệ và đã bị bỏ qua.",
+    "Từ khoá",
+    "Trạng thái",
+    "Tất cả",
+    "ComingSoon",
+    "NowShowing",
+    "Ended",
+    "Ngôn ngữ",
+    "Tất cả",
+    "Tiếng Việt",
+    "Tiếng Anh",
+    "Thể loại",
+    "Tất cả",
+    "Hành động",
+    "Phiêu lưu",
+    "Phát hành từ",
+    "Phát hành đến",
+    "Xoá lọc",
+    "Tìm kiếm",
+    "Poster",
+    "Tên phim",
+    "▲",
+    "Thời lượng",
+    "Ngôn ngữ",
+    "Thể loại",
+    "Ngày phát hành",
+    "Trạng thái",
+    "Ngày tạo",
+    "Avengers: Endgame",
+    "181 phút",
+    "Tiếng Anh",
+    "Hành động, Phiêu lưu",
+    "15/01/2025",
+    "NowShowing",
+    "15/01/2025 09:30",
+    "N/A",
+    "Dune: Part Two",
+    "166 phút",
+    "Tiếng Anh",
+    "Khoa học viễn tưởng",
+    "15/01/2025",
+    "ComingSoon",
+    "15/01/2025 09:30",
+    "Trang",
+    "1",
+    "/",
+    "2",
+    "— tổng",
+    "12",
+    "phim",
+    "‹ Trước",
+    "1",
+    "2",
+    "Sau ›"
+  ]
+}

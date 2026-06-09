@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Không tìm thấy Phim - HyperCinema')}"><title>Không tìm thấy Phim - HyperCinema</title></head>
+<head th:replace="~{fragments/layout :: head('Không tìm thấy Phim - HyperCinema')}">
+    <title>Không tìm thấy Phim - HyperCinema</title>
+</head>
 <body class="min-h-screen flex items-center justify-center px-6">
-<div class="w-full max-w-md glass-card p-10 text-center" role="alert" aria-labelledby="error-title">
-    <div class="w-[72px] h-[72px] mx-auto mb-5 flex items-center justify-center rounded-full bg-warning/10 border border-warning/25 text-warning" aria-hidden="true">
-        <svg class="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="8" x2="14" y2="14"/><line x1="14" y1="8" x2="8" y2="14"/></svg>
+    <div class="w-full max-w-md glass-card p-10 text-center" role="alert" aria-labelledby="error-title">
+        <div class="w-[72px] h-[72px] mx-auto mb-5 flex items-center justify-center rounded-full bg-warning/10 border border-warning/25 text-warning" aria-hidden="true">
+            <svg class="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="8" x2="14" y2="14"/><line x1="14" y1="8" x2="8" y2="14"/></svg>
+        </div>
+        <p class="text-5xl font-bold text-white tracking-tight mb-2" th:text="${status} ?: 404">404</p>
+        <h1 class="text-xl font-semibold text-white mb-3" id="error-title">Không tìm thấy Phim</h1>
+        <p class="text-sm text-slate-400 leading-relaxed mb-8" th:text="${errorKey != null} ? #{${errorKey}} : #{movie.not_found}">Không tìm thấy Phim.</p>
+        <a class="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary to-amber-500 text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 cursor-pointer no-underline" th:href="@{/admin/movies}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Về danh sách Phim
+        </a>
     </div>
-    <p class="text-5xl font-bold text-white tracking-tight mb-2" th:text="${status} ?: 404">404</p>
-    <h1 class="text-xl font-semibold text-white mb-3" id="error-title">Không tìm thấy Phim</h1>
-    <p class="text-sm text-slate-400 leading-relaxed mb-8" th:text="${errorKey != null} ? #{__${errorKey}__} : #{movie.not_found}">Không tìm thấy Phim.</p>
-    <a class="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary to-amber-500 text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 cursor-pointer no-underline" th:href="@{/admin/movies}">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        Về danh sách Phim
-    </a>
-</div>
 </body>
 </html>
