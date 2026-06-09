@@ -70,7 +70,6 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Email already exists: " + user.getEmail());
         }
 
-        // Sửa lỗi: Gán giá trị mặc định cho fullName nếu chưa có để không bị lỗi null ở database
         if (user.getFullName() == null) {
             user.setFullName(user.getName());
         }
