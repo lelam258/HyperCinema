@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<!--
+    Movie Form — Tailwind CSS Rebuild.
+    Dùng chung cho create (POST /admin/movies) và edit (POST /admin/movies/{movieId}).
+    Giữ nguyên 100% Thymeleaf bindings.
+-->
+<head th:replace="~{fragments/layout :: head(${mode == 'edit'} ? 'Chỉnh sửa Phim' : 'Tạo Phim')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('movies')}"></nav>
+
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-3xl mx-auto px-6 py-8">
+
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-white tracking-tight" th:text="${mode == 'edit'} ? 'Chỉnh sửa Phim' : 'Tạo Phim'">Tạo Phim</h1>
+        </div>
+
+        <div class="glass-card p-6 md:p-8">
+
+            <div th:replace="~{fragments/components :: flashes}"></div>
+
+            <form th:object="${movie}"
+                  th:action="${mode == 'edit'} ? @{|/admin/movies/${movieId}|} : @{/admin/movies}"
+                  th:data-mode="${mode}"
+                  th:data-api-url="${mode == 'edit'} ? @{|/api/admin/movies/${movieId}|} : @{/api/admin/movies}"
+                  method="post" novalidate class="space-y-5" id="movieForm">
+
+                <!-- Global errors -->
+                <div th:if="${#fields.hasGlobalErrors()}" class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-danger/10 border border-danger/25 text-danger text-sm" role="alert">
+                    <strong>Không thể lưu thay đổi:</strong>
+                    <ul class="list-disc pl-5 space-y-0.5"><li th:each="err : ${#fields.globalErrors()}" th:text="${err}">global error</li></ul>
+                </div>
+
+                <!-- Tên phim -->
+                <div>
+                    <label for="title" class="block text-sm font-medium text-slate-400 mb-2">Tên phim</label>
+                    <input type="text" id="title" th:field="*{title}" th:classappend="${#fields.hasErrors('title')} ? ' border-danger!' : ''" maxlength="255" autocomplete="off" required
+                           class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                    <span th:if="${#fields.hasErrors('title')}" th:errors="*{title}" class="block text-xs text-danger mt-1"></span>
+                </div>
+
+                <!-- Thời lượng + Ngày phát hành -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="duration" class="block text-sm font-medium text-slate-400 mb-2">Thời lượng (phút)</label>
+                        <input type="number" id="duration" th:field="*{duration}" th:classappend="${#fields.hasErrors('duration')} ? ' border-danger!' : ''" min="1" max="600" required
+                               class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                        <span th:if="${#fields.hasErrors('duration')}" th:errors="*{duration}" class="block text-xs text-danger mt-1"></span>
+                    </div>
+                    <div>
+                        <label for="releaseDate" class="block text-sm font-medium text-slate-400 mb-2">Ngày phát hành</label>
+                        <input type="date" id="releaseDate" th:field="*{releaseDate}" th:classappend="${#fields.hasErrors('releaseDate')} ? ' border-danger!' : ''" required
+                               class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                        <span th:if="${#fields.hasErrors('releaseDate')}" th:errors="*{releaseDate}" class="block text-xs text-danger mt-1"></span>
+                    </div>
+                </div>
+
+                <!-- Mô tả -->
+                <div>
+                    <label for="description" class="block text-sm font-medium text-slate-400 mb-2">Mô tả</label>
+                    <textarea id="description" th:field="*{description}" th:classappend="${#fields.hasErrors('description')} ? ' border-danger!' : ''" maxlength="5000" rows="4" required
+                              class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-y"></textarea>
+                    <span th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="block text-xs text-danger mt-1"></span>
+                </div>
+
+                <!-- Ngôn ngữ -->
+                <div>
+                    <label for="languageId" class="block text-sm font-medium text-slate-400 mb-2">Ngôn ngữ</label>
+                    <select id="languageId" th:field="*{languageId}" th:classappend="${#fields.hasErrors('languageId')} ? ' border-danger!' : ''" required
+                            class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer appearance-none">
+                        <option value="">-- Chọn ngôn ngữ --</option>
+                        <option th:each="lang : ${languages}" th:value="${lang.languageId}" th:text="${lang.name}">Tiếng Việt</option>
+                    </select>
+                    <span th:if="${#fields.hasErrors('languageId')}" th:errors="*{languageId}" class="block text-xs text-danger mt-1"></span>
+                </div>
+
+                <!-- URL poster -->
+                <div>
+                    <label for="posterUrl" class="block text-sm font-medium text-slate-400 mb-2">URL poster (tùy chọn)</label>
+                    <input type="url" id="posterUrl" th:field="*{posterUrl}" th:classappend="${#fields.hasErrors('posterUrl')} ? ' border-danger!' : ''" placeholder="https://..." maxlength="500" autocomplete="off"
+                           class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                    <span th:if="${#fields.hasErrors('posterUrl')}" th:errors="*{posterUrl}" class="block text-xs text-danger mt-1"></span>
+                </div>
+
+                <!-- URL trailer -->
+                <div>
+                    <label for="trailerUrl" class="block text-sm font-medium text-slate-400 mb-2">URL trailer (tùy chọn)</label>
+                    <input type="url" id="trailerUrl" th:field="*{trailerUrl}" th:classappend="${#fields.hasErrors('trailerUrl')} ? ' border-danger!' : ''" placeholder="https://..." maxlength="500" autocomplete="off"
+                           class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                    <span th:if="${#fields.hasErrors('trailerUrl')}" th:errors="*{trailerUrl}" class="block text-xs text-danger mt-1"></span>
+                </div>
+
+                <!-- Thể loại -->
+                <div>
+                    <label for="genreIds" class="block text-sm font-medium text-slate-400 mb-2">Thể loại</label>
+                    <div class="flex flex-wrap gap-3 p-4 bg-white/[0.03] border rounded-xl" th:classappend="${#fields.hasErrors('genreIds')} ? ' border-danger!' : ' border-white/10'">
+                        <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-slate-300 hover:text-white transition-colors" th:each="g : ${genres}">
+                            <input type="checkbox" name="genreIds" th:value="${g.genreId}" th:checked="${movie.genreIds != null and #lists.contains(movie.genreIds, g.genreId)}"
+                                   class="w-4 h-4 rounded border-white/20 bg-white/5 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer accent-[#CA8A04]">
+                            <span th:text="${g.name}">Thể loại</span>
+                        </label>
+                        <span th:if="${genres == null or #lists.isEmpty(genres)}" class="text-sm text-slate-500">Chưa có thể loại nào trong hệ thống.</span>
+                    </div>
+                    <span class="block text-xs text-slate-500 mt-1">Có thể chọn tối đa 10 thể loại.</span>
+                    <span th:if="${#fields.hasErrors('genreIds')}" th:errors="*{genreIds}" class="block text-xs text-danger mt-1"></span>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
+                    <a th:href="${mode == 'edit'} ? @{|/admin/movies/${movieId}|} : @{/admin/movies}"
+                       class="px-5 py-2.5 text-sm font-medium text-slate-300 bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Hủy</a>
+                    <button type="submit" id="movieSubmitButton" th:text="${mode == 'edit'} ? 'Lưu thay đổi' : 'Tạo mới'"
+                            class="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 cursor-pointer">Tạo mới</button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+<script>
+    (() => {
+        const form = document.getElementById('movieForm');
+        if (!form) {
+            return;
+        }
+
+        const submitButton = document.getElementById('movieSubmitButton');
+        const defaultButtonText = submitButton ? submitButton.textContent : '';
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            clearClientErrors(form);
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Đang lưu...';
+                submitButton.classList.add('opacity-70', 'cursor-wait');
+            }
+
+            try {
+                const response = await fetch(form.dataset.apiUrl, {
+                    method: form.dataset.mode === 'edit' ? 'PUT' : 'POST',
+                    headers: buildHeaders(),
+                    body: JSON.stringify(buildPayload(form))
+                });
+
+                const result = await readJson(response);
+                if (!response.ok) {
+                    showClientErrors(form, result);
+                    return;
+                }
+
+                window.location.href = result.redirectUrl || form.action;
+            } catch (error) {
+                showClientErrors(form, {
+                    message: 'Không thể kết nối tới API. Vui lòng thử lại.'
+                });
+            } finally {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = defaultButtonText;
+                    submitButton.classList.remove('opacity-70', 'cursor-wait');
+                }
+            }
+        });
+
+        function buildHeaders() {
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+            return headers;
+        }
+
+        function buildPayload(formElement) {
+            const formData = new FormData(formElement);
+            return {
+                title: stringValue(formData, 'title'),
+                duration: numberValue(formData, 'duration'),
+                description: stringValue(formData, 'description'),
+                releaseDate: stringValue(formData, 'releaseDate'),
+                languageId: numberValue(formData, 'languageId'),
+                posterUrl: stringValue(formData, 'posterUrl'),
+                trailerUrl: stringValue(formData, 'trailerUrl'),
+                genreIds: formData.getAll('genreIds')
+                    .map((value) => Number(value))
+                    .filter((value) => Number.isInteger(value))
+            };
+        }
+
+        function stringValue(formData, name) {
+            const value = formData.get(name);
+            return typeof value === 'string' ? value.trim() : '';
+        }
+
+        function numberValue(formData, name) {
+            const value = formData.get(name);
+            return value === null || value === '' ? null : Number(value);
+        }
+
+        async function readJson(response) {
+            try {
+                return await response.json();
+            } catch (error) {
+                return {};
+            }
+        }
+
+        function clearClientErrors(formElement) {
+            formElement.querySelectorAll('[data-client-error]').forEach((node) => node.remove());
+            formElement.querySelectorAll('.border-danger\\!').forEach((node) => {
+                node.classList.remove('border-danger!');
+            });
+        }
+
+        function showClientErrors(formElement, result) {
+            const errors = Array.isArray(result.errors) ? result.errors : [];
+            errors.forEach((error) => {
+                const field = formElement.querySelector(`[name="${CSS.escape(error.field)}"]`);
+                if (!field) {
+                    return;
+                }
+                field.classList.add('border-danger!');
+                field.insertAdjacentHTML('afterend',
+                    `<span data-client-error class="block text-xs text-danger mt-1">${escapeHtml(error.message)}</span>`);
+            });
+
+            const message = result.message || 'Không thể lưu thay đổi.';
+            formElement.insertAdjacentHTML('afterbegin',
+                `<div data-client-error class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-danger/10 border border-danger/25 text-danger text-sm" role="alert">${escapeHtml(message)}</div>`);
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[char]);
+        }
+    })();
+</script>
+
+</body>
+</html>

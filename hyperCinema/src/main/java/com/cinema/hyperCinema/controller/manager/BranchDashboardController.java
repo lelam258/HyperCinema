@@ -34,7 +34,7 @@ public class BranchDashboardController {
             model.addAttribute("branchName", user.getBranch().getName());
         } else {
             // Fallback for demo or edge case
-            branchId = 1;
+            branchId = 1; 
             model.addAttribute("branchName", "Chi nhánh 1");
         }
 

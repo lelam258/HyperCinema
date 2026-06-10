@@ -103,8 +103,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Email already exists: " + userDetails.getEmail());
         }
 
-        user.setName(userDetails.getName());
-        user.setFullName(userDetails.getName()); // Sửa lỗi: Cập nhật đồng bộ trường fullName
+//        user.setName(userDetails.getName());
         user.setUsername(userDetails.getUsername());
         user.setEmail(userDetails.getEmail());
         user.setPhone(userDetails.getPhone());
@@ -151,7 +150,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User resetUserPassword(Integer id, String newPassword) {
         User user = getUserById(id);
-        user.setPasswordHash(newPassword); // Sửa lỗi: Đổi từ setPassword sang setPasswordHash (Dòng 149)
+        user.setPasswordHash(newPassword); // In production, this would be encrypted
         return userRepository.save(user);
     }
 

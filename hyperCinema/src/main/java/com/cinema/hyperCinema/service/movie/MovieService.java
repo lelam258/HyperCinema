@@ -33,4 +33,3 @@ public interface MovieService {
 
     void unassignBranch(Integer movieId, Integer branchId, User admin);
 }
-

@@ -12,9 +12,11 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
     private Integer userId;
 
+    //    @Column(nullable = false, length = 100)
+//    @org.hibernate.annotations.Nationalized
+//    private String name;
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;
 
@@ -30,10 +32,15 @@ public class User {
     @Column(nullable = false, length = 20)
     private String phone;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id")
     private Role role;
 
+    @Column(length = 20)
+    private String status = "Active";
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
     /**
      * Chi nhánh mà người dùng thuộc về.
      *
@@ -56,6 +63,33 @@ public class User {
     @JoinColumn(name = "manager_id")
     private User manager;
 
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
+    /**
+     * Chi nhánh mà người dùng thuộc về.
+     *
+     * <p>NULL với Customer hoặc Manager chưa được gán chi nhánh; bắt buộc với
+     * Staff đã được gán. Trace requirement: REQ 1.4 — xem
+     * {@code .kiro/specs/branch-management/design.md} mục A.4.2.</p>
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "branch_id")
+    private Branch branch;
+
+    /**
+     * Quản lý trực tiếp của người dùng (self-reference).
+     *
+     * <p>NULL với Admin / Manager / Customer; bắt buộc với Staff đã được gán
+     * vào một chi nhánh. Trace requirement: REQ 1.4 — xem
+     * {@code .kiro/specs/branch-management/design.md} mục A.4.2.</p>
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id")
+    private User manager;
+
+    @Column(nullable = false, length = 50)
+    private String status = "Active";
+
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
@@ -74,25 +108,11 @@ public class User {
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
-    @Column(nullable = false, length = 50)
-    private String status = "Active";
-
-    @Column(name = "last_login")
-    private LocalDateTime lastLogin;
-
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    public String getName() {
-        return this.fullName;
-    }
-
-    public void setName(String name) {
-        this.fullName = name;
-    }
 
     @PrePersist
     protected void onCreate() {
