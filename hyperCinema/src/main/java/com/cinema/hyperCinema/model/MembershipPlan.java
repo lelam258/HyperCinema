@@ -13,6 +13,7 @@ public class MembershipPlan {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "plan_id")
     private Integer planId;
 
     @Column(nullable = false, length = 100)

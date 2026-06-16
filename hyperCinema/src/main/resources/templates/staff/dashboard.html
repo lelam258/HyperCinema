@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+    Staff Dashboard — Premium Dark-Gold Glassmorphic Rebuild
+-->
+<head th:replace="~{fragments/layout :: head('Staff Dashboard - HyperCinema')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: staffSidebar('dashboard')}"></nav>
+
+<!-- Main Content -->
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- Page Header -->
+        <div class="mb-8 font-sans">
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-1" th:text="'Hello, ' + ${staffName}">Hello, Staff</h1>
+            <p class="text-sm text-slate-400">Staff Portal · Branch: <span class="text-primary font-medium" th:text="${branchName}">Branch Name</span> · Last updated at <span th:text="${lastUpdated}">--:--</span></p>
+        </div>
+
+        <!-- Quick Operations -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+            <!-- Sell Tickets Card -->
+            <div class="glass-card p-6 flex flex-col justify-between transition-all duration-300 hover:border-white/15 cursor-pointer">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center mb-4"><svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+                    <h2 class="text-lg font-bold text-white mb-2">Sell Tickets & Concessions</h2>
+                    <p class="text-sm text-slate-400 mb-6">Process customer bookings, print physical tickets, and sell snacks/beverages.</p>
+                </div>
+                <div>
+                    <a th:href="@{/staff/booking}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-amber-500 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5">
+                        Open Booking POS
+                    </a>
+                </div>
+            </div>
+
+            <!-- View Showtimes Card -->
+            <div class="glass-card p-6 flex flex-col justify-between transition-all duration-300 hover:border-white/15 cursor-pointer">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-info/15 flex items-center justify-center mb-4"><svg class="w-6 h-6 text-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                    <h2 class="text-lg font-bold text-white mb-2">Schedule & Showtimes</h2>
+                    <p class="text-sm text-slate-400 mb-6">Check the showtimes schedule for the current branch and verify hall status.</p>
+                </div>
+                <div>
+                    <a th:href="@{/admin/halls}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:bg-white/[0.08]">
+                        View Hall Management
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

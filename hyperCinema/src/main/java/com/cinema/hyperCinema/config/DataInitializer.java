@@ -34,6 +34,9 @@ public class DataInitializer implements CommandLineRunner {
     private final PaymentRepository paymentRepository;
     private final FoodItemRepository foodItemRepository;
     private final AuditLogRepository auditLogRepository;
+    private final LanguageRepository languageRepository;
+    private final FoodOrderRepository foodOrderRepository;
+    private final FoodOrderItemRepository foodOrderItemRepository;
     private final PasswordEncoder passwordEncoder;
 
     private final Random random = new Random(42);
@@ -52,6 +55,9 @@ public class DataInitializer implements CommandLineRunner {
             PaymentRepository paymentRepository,
             FoodItemRepository foodItemRepository,
             AuditLogRepository auditLogRepository,
+            LanguageRepository languageRepository,
+            FoodOrderRepository foodOrderRepository,
+            FoodOrderItemRepository foodOrderItemRepository,
             PasswordEncoder passwordEncoder) {
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
@@ -66,14 +72,30 @@ public class DataInitializer implements CommandLineRunner {
         this.paymentRepository = paymentRepository;
         this.foodItemRepository = foodItemRepository;
         this.auditLogRepository = auditLogRepository;
+        this.languageRepository = languageRepository;
+        this.foodOrderRepository = foodOrderRepository;
+        this.foodOrderItemRepository = foodOrderItemRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     @Transactional
     public void run(String... args) {
-        if (roleRepository.count() > 0) {
-            return; // Đã có data, bỏ qua
+        if (userRepository.findByUsername("admin").isPresent()) {
+            if (bookingRepository.count() == 0) {
+                System.out.println("=== DataInitializer: admin present, but bookings missing. Seeding showtimes & bookings ===");
+                List<User> users = userRepository.findAll();
+                List<Branch> branches = branchRepository.findAll();
+                List<Hall> halls = hallRepository.findAll();
+                List<Seat> allSeats = seatRepository.findAll();
+                List<Genre> genres = genreRepository.findAll();
+                List<Language> languages = seedLanguages();
+                List<Movie> movies = seedMovies(genres, languages);
+                List<Showtime> showtimes = seedShowtimes(movies, halls);
+                seedBookingsPaymentsAndFood(users, showtimes, allSeats);
+                System.out.println("=== DataInitializer: Finished seeding showtimes & bookings ===");
+            }
+            return;
         }
 
         System.out.println("=== DataInitializer: Bắt đầu seed dữ liệu mẫu ===");
@@ -88,6 +110,11 @@ public class DataInitializer implements CommandLineRunner {
         seedFoodItems();
         seedAuditLogs(users);
 
+        List<Language> languages = seedLanguages();
+        List<Movie> movies = seedMovies(genres, languages);
+        List<Showtime> showtimes = seedShowtimes(movies, halls);
+        seedBookingsPaymentsAndFood(users, showtimes, allSeats);
+
         System.out.println("=== DataInitializer: Hoàn tất seed dữ liệu mẫu ===");
     }
 
@@ -95,9 +122,12 @@ public class DataInitializer implements CommandLineRunner {
     private List<Role> seedRoles() {
         List<Role> roles = new ArrayList<>();
         for (String name : new String[]{"Admin", "Manager", "BranchManager", "Staff", "Customer"}) {
-            Role r = new Role();
-            r.setName(name);
-            roles.add(roleRepository.save(r));
+            Role r = roleRepository.findByName(name).orElseGet(() -> {
+                Role newRole = new Role();
+                newRole.setName(name);
+                return roleRepository.save(newRole);
+            });
+            roles.add(r);
         }
         return roles;
     }
@@ -237,6 +267,15 @@ public class DataInitializer implements CommandLineRunner {
                 Hall h = new Hall();
                 h.setBranch(branch);
                 h.setName(name);
+                h.setCapacity(50);
+                String hallType = "2D";
+                if (name.contains("3D")) {
+                    hallType = "3D";
+                } else if (name.contains("IMAX")) {
+                    hallType = "IMAX";
+                }
+                h.setHallType(hallType);
+                h.setStatus("Active");
                 halls.add(hallRepository.save(h));
             }
         }
@@ -262,24 +301,19 @@ public class DataInitializer implements CommandLineRunner {
         return allSeats;
     }
 
-    private int randomPrice() {
-        int[] prices = {75000, 85000, 95000, 110000, 120000, 150000};
-        return prices[random.nextInt(prices.length)];
-    }
-
     // ───────────────────── FOOD ITEMS ─────────────────────
     private void seedFoodItems() {
         Object[][] foodData = {
-                {"Bắp rang bơ (L)", 45000, "Bắp rang"},
-                {"Bắp rang phô mai (L)", 55000, "Bắp rang"},
-                {"Coca-Cola (L)", 30000, "Nước uống"},
-                {"Pepsi (L)", 30000, "Nước uống"},
-                {"Nước suối", 15000, "Nước uống"},
+                {"Bắp rang bơ (L)", 45000, "Food"},
+                {"Bắp rang phô mai (L)", 55000, "Food"},
+                {"Coca-Cola (L)", 30000, "Beverage"},
+                {"Pepsi (L)", 30000, "Beverage"},
+                {"Nước suối", 15000, "Beverage"},
                 {"Combo Couple", 120000, "Combo"},
                 {"Combo Gia đình", 180000, "Combo"},
-                {"Hotdog", 35000, "Snack"},
-                {"Nachos phô mai", 40000, "Snack"},
-                {"Kem ốc quế", 25000, "Snack"},
+                {"Hotdog", 35000, "Food"},
+                {"Nachos phô mai", 40000, "Food"},
+                {"Kem ốc quế", 25000, "Food"},
         };
         for (Object[] data : foodData) {
             FoodItem fi = new FoodItem();
@@ -291,47 +325,216 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
-    // ───────────────────── BOOKINGS + PAYMENTS ─────────────────────
-    private void seedBookingsAndPayments(List<User> users, List<Showtime> showtimes, List<Seat> allSeats) {
-        List<User> customers = users.subList(11, Math.min(21, users.size()));
-        String[] statuses = {"Confirmed", "Confirmed", "Confirmed", "Completed", "Completed", "Cancelled"};
-        String[] methods = {"VNPay", "VietQR", "Cash", "VNPay", "VietQR"};
+    // ───────────────────── LANGUAGES & MOVIES ─────────────────────
+    private List<Language> seedLanguages() {
+        List<Language> languages;
+        if (languageRepository.count() == 0) {
+            languages = new ArrayList<>();
+            for (String name : new String[]{"English", "Vietnamese"}) {
+                Language l = new Language();
+                l.setName(name);
+                languages.add(languageRepository.save(l));
+            }
+        } else {
+            languages = languageRepository.findAll();
+        }
+        return languages;
+    }
 
-        int seatIdx = 0;
-        for (int i = 0; i < 50 && i < showtimes.size(); i++) {
-            Showtime st = showtimes.get(i % showtimes.size());
-            User customer = customers.get(i % customers.size());
-            String bookingStatus = statuses[i % statuses.length];
+    private List<Movie> seedMovies(List<Genre> genres, List<Language> languages) {
+        List<Movie> movies;
+        if (movieRepository.count() == 0) {
+            movies = new ArrayList<>();
+            Language en = languages.stream().filter(l -> l.getName().equals("English")).findFirst().orElse(languages.get(0));
+            Language vi = languages.stream().filter(l -> l.getName().equals("Vietnamese")).findFirst().orElse(languages.get(0));
 
-            int ticketCount = 1 + random.nextInt(3);
-            long totalPrice = (long) st.getPrice() * ticketCount;
+            movies.add(createMovie("Avengers: Doomsday", 180, "The Avengers assemble to face Doctor Doom.", LocalDate.of(2026, 5, 1), "NowShowing", en.getLanguageId()));
+            movies.add(createMovie("Lật Mặt 8", 120, "Hành trình gia đình đầy tiếng cười và nước mắt.", LocalDate.of(2026, 4, 15), "NowShowing", vi.getLanguageId()));
+            movies.add(createMovie("Godzilla x Kong", 115, "The legendary titans unite to face a colossal threat.", LocalDate.of(2026, 4, 1), "NowShowing", en.getLanguageId()));
+            movies.add(createMovie("Dune: Part Two", 166, "Paul Atreides unites with the Fremen to seek revenge.", LocalDate.of(2026, 3, 15), "NowShowing", en.getLanguageId()));
+        } else {
+            movies = movieRepository.findAll();
+        }
+        return movies;
+    }
 
-            Booking booking = new Booking();
-            booking.setUser(customer);
-            booking.setShowtime(st);
-            booking.setTotalPrice(totalPrice);
-            booking.setStatus(bookingStatus);
-            booking = bookingRepository.save(booking);
+    private Movie createMovie(String title, int duration, String description, LocalDate releaseDate, String status, Integer languageId) {
+        Movie m = new Movie();
+        m.setTitle(title);
+        m.setDuration(duration);
+        m.setDescription(description);
+        m.setReleaseDate(releaseDate);
+        m.setStatus(status);
+        m.setLanguageId(languageId);
+        m.setPosterUrl("/images/movies/" + title.toLowerCase().replaceAll("[^a-z0-9]", "_") + ".jpg");
+        m.setTrailerUrl("https://youtube.com");
+        return movieRepository.save(m);
+    }
 
-            for (int t = 0; t < ticketCount && seatIdx < allSeats.size(); t++) {
-                Ticket ticket = new Ticket();
-                ticket.setBooking(booking);
-                ticket.setSeat(allSeats.get(seatIdx % allSeats.size()));
-                ticket.setQrCode("QR-" + booking.getBookingId() + "-" + t);
-                ticket.setStatus("Cancelled".equals(bookingStatus) ? "Cancelled" : "Active");
-                ticketRepository.save(ticket);
-                seatIdx++;
+    // ───────────────────── SHOWTIMES ─────────────────────
+    private List<Showtime> seedShowtimes(List<Movie> movies, List<Hall> halls) {
+        List<Showtime> showtimes = new ArrayList<>();
+        if (showtimeRepository.count() == 0) {
+            LocalDate today = LocalDate.now();
+            int[] hours = {9, 12, 15, 18, 21};
+
+            for (int day = -35; day <= 3; day++) {
+                LocalDate date = today.plusDays(day);
+
+                for (int hIdx = 0; hIdx < halls.size(); hIdx++) {
+                    Hall hall = halls.get(hIdx);
+                    for (int s = 0; s < 2; s++) {
+                        Movie movie = movies.get((hIdx + s + Math.abs(day)) % movies.size());
+                        int hour = hours[(hIdx + s) % hours.length];
+
+                        LocalDateTime start = LocalDateTime.of(date, LocalTime.of(hour, 0));
+                        LocalDateTime end = start.plusMinutes(movie.getDuration());
+
+                        Showtime st = new Showtime();
+                        st.setMovie(movie);
+                        st.setHall(hall);
+                        st.setStartTime(start);
+                        st.setEndTime(end);
+                        st.setPrice(80000 + random.nextInt(8) * 10000); // 80k - 150k
+                        showtimes.add(showtimeRepository.save(st));
+                    }
+                }
+            }
+        } else {
+            showtimes = showtimeRepository.findAll();
+        }
+        return showtimes;
+    }
+
+    // ───────────────────── BOOKINGS, PAYMENTS & FOOD ORDERS ─────────────────────
+    private void seedBookingsPaymentsAndFood(List<User> users, List<Showtime> showtimes, List<Seat> seats) {
+        if (bookingRepository.count() > 0) return;
+
+        List<User> customers = users.stream()
+                .filter(u -> u.getRole().getName().equalsIgnoreCase("Customer"))
+                .toList();
+        if (customers.isEmpty()) {
+            customers = users;
+        }
+
+        List<FoodItem> foodItems = foodItemRepository.findAll();
+
+        java.util.Map<Integer, List<Seat>> hallSeatsMap = new java.util.HashMap<>();
+        for (Seat seat : seats) {
+            hallSeatsMap.computeIfAbsent(seat.getHall().getHallId(), k -> new ArrayList<>()).add(seat);
+        }
+
+        String[] paymentMethods = {"VNPay", "VietQR", "Credit Card", "Cash"};
+        LocalDateTime now = LocalDateTime.now();
+
+        System.out.println("=== Seeding bookings, payments and food orders ===");
+        int bookingCount = 0;
+
+        for (Showtime st : showtimes) {
+            if (st.getStartTime().isAfter(now)) {
+                continue;
             }
 
-            if (!"Cancelled".equals(bookingStatus)) {
-                Payment payment = new Payment();
-                payment.setBooking(booking);
-                payment.setAmount(totalPrice);
-                payment.setMethod(methods[i % methods.length]);
-                payment.setStatus("Completed");
-                paymentRepository.save(payment);
+            if (random.nextDouble() > 0.8) {
+                continue;
+            }
+
+            List<Seat> hallSeats = hallSeatsMap.get(st.getHall().getHallId());
+            if (hallSeats == null || hallSeats.isEmpty()) {
+                continue;
+            }
+
+            double occupancy = 0.2 + random.nextDouble() * 0.7;
+            int seatsToBookCount = (int) (hallSeats.size() * occupancy);
+
+            List<Seat> shuffledSeats = new ArrayList<>(hallSeats);
+            java.util.Collections.shuffle(shuffledSeats, random);
+
+            int seatPointer = 0;
+            while (seatPointer < seatsToBookCount && seatPointer < shuffledSeats.size()) {
+                int numSeats = 1 + random.nextInt(3);
+                if (seatPointer + numSeats > seatsToBookCount) {
+                    numSeats = seatsToBookCount - seatPointer;
+                }
+                if (numSeats <= 0) break;
+
+                User customer = customers.get(random.nextInt(customers.size()));
+
+                boolean isCompleted = random.nextDouble() < 0.85;
+                String status = isCompleted ? "Completed" : "Cancelled";
+
+                long ticketPriceTotal = (long) st.getPrice() * numSeats;
+
+                Booking booking = new Booking();
+                booking.setUser(customer);
+                booking.setShowtime(st);
+                booking.setTotalPrice(ticketPriceTotal);
+                booking.setStatus(status);
+                booking.setCreatedAt(st.getStartTime().minusHours(1 + random.nextInt(48)));
+                booking = bookingRepository.save(booking);
+
+                for (int t = 0; t < numSeats; t++) {
+                    Seat seat = shuffledSeats.get(seatPointer + t);
+                    Ticket ticket = new Ticket();
+                    ticket.setBooking(booking);
+                    ticket.setSeat(seat);
+                    ticket.setQrCode("QR-" + booking.getBookingId() + "-" + seat.getSeatRow() + seat.getSeatNumber());
+                    ticket.setStatus(isCompleted ? "Active" : "Cancelled");
+                    ticketRepository.save(ticket);
+                }
+
+                seatPointer += numSeats;
+
+                if (isCompleted) {
+                    Payment payment = new Payment();
+                    payment.setBooking(booking);
+                    payment.setAmount(ticketPriceTotal);
+                    payment.setMethod(paymentMethods[random.nextInt(paymentMethods.length)]);
+                    payment.setStatus("Completed");
+                    payment.setCreatedAt(booking.getCreatedAt().plusMinutes(random.nextInt(15)));
+                    paymentRepository.save(payment);
+
+                    if (random.nextBoolean() && !foodItems.isEmpty()) {
+                        FoodOrder foodOrder = new FoodOrder();
+                        foodOrder.setBooking(booking);
+                        foodOrder.setStatus("Completed");
+                        foodOrder.setCreatedAt(booking.getCreatedAt());
+
+                        List<FoodOrderItem> orderItems = new ArrayList<>();
+                        int numItems = 1 + random.nextInt(3);
+                        long foodTotal = 0;
+
+                        List<FoodItem> shuffledFood = new ArrayList<>(foodItems);
+                        java.util.Collections.shuffle(shuffledFood, random);
+
+                        for (int f = 0; f < numItems && f < shuffledFood.size(); f++) {
+                            FoodItem item = shuffledFood.get(f);
+                            int qty = 1 + random.nextInt(2);
+
+                            FoodOrderItem orderItem = new FoodOrderItem();
+                            orderItem.setFoodOrder(foodOrder);
+                            orderItem.setFood(item);
+                            orderItem.setQuantity(qty);
+                            orderItem.setPrice(item.getPrice());
+                            orderItems.add(orderItem);
+
+                            foodTotal += (long) item.getPrice() * qty;
+                        }
+
+                        foodOrder.setTotalPrice(foodTotal);
+                        foodOrder.setItems(orderItems);
+                        foodOrderRepository.save(foodOrder);
+
+                        for (FoodOrderItem item : orderItems) {
+                            foodOrderItemRepository.save(item);
+                        }
+                    }
+                }
+
+                bookingCount++;
             }
         }
+        System.out.println("=== Seeded " + bookingCount + " bookings. ===");
     }
 
     // ───────────────────── AUDIT LOGS ─────────────────────

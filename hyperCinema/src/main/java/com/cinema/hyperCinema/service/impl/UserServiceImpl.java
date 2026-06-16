@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
         }
 
         if (user.getFullName() == null) {
-            user.setFullName(user.getName());
+            user.setFullName(user.getUsername());
         }
 
         if (user.getRole() == null || user.getRole().getRoleId() == null) {

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+    Manager Dashboard — Premium Dark-Gold Glassmorphic Rebuild
+    Trace Requirement: Chain Manager Overview Dashboard
+-->
+<head th:replace="~{fragments/layout :: head('Manager Dashboard - HyperCinema')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: managerSidebar('dashboard')}"></nav>
+
+<!-- Main Content -->
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Chain Management Dashboard</h1>
+            <p class="text-sm text-slate-400">Chain-wide performance overview · Last updated at <span th:text="${lastUpdated}">--:--</span></p>
+        </div>
+
+        <!-- ═══════════════════ KPI CARDS ═══════════════════ -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+            <!-- Total Revenue -->
+            <div class="glass-card p-5 flex items-start gap-4 transition-all duration-300 hover:border-white/15 cursor-pointer group">
+                <div class="w-12 h-12 rounded-xl bg-warning/15 flex items-center justify-center shrink-0 group-hover:bg-warning/25 transition-colors">
+                    <svg class="w-6 h-6 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-2xl font-bold text-white tabular-nums" th:text="${#numbers.formatInteger(totalRevenue != null ? totalRevenue : 0, 0, 'COMMA')}">0</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Monthly Revenue (VND)</span>
+                </div>
+            </div>
+            <!-- Total Tickets -->
+            <div class="glass-card p-5 flex items-start gap-4 transition-all duration-300 hover:border-white/15 cursor-pointer group">
+                <div class="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary/25 transition-colors">
+                    <svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-2xl font-bold text-white tabular-nums" th:text="${totalTickets}">0</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Tickets Sold (Month)</span>
+                </div>
+            </div>
+            <!-- Active Branches -->
+            <div class="glass-card p-5 flex items-start gap-4 transition-all duration-300 hover:border-white/15 cursor-pointer group">
+                <div class="w-12 h-12 rounded-xl bg-success/15 flex items-center justify-center shrink-0 group-hover:bg-success/25 transition-colors">
+                    <svg class="w-6 h-6 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-2xl font-bold text-white tabular-nums" th:text="${activeBranches}">0</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Active Branches</span>
+                </div>
+            </div>
+            <!-- Now Showing Movies -->
+            <div class="glass-card p-5 flex items-start gap-4 transition-all duration-300 hover:border-white/15 cursor-pointer group">
+                <div class="w-12 h-12 rounded-xl bg-info/15 flex items-center justify-center shrink-0 group-hover:bg-info/25 transition-colors">
+                    <svg class="w-6 h-6 text-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-2xl font-bold text-white tabular-nums" th:text="${nowShowingMovies}">0</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Now Showing</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ CHARTS ═══════════════════ -->
+        <div class="glass-card p-6 mb-8">
+            <h2 class="text-base font-semibold text-white mb-4">Chain Revenue (Last 14 Days)</h2>
+            <div class="relative h-[280px]">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ TABLES ═══════════════════ -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <!-- Branch Leaderboard -->
+            <div class="glass-card overflow-hidden">
+                <div class="px-5 py-4 border-b border-white/[0.08] bg-white/[0.02]">
+                    <h2 class="text-base font-semibold text-white">Branch Revenue Leaderboard</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-white/[0.08]">
+                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Rank</th>
+                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Branch</th>
+                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Revenue (VND)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/[0.06]">
+                            <tr th:each="row, idx : ${branchLeaderboard}" class="hover:bg-white/[0.04] transition-colors">
+                                <td class="px-5 py-3 text-slate-300" th:text="${idx.index + 1}">1</td>
+                                <td class="px-5 py-3 text-white" th:text="${row[0]}">Branch Name</td>
+                                <td class="px-5 py-3 text-right text-slate-400 tabular-nums" th:text="${#numbers.formatInteger(row[1] != null ? row[1] : 0, 0, 'COMMA')}">0</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(branchLeaderboard)}">
+                                <td colspan="3" class="px-5 py-10 text-center text-slate-500">No branch revenue records found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Movies -->
+            <div class="glass-card overflow-hidden">
+                <div class="px-5 py-4 border-b border-white/[0.08] bg-white/[0.02]">
+                    <h2 class="text-base font-semibold text-white">Top Movies Chain-wide</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-white/[0.08]">
+                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">#</th>
+                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Movie</th>
+                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Bookings</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/[0.06]">
+                            <tr th:each="movie, idx : ${topMovies}" class="hover:bg-white/[0.04] transition-colors">
+                                <td class="px-5 py-3 text-slate-300" th:text="${idx.index + 1}">1</td>
+                                <td class="px-5 py-3 text-white" th:text="${movie[0]}">Movie Name</td>
+                                <td class="px-5 py-3 text-right text-slate-400 tabular-nums" th:text="${movie[1]}">0</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(topMovies)}">
+                                <td colspan="3" class="px-5 py-10 text-center text-slate-500">No movie booking records found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const revenueLabels = /*[[${revenueLabels}]]*/ [];
+    const revenueValues = /*[[${revenueValues}]]*/ [];
+
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'bar',
+        data: {
+            labels: Array.from(revenueLabels),
+            datasets: [{
+                label: 'Revenue (VND)',
+                data: Array.from(revenueValues),
+                backgroundColor: 'rgba(245, 158, 11, 0.25)',
+                borderColor: '#F59E0B',
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return new Intl.NumberFormat('vi-VN').format(ctx.raw) + ' VND';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.04)' },
+                    ticks: { color: '#64748b' }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.04)' },
+                    ticks: {
+                        color: '#64748b',
+                        callback: function(val) {
+                            if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+                            return val;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    /*]]>*/
+</script>
+</body>
+</html>
