@@ -28,7 +28,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate", "/api/auth/verify-email").permitAll()
+                .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate", "/api/auth/verify-email", "/movies/**", "/movies").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 // ===== Branch Management — REQ 11.1, 11.2, 11.4 =====
                 // Mutation endpoints (POST/PUT/PATCH/DELETE) — Admin only
@@ -46,19 +46,19 @@ public class SecurityConfig {
                         "/admin/branches/*/staff/assign").hasRole("ADMIN")
                 // GET detail — Admin or Manager (REQ 11.3 refined by @PreAuthorize on controller)
                 .requestMatchers(HttpMethod.GET, "/admin/branches/*").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers(HttpMethod.POST,   "/admin/movies", "/admin/movies/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT,    "/admin/movies/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH,  "/admin/movies/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST,   "/admin/movies", "/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.PUT,    "/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.PATCH,  "/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.DELETE, "/admin/movies/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST,   "/api/admin/movies", "/api/admin/movies/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT,    "/api/admin/movies/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH,  "/api/admin/movies/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST,   "/api/admin/movies", "/api/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.PUT,    "/api/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.PATCH,  "/api/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.DELETE, "/api/admin/movies/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET,
                         "/admin/movies",
                         "/admin/movies/",
                         "/admin/movies/new",
-                        "/admin/movies/*/edit").hasRole("ADMIN")
+                        "/admin/movies/*/edit").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.GET, "/admin/movies/*").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.GET,
                         "/admin/halls",
