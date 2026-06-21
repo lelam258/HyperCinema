@@ -3,11 +3,11 @@ package com.cinema.hyperCinema.repository;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cinema.hyperCinema.model.Branch;
+import com.cinema.hyperCinema.model.Hall;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.cinema.hyperCinema.dto.admin.hall.request.HallSearchCriteria;
-import com.cinema.hyperCinema.model.Branch;
-import com.cinema.hyperCinema.model.Hall;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;

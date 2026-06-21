@@ -2,7 +2,9 @@ package com.cinema.hyperCinema.config;
 
 import com.cinema.hyperCinema.model.*;
 import com.cinema.hyperCinema.repository.*;
+import com.cinema.hyperCinema.util.SeatPricing;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,12 +30,15 @@ public class DataInitializer implements CommandLineRunner {
     private final HallRepository hallRepository;
     private final SeatRepository seatRepository;
     private final MovieRepository movieRepository;
+    private final LanguageRepository languageRepository;
+    private final MovieGenreRepository movieGenreRepository;
     private final ShowtimeRepository showtimeRepository;
     private final BookingRepository bookingRepository;
     private final TicketRepository ticketRepository;
     private final PaymentRepository paymentRepository;
     private final FoodItemRepository foodItemRepository;
     private final AuditLogRepository auditLogRepository;
+    private final JdbcTemplate jdbcTemplate;
     private final PasswordEncoder passwordEncoder;
 
     private final Random random = new Random(42);
@@ -46,12 +51,15 @@ public class DataInitializer implements CommandLineRunner {
             HallRepository hallRepository,
             SeatRepository seatRepository,
             MovieRepository movieRepository,
+            LanguageRepository languageRepository,
+            MovieGenreRepository movieGenreRepository,
             ShowtimeRepository showtimeRepository,
             BookingRepository bookingRepository,
             TicketRepository ticketRepository,
             PaymentRepository paymentRepository,
             FoodItemRepository foodItemRepository,
             AuditLogRepository auditLogRepository,
+            JdbcTemplate jdbcTemplate,
             PasswordEncoder passwordEncoder) {
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
@@ -60,33 +68,41 @@ public class DataInitializer implements CommandLineRunner {
         this.hallRepository = hallRepository;
         this.seatRepository = seatRepository;
         this.movieRepository = movieRepository;
+        this.languageRepository = languageRepository;
+        this.movieGenreRepository = movieGenreRepository;
         this.showtimeRepository = showtimeRepository;
         this.bookingRepository = bookingRepository;
         this.ticketRepository = ticketRepository;
         this.paymentRepository = paymentRepository;
         this.foodItemRepository = foodItemRepository;
         this.auditLogRepository = auditLogRepository;
+        this.jdbcTemplate = jdbcTemplate;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     @Transactional
     public void run(String... args) {
-        if (roleRepository.count() > 0) {
-            return; // Đã có data, bỏ qua
+        if (roleRepository.count() == 0) {
+            System.out.println("=== DataInitializer: Bắt đầu seed dữ liệu mẫu ===");
+
+            List<Role> roles = seedRoles();
+            List<Genre> genres = seedGenres();
+            List<User> users = seedUsers(roles);
+            List<Branch> branches = seedBranches();
+            assignBranchManagers(users, branches);
+            List<Hall> halls = seedHalls(branches);
+            List<Seat> allSeats = seedSeats(halls);
+            seedFoodItems();
+            ensureAuditLogTable();
+            seedAuditLogs(users);
         }
 
-        System.out.println("=== DataInitializer: Bắt đầu seed dữ liệu mẫu ===");
-
-        List<Role> roles = seedRoles();
-        List<Genre> genres = seedGenres();
-        List<User> users = seedUsers(roles);
-        List<Branch> branches = seedBranches();
-        assignBranchManagers(users, branches);
-        List<Hall> halls = seedHalls(branches);
-        List<Seat> allSeats = seedSeats(halls);
-        seedFoodItems();
-        seedAuditLogs(users);
+        List<Language> languages = ensureLanguages();
+        List<Genre> currentGenres = ensureGenres();
+        List<Movie> movies = ensureMovies(languages);
+        ensureMovieGenres(movies, currentGenres);
+        ensureShowtimes(movies, hallRepository.findAll());
 
         System.out.println("=== DataInitializer: Hoàn tất seed dữ liệu mẫu ===");
     }
@@ -103,6 +119,30 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     // ───────────────────── GENRES ─────────────────────
+    private List<Language> ensureLanguages() {
+        if (languageRepository.count() > 0) {
+            return languageRepository.findAll();
+        }
+        return seedLanguages();
+    }
+
+    private List<Language> seedLanguages() {
+        List<Language> languages = new ArrayList<>();
+        for (String name : new String[]{"Vietnamese", "English", "Japanese", "Korean"}) {
+            Language language = new Language();
+            language.setName(name);
+            languages.add(languageRepository.save(language));
+        }
+        return languages;
+    }
+
+    private List<Genre> ensureGenres() {
+        if (genreRepository.count() > 0) {
+            return genreRepository.findAll();
+        }
+        return seedGenres();
+    }
+
     private List<Genre> seedGenres() {
         List<Genre> genres = new ArrayList<>();
         for (String name : new String[]{
@@ -116,6 +156,92 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     // ───────────────────── USERS ─────────────────────
+    private List<Movie> ensureMovies(List<Language> languages) {
+        if (movieRepository.count() > 0) {
+            return movieRepository.findAll();
+        }
+        return seedMovies(languages);
+    }
+
+    private List<Movie> seedMovies(List<Language> languages) {
+        List<Movie> movies = new ArrayList<>();
+        if (languages.isEmpty()) {
+            return movies;
+        }
+
+        Language vietnamese = languages.get(0);
+        Language english = languages.size() > 1 ? languages.get(1) : vietnamese;
+        Language japanese = languages.size() > 2 ? languages.get(2) : vietnamese;
+        Language korean = languages.size() > 3 ? languages.get(3) : vietnamese;
+
+        movies.add(createMovie("Lat Mat 8", 135,
+                "A Vietnamese family drama with action and comedy elements.",
+                LocalDate.of(2025, 4, 30), "NowShowing", vietnamese));
+        movies.add(createMovie("Detective Conan: One-eyed Flashback", 110,
+                "A mystery case follows Conan and the police into a dangerous mountain incident.",
+                LocalDate.of(2025, 4, 18), "NowShowing", japanese));
+        movies.add(createMovie("Doraemon: Nobita's Art World Tales", 105,
+                "Nobita and friends enter a magical world hidden inside famous paintings.",
+                LocalDate.of(2025, 5, 23), "NowShowing", japanese));
+        movies.add(createMovie("Mission: Impossible - The Final Reckoning", 169,
+                "Ethan Hunt faces a final mission against a global AI threat.",
+                LocalDate.of(2025, 5, 21), "NowShowing", english));
+        movies.add(createMovie("How to Train Your Dragon", 125,
+                "A live-action fantasy adventure about Hiccup and Toothless.",
+                LocalDate.of(2025, 6, 13), "ComingSoon", english));
+        movies.add(createMovie("F1 The Movie", 155,
+                "A former driver returns to Formula 1 to mentor a young racing talent.",
+                LocalDate.of(2025, 6, 27), "ComingSoon", english));
+        movies.add(createMovie("The Roundup: Punishment", 109,
+                "Detective Ma Seok-do hunts a criminal network across borders.",
+                LocalDate.of(2024, 4, 24), "Ended", korean));
+        movies.add(createMovie("Godzilla x Kong: The New Empire", 115,
+                "Two titans face a hidden threat from deep within the Hollow Earth.",
+                LocalDate.of(2024, 3, 29), "Ended", english));
+
+        return movies;
+    }
+
+    private Movie createMovie(String title, Integer duration, String description,
+                              LocalDate releaseDate, String status, Language language) {
+        Movie movie = new Movie();
+        movie.setTitle(title);
+        movie.setDuration(duration);
+        movie.setDescription(description);
+        movie.setReleaseDate(releaseDate);
+        movie.setStatus(status);
+        movie.setLanguageId(language.getLanguageId());
+        movie.setCreatedAt(LocalDateTime.now());
+        return movieRepository.save(movie);
+    }
+
+    private void ensureMovieGenres(List<Movie> movies, List<Genre> genres) {
+        if (movies.isEmpty() || genres.isEmpty() || movieGenreRepository.count() > 0) {
+            return;
+        }
+
+        List<MovieGenre> links = new ArrayList<>();
+        for (int i = 0; i < movies.size(); i++) {
+            Movie movie = movies.get(i);
+            Genre firstGenre = genres.get(i % genres.size());
+            Genre secondGenre = genres.get((i + 2) % genres.size());
+
+            links.add(createMovieGenre(movie, firstGenre));
+            if (!firstGenre.getGenreId().equals(secondGenre.getGenreId())) {
+                links.add(createMovieGenre(movie, secondGenre));
+            }
+        }
+        movieGenreRepository.saveAll(links);
+    }
+
+    private MovieGenre createMovieGenre(Movie movie, Genre genre) {
+        MovieGenre link = new MovieGenre();
+        link.setId(new MovieGenreId(movie.getMovieId(), genre.getGenreId()));
+        link.setMovie(movie);
+        link.setGenre(genre);
+        return link;
+    }
+
     private List<User> seedUsers(List<Role> roles) {
         String encodedPw = passwordEncoder.encode("123456");
         Role adminRole = roles.stream().filter(r -> r.getName().equalsIgnoreCase("Admin")).findFirst().orElse(roles.get(0));
@@ -237,6 +363,9 @@ public class DataInitializer implements CommandLineRunner {
                 Hall h = new Hall();
                 h.setBranch(branch);
                 h.setName(name);
+                h.setCapacity(50);
+                h.setHallType(name.contains("IMAX") ? "IMAX" : (name.contains("3D") ? "3D" : "2D"));
+                h.setStatus("Active");
                 halls.add(hallRepository.save(h));
             }
         }
@@ -262,9 +391,46 @@ public class DataInitializer implements CommandLineRunner {
         return allSeats;
     }
 
-    private int randomPrice() {
-        int[] prices = {75000, 85000, 95000, 110000, 120000, 150000};
-        return prices[random.nextInt(prices.length)];
+    private void ensureShowtimes(List<Movie> movies, List<Hall> halls) {
+        if (showtimeRepository.count() > 0 || movies.isEmpty() || halls.isEmpty()) {
+            return;
+        }
+
+        List<Movie> activeMovies = movies.stream()
+                .filter(movie -> "NowShowing".equals(movie.getStatus()))
+                .toList();
+        if (activeMovies.isEmpty()) {
+            activeMovies = movies;
+        }
+
+        LocalDate firstDate = LocalDate.now();
+        LocalTime[] times = {
+                LocalTime.of(10, 0),
+                LocalTime.of(13, 0),
+                LocalTime.of(15, 45),
+                LocalTime.of(18, 30),
+                LocalTime.of(21, 15)
+        };
+
+        for (int day = 0; day < 7; day++) {
+            for (int hallIndex = 0; hallIndex < halls.size(); hallIndex++) {
+                Hall hall = halls.get(hallIndex);
+                Movie movie = activeMovies.get((day + hallIndex) % activeMovies.size());
+                for (int timeIndex = 0; timeIndex < times.length; timeIndex++) {
+                    if (timeIndex > 2 && hallIndex % 2 == 1) {
+                        continue;
+                    }
+                    LocalDateTime startTime = LocalDateTime.of(firstDate.plusDays(day), times[timeIndex]);
+                    Showtime showtime = new Showtime();
+                    showtime.setMovie(movie);
+                    showtime.setHall(hall);
+                    showtime.setStartTime(startTime);
+                    showtime.setEndTime(startTime.plusMinutes(movie.getDuration() != null ? movie.getDuration() : 120));
+                    showtime.setPrice(0);
+                    showtimeRepository.save(showtime);
+                }
+            }
+        }
     }
 
     // ───────────────────── FOOD ITEMS ─────────────────────
@@ -285,8 +451,10 @@ public class DataInitializer implements CommandLineRunner {
             FoodItem fi = new FoodItem();
             fi.setName((String) data[0]);
             fi.setPrice((Integer) data[1]);
-            fi.setCategory((String) data[2]);
-            fi.setStatus("Active");
+            fi.setCategoryName((String) data[2]);
+            fi.setDescription("");
+            fi.setStock(100);
+            fi.setIsAvailable(true);
             foodItemRepository.save(fi);
         }
     }
@@ -304,7 +472,13 @@ public class DataInitializer implements CommandLineRunner {
             String bookingStatus = statuses[i % statuses.length];
 
             int ticketCount = 1 + random.nextInt(3);
-            long totalPrice = (long) st.getPrice() * ticketCount;
+            List<Seat> bookingSeats = new ArrayList<>(ticketCount);
+            for (int t = 0; t < ticketCount && seatIdx + t < allSeats.size(); t++) {
+                bookingSeats.add(allSeats.get((seatIdx + t) % allSeats.size()));
+            }
+            long totalPrice = bookingSeats.stream()
+                    .mapToLong(seat -> SeatPricing.priceFor(seat.getType()))
+                    .sum();
 
             Booking booking = new Booking();
             booking.setUser(customer);
@@ -313,10 +487,10 @@ public class DataInitializer implements CommandLineRunner {
             booking.setStatus(bookingStatus);
             booking = bookingRepository.save(booking);
 
-            for (int t = 0; t < ticketCount && seatIdx < allSeats.size(); t++) {
+            for (int t = 0; t < bookingSeats.size() && seatIdx < allSeats.size(); t++) {
                 Ticket ticket = new Ticket();
                 ticket.setBooking(booking);
-                ticket.setSeat(allSeats.get(seatIdx % allSeats.size()));
+                ticket.setSeat(bookingSeats.get(t));
                 ticket.setQrCode("QR-" + booking.getBookingId() + "-" + t);
                 ticket.setStatus("Cancelled".equals(bookingStatus) ? "Cancelled" : "Active");
                 ticketRepository.save(ticket);
@@ -335,6 +509,20 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     // ───────────────────── AUDIT LOGS ─────────────────────
+    private void ensureAuditLogTable() {
+        jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS `Audit_Log` (
+                    `log_id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `user_id` INT NOT NULL,
+                    `entity_type` VARCHAR(100) NOT NULL,
+                    `entity_id` INT NOT NULL,
+                    `action` VARCHAR(50) NOT NULL,
+                    `details` TEXT NOT NULL,
+                    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+    }
+
     private void seedAuditLogs(List<User> users) {
         User admin = users.get(0);
         User manager = users.get(1);
