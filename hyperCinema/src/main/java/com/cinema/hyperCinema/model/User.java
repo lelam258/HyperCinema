@@ -1,7 +1,11 @@
 package com.cinema.hyperCinema.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -12,6 +16,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Integer userId;
 
     //    @Column(nullable = false, length = 100)
@@ -36,59 +41,33 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
-    @Column(length = 20)
-    private String status = "Active";
-
-    @Column(name = "last_login")
-    private LocalDateTime lastLogin;
-    /**
-     * Chi nhánh mà người dùng thuộc về.
-     *
-     * <p>NULL với Customer hoặc Manager chưa được gán chi nhánh; bắt buộc với
-     * Staff đã được gán. Trace requirement: REQ 1.4 — xem
-     * {@code .kiro/specs/branch-management/design.md} mục A.4.2.</p>
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "branch_id")
-    private Branch branch;
-
-    /**
-     * Quản lý trực tiếp của người dùng (self-reference).
-     *
-     * <p>NULL với Admin / Manager / Customer; bắt buộc với Staff đã được gán
-     * vào một chi nhánh. Trace requirement: REQ 1.4 — xem
-     * {@code .kiro/specs/branch-management/design.md} mục A.4.2.</p>
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "manager_id")
-    private User manager;
-
-    @Column(name = "last_login")
-    private LocalDateTime lastLogin;
-    /**
-     * Chi nhánh mà người dùng thuộc về.
-     *
-     * <p>NULL với Customer hoặc Manager chưa được gán chi nhánh; bắt buộc với
-     * Staff đã được gán. Trace requirement: REQ 1.4 — xem
-     * {@code .kiro/specs/branch-management/design.md} mục A.4.2.</p>
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "branch_id")
-    private Branch branch;
-
-    /**
-     * Quản lý trực tiếp của người dùng (self-reference).
-     *
-     * <p>NULL với Admin / Manager / Customer; bắt buộc với Staff đã được gán
-     * vào một chi nhánh. Trace requirement: REQ 1.4 — xem
-     * {@code .kiro/specs/branch-management/design.md} mục A.4.2.</p>
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "manager_id")
-    private User manager;
-
     @Column(nullable = false, length = 50)
     private String status = "Active";
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
+
+    /**
+     * Chi nhánh mà người dùng thuộc về.
+     *
+     * <p>NULL với Customer hoặc Manager chưa được gán chi nhánh; bắt buộc với
+     * Staff đã được gán. Trace requirement: REQ 1.4 — xem
+     * {@code .kiro/specs/branch-management/design.md} mục A.4.2.</p>
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "branch_id")
+    private Branch branch;
+
+    /**
+     * Quản lý trực tiếp của người dùng (self-reference).
+     *
+     * <p>NULL với Admin / Manager / Customer; bắt buộc với Staff đã được gán
+     * vào một chi nhánh. Trace requirement: REQ 1.4 — xem
+     * {@code .kiro/specs/branch-management/design.md} mục A.4.2.</p>
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id")
+    private User manager;
 
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;

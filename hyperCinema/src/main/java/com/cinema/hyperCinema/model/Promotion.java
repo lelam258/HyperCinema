@@ -1,8 +1,12 @@
 package com.cinema.hyperCinema.model;
 
 import jakarta.persistence.*;
-import lombok.*;
-import java.time.LocalDate;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -15,30 +19,58 @@ public class Promotion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer promotionId;
 
+    @Column(nullable = false, length = 255)
+    private String title;
+
     @Column(nullable = false, unique = true, length = 50)
     private String code;
 
-    @Column(name = "discount_type", nullable = false, length = 20)
-    private String discountType;
+    @Column(name = "discount_type", nullable = false, length = 50)
+    private String discountType;          // PERCENTAGE | FIXED_AMOUNT
 
     @Column(name = "discount_value", nullable = false)
     private Integer discountValue;
 
-    @Column(name = "start_date")
-    private LocalDate startDate;
+    @Column(name = "min_order_value", nullable = false)
+    private Integer minOrderValue;        // >= 0, default 0
 
-    @Column(name = "end_date")
-    private LocalDate endDate;
+    @Column(name = "max_uses", nullable = false)
+    private Integer maxUses;              // >= 1
 
-    @Column(name = "usage_limit")
-    private Integer usageLimit;
+    @Column(name = "used_count", nullable = false)
+    private Integer usedCount;            // default 0
 
-    @Column(length = 20)
-    private String status;
+    @Column(name = "start_date", nullable = false)
+    private LocalDateTime startDate;
 
-    @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL)
+    @Column(name = "end_date", nullable = false)
+    private LocalDateTime endDate;
+
+    @Column(name = "is_branch_specific", nullable = false)
+    private Boolean branchSpecific;       // default false
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "branch_id")
+    private Branch branch;                // null nếu áp dụng toàn hệ thống
+
+    @Column(nullable = false, length = 50)
+    private String status;                // ACTIVE | INACTIVE | EXPIRED
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "promotion")
     private List<Booking> bookings;
 
     @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL)
     private List<PromotionUsage> usages;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (usedCount == null) usedCount = 0;
+        if (minOrderValue == null) minOrderValue = 0;
+        if (branchSpecific == null) branchSpecific = false;
+        if (status == null) status = "ACTIVE";
+    }
 }
