@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -69,14 +70,21 @@ public class MovieCustomerController {
     }
 
     @GetMapping("/showtimes/{showtimeId}/seats")
-    public String viewShowtimeSeats(@PathVariable Integer showtimeId, Model model) {
+    public String viewShowtimeSeats(@PathVariable Integer showtimeId, Model model, Authentication authentication) {
         Showtime showtime = showtimeRepository.findById(showtimeId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy suất chiếu ID: " + showtimeId));
 
         List<ShowtimeSeatView> seats = seatService.getSeatsForShowtime(showtimeId);
 
+        boolean isLoggedInCustomer = false;
+        if (authentication != null && authentication.isAuthenticated()) {
+            isLoggedInCustomer = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"));
+        }
+
         model.addAttribute("showtime", showtime);
         model.addAttribute("seats", seats);
+        model.addAttribute("isLoggedInCustomer", isLoggedInCustomer);
 
         return "customer/movies/seat-view";
     }

@@ -5,7 +5,12 @@ import com.cinema.hyperCinema.model.*;
 import com.cinema.hyperCinema.repository.*;
 import com.cinema.hyperCinema.security.CustomUserDetails;
 import com.cinema.hyperCinema.service.seat.SeatService;
+import com.cinema.hyperCinema.service.PaymentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,6 +34,7 @@ public class StaffDashboardController {
     private final BookingRepository bookingRepository;
     private final TicketRepository ticketRepository;
     private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
 
     @GetMapping({"/dashboard", ""})
     public String dashboard(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
@@ -170,5 +176,53 @@ public class StaffDashboardController {
 
         redirectAttributes.addFlashAttribute("successKey", "booking.checkout.success");
         return "redirect:/staff/booking";
+    }
+
+    @GetMapping("/payments")
+    public String paymentHistory(
+            @RequestParam(name = "status", required = false, defaultValue = "All") String status,
+            @RequestParam(name = "method", required = false, defaultValue = "All") String method,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model) {
+        User user = userDetails.getUser();
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Payment> paymentPage = paymentService.getPaymentHistory(user, status, method, null, null, pageable);
+
+        if (user.getBranch() != null) {
+            model.addAttribute("branchName", user.getBranch().getName());
+        } else {
+            model.addAttribute("branchName", "Chưa phân công chi nhánh");
+        }
+
+        model.addAttribute("staffName", user.getFullName());
+        model.addAttribute("payments", paymentPage);
+        model.addAttribute("status", status);
+        model.addAttribute("method", method);
+        model.addAttribute("lastUpdated", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")));
+
+        return "staff/payment/list";
+    }
+
+    @GetMapping("/payments/{paymentId}")
+    public String paymentDetail(
+            @PathVariable Integer paymentId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model) {
+        User user = userDetails.getUser();
+        Payment payment = paymentService.getPaymentById(paymentId, user);
+
+        if (user.getBranch() != null) {
+            model.addAttribute("branchName", user.getBranch().getName());
+        } else {
+            model.addAttribute("branchName", "Chưa phân công chi nhánh");
+        }
+
+        model.addAttribute("staffName", user.getFullName());
+        model.addAttribute("payment", payment);
+        model.addAttribute("lastUpdated", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")));
+
+        return "staff/payment/detail";
     }
 }

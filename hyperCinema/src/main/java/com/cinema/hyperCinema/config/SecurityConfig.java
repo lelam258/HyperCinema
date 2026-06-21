@@ -28,7 +28,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate", "/api/auth/verify-email", "/movies/**", "/movies").permitAll()
+                .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate", "/api/auth/verify-email", "/movies/**", "/movies", "/api/payment/vnpay-return").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 // ===== Branch Management — REQ 11.1, 11.2, 11.4 =====
                 // Mutation endpoints (POST/PUT/PATCH/DELETE) — Admin only
@@ -75,6 +75,8 @@ public class SecurityConfig {
                         "/admin/halls/**").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
                 .requestMatchers(HttpMethod.DELETE,
                         "/admin/halls/**").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
+                // ===== Payment Management =====
+                .requestMatchers("/admin/payments/**").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
                 // Catch-all for /admin/**
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/manager/**").hasRole("MANAGER")
