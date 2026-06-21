@@ -46,19 +46,19 @@ public class SecurityConfig {
                         "/admin/branches/*/staff/assign").hasRole("ADMIN")
                 // GET detail — Admin or Manager (REQ 11.3 refined by @PreAuthorize on controller)
                 .requestMatchers(HttpMethod.GET, "/admin/branches/*").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers(HttpMethod.POST,   "/admin/movies", "/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers(HttpMethod.PUT,    "/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers(HttpMethod.PATCH,  "/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.POST,   "/admin/movies", "/admin/movies/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT,    "/admin/movies/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH,  "/admin/movies/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/admin/movies/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST,   "/api/admin/movies", "/api/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers(HttpMethod.PUT,    "/api/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers(HttpMethod.PATCH,  "/api/admin/movies/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.POST,   "/api/admin/movies", "/api/admin/movies/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT,    "/api/admin/movies/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH,  "/api/admin/movies/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/admin/movies/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET,
                         "/admin/movies",
                         "/admin/movies/",
                         "/admin/movies/new",
-                        "/admin/movies/*/edit").hasAnyRole("ADMIN", "MANAGER")
+                        "/admin/movies/*/edit").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/admin/movies/*").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.GET,
                         "/admin/halls",
@@ -75,8 +75,6 @@ public class SecurityConfig {
                         "/admin/halls/**").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
                 .requestMatchers(HttpMethod.DELETE,
                         "/admin/halls/**").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
-                // ===== Payment Management =====
-                .requestMatchers("/admin/payments/**").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
                 // Catch-all for /admin/**
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/manager/**").hasRole("MANAGER")

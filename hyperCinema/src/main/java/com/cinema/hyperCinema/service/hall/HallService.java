@@ -1,5 +1,6 @@
 package com.cinema.hyperCinema.service.hall;
 
+import com.cinema.hyperCinema.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -9,7 +10,6 @@ import com.cinema.hyperCinema.dto.admin.hall.request.HallUpdateRequest;
 import com.cinema.hyperCinema.dto.admin.hall.response.HallDetailView;
 import com.cinema.hyperCinema.dto.admin.hall.response.HallListItem;
 import com.cinema.hyperCinema.dto.admin.hall.response.HallManagementContext;
-import com.cinema.hyperCinema.model.User;
 
 public interface HallService {
 

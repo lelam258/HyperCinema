@@ -1,7 +1,11 @@
 package com.cinema.hyperCinema.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -12,6 +16,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Integer userId;
 
 //    @Column(nullable = false, length = 100)
@@ -36,11 +41,12 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
-    @Column(length = 20)
+    @Column(nullable = false, length = 50)
     private String status = "Active";
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
+
     /**
      * Chi nhánh mà người dùng thuộc về.
      *

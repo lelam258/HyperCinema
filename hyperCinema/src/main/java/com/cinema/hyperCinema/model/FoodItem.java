@@ -1,31 +1,51 @@
 package com.cinema.hyperCinema.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.List;
 
 @Entity
-@Table(name = "Food_Item")
+@Table(name = "FoodItem")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class FoodItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer foodId;
+    @Column(name = "item_id")
+    private Integer itemId;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "category_name", nullable = false, length = 100)
+    private String categoryName;
+
+    @Column(nullable = false, length = 150)
     private String name;
+
+    @Column(nullable = false, length = 500)
+    private String description;
 
     @Column(nullable = false)
     private Integer price;
 
-    @Column(length = 50)
-    private String category;
+    @Column(nullable = false)
+    private Integer stock;
 
-    @Column(length = 20)
-    private String status;
+    @Column(name = "is_available", nullable = false)
+    private Boolean isAvailable;
 
-    @OneToMany(mappedBy = "food", cascade = CascadeType.ALL)
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
+    @OneToMany(mappedBy = "foodItem", cascade = CascadeType.ALL)
     private List<FoodOrderItem> orderItems;
+
+    @PrePersist
+    protected void onCreate() {
+        if (isAvailable == null) isAvailable = true;
+        if (stock == null) stock = 0;
+    }
 }

@@ -3,16 +3,16 @@ package com.cinema.hyperCinema.util;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.cinema.hyperCinema.model.Branch;
+import com.cinema.hyperCinema.model.BranchMovie;
+import com.cinema.hyperCinema.model.Genre;
+import com.cinema.hyperCinema.model.Movie;
 import org.springframework.stereotype.Component;
 
 import com.cinema.hyperCinema.dto.admin.movie.response.BranchAssignmentSummary;
 import com.cinema.hyperCinema.dto.admin.movie.response.GenreSummary;
 import com.cinema.hyperCinema.dto.admin.movie.response.MovieDetailView;
 import com.cinema.hyperCinema.dto.admin.movie.response.MovieListItem;
-import com.cinema.hyperCinema.model.Branch;
-import com.cinema.hyperCinema.model.BranchMovie;
-import com.cinema.hyperCinema.model.Genre;
-import com.cinema.hyperCinema.model.Movie;
 import com.cinema.hyperCinema.repository.BranchMovieRepository;
 import com.cinema.hyperCinema.repository.LanguageRepository;
 import com.cinema.hyperCinema.repository.MovieGenreRepository;

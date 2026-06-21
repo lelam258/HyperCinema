@@ -1,6 +1,7 @@
 package com.cinema.hyperCinema.repository;
 
 import com.cinema.hyperCinema.model.Booking;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -56,4 +57,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             + "GROUP BY m.title ORDER BY cnt DESC LIMIT :limit")
     List<Object[]> findTopMoviesByBranchId(@Param("branchId") Integer branchId,
                                            @Param("limit") int limit);
+
+    List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Integer userId, Pageable pageable);
 }

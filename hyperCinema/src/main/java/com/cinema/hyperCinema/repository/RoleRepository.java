@@ -1,8 +1,8 @@
 package com.cinema.hyperCinema.repository;
 
+import com.cinema.hyperCinema.model.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import com.cinema.hyperCinema.model.Role;
 
 import java.util.Optional;
 
