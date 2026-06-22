@@ -43,7 +43,9 @@
     Trace: Req 5.1, 5.4, 5.5, 5.6, 6.1, 6.2, 6.5, 4.2.
     =========================================================================
 -->
-<head th:replace="~{fragments/layout :: head(|Phân phối Phim tới Chi nhánh: ${movie.title} - HyperCinema|)}"></head>
+<head th:replace="~{fragments/layout :: head(|Phân phối Phim tới Chi nhánh: ${movie.title} - HyperCinema|)}">
+    <title>title</title>
+</head>
 <body>
 
 <header th:replace="~{fragments/layout :: adminHeader('movies')}"></header>
@@ -88,7 +90,7 @@
          phụ thuộc vào một command object trong model.
          ================================================================= -->
     <form method="post"
-          th:action="@{|/admin/movies/${movie.movieId}/branches|}">
+          th:action="@{/admin/movies/{id}/branches(id=${movie.movieId})}">
 
         <section class="panel" aria-labelledby="candidates-heading">
             <h2 id="candidates-heading">
@@ -119,7 +121,7 @@
                     <option value="" disabled selected>-- Chọn một chi nhánh --</option>
                     <option th:each="candidate : ${candidates}"
                             th:value="${candidate.branchId}"
-                            th:text="|${candidate.name} — ${candidate.city}|">
+                            th:text="|${candidate.name} - ${candidate.city}|">
                         Tên chi nhánh — Thành phố
                     </option>
                 </select>

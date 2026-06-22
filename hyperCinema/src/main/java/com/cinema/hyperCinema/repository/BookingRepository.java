@@ -13,6 +13,8 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
+    List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Integer userId);
+
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     /**

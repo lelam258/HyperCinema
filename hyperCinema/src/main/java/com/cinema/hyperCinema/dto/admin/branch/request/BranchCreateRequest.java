@@ -1,6 +1,11 @@
 package com.cinema.hyperCinema.dto.admin.branch.request;
 
+import java.time.LocalTime;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
 import com.cinema.hyperCinema.validation.BranchTimeRangeValid;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -9,8 +14,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalTime;
 
 @BranchTimeRangeValid
 @Getter
@@ -39,8 +42,10 @@ public class BranchCreateRequest {
     private String phone;
 
     @NotNull(message = "Giờ mở cửa không được để trống")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
     private LocalTime openingTime;
 
     @NotNull(message = "Giờ đóng cửa không được để trống")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
     private LocalTime closingTime;
 }

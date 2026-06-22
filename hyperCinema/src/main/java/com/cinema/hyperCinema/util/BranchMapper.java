@@ -1,5 +1,9 @@
 package com.cinema.hyperCinema.util;
 
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import com.cinema.hyperCinema.dto.admin.branch.response.BranchDetailView;
 import com.cinema.hyperCinema.dto.admin.branch.response.HallSummary;
 import com.cinema.hyperCinema.dto.admin.branch.response.UserSummary;
@@ -9,10 +13,8 @@ import com.cinema.hyperCinema.model.Role;
 import com.cinema.hyperCinema.model.User;
 import com.cinema.hyperCinema.repository.HallRepository;
 import com.cinema.hyperCinema.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
@@ -65,9 +67,9 @@ public class BranchMapper {
         return HallSummary.builder()
                 .hallId(hall.getHallId())
                 .name(hall.getName())
-                .capacity(null)
-                .hallType(null)
-                .status(null)
+                .capacity(hall.getCapacity())
+                .hallType(hall.getHallType())
+                .status(hall.getStatus())
                 .build();
     }
 

@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head(${mode == 'edit'} ? 'Chỉnh sửa phòng chiếu' : 'Tạo phòng chiếu')}"></head>
+<head th:replace="~{fragments/layout :: head(${mode == 'edit'} ? 'Chỉnh sửa phòng chiếu' : 'Tạo phòng chiếu')}">
+    <title>${mode == 'edit'} ? 'Chỉnh sửa phòng chiếu' : 'Tạo phòng chiếu</title>
+</head>
 <body class="min-h-screen">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
@@ -13,7 +15,7 @@
         </div>
 
         <div class="glass-card p-6 md:p-8">
-            <form th:object="${hall}" th:action="${mode == 'edit'} ? @{|/admin/halls/${hallId}|} : @{/admin/halls}" method="post" novalidate class="space-y-5">
+            <form th:object="${hall}" th:action="${mode == 'edit'} ? @{/admin/halls/{id}(id=${hallId})} : @{/admin/halls}" method="post" novalidate class="space-y-5">
                 <div th:if="${#fields.hasGlobalErrors()}" class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-danger/10 border border-danger/25 text-danger text-sm" role="alert">
                     <strong>Không thể lưu phòng chiếu:</strong>
                     <ul class="list-disc pl-5 space-y-0.5"><li th:each="err : ${#fields.globalErrors()}" th:text="${err}">global error</li></ul>
@@ -68,7 +70,7 @@
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
-                    <a th:href="${mode == 'edit'} ? @{|/admin/halls/${hallId}|} : @{/admin/halls}" class="px-5 py-2.5 text-sm font-medium text-slate-300 bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Hủy</a>
+                    <a th:href="@{${mode == 'edit' ? '/admin/halls/' + hallId : '/admin/halls'}}" class="px-5 py-2.5 text-sm font-medium text-slate-300 bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Hủy</a>
                     <button type="submit" th:text="${mode == 'edit'} ? 'Lưu thay đổi' : 'Tạo mới'" class="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 cursor-pointer">Tạo mới</button>
                 </div>
             </form>

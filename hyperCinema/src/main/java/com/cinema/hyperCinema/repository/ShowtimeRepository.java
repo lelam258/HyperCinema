@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 @Repository
 public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
 
+    java.util.List<Showtime> findByHall_Branch_BranchIdAndStartTimeAfterOrderByStartTimeAsc(Integer branchId, java.time.LocalDateTime now);
+
     /**
      * Check whether the given branch has at least one Showtime whose
      * start time is strictly after the supplied moment.

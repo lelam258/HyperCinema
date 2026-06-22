@@ -1,0 +1,45 @@
+{
+  "view": "admin/branches/assign-staff",
+  "title": "Gán Staff cho Chi nhánh: CGV Vincom - HyperCinema",
+  "links": [
+    "/admin/branches",
+    "/admin/branches/11"
+  ],
+  "i18nKeys": [
+    "#{${errorKey}}",
+    "#{${successKey}}"
+  ],
+  "forms": [
+    {
+      "action": "/admin/branches/11/staff",
+      "method": "post",
+      "fields": [
+        "select:userId=options[|31];selected=",
+        "select:managerId=options[|21];selected=",
+        "submit:Gán Staff"
+      ]
+    }
+  ],
+  "tables": [],
+  "pagination": null,
+  "text": [
+    "Quản lý Chi nhánh",
+    "/",
+    "CGV Vincom",
+    "/",
+    "Gán Staff",
+    "Gán Staff cho Chi nhánh: CGV Vincom",
+    "Hà Nội",
+    "·",
+    "191 Bà Triệu",
+    "Thông tin gán Staff",
+    "Nhân viên (Staff)",
+    "-- Chọn Staff chưa được gán --",
+    "Trần Thị B (b@example.com)",
+    "Quản lý của Chi nhánh (Manager)",
+    "-- Chọn Manager của Chi nhánh --",
+    "Nguyễn Văn A (a@example.com)",
+    "Hủy",
+    "Gán Staff"
+  ]
+}

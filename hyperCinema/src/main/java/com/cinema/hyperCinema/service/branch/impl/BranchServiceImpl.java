@@ -1,30 +1,40 @@
 package com.cinema.hyperCinema.service.branch.impl;
 
-import com.cinema.hyperCinema.dto.admin.branch.request.BranchCreateRequest;
-import com.cinema.hyperCinema.dto.admin.branch.request.BranchSearchCriteria;
-import com.cinema.hyperCinema.dto.admin.branch.request.BranchUpdateRequest;
-import com.cinema.hyperCinema.dto.admin.branch.response.*;
-import com.cinema.hyperCinema.exception.branch.BranchNotFoundException;
-import com.cinema.hyperCinema.exception.branch.BranchValidationException;
-import com.cinema.hyperCinema.model.Branch;
-import com.cinema.hyperCinema.model.User;
-import com.cinema.hyperCinema.repository.*;
-import com.cinema.hyperCinema.service.audit.BranchAuditLogger;
-import com.cinema.hyperCinema.service.branch.BranchDiffer;
-import com.cinema.hyperCinema.service.branch.BranchService;
-import com.cinema.hyperCinema.validation.BranchValidator;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.cinema.hyperCinema.util.BranchMapper;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchCreateRequest;
+import com.cinema.hyperCinema.dto.admin.branch.response.BranchDetailView;
+import com.cinema.hyperCinema.dto.admin.branch.response.BranchListItem;
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchSearchCriteria;
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchUpdateRequest;
+import com.cinema.hyperCinema.dto.admin.branch.response.FieldChange;
+import com.cinema.hyperCinema.dto.admin.branch.response.UpdateResult;
+import com.cinema.hyperCinema.dto.admin.branch.response.UserSummary;
+import com.cinema.hyperCinema.exception.branch.BranchNotFoundException;
+import com.cinema.hyperCinema.exception.branch.BranchValidationException;
+import com.cinema.hyperCinema.model.Branch;
+import com.cinema.hyperCinema.model.User;
+import com.cinema.hyperCinema.repository.BranchRepository;
+import com.cinema.hyperCinema.repository.BranchSpecifications;
+import com.cinema.hyperCinema.repository.HallRepository;
+import com.cinema.hyperCinema.repository.ShowtimeRepository;
+import com.cinema.hyperCinema.repository.UserRepository;
+import com.cinema.hyperCinema.service.audit.BranchAuditLogger;
+import com.cinema.hyperCinema.service.branch.BranchDiffer;
+import com.cinema.hyperCinema.service.branch.BranchService;
+import com.cinema.hyperCinema.util.BranchMapper;
+import com.cinema.hyperCinema.validation.BranchValidator;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Transactional
@@ -55,10 +65,10 @@ public class BranchServiceImpl implements BranchService {
         branchValidator.validateCreate(request);
 
         Branch entity = new Branch();
-        entity.setName(request.getName());
-        entity.setAddress(request.getAddress());
-        entity.setCity(request.getCity());
-        entity.setPhone(request.getPhone());
+        entity.setName(normalizeText(request.getName()));
+        entity.setAddress(normalizeText(request.getAddress()));
+        entity.setCity(normalizeText(request.getCity()));
+        entity.setPhone(normalizeText(request.getPhone()));
         entity.setOpeningTime(request.getOpeningTime());
         entity.setClosingTime(request.getClosingTime());
         entity.setStatus("Active");
@@ -257,6 +267,24 @@ public class BranchServiceImpl implements BranchService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserSummary> listUnassignedStaff() {
+        return userRepository.findUnassignedStaff().stream()
+                .map(BranchMapper::toUserSummary)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserSummary> listManagersForBranch(Integer branchId) {
+        branchRepository.findById(branchId)
+                .orElseThrow(() -> new BranchNotFoundException(branchId));
+        return userRepository.findManagersByBranchId(branchId).stream()
+                .map(BranchMapper::toUserSummary)
+                .toList();
+    }
+
     private static Branch snapshot(Branch source) {
         Branch copy = new Branch();
         copy.setBranchId(source.getBranchId());
@@ -272,12 +300,16 @@ public class BranchServiceImpl implements BranchService {
     }
 
     private static void applyRequest(Branch target, BranchUpdateRequest request) {
-        target.setName(request.getName());
-        target.setAddress(request.getAddress());
-        target.setCity(request.getCity());
-        target.setPhone(request.getPhone());
+        target.setName(normalizeText(request.getName()));
+        target.setAddress(normalizeText(request.getAddress()));
+        target.setCity(normalizeText(request.getCity()));
+        target.setPhone(normalizeText(request.getPhone()));
         target.setOpeningTime(request.getOpeningTime());
         target.setClosingTime(request.getClosingTime());
+    }
+
+    private static String normalizeText(String value) {
+        return value == null ? null : value.trim();
     }
 
     private void auditSafe(Runnable auditAction) {

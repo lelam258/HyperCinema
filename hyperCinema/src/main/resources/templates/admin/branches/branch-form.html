@@ -1,289 +1,99 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${mode == 'edit'} ? 'Chỉnh sửa Chi nhánh' : 'Tạo Chi nhánh'">Tạo Chi nhánh</title>
-
-    <!--
-        Branch_Form_View — dùng chung cho hai luồng nghiệp vụ:
-            * mode = "create"  -> POST /admin/branches              (REQ 2.1, 2.4, 3.8)
-            * mode = "edit"    -> POST /admin/branches/{branchId}   (REQ 6.1, 6.5)
-
-        Model attributes do BranchController truyền vào:
-            * branch    — DTO th:object (BranchCreateRequest hoặc BranchUpdateRequest)
-            * mode      — "create" | "edit"
-            * branchId  — Integer, chỉ có khi mode == "edit"
-            * infoKey   — i18n key, set ở update no-op (REQ 6.5)
-
-        BindingResult đính kèm tự động bởi Spring khi @Valid sinh lỗi.
-        Trace: Requirements 2.1, 2.4, 3.8, 6.1, 6.5.
-    -->
-    <style>
-        :root {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --primary-color: #ff3b30;
-            --text-primary: #ffffff;
-            --text-secondary: #aaaaaa;
-            --border-color: #333333;
-            --error-color: #ff3b30;
-            --info-color: #0a84ff;
-        }
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 40px 20px;
-        }
-        .form-container {
-            background-color: var(--surface-color);
-            padding: 32px 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 640px;
-            border: 1px solid var(--border-color);
-        }
-        .form-container h2 {
-            margin-top: 0;
-            margin-bottom: 24px;
-            font-weight: 600;
-            font-size: 24px;
-        }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-        .form-group {
-            margin-bottom: 18px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            background-color: #2a2a2a;
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: inherit;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-        .form-group input.is-invalid {
-            border-color: var(--error-color);
-        }
-        .field-error {
-            display: block;
-            margin-top: 6px;
-            color: var(--error-color);
-            font-size: 13px;
-        }
-        .alert {
-            padding: 12px 14px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        .alert-error {
-            background-color: rgba(255, 59, 48, 0.1);
-            color: var(--error-color);
-            border: 1px solid rgba(255, 59, 48, 0.25);
-        }
-        .alert-error ul {
-            margin: 4px 0 0 0;
-            padding-left: 20px;
-        }
-        .alert-info {
-            background-color: rgba(10, 132, 255, 0.1);
-            color: var(--info-color);
-            border: 1px solid rgba(10, 132, 255, 0.25);
-        }
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            margin-top: 24px;
-        }
-        .btn {
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            line-height: 1.2;
-            border: 1px solid transparent;
-            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-        }
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: #ffffff;
-            border-color: var(--primary-color);
-        }
-        .btn-primary:hover {
-            background-color: #e0352b;
-            border-color: #e0352b;
-        }
-        .btn-secondary {
-            background-color: transparent;
-            color: var(--text-secondary);
-            border-color: var(--border-color);
-        }
-        .btn-secondary:hover {
-            color: var(--text-primary);
-            border-color: var(--text-secondary);
-        }
-        @media (max-width: 540px) {
-            .form-row { grid-template-columns: 1fr; gap: 0; }
-        }
-    </style>
+<!--
+    Branch Form — Tailwind CSS Rebuild.
+    Dùng chung cho create (POST /admin/branches) và edit (POST /admin/branches/{branchId}).
+    Giữ nguyên 100% Thymeleaf bindings.
+-->
+<head th:replace="~{fragments/layout :: head(${mode == 'edit'} ? 'Chỉnh sửa Chi nhánh' : 'Tạo Chi nhánh')}">
+    <title>${mode == 'edit'} ? 'Chỉnh sửa Chi nhánh' : 'Tạo Chi nhánh</title>
 </head>
-<body>
-    <div class="form-container">
+<body class="min-h-screen">
 
-        <!-- Tiêu đề trang theo mode (REQ 2.1, 6.1) -->
-        <h2 th:text="${mode == 'edit'} ? 'Chỉnh sửa Chi nhánh' : 'Tạo Chi nhánh'">Tạo Chi nhánh</h2>
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('branches')}"></nav>
 
-        <!--
-            Info banner cho update no-op (REQ 6.5).
-            Controller set infoKey = "branch.update.no_change" khi không có
-            field nào thay đổi. Render qua #{__${infoKey}__} để Thymeleaf
-            resolve i18n message với key động.
-        -->
-        <div th:if="${infoKey != null}" class="alert alert-info"
-             th:text="#{__${infoKey}__}">
-            Không có thay đổi nào được lưu.
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-3xl mx-auto px-6 py-8">
+
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-white tracking-tight" th:text="${mode == 'edit'} ? 'Chỉnh sửa Chi nhánh' : 'Tạo Chi nhánh'">Tạo Chi nhánh</h1>
         </div>
 
-        <!--
-            Form action điều hướng theo mode:
-                create -> POST /admin/branches            (REQ 2.1, 2.4, 3.8)
-                edit   -> POST /admin/branches/{branchId} (REQ 6.1)
-            DTO bind dưới tên "branch" để khớp với BranchController.
-        -->
-        <form th:object="${branch}"
-              th:action="${mode == 'edit'} ? @{|/admin/branches/${branchId}|} : @{/admin/branches}"
-              method="post"
-              novalidate>
+        <div class="glass-card p-6 md:p-8">
 
-            <!--
-                Global errors (lỗi không gắn với field cụ thể) — vd.
-                business rule duplicate (city, name) hoặc time range invalid
-                được service reject qua bindingResult.reject(key) tại
-                BranchController#create / update (REQ 2.4, 3.8).
-            -->
-            <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-error" role="alert">
-                <strong>Không thể lưu thay đổi:</strong>
-                <ul>
-                    <li th:each="err : ${#fields.globalErrors()}" th:text="${err}">global error</li>
-                </ul>
-            </div>
+            <!-- Info banner for no-op update -->
+            <div th:if="${infoKey != null}" class="flex items-center gap-2 px-4 py-3 mb-4 rounded-xl bg-info/10 border border-info/25 text-info text-sm" th:text="#{__${infoKey}__}">Không có thay đổi nào được lưu.</div>
 
-            <!-- Tên chi nhánh (REQ 3.1) -->
-            <div class="form-group">
-                <label for="name">Tên chi nhánh</label>
-                <input type="text" id="name" th:field="*{name}"
-                       th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''"
-                       maxlength="150" autocomplete="off" required>
-                <span class="field-error"
-                      th:if="${#fields.hasErrors('name')}"
-                      th:errors="*{name}">Lỗi tên chi nhánh</span>
-            </div>
+            <form th:object="${branch}" th:action="${mode == 'edit'} ? @{/admin/branches/{id}(id=${branchId})} : @{/admin/branches}" method="post" novalidate class="space-y-5">
 
-            <!-- Địa chỉ (REQ 3.2) -->
-            <div class="form-group">
-                <label for="address">Địa chỉ</label>
-                <input type="text" id="address" th:field="*{address}"
-                       th:classappend="${#fields.hasErrors('address')} ? 'is-invalid' : ''"
-                       maxlength="255" autocomplete="off" required>
-                <span class="field-error"
-                      th:if="${#fields.hasErrors('address')}"
-                      th:errors="*{address}">Lỗi địa chỉ</span>
-            </div>
-
-            <!-- Thành phố (REQ 3.3) -->
-            <div class="form-group">
-                <label for="city">Thành phố</label>
-                <input type="text" id="city" th:field="*{city}"
-                       th:classappend="${#fields.hasErrors('city')} ? 'is-invalid' : ''"
-                       maxlength="100" autocomplete="off" required>
-                <span class="field-error"
-                      th:if="${#fields.hasErrors('city')}"
-                      th:errors="*{city}">Lỗi thành phố</span>
-            </div>
-
-            <!-- Số điện thoại (REQ 3.4) -->
-            <div class="form-group">
-                <label for="phone">Số điện thoại</label>
-                <input type="text" id="phone" th:field="*{phone}"
-                       th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid' : ''"
-                       placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx"
-                       maxlength="13" autocomplete="off" required>
-                <span class="field-error"
-                      th:if="${#fields.hasErrors('phone')}"
-                      th:errors="*{phone}">Lỗi số điện thoại</span>
-            </div>
-
-            <div class="form-row">
-                <!-- Giờ mở cửa (REQ 3.6) -->
-                <div class="form-group">
-                    <label for="openingTime">Giờ mở cửa</label>
-                    <input type="time" id="openingTime" th:field="*{openingTime}"
-                           th:classappend="${#fields.hasErrors('openingTime')} ? 'is-invalid' : ''"
-                           required>
-                    <span class="field-error"
-                          th:if="${#fields.hasErrors('openingTime')}"
-                          th:errors="*{openingTime}">Lỗi giờ mở cửa</span>
+                <!-- Global errors -->
+                <div th:if="${#fields.hasGlobalErrors()}" class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-danger/10 border border-danger/25 text-danger text-sm" role="alert">
+                    <strong>Không thể lưu thay đổi:</strong>
+                    <ul class="list-disc pl-5 space-y-0.5"><li th:each="err : ${#fields.globalErrors()}" th:text="${err}">global error</li></ul>
                 </div>
 
-                <!-- Giờ đóng cửa (REQ 3.6) -->
-                <div class="form-group">
-                    <label for="closingTime">Giờ đóng cửa</label>
-                    <input type="time" id="closingTime" th:field="*{closingTime}"
-                           th:classappend="${#fields.hasErrors('closingTime')} ? 'is-invalid' : ''"
-                           required>
-                    <span class="field-error"
-                          th:if="${#fields.hasErrors('closingTime')}"
-                          th:errors="*{closingTime}">Lỗi giờ đóng cửa</span>
+                <!-- Tên chi nhánh -->
+                <div>
+                    <label for="name" class="block text-sm font-medium text-slate-400 mb-2">Tên chi nhánh</label>
+                    <input type="text" id="name" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? ' border-danger!' : ''" maxlength="150" autocomplete="off" required
+                           class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                    <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="block text-xs text-danger mt-1"></span>
                 </div>
-            </div>
 
-            <div class="form-actions">
-                <!--
-                    Cancel: trả về detail khi edit (giữ context Chi nhánh
-                    đang xem) hoặc list khi create. Dùng <a> thay vì button
-                    type="reset" vì người dùng kỳ vọng "huỷ" rời khỏi form.
-                -->
-                <a class="btn btn-secondary"
-                   th:href="${mode == 'edit'} ? @{|/admin/branches/${branchId}|} : @{/admin/branches}">
-                    Hủy
-                </a>
+                <!-- Địa chỉ -->
+                <div>
+                    <label for="address" class="block text-sm font-medium text-slate-400 mb-2">Địa chỉ</label>
+                    <input type="text" id="address" th:field="*{address}" th:classappend="${#fields.hasErrors('address')} ? ' border-danger!' : ''" maxlength="255" autocomplete="off" required
+                           class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                    <span th:if="${#fields.hasErrors('address')}" th:errors="*{address}" class="block text-xs text-danger mt-1"></span>
+                </div>
 
-                <!-- Submit text theo mode (REQ 2.1 vs 6.1) -->
-                <button type="submit" class="btn btn-primary"
-                        th:text="${mode == 'edit'} ? 'Lưu thay đổi' : 'Tạo mới'">
-                    Tạo mới
-                </button>
-            </div>
-        </form>
+                <!-- Thành phố -->
+                <div>
+                    <label for="city" class="block text-sm font-medium text-slate-400 mb-2">Thành phố</label>
+                    <input type="text" id="city" th:field="*{city}" th:classappend="${#fields.hasErrors('city')} ? ' border-danger!' : ''" maxlength="100" autocomplete="off" required
+                           class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                    <span th:if="${#fields.hasErrors('city')}" th:errors="*{city}" class="block text-xs text-danger mt-1"></span>
+                </div>
+
+                <!-- Số điện thoại -->
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-slate-400 mb-2">Số điện thoại</label>
+                    <input type="text" id="phone" th:field="*{phone}" th:classappend="${#fields.hasErrors('phone')} ? ' border-danger!' : ''" placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx" maxlength="13" autocomplete="off" required
+                           class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                    <span th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}" class="block text-xs text-danger mt-1"></span>
+                </div>
+
+                <!-- Giờ mở cửa / đóng cửa -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="openingTime" class="block text-sm font-medium text-slate-400 mb-2">Giờ mở cửa</label>
+                        <input type="time" id="openingTime" th:field="*{openingTime}" th:classappend="${#fields.hasErrors('openingTime')} ? ' border-danger!' : ''" required
+                               class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                        <span th:if="${#fields.hasErrors('openingTime')}" th:errors="*{openingTime}" class="block text-xs text-danger mt-1"></span>
+                    </div>
+                    <div>
+                        <label for="closingTime" class="block text-sm font-medium text-slate-400 mb-2">Giờ đóng cửa</label>
+                        <input type="time" id="closingTime" th:field="*{closingTime}" th:classappend="${#fields.hasErrors('closingTime')} ? ' border-danger!' : ''" required
+                               class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                        <span th:if="${#fields.hasErrors('closingTime')}" th:errors="*{closingTime}" class="block text-xs text-danger mt-1"></span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
+                    <a th:href="@{${mode == 'edit' ? '/admin/branches/' + branchId : '/admin/branches'}}"
+                       class="px-5 py-2.5 text-sm font-medium text-slate-300 bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Hủy</a>
+                    <button type="submit" th:text="${mode == 'edit'} ? 'Lưu thay đổi' : 'Tạo mới'"
+                            class="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 cursor-pointer">Tạo mới</button>
+                </div>
+            </form>
+        </div>
+
     </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
 </body>
 </html>

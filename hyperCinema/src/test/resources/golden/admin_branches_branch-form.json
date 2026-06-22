@@ -1,0 +1,36 @@
+{
+  "view": "admin/branches/branch-form",
+  "title": "Tạo Chi nhánh",
+  "links": [],
+  "i18nKeys": [
+    "#{__${infoKey}__}"
+  ],
+  "forms": [
+    {
+      "action": "/admin/branches",
+      "method": "post",
+      "fields": [
+        "name(text)=Chi nh&aacute;nh mới",
+        "address(text)=123 Đường ABC",
+        "city(text)=Đ&agrave; Nẵng",
+        "phone(text)=0905123456",
+        "openingTime(time)=09:00",
+        "closingTime(time)=22:00",
+        "submit:Tạo mới"
+      ]
+    }
+  ],
+  "tables": [],
+  "pagination": null,
+  "text": [
+    "Tạo Chi nhánh",
+    "Tên chi nhánh",
+    "Địa chỉ",
+    "Thành phố",
+    "Số điện thoại",
+    "Giờ mở cửa",
+    "Giờ đóng cửa",
+    "Hủy",
+    "Tạo mới"
+  ]
+}

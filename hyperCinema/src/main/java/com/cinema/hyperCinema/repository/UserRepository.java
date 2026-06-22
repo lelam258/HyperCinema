@@ -33,7 +33,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * <p>Dùng cho authentication flow để tránh LazyInitializationException
      * khi truy cập role.name ngoài Hibernate session.</p>
      */
-    @Query("SELECT u FROM User u JOIN FETCH u.role WHERE u.username = :username")
+    @Query("SELECT u FROM User u JOIN FETCH u.role LEFT JOIN FETCH u.branch WHERE u.username = :username")
     Optional<User> findByUsernameWithRole(@Param("username") String username);
 
     /**
@@ -42,7 +42,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * <p>Dùng cho authentication flow để tránh LazyInitializationException
      * khi truy cập role.name ngoài Hibernate session.</p>
      */
-    @Query("SELECT u FROM User u JOIN FETCH u.role WHERE u.email = :email")
+    @Query("SELECT u FROM User u JOIN FETCH u.role LEFT JOIN FETCH u.branch WHERE u.email = :email")
     Optional<User> findByEmailWithRole(@Param("email") String email);
 
     boolean existsByUsername(String username);

@@ -1,0 +1,29 @@
+{
+  "view": "admin/index",
+  "title": "Trang quản trị - HyperCinema",
+  "links": [
+    "/admin",
+    "/admin/branches",
+    "/admin/movies"
+  ],
+  "i18nKeys": [],
+  "forms": [],
+  "tables": [],
+  "pagination": null,
+  "text": [
+    "HyperCinema",
+    "Quản lý Phim",
+    "Quản lý Chi nhánh",
+    "Trang quản trị",
+    "Chọn một mục bên dưới để bắt đầu quản lý.",
+    "Đây là trang điều hướng tạm thời. Khi hệ thống có layout quản trị dùng chung (sidebar/menu), các liên kết bên dưới sẽ được chuyển vào layout đó.",
+    "Quản lý Chi nhánh",
+    "Tạo, tìm kiếm, cập nhật và phân công nhân sự cho các chi nhánh rạp chiếu.",
+    "Mở →",
+    "Quản lý Phim",
+    "Tạo, tìm kiếm, cập nhật, đổi trạng thái phát hành, gắn thể loại và phân phối phim tới các chi nhánh.",
+    "Mở →",
+    "HyperCinema",
+    "© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim."
+  ]
+}

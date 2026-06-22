@@ -154,7 +154,7 @@
                         <td class="row-index" th:text="${uStat.count}">1</td>
                         <td>
                             <div style="display: flex; flex-direction: column; gap: 0.15rem;">
-                                <a th:href="@{/admin/users/{id}(id=${u.userId})}" th:text="${u.fullName}" style="color: var(--text-primary); font-weight: 600; text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='#4f46e5'" onmouseout="this.style.color='var(--text-primary)'">John Admin</a>
+                                <a th:href="@{/admin/users/{id}(id=${u.userId})}" th:text="${u.name}" style="color: var(--text-primary); font-weight: 600; text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='#4f46e5'" onmouseout="this.style.color='var(--text-primary)'">John Admin</a>
                                 <span th:text="'@' + ${u.username}" style="color: var(--text-muted); font-size: 0.8rem;">john.admin</span>
                             </div>
                         </td>
@@ -172,7 +172,7 @@
                                 <a th:href="@{/admin/users/{id}(id=${u.userId})}" class="action-btn" title="View Details">
                                     <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
                                 </a>
-                                <button class="action-btn" title="Update User" th:onclick="openEditModal([[${u.userId}]], [[${u.fullName}]], [[${u.username}]], [[${u.email}]], [[${u.phone}]], [[${u.role != null ? u.role.roleId : null}]], [[${u.status}]])">
+                                <button class="action-btn" title="Update User" th:onclick="openEditModal([[${u.userId}]], [[${u.name}]], [[${u.username}]], [[${u.email}]], [[${u.phone}]], [[${u.role != null ? u.role.roleId : null}]], [[${u.status}]])">
                                     <i data-lucide="edit-3" style="width: 16px; height: 16px;"></i>
                                 </button>
                                 <div class="action-dropdown-wrapper">
@@ -665,7 +665,7 @@
                 showToast('User created successfully!');
                 setTimeout(() => window.location.reload(), 1000);
             } else {
-                return response.json().then(err => { throw new Error(err.message || 'Failed to create user') });
+                return response.json().then(err => { throw new Error(err['message'] || 'Failed to create user') });
             }
         })
         .catch(error => {
@@ -696,7 +696,7 @@
                 showToast('User updated successfully!');
                 setTimeout(() => window.location.reload(), 1000);
             } else {
-                return response.json().then(err => { throw new Error(err.message || 'Failed to update user') });
+                return response.json().then(err => { throw new Error(err['message'] || 'Failed to update user') });
             }
         })
         .catch(error => {
@@ -720,7 +720,7 @@
                 showToast('Role assigned successfully!');
                 setTimeout(() => window.location.reload(), 1000);
             } else {
-                return response.json().then(err => { throw new Error(err.message || 'Failed to assign role') });
+                return response.json().then(err => { throw new Error(err['message'] || 'Failed to assign role') });
             }
         })
         .catch(error => {
@@ -744,7 +744,7 @@
                 showToast('Password reset successfully!');
                 closeModal('resetPasswordModal');
             } else {
-                return response.json().then(err => { throw new Error(err.message || 'Failed to reset password') });
+                return response.json().then(err => { throw new Error(err['message'] || 'Failed to reset password') });
             }
         })
         .catch(error => {
@@ -781,7 +781,7 @@
                     showToast('User deleted successfully!');
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
-                    return response.json().then(err => { throw new Error(err.message || 'Failed to delete user') });
+                    return response.json().then(err => { throw new Error(err['message'] || 'Failed to delete user') });
                 }
             })
             .catch(error => {
