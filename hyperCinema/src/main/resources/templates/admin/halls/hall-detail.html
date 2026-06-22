@@ -1,12 +1,8 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<<<<<<< HEAD
 <head th:replace="~{fragments/layout :: head(|Chi tiết phòng chiếu - ${hall.name} - HyperCinema|)}">
     <title>Chi tiết phòng chiếu - ${hall.name} - HyperCinema</title>
 </head>
-=======
-<head th:replace="~{fragments/layout :: head(|Chi tiết phòng chiếu - ${hall.name} - HyperCinema|)}"></head>
->>>>>>> 3734b1a8276519803e392a0863c1d377b240d3d2
 <body class="min-h-screen">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
@@ -22,10 +18,7 @@
 
         <div th:replace="~{fragments/components :: flashes}"></div>
 
-<<<<<<< HEAD
         <!-- Hall Info Header -->
-=======
->>>>>>> 3734b1a8276519803e392a0863c1d377b240d3d2
         <div class="glass-card p-6 mb-6">
             <div class="flex flex-wrap justify-between items-start gap-4">
                 <div>
@@ -33,20 +26,12 @@
                     <p class="text-sm text-slate-400 mt-1" th:text="|${hall.branchName} - ${hall.city}|">Branch</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-<<<<<<< HEAD
                     <a th:href="@{'/admin/halls/{id}/edit'(id=${hall.hallId})}" class="px-4 py-2 text-sm font-medium text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Chỉnh sửa</a>
-=======
-                    <a th:href="@{|/admin/halls/${hall.hallId}/edit|}" class="px-4 py-2 text-sm font-medium text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Chỉnh sửa</a>
->>>>>>> 3734b1a8276519803e392a0863c1d377b240d3d2
                 </div>
             </div>
         </div>
 
-<<<<<<< HEAD
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-=======
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
->>>>>>> 3734b1a8276519803e392a0863c1d377b240d3d2
             <div class="glass-card p-6">
                 <h2 class="text-lg font-semibold text-white mb-4">Thông tin phòng</h2>
                 <div class="space-y-4">
@@ -55,11 +40,7 @@
                     <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Loại phòng</span><span class="text-white" th:text="${hall.hallType}">2D</span></div>
                     <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Trạng thái</span><span class="text-white" th:text="${hall.status}">Active</span></div>
                     <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Sức chứa</span><span class="text-white tabular-nums" th:text="${hall.capacity}">0</span></div>
-<<<<<<< HEAD
                     <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Số ghế đã cấu hình</span><span class="text-white tabular-nums" th:text="${hall.seatCount}">0</span></div>
-=======
-                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Số ghế</span><span class="text-white tabular-nums" th:text="${hall.seatCount}">0</span></div>
->>>>>>> 3734b1a8276519803e392a0863c1d377b240d3d2
                     <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Số suất chiếu</span><span class="text-white tabular-nums" th:text="${hall.showtimeCount}">0</span></div>
                 </div>
             </div>
@@ -73,7 +54,6 @@
             </div>
         </div>
 
-<<<<<<< HEAD
         <!-- Seat Management Section -->
         <div class="glass-card p-6">
             <div class="flex items-center justify-between gap-4 flex-wrap mb-6 border-b border-white/[0.06] pb-4">
@@ -231,11 +211,5 @@
     }
 </script>
 
-=======
-    </div>
-    <footer th:replace="~{fragments/layout :: footer}"></footer>
-</main>
-
->>>>>>> 3734b1a8276519803e392a0863c1d377b240d3d2
 </body>
 </html>
