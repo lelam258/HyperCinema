@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+    Movie status badge fragment.
+
+    Usage:
+        <th:block th:replace="~{admin/movies/_status-badge :: statusBadge(${movie.status})}"></th:block>
+
+    Renders a single coloured <span> badge for one of the three movie
+    release statuses, with a distinct colour palette per value:
+
+        ComingSoon  -> blue  / accent   (#0a84ff)
+        NowShowing  -> green / success  (#30d158)
+        Ended       -> grey  / muted    (#aaaaaa)
+
+    The status text is escaped via th:text (never th:utext) so any
+    untrusted value is safely rendered.
+
+    Trace: Requirement 7.6
+-->
+<th:block th:fragment="statusBadge(status)" th:switch="${status}">
+
+    <span th:case="'ComingSoon'"
+          style="display: inline-block;
+                 padding: 4px 10px;
+                 border-radius: 999px;
+                 font-family: 'Inter', sans-serif;
+                 font-size: 12px;
+                 font-weight: 600;
+                 line-height: 1;
+                 letter-spacing: 0.3px;
+                 text-transform: uppercase;
+                 background-color: rgba(10, 132, 255, 0.15);
+                 color: #0a84ff;
+                 border: 1px solid rgba(10, 132, 255, 0.35);"
+          th:text="${status}">ComingSoon</span>
+
+    <span th:case="'NowShowing'"
+          style="display: inline-block;
+                 padding: 4px 10px;
+                 border-radius: 999px;
+                 font-family: 'Inter', sans-serif;
+                 font-size: 12px;
+                 font-weight: 600;
+                 line-height: 1;
+                 letter-spacing: 0.3px;
+                 text-transform: uppercase;
+                 background-color: rgba(48, 209, 88, 0.15);
+                 color: #30d158;
+                 border: 1px solid rgba(48, 209, 88, 0.35);"
+          th:text="${status}">NowShowing</span>
+
+    <span th:case="'Ended'"
+          style="display: inline-block;
+                 padding: 4px 10px;
+                 border-radius: 999px;
+                 font-family: 'Inter', sans-serif;
+                 font-size: 12px;
+                 font-weight: 600;
+                 line-height: 1;
+                 letter-spacing: 0.3px;
+                 text-transform: uppercase;
+                 background-color: rgba(170, 170, 170, 0.15);
+                 color: #aaaaaa;
+                 border: 1px solid rgba(170, 170, 170, 0.35);"
+          th:text="${status}">Ended</span>
+
+    <span th:case="*"
+          style="display: inline-block;
+                 padding: 4px 10px;
+                 border-radius: 999px;
+                 font-family: 'Inter', sans-serif;
+                 font-size: 12px;
+                 font-weight: 600;
+                 line-height: 1;
+                 letter-spacing: 0.3px;
+                 text-transform: uppercase;
+                 background-color: rgba(170, 170, 170, 0.15);
+                 color: #aaaaaa;
+                 border: 1px solid rgba(170, 170, 170, 0.35);"
+          th:text="${status} ?: 'Unknown'">Unknown</span>
+
+</th:block>
+
+</body>
+</html>

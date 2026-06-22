@@ -5,10 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.data.jpa.domain.Specification;
-
 import com.cinema.hyperCinema.model.Movie;
 import com.cinema.hyperCinema.model.MovieGenre;
+import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;

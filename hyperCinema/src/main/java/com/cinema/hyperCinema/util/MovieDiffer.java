@@ -5,11 +5,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import com.cinema.hyperCinema.model.Movie;
 import org.springframework.stereotype.Component;
 
 import com.cinema.hyperCinema.dto.admin.movie.request.MovieUpdateRequest;
 import com.cinema.hyperCinema.dto.admin.movie.response.FieldChange;
-import com.cinema.hyperCinema.model.Movie;
 
 @Component
 public class MovieDiffer {

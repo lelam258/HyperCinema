@@ -8,7 +8,6 @@ import com.cinema.hyperCinema.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,11 +69,6 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Email already exists: " + user.getEmail());
         }
 
-        // Sửa lỗi: Gán giá trị mặc định cho fullName nếu chưa có để không bị lỗi null ở database
-        if (user.getFullName() == null) {
-            user.setFullName(user.getName());
-        }
-
         if (user.getRole() == null || user.getRole().getRoleId() == null) {
             // Default to Viewer if no role specified
             Role defaultRole = roleRepository.findByName("Viewer")
@@ -104,8 +98,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Email already exists: " + userDetails.getEmail());
         }
 
-        user.setName(userDetails.getName());
-        user.setFullName(userDetails.getName()); // Sửa lỗi: Cập nhật đồng bộ trường fullName
+//        user.setName(userDetails.getName());
         user.setUsername(userDetails.getUsername());
         user.setEmail(userDetails.getEmail());
         user.setPhone(userDetails.getPhone());
@@ -152,7 +145,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User resetUserPassword(Integer id, String newPassword) {
         User user = getUserById(id);
-        user.setPasswordHash(newPassword); // Sửa lỗi: Đổi từ setPassword sang setPasswordHash (Dòng 149)
+        user.setPasswordHash(newPassword); // In production, this would be encrypted
         return userRepository.save(user);
     }
 

@@ -1,5 +1,6 @@
 package com.cinema.hyperCinema.service.movie;
 
+import com.cinema.hyperCinema.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -9,7 +10,6 @@ import com.cinema.hyperCinema.dto.admin.movie.request.MovieUpdateRequest;
 import com.cinema.hyperCinema.dto.admin.movie.response.MovieDetailView;
 import com.cinema.hyperCinema.dto.admin.movie.response.MovieListItem;
 import com.cinema.hyperCinema.dto.admin.movie.response.UpdateResult;
-import com.cinema.hyperCinema.model.User;
 
 public interface MovieService {
 
@@ -33,4 +33,3 @@ public interface MovieService {
 
     void unassignBranch(Integer movieId, Integer branchId, User admin);
 }
-
