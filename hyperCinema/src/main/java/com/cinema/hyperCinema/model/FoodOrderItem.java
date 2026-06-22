@@ -1,29 +1,37 @@
 package com.cinema.hyperCinema.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name = "Food_Order_Item")
+@Table(name = "FoodOrderItem")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
+@IdClass(FoodOrderItemId.class)
 public class FoodOrderItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "order_id")
+    private Integer orderId;
+
+    @Id
+    @Column(name = "item_id")
+    private Integer itemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "food_order_id")
+    @JoinColumn(name = "order_id", insertable = false, updatable = false)
     private FoodOrder foodOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "food_id")
-    private FoodItem food;
+    @JoinColumn(name = "item_id", insertable = false, updatable = false)
+    private FoodItem foodItem;
 
     @Column(nullable = false)
     private Integer quantity;
 
-    @Column(nullable = false)
-    private Integer price;
+    @Column(name = "unit_price", nullable = false)
+    private Integer unitPrice;
 }

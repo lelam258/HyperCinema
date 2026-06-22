@@ -1,38 +1,44 @@
 package com.cinema.hyperCinema.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "Food_Order")
+@Table(name = "FoodOrder")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class FoodOrder {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer foodOrderId;
+    @Column(name = "order_id")
+    private Integer orderId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "booking_id")
+    @JoinColumn(name = "booking_id", nullable = false)
     private Booking booking;
 
-    @Column(name = "total_price", nullable = false)
-    private Long totalPrice;
-
-    @Column(length = 20)
+    @Column(nullable = false, length = 50)
     private String status;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "total_amount", nullable = false)
+    private Integer totalAmount;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "foodOrder", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "foodOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FoodOrderItem> items;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (status == null) status = "PENDING";
     }
 }

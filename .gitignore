@@ -46,3 +46,4 @@ hyperCinema/check-jar.ps1
 hyperCinema/deps.txt
 *.zip
 hyperCinema/src/test/java
+template

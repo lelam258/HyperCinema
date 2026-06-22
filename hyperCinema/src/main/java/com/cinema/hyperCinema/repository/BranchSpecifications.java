@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.cinema.hyperCinema.model.Branch;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.cinema.hyperCinema.dto.admin.branch.request.BranchSearchCriteria;
-import com.cinema.hyperCinema.model.Branch;
 
 import jakarta.persistence.criteria.Predicate;
 
