@@ -1,0 +1,53 @@
+package com.cinema.hyperCinema.dto.admin.showtime.response;
+
+import java.time.LocalDateTime;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ShowtimeDetailView {
+
+    private Integer showtimeId;
+
+    private Integer movieId;
+
+    private String movieTitle;
+
+    private Integer branchId;
+
+    private String branchName;
+
+    private String city;
+
+    private Integer hallId;
+
+    private String hallName;
+
+    private LocalDateTime startTime;
+
+    private LocalDateTime endTime;
+
+    private Integer price;
+
+    private long bookingCount;
+
+    private long ticketCount;
+
+    private long reservationCount;
+
+    private long paymentCount;
+
+    private boolean past;
+
+    private boolean canDelete;
+
+    private boolean canEditSchedule;
+}

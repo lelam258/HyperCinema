@@ -9,13 +9,14 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Review")
+@Table(name = "review")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "review_id")
     private Integer reviewId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -29,7 +30,8 @@ public class Review {
     @Column
     private Integer rating;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
+    @Column
     private String comment;
 
     @Column(name = "created_at", updatable = false)
@@ -40,3 +42,4 @@ public class Review {
         createdAt = LocalDateTime.now();
     }
 }
+

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Bán vé - HyperCinema')}"></head>
+<body class="min-h-screen hc-staff-booking-shell">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: staffSidebar('booking')}"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner">
+        <section class="hc-page-head">
+            <div>
+                <p class="hc-kicker">Nhân viên</p>
+                <h1 class="hc-page-title">Bán vé tại quầy</h1>
+                <p class="hc-page-subtitle">
+                    Nhân viên: <span th:text="${staffName}">Staff</span>
+                    <span aria-hidden="true"> · </span>
+                    Chi nhánh: <span th:text="${branchName}">Chi nhánh</span>
+                </p>
+            </div>
+        </section>
+
+        <section class="hc-grid-two" data-booking-root aria-label="Booking workflow">
+            <div class="hc-stack">
+                <section class="hc-panel">
+                    <div class="hc-panel-head">
+                        <div>
+                            <p class="hc-kicker">Booking</p>
+                            <h2>Thông tin khách</h2>
+                        </div>
+                    </div>
+                    <div class="hc-form-grid">
+                        <label class="hc-field" for="customerName">
+                            <span>Tên khách</span>
+                            <input class="hc-input" id="customerName" type="text" placeholder="Nhập tên khách">
+                        </label>
+                        <label class="hc-field" for="customerPhone">
+                            <span>Số điện thoại</span>
+                            <input class="hc-input" id="customerPhone" type="tel" placeholder="0xxxxxxxxx">
+                        </label>
+                        <label class="hc-field" for="movieSearch">
+                            <span>Phim</span>
+                            <input class="hc-input" id="movieSearch" type="search" placeholder="Tìm phim đang chiếu">
+                        </label>
+                        <label class="hc-field" for="showtimeSearch">
+                            <span>Suất chiếu</span>
+                            <input class="hc-input" id="showtimeSearch" type="search" placeholder="Chọn ngày, giờ, phòng">
+                        </label>
+                    </div>
+                </section>
+
+                <section class="hc-panel">
+                    <div class="hc-panel-head">
+                        <div>
+                            <p class="hc-kicker">Sơ đồ ghế</p>
+                            <h2>Chọn ghế</h2>
+                        </div>
+                        <span class="hc-badge">Màn hình</span>
+                    </div>
+                    <div class="hc-screen-line" aria-hidden="true"></div>
+                    <div class="hc-seat-grid hc-booking-seat-grid" data-booking-seat-grid>
+                        <button th:each="seat : ${#numbers.sequence(1, 40)}"
+                                type="button"
+                                class="hc-seat"
+                                data-seat-price="90000"
+                                th:data-seat-label="|A${seat}|"
+                                th:text="|A${seat}|">
+                            A1
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="hc-stack">
+                <section class="hc-panel">
+                    <div class="hc-panel-head">
+                        <div>
+                            <p class="hc-kicker">Hóa đơn</p>
+                            <h2>Tóm tắt</h2>
+                        </div>
+                    </div>
+                    <dl class="hc-summary-list">
+                        <div><dt>Vé</dt><dd data-booking-seat-count>0</dd></div>
+                        <div><dt>Ghế</dt><dd data-booking-seat-summary>Chưa chọn</dd></div>
+                        <div class="hc-summary-total"><dt>Tổng</dt><dd data-booking-total>0 VND</dd></div>
+                    </dl>
+                    <div class="hc-actions hc-actions-stacked">
+                        <button type="button"
+                                class="hc-button hc-button-primary"
+                                data-booking-submit
+                                disabled>
+                            Xác nhận bán vé
+                        </button>
+                        <a th:href="@{/staff/dashboard}" class="hc-button hc-button-outline">Hủy phiên</a>
+                    </div>
+                </section>
+
+                <section class="hc-panel">
+                    <div class="hc-panel-head">
+                        <div>
+                            <p class="hc-kicker">Trạng thái</p>
+                            <h2>Phiên hiện tại</h2>
+                        </div>
+                    </div>
+                    <dl class="hc-summary-list">
+                        <div><dt>Khóa ghế</dt><dd class="hc-warning">Chưa khóa</dd></div>
+                        <div><dt>Thanh toán</dt><dd>Chờ xử lý</dd></div>
+                    </dl>
+                </section>
+            </aside>
+        </section>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

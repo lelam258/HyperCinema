@@ -1,794 +1,200 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management - HyperCinema</title>
-    <!-- Lucide Icons for premium feel -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" th:href="@{/css/admin.css(v=1.1)}">
-</head>
-<body>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Quản lý người dùng - HyperCinema')}"></head>
+<body class="min-h-screen">
 
-<div class="dashboard-container">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="logo-container">
-            <div class="logo-icon">H</div>
-            <span class="logo-text">HyperCinema</span>
-        </div>
-        <ul class="nav-links">
-            <li>
-                <a href="#" class="nav-link">
-                    <i data-lucide="layout-dashboard"></i>
-                    <span>Dashboard</span>
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/users}" class="nav-link active">
-                    <i data-lucide="users"></i>
-                    <span>Users</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-link">
-                    <i data-lucide="film"></i>
-                    <span>Movies</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-link">
-                    <i data-lucide="calendar"></i>
-                    <span>Showtimes</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-link">
-                    <i data-lucide="ticket"></i>
-                    <span>Bookings</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-link">
-                    <i data-lucide="coffee"></i>
-                    <span>Food & Drinks</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-link">
-                    <i data-lucide="tag"></i>
-                    <span>Promotions</span>
-                </a>
-            </li>
-        </ul>
-    </aside>
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('users')}"></nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="header-row">
-            <div class="header-title">
-                <h1>User Management</h1>
-                <p>Manage user accounts, roles, and permissions</p>
+<main class="hc-page">
+    <div class="hc-page-inner">
+        <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h1 class="hc-page-title">Quản lý người dùng</h1>
+                <p class="hc-page-subtitle">Quản lý tài khoản, vai trò, trạng thái và quyền truy cập.</p>
             </div>
-            <button class="btn-primary" onclick="openAddModal()">
-                <i data-lucide="user-plus"></i>
-                <span>Add User</span>
-            </button>
+            <button type="button" class="hc-btn hc-btn-primary" data-user-open="add">Thêm người dùng</button>
         </div>
 
-        <!-- Statistics Grid -->
-        <section class="stats-grid">
-            <div class="stats-card">
-                <div class="stats-icon-wrapper stats-icon-total">
-                    <i data-lucide="users"></i>
-                </div>
-                <div class="stats-info">
-                    <p>Total Users</p>
-                    <h3 th:text="${stats.total}">0</h3>
-                </div>
-            </div>
-            <div class="stats-card">
-                <div class="stats-icon-wrapper stats-icon-active">
-                    <i data-lucide="user-check"></i>
-                </div>
-                <div class="stats-info">
-                    <p>Active Users</p>
-                    <h3 th:text="${stats.active}">0</h3>
-                </div>
-            </div>
-            <div class="stats-card">
-                <div class="stats-icon-wrapper stats-icon-inactive">
-                    <i data-lucide="user-x"></i>
-                </div>
-                <div class="stats-info">
-                    <p>Inactive Users</p>
-                    <h3 th:text="${stats.inactive}">0</h3>
-                </div>
-            </div>
-            <div class="stats-card">
-                <div class="stats-icon-wrapper stats-icon-admins">
-                    <i data-lucide="shield-check"></i>
-                </div>
-                <div class="stats-info">
-                    <p>Administrators</p>
-                    <h3 th:text="${stats.admins}">0</h3>
-                </div>
-            </div>
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <section class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4" aria-label="Thống kê người dùng">
+            <div class="hc-card p-5"><span class="hc-label">Tổng người dùng</span><strong class="text-3xl text-white" th:text="${stats.total}">0</strong></div>
+            <div class="hc-card p-5"><span class="hc-label">Đang hoạt động</span><strong class="text-3xl text-success" th:text="${stats.active}">0</strong></div>
+            <div class="hc-card p-5"><span class="hc-label">Tạm khóa</span><strong class="text-3xl text-warning" th:text="${stats.inactive}">0</strong></div>
+            <div class="hc-card p-5"><span class="hc-label">Administrator</span><strong class="text-3xl text-accent" th:text="${stats.admins}">0</strong></div>
         </section>
 
-        <!-- Filters & Search Block -->
-        <div class="filter-card">
-            <div class="search-wrapper">
-                <i data-lucide="search" class="search-icon"></i>
-                <input type="text" id="tableSearch" class="search-input" placeholder="Search by name, username, email, or role..." oninput="filterTable()">
-            </div>
-            <select id="roleFilter" class="select-input" onchange="filterTable()">
-                <option value="">All Roles</option>
-                <option th:each="r : ${roles}" th:value="${r.name}" th:text="${r.name}"></option>
-            </select>
-            <select id="statusFilter" class="select-input" onchange="filterTable()">
-                <option value="">All Status</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-            </select>
-        </div>
+        <section class="hc-card mb-6 p-5" aria-label="Bộ lọc người dùng">
+            <form th:action="@{/admin/users}" method="get" class="grid grid-cols-1 items-end gap-4 md:grid-cols-[2fr_1fr_1fr_auto]">
+                <div>
+                    <label for="search" class="hc-label">Tìm kiếm</label>
+                    <input class="hc-input" id="search" name="search" type="search" placeholder="Tên, username, email hoặc vai trò" th:value="${search}">
+                </div>
+                <div>
+                    <label for="role" class="hc-label">Vai trò</label>
+                    <select class="hc-input" id="role" name="role">
+                        <option value="" th:selected="${selectedRole == null or #strings.isEmpty(selectedRole)}">Tất cả</option>
+                        <option th:each="r : ${roles}" th:value="${r.name}" th:text="${r.name}" th:selected="${selectedRole == r.name}">Role</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="status" class="hc-label">Trạng thái</label>
+                    <select class="hc-input" id="status" name="status">
+                        <option value="" th:selected="${selectedStatus == null or #strings.isEmpty(selectedStatus)}">Tất cả</option>
+                        <option value="Active" th:selected="${selectedStatus == 'Active'}">Hoạt động</option>
+                        <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}">Ngừng hoạt động</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="hc-btn hc-btn-primary">Lọc</button>
+                    <a th:href="@{/admin/users}" class="hc-btn no-underline">Xóa</a>
+                </div>
+            </form>
+        </section>
 
-        <!-- Table Card -->
-        <div class="table-card">
-            <div class="table-wrapper">
-                <table class="custom-table">
+        <section class="hc-card overflow-hidden" aria-label="Danh sách người dùng">
+            <div class="overflow-x-auto">
+                <table class="hc-table">
                     <thead>
                     <tr>
                         <th>ID</th>
-                        <th>User</th>
+                        <th>Người dùng</th>
                         <th>Email</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Last Login</th>
-                        <th>Created</th>
-                        <th>Actions</th>
+                        <th>Vai trò</th>
+                        <th>Trạng thái</th>
+                        <th>Đăng nhập gần nhất</th>
+                        <th>Ngày tạo</th>
+                        <th class="text-right">Thao tác</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="u : ${users}">
-                        <td class="row-index" th:text="${uStat.count}">1</td>
+                    <tr th:if="${users == null or #lists.isEmpty(users)}">
+                        <td colspan="8" class="py-12 text-center text-cinema-muted">Không tìm thấy người dùng phù hợp.</td>
+                    </tr>
+                    <tr th:each="u, stat : ${users}">
+                        <td class="tabular-nums" th:text="${u.userId}">1</td>
                         <td>
-                            <div style="display: flex; flex-direction: column; gap: 0.15rem;">
-                                <a th:href="@{/admin/users/{id}(id=${u.userId})}" th:text="${u.fullName}" style="color: var(--text-primary); font-weight: 600; text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='#4f46e5'" onmouseout="this.style.color='var(--text-primary)'">John Admin</a>
-                                <span th:text="'@' + ${u.username}" style="color: var(--text-muted); font-size: 0.8rem;">john.admin</span>
-                            </div>
+                            <a th:href="@{/admin/users/{id}(id=${u.userId})}" th:text="${u.fullName}" class="font-semibold text-white no-underline hover:text-accent">Tên người dùng</a>
+                            <div class="text-xs text-cinema-muted" th:text="|@${u.username}|">@username</div>
                         </td>
-                        <td th:text="${u.email}" style="color: var(--text-secondary);">john.admin@company.com</td>
+                        <td th:text="${u.email}">email@example.com</td>
+                        <td><span class="hc-badge border-info/40 bg-info/10 text-info" th:text="${u.role != null ? u.role.name : 'Viewer'}">Role</span></td>
+                        <td><span th:replace="~{fragments/components :: statusBadge(${u.status})}"></span></td>
+                        <td th:text="${u.lastLogin != null ? #temporals.format(u.lastLogin, 'yyyy-MM-dd HH:mm') : 'N/A'}">N/A</td>
+                        <td th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'yyyy-MM-dd') : 'N/A'}">N/A</td>
                         <td>
-                            <span class="badge" th:classappend="${u.role != null && u.role.name == 'Administrator' ? 'badge-role-admin' : (u.role != null && u.role.name == 'Manager' ? 'badge-role-manager' : 'badge-role')}" th:text="${u.role != null ? u.role.name : 'Viewer'}">Administrator</span>
-                        </td>
-                        <td>
-                            <span class="badge" th:classappend="${u.status == 'Active' ? 'badge-status-active' : 'badge-status-inactive'}" th:text="${u.status}">Active</span>
-                        </td>
-                        <td th:text="${u.lastLogin != null ? #temporals.format(u.lastLogin, 'yyyy-MM-dd HH:mm') : 'N/A'}" style="color: var(--text-secondary);">2026-05-23 09:30</td>
-                        <td th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'yyyy-MM-dd') : 'N/A'}" style="color: var(--text-muted);">2025-01-15</td>
-                        <td>
-                            <div class="actions-cell">
-                                <a th:href="@{/admin/users/{id}(id=${u.userId})}" class="action-btn" title="View Details">
-                                    <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
-                                </a>
-                                <button class="action-btn" title="Update User" th:onclick="openEditModal([[${u.userId}]], [[${u.fullName}]], [[${u.username}]], [[${u.email}]], [[${u.phone}]], [[${u.role != null ? u.role.roleId : null}]], [[${u.status}]])">
-                                    <i data-lucide="edit-3" style="width: 16px; height: 16px;"></i>
+                            <div class="flex justify-end gap-2">
+                                <a th:href="@{/admin/users/{id}(id=${u.userId})}" class="hc-btn px-3 py-1.5 no-underline">Xem</a>
+                                <button type="button" class="hc-btn px-3 py-1.5"
+                                        data-user-open="edit"
+                                        th:attr="data-user-id=${u.userId},data-user-name=${u.fullName},data-user-username=${u.username},data-user-email=${u.email},data-user-phone=${u.phone},data-user-role=${u.role != null ? u.role.roleId : ''},data-user-status=${u.status}">
+                                    Sửa
                                 </button>
-                                <div class="action-dropdown-wrapper">
-                                    <button class="action-btn" th:id="'dropdownBtn-' + ${u.userId}" th:onclick="toggleDropdown([[${u.userId}]])">
-                                        <i data-lucide="more-vertical" style="width: 16px; height: 16px;"></i>
-                                    </button>
-                                    <ul class="dropdown-menu" th:id="'dropdownMenu-' + ${u.userId}">
-                                        <li>
-                                            <a class="dropdown-item" th:onclick="toggleStatus([[${u.userId}]])">
-                                                <i data-lucide="user-minus" style="width: 14px; height: 14px;"></i>
-                                                <span th:text="${u.status == 'Active' ? 'Deactivate User' : 'Activate User'}">Deactivate User</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" th:onclick="openRoleModal([[${u.userId}]], [[${u.role != null ? u.role.roleId : null}]])">
-                                                <i data-lucide="shield" style="width: 14px; height: 14px;"></i>
-                                                <span>Assign Roles</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" th:onclick="openResetPasswordModal([[${u.userId}]])">
-                                                <i data-lucide="key-round" style="width: 14px; height: 14px;"></i>
-                                                <span>Reset Password</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item danger-item" th:onclick="deleteUser([[${u.userId}]])">
-                                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
-                                                <span>Delete User</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
+                                <button type="button" class="hc-btn px-3 py-1.5" data-user-open="role" th:attr="data-user-id=${u.userId},data-user-role=${u.role != null ? u.role.roleId : ''}">Role</button>
+                                <button type="button" class="hc-btn px-3 py-1.5" data-user-action="toggle" th:attr="data-user-id=${u.userId}" th:text="${u.status == 'Active' ? 'Khóa' : 'Mở'}">Khóa</button>
+                                <button type="button" class="hc-btn px-3 py-1.5" data-user-open="reset" th:attr="data-user-id=${u.userId}">Mật khẩu</button>
+                                <button type="button" class="hc-btn px-3 py-1.5 text-danger hover:text-red-300" data-user-action="delete" th:attr="data-user-id=${u.userId}">Xóa</button>
                             </div>
                         </td>
                     </tr>
                     </tbody>
                 </table>
             </div>
-            <!-- Pagination Footer -->
-            <div class="pagination-container">
-                <div class="page-size-wrapper">
-                    <span>Show</span>
-                    <select id="pageSizeSelect" class="page-size-select" onchange="changePageSize()">
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                    </select>
-                    <span>entries</span>
+        </section>
+    </div>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="add">
+        <section class="hc-card w-full max-w-lg p-6" role="dialog" aria-modal="true" aria-labelledby="addUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="addUserTitle" class="text-xl font-semibold text-white">Thêm người dùng</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
+            </div>
+            <form class="space-y-4" data-user-form="add">
+                <input class="hc-input" name="name" placeholder="Họ và tên" required>
+                <input class="hc-input" name="username" placeholder="Username" required>
+                <input class="hc-input" name="email" type="email" placeholder="Email" required>
+                <input class="hc-input" name="password" type="password" placeholder="Mật khẩu tạm" required>
+                <input class="hc-input" name="phone" placeholder="Số điện thoại" required>
+                <select class="hc-input" name="roleId" required>
+                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}">Role</option>
+                </select>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Tạo người dùng</button>
                 </div>
-                <div class="pagination-info" id="paginationInfo">
-                    Showing 1 to 5 of 5 entries
+            </form>
+        </section>
+    </div>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="edit">
+        <section class="hc-card w-full max-w-lg p-6" role="dialog" aria-modal="true" aria-labelledby="editUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="editUserTitle" class="text-xl font-semibold text-white">Cập nhật người dùng</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
+            </div>
+            <form class="space-y-4" data-user-form="edit">
+                <input type="hidden" name="id">
+                <input class="hc-input" name="name" placeholder="Họ và tên" required>
+                <input class="hc-input" name="username" placeholder="Username" required>
+                <input class="hc-input" name="email" type="email" placeholder="Email" required>
+                <input class="hc-input" name="phone" placeholder="Số điện thoại" required>
+                <select class="hc-input" name="roleId" required>
+                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}">Role</option>
+                </select>
+                <select class="hc-input" name="status" required>
+                    <option value="Active">Hoạt động</option>
+                    <option value="Inactive">Ngừng hoạt động</option>
+                </select>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Lưu thay đổi</button>
                 </div>
-                <div class="pagination-controls" id="paginationControls">
-                    <!-- Dynamic pagination controls -->
+            </form>
+        </section>
+    </div>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="role">
+        <section class="hc-card w-full max-w-md p-6" role="dialog" aria-modal="true" aria-labelledby="roleUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="roleUserTitle" class="text-xl font-semibold text-white">Gán vai trò</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
+            </div>
+            <form class="space-y-4" data-user-form="role">
+                <input type="hidden" name="id">
+                <select class="hc-input" name="roleId" required>
+                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}">Role</option>
+                </select>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Cập nhật</button>
                 </div>
-            </div>
-        </div>
-    </main>
-</div>
-
-<!-- ================= MODALS ================= -->
-
-<!-- Add User Modal -->
-<div class="modal-overlay" id="addModal">
-    <div class="modal-card">
-        <div class="modal-header">
-            <h2>Add New User</h2>
-            <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
-        </div>
-        <form id="addUserForm" onsubmit="submitAddUser(event)">
-            <div class="form-group">
-                <label for="add_name">Full Name</label>
-                <input type="text" id="add_name" class="form-control" placeholder="e.g., Sarah Connor" required>
-            </div>
-            <div class="form-group">
-                <label for="add_username">Username</label>
-                <input type="text" id="add_username" class="form-control" placeholder="e.g., sarah.c" required>
-            </div>
-            <div class="form-group">
-                <label for="add_email">Email</label>
-                <input type="email" id="add_email" class="form-control" placeholder="e.g., sarah@company.com" required>
-            </div>
-            <div class="form-group">
-                <label for="add_password">Password</label>
-                <input type="password" id="add_password" class="form-control" placeholder="Create a temporary password" required>
-            </div>
-            <div class="form-group">
-                <label for="add_phone">Phone</label>
-                <input type="text" id="add_phone" class="form-control" placeholder="e.g., 0123456789">
-            </div>
-            <div class="form-group">
-                <label for="add_role">Role</label>
-                <select id="add_role" class="form-control" style="background-color: var(--bg-modal);" required>
-                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}"></option>
-                </select>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn-secondary" onclick="closeModal('addModal')">Cancel</button>
-                <button type="submit" class="btn-primary">Create User</button>
-            </div>
-        </form>
+            </form>
+        </section>
     </div>
-</div>
 
-<!-- Update User Modal -->
-<div class="modal-overlay" id="editModal">
-    <div class="modal-card">
-        <div class="modal-header">
-            <h2>Update User</h2>
-            <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
-        </div>
-        <form id="editUserForm" onsubmit="submitEditUser(event)">
-            <input type="hidden" id="edit_id">
-            <div class="form-group">
-                <label for="edit_name">Full Name</label>
-                <input type="text" id="edit_name" class="form-control" required>
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="reset">
+        <section class="hc-card w-full max-w-md p-6" role="dialog" aria-modal="true" aria-labelledby="resetUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="resetUserTitle" class="text-xl font-semibold text-white">Đặt lại mật khẩu</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
             </div>
-            <div class="form-group">
-                <label for="edit_username">Username</label>
-                <input type="text" id="edit_username" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="edit_email">Email</label>
-                <input type="email" id="edit_email" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="edit_phone">Phone</label>
-                <input type="text" id="edit_phone" class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="edit_role">Role</label>
-                <select id="edit_role" class="form-control" style="background-color: var(--bg-modal);" required>
-                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}"></option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="edit_status">Status</label>
-                <select id="edit_status" class="form-control" style="background-color: var(--bg-modal);" required>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                </select>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn-secondary" onclick="closeModal('editModal')">Cancel</button>
-                <button type="submit" class="btn-primary">Save Changes</button>
-            </div>
-        </form>
+            <form class="space-y-4" data-user-form="reset">
+                <input type="hidden" name="id">
+                <input class="hc-input" name="password" type="password" placeholder="Mật khẩu mới" required>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Cập nhật</button>
+                </div>
+            </form>
+        </section>
     </div>
-</div>
 
-<!-- Assign Role Modal -->
-<div class="modal-overlay" id="roleModal">
-    <div class="modal-card" style="max-width: 400px;">
-        <div class="modal-header">
-            <h2>Assign Role</h2>
-            <button class="modal-close" onclick="closeModal('roleModal')">&times;</button>
-        </div>
-        <form id="assignRoleForm" onsubmit="submitAssignRole(event)">
-            <input type="hidden" id="role_user_id">
-            <div class="form-group">
-                <label for="assign_role_id">Select Permission Role</label>
-                <select id="assign_role_id" class="form-control" style="background-color: var(--bg-modal);" required>
-                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}"></option>
-                </select>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn-secondary" onclick="closeModal('roleModal')">Cancel</button>
-                <button type="submit" class="btn-primary">Update Role</button>
-            </div>
-        </form>
-    </div>
-</div>
+    <div class="fixed bottom-5 right-5 z-[60] space-y-2" data-user-toasts></div>
 
-<!-- Reset Password Modal -->
-<div class="modal-overlay" id="resetPasswordModal">
-    <div class="modal-card" style="max-width: 400px;">
-        <div class="modal-header">
-            <h2>Reset Password</h2>
-            <button class="modal-close" onclick="closeModal('resetPasswordModal')">&times;</button>
-        </div>
-        <form id="resetPasswordForm" onsubmit="submitResetPassword(event)">
-            <input type="hidden" id="reset_user_id">
-            <div class="form-group">
-                <label for="reset_password_val">New Password</label>
-                <input type="password" id="reset_password_val" class="form-control" placeholder="Enter new password" required>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn-secondary" onclick="closeModal('resetPasswordModal')">Cancel</button>
-                <button type="submit" class="btn-primary">Update Password</button>
-            </div>
-        </form>
-    </div>
-</div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <script defer th:src="@{/js/features/admin-users.js(v=1.0)}"></script>
+</main>
 
-<!-- Toast notifications wrapper -->
-<div class="toast-container" id="toastContainer"></div>
-
-<!-- ================= SCRIPTS ================= -->
-<script>
-    // Initialize Lucide Icons
-    lucide.createIcons();
-
-    // Pagination State
-    let currentPage = 1;
-    let pageSize = 5; // Default page size to 5, letting user see pagination in action with 5 users
-
-    // Initialize pagination on load
-    document.addEventListener('DOMContentLoaded', () => {
-        const selectEl = document.getElementById('pageSizeSelect');
-        if (selectEl) {
-            selectEl.value = pageSize;
-        }
-        filterTable();
-    });
-
-    function changePageSize() {
-        pageSize = parseInt(document.getElementById('pageSizeSelect').value);
-        currentPage = 1;
-        filterTable();
-    }
-
-    // Instant Client-side Table Search & Filter with Pagination
-    function filterTable() {
-        const searchQuery = document.getElementById('tableSearch').value.toLowerCase().trim();
-        const selectedRole = document.getElementById('roleFilter').value.toLowerCase().trim();
-        const selectedStatus = document.getElementById('statusFilter').value.toLowerCase().trim();
-        
-        const rows = document.querySelectorAll('.custom-table tbody tr');
-        const matchingRows = [];
-        
-        rows.forEach(row => {
-            const nameText = row.querySelector('td:nth-child(2) a').textContent.toLowerCase();
-            const usernameText = row.querySelector('td:nth-child(2) span').textContent.toLowerCase();
-            const emailText = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-            
-            const roleBadge = row.querySelector('td:nth-child(4) .badge');
-            const roleText = roleBadge ? roleBadge.textContent.toLowerCase() : '';
-            
-            const statusBadge = row.querySelector('td:nth-child(5) .badge');
-            const statusText = statusBadge ? statusBadge.textContent.toLowerCase() : '';
-            
-            const matchesSearch = searchQuery === '' || 
-                                  nameText.includes(searchQuery) || 
-                                  usernameText.includes(searchQuery) || 
-                                  emailText.includes(searchQuery);
-                                  
-            const matchesRole = selectedRole === '' || 
-                                 roleText === selectedRole;
-                                 
-            const matchesStatus = selectedStatus === '' || 
-                                   statusText === selectedStatus;
-                                   
-            row.style.display = 'none'; // Hide by default, pagination will display matches on the current page
-            
-            if (matchesSearch && matchesRole && matchesStatus) {
-                matchingRows.push(row);
-            }
-        });
-        
-        updatePagination(matchingRows);
-    }
-
-    function updatePagination(matchingRows) {
-        const totalItems = matchingRows.length;
-        const totalPages = Math.ceil(totalItems / pageSize) || 1;
-        
-        if (currentPage > totalPages) currentPage = totalPages;
-        if (currentPage < 1) currentPage = 1;
-        
-        const startIndex = (currentPage - 1) * pageSize;
-        const endIndex = Math.min(startIndex + pageSize, totalItems);
-        
-        // Show current page items and dynamically update sequence numbers (STT)
-        for (let i = startIndex; i < endIndex; i++) {
-            matchingRows[i].style.display = '';
-            const indexCell = matchingRows[i].querySelector('.row-index');
-            if (indexCell) {
-                indexCell.textContent = i + 1;
-            }
-        }
-        
-        // Update showing text
-        const infoEl = document.getElementById('paginationInfo');
-        if (infoEl) {
-            if (totalItems === 0) {
-                infoEl.textContent = 'Showing 0 to 0 of 0 entries';
-            } else {
-                infoEl.textContent = `Showing ${startIndex + 1} to ${endIndex} of ${totalItems} entries`;
-            }
-        }
-        
-        // Render control buttons
-        const controlsEl = document.getElementById('paginationControls');
-        if (controlsEl) {
-            controlsEl.innerHTML = '';
-            
-            // Previous Button
-            const prevBtn = document.createElement('button');
-            prevBtn.className = 'pagination-btn';
-            prevBtn.innerHTML = '<i data-lucide="chevron-left" style="width: 16px; height: 16px;"></i>';
-            prevBtn.disabled = currentPage === 1;
-            prevBtn.onclick = (e) => {
-                e.preventDefault();
-                if (currentPage > 1) {
-                    currentPage--;
-                    filterTable();
-                }
-            };
-            controlsEl.appendChild(prevBtn);
-            
-            // Page buttons
-            const maxPagesToShow = 5;
-            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-            
-            if (endPage - startPage + 1 < maxPagesToShow) {
-                startPage = Math.max(1, endPage - maxPagesToShow + 1);
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
-                const pageBtn = document.createElement('button');
-                pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
-                pageBtn.textContent = i;
-                pageBtn.onclick = (e) => {
-                    e.preventDefault();
-                    currentPage = i;
-                    filterTable();
-                };
-                controlsEl.appendChild(pageBtn);
-            }
-            
-            // Next Button
-            const nextBtn = document.createElement('button');
-            nextBtn.className = 'pagination-btn';
-            nextBtn.innerHTML = '<i data-lucide="chevron-right" style="width: 16px; height: 16px;"></i>';
-            nextBtn.disabled = currentPage === totalPages;
-            nextBtn.onclick = (e) => {
-                e.preventDefault();
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    filterTable();
-                }
-            };
-            controlsEl.appendChild(nextBtn);
-            
-            // Refresh Lucide icons inside controls
-            lucide.createIcons({nodeList: [controlsEl]});
-        }
-    }
-
-    // Context Actions Menu Dropdown handler
-    let activeDropdownId = null;
-
-    function toggleDropdown(userId) {
-        event.stopPropagation();
-        const menu = document.getElementById('dropdownMenu-' + userId);
-        const button = document.getElementById('dropdownBtn-' + userId);
-        
-        // Close other open dropdowns
-        if (activeDropdownId && activeDropdownId !== userId) {
-            const openMenu = document.getElementById('dropdownMenu-' + activeDropdownId);
-            if (openMenu) openMenu.classList.remove('show');
-        }
-
-        if (menu.classList.contains('show')) {
-            menu.classList.remove('show');
-            activeDropdownId = null;
-        } else {
-            // Smart auto-dropup positioning for bottom rows
-            const row = button.closest('tr');
-            const tbody = row.parentElement;
-            const rows = Array.from(tbody.children);
-            const index = rows.indexOf(row);
-            
-            if (index >= rows.length - 2 && rows.length > 2) {
-                menu.style.top = 'auto';
-                menu.style.bottom = 'calc(100% + 5px)';
-                menu.style.transformOrigin = 'bottom right';
-            } else {
-                menu.style.top = 'calc(100% + 5px)';
-                menu.style.bottom = 'auto';
-                menu.style.transformOrigin = 'top right';
-            }
-            
-            menu.classList.add('show');
-            activeDropdownId = userId;
-        }
-    }
-
-    // Close active dropdowns when clicking outside
-    document.addEventListener('click', function() {
-        if (activeDropdownId) {
-            const openMenu = document.getElementById('dropdownMenu-' + activeDropdownId);
-            if (openMenu) openMenu.classList.remove('show');
-            activeDropdownId = null;
-        }
-    });
-
-    // Modal Operations
-    function openModal(id) {
-        document.getElementById(id).classList.add('show');
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('show');
-    }
-
-    // Add Modal
-    function openAddModal() {
-        document.getElementById('addUserForm').reset();
-        openModal('addModal');
-    }
-
-    // Edit Modal
-    function openEditModal(id, name, username, email, phone, roleId, status) {
-        document.getElementById('edit_id').value = id;
-        document.getElementById('edit_name').value = name || '';
-        document.getElementById('edit_username').value = username || '';
-        document.getElementById('edit_email').value = email || '';
-        document.getElementById('edit_phone').value = phone || '';
-        document.getElementById('edit_role').value = roleId || '';
-        document.getElementById('edit_status').value = status || 'Active';
-        openModal('editModal');
-    }
-
-    // Assign Role Modal
-    function openRoleModal(userId, currentRoleId) {
-        document.getElementById('role_user_id').value = userId;
-        document.getElementById('assign_role_id').value = currentRoleId || '';
-        openModal('roleModal');
-    }
-
-    // Reset Password Modal
-    function openResetPasswordModal(userId) {
-        document.getElementById('reset_user_id').value = userId;
-        document.getElementById('reset_password_val').value = '';
-        openModal('resetPasswordModal');
-    }
-
-    // Dynamic Toasts
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        
-        let icon = type === 'success' ? 'check-circle' : 'alert-circle';
-        
-        toast.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <i data-lucide="${icon}" style="width: 20px; height: 20px;"></i>
-                <span>${message}</span>
-            </div>
-            <button onclick="this.parentElement.remove()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.15rem; margin-left: 1rem;">&times;</button>
-        `;
-        
-        container.appendChild(toast);
-        lucide.createIcons({nodeList: [toast]});
-        
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(10px)';
-            toast.style.transition = 'all 0.5s ease';
-            setTimeout(() => toast.remove(), 500);
-        }, 4000);
-    }
-
-    // AJAX Form Submissions
-    
-    // 1. Submit Add User
-    function submitAddUser(event) {
-        event.preventDefault();
-        const payload = {
-            name: document.getElementById('add_name').value,
-            username: document.getElementById('add_username').value,
-            email: document.getElementById('add_email').value,
-            password: document.getElementById('add_password').value,
-            phone: document.getElementById('add_phone').value,
-            roleId: parseInt(document.getElementById('add_role').value)
-        };
-
-        fetch('/api/admin/users', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('User created successfully!');
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                return response.json().then(err => { throw new Error(err.message || 'Failed to create user') });
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
-
-    // 2. Submit Edit User
-    function submitEditUser(event) {
-        event.preventDefault();
-        const id = document.getElementById('edit_id').value;
-        const payload = {
-            name: document.getElementById('edit_name').value,
-            username: document.getElementById('edit_username').value,
-            email: document.getElementById('edit_email').value,
-            phone: document.getElementById('edit_phone').value,
-            roleId: parseInt(document.getElementById('edit_role').value),
-            status: document.getElementById('edit_status').value
-        };
-
-        fetch(`/api/admin/users/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('User updated successfully!');
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                return response.json().then(err => { throw new Error(err.message || 'Failed to update user') });
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
-
-    // 3. Submit Assign Role
-    function submitAssignRole(event) {
-        event.preventDefault();
-        const userId = document.getElementById('role_user_id').value;
-        const roleId = parseInt(document.getElementById('assign_role_id').value);
-
-        fetch(`/api/admin/users/${userId}/assign-role`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(roleId)
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('Role assigned successfully!');
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                return response.json().then(err => { throw new Error(err.message || 'Failed to assign role') });
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
-
-    // 4. Submit Reset Password
-    function submitResetPassword(event) {
-        event.preventDefault();
-        const userId = document.getElementById('reset_user_id').value;
-        const password = document.getElementById('reset_password_val').value;
-
-        fetch(`/api/admin/users/${userId}/reset-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: password })
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('Password reset successfully!');
-                closeModal('resetPasswordModal');
-            } else {
-                return response.json().then(err => { throw new Error(err.message || 'Failed to reset password') });
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
-
-    // 5. Toggle Status
-    function toggleStatus(userId) {
-        fetch(`/api/admin/users/${userId}/toggle-status`, {
-            method: 'POST'
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('User status changed!');
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                throw new Error('Failed to toggle status');
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
-
-    // 6. Delete User
-    function deleteUser(userId) {
-        if (confirm('Are you absolutely sure you want to permanently delete this user account from the system?')) {
-            fetch(`/api/admin/users/${userId}`, {
-                method: 'DELETE'
-            })
-            .then(response => {
-                if (response.ok) {
-                    showToast('User deleted successfully!');
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    return response.json().then(err => { throw new Error(err.message || 'Failed to delete user') });
-                }
-            })
-            .catch(error => {
-                showToast(error.message, 'danger');
-            });
-        }
-    }
-</script>
 </body>
 </html>

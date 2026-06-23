@@ -1,49 +1,55 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Đăng Ký - HyperCinema')}"></head>
-<body class="min-h-screen flex items-center justify-center px-4 py-8">
-    <div class="fixed inset-0 bg-[#050505] -z-10"><div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px]"></div></div>
-    <div class="w-full max-w-md glass-card p-10">
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent">Đăng Ký Tài Khoản</h1>
-            <p class="text-sm text-slate-400 mt-1">Tạo tài khoản HyperCinema mới</p>
+<head th:replace="~{fragments/layout :: head('Đăng ký - HyperCinema')}"></head>
+<body class="min-h-screen bg-cinema-bg">
+
+<main class="flex min-h-screen items-center justify-center px-4 py-10">
+    <section class="hc-card w-full max-w-lg p-8" aria-labelledby="registerTitle">
+        <div class="mb-8 text-center">
+            <h1 id="registerTitle" class="font-serif text-3xl font-bold text-white">Tạo tài khoản</h1>
+            <p class="mt-2 text-sm text-cinema-muted">HyperCinema</p>
         </div>
-        <div th:if="${errorMessage}" class="flex items-center gap-2 px-4 py-3 mb-4 rounded-xl bg-danger/10 border border-danger/25 text-danger text-sm" th:text="${errorMessage}">Lỗi đăng ký</div>
+
+        <div th:if="${errorMessage}" class="mb-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" th:text="${errorMessage}">Lỗi đăng ký</div>
+
         <form th:action="@{/register}" th:object="${registerDTO}" method="post" class="space-y-4">
             <div>
-                <label for="fullName" class="block text-sm font-medium text-slate-400 mb-2">Họ và tên</label>
-                <input type="text" id="fullName" th:field="*{fullName}" required class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="block text-xs text-danger mt-1"></span>
+                <label for="fullName" class="hc-label">Họ và tên</label>
+                <input class="hc-input" type="text" id="fullName" th:field="*{fullName}" required autocomplete="name">
+                <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="mt-1 block text-xs text-danger"></span>
             </div>
             <div>
-                <label for="email" class="block text-sm font-medium text-slate-400 mb-2">Email</label>
-                <input type="email" id="email" th:field="*{email}" required class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="block text-xs text-danger mt-1"></span>
+                <label for="email" class="hc-label">Email</label>
+                <input class="hc-input" type="email" id="email" th:field="*{email}" required autocomplete="email">
+                <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="mt-1 block text-xs text-danger"></span>
             </div>
             <div>
-                <label for="username" class="block text-sm font-medium text-slate-400 mb-2">Tên đăng nhập</label>
-                <input type="text" id="username" th:field="*{username}" required class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                <span th:if="${#fields.hasErrors('username')}" th:errors="*{username}" class="block text-xs text-danger mt-1"></span>
+                <label for="username" class="hc-label">Tên đăng nhập</label>
+                <input class="hc-input" type="text" id="username" th:field="*{username}" required autocomplete="username">
+                <span th:if="${#fields.hasErrors('username')}" th:errors="*{username}" class="mt-1 block text-xs text-danger"></span>
+            </div>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                    <label for="password" class="hc-label">Mật khẩu</label>
+                    <input class="hc-input" type="password" id="password" th:field="*{password}" required autocomplete="new-password">
+                    <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+                <div>
+                    <label for="confirmPassword" class="hc-label">Xác nhận mật khẩu</label>
+                    <input class="hc-input" type="password" id="confirmPassword" th:field="*{confirmPassword}" required autocomplete="new-password">
+                    <span th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}" class="mt-1 block text-xs text-danger"></span>
+                </div>
             </div>
             <div>
-                <label for="password" class="block text-sm font-medium text-slate-400 mb-2">Mật khẩu</label>
-                <input type="password" id="password" th:field="*{password}" required class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="block text-xs text-danger mt-1"></span>
+                <label for="phone" class="hc-label">Số điện thoại</label>
+                <input class="hc-input" type="text" id="phone" th:field="*{phone}" autocomplete="tel">
             </div>
-            <div>
-                <label for="confirmPassword" class="block text-sm font-medium text-slate-400 mb-2">Xác nhận mật khẩu</label>
-                <input type="password" id="confirmPassword" th:field="*{confirmPassword}" required class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                <span th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}" class="block text-xs text-danger mt-1"></span>
-            </div>
-            <div>
-                <label for="phone" class="block text-sm font-medium text-slate-400 mb-2">Số điện thoại (Tuỳ chọn)</label>
-                <input type="text" id="phone" th:field="*{phone}" class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-            </div>
-            <button type="submit" class="w-full py-3 mt-2 bg-gradient-to-r from-primary to-amber-500 text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 cursor-pointer">Đăng Ký</button>
+            <button type="submit" class="hc-btn hc-btn-primary w-full">Đăng ký</button>
         </form>
-        <div class="mt-6 text-center text-sm text-slate-400">
-            Đã có tài khoản? <a th:href="@{/login}" class="text-primary hover:text-primary-hover no-underline transition-colors font-medium">Đăng nhập ngay</a>
-        </div>
-    </div>
+
+        <p class="mt-6 text-center text-sm text-cinema-muted">Đã có tài khoản? <a th:href="@{/login}" class="font-medium text-accent no-underline hover:text-yellow-300">Đăng nhập ngay</a></p>
+    </section>
+</main>
+
 </body>
 </html>

@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "FoodOrderItem")
+@Table(name = "food_order_item")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @IdClass(FoodOrderItemId.class)
@@ -35,3 +35,4 @@ public class FoodOrderItem {
     @Column(name = "unit_price", nullable = false)
     private Integer unitPrice;
 }
+

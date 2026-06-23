@@ -9,13 +9,14 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Notification")
+@Table(name = "notification")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "notification_id")
     private Integer notificationId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -25,7 +26,8 @@ public class Notification {
     @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
+    @Column
     private String message;
 
     @Column(length = 50)
@@ -42,3 +44,4 @@ public class Notification {
         createdAt = LocalDateTime.now();
     }
 }
+

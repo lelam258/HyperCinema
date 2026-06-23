@@ -10,13 +10,14 @@ import lombok.Setter;
 import java.util.List;
 
 @Entity
-@Table(name = "Role")
+@Table(name = "role")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "role_id")
     private Integer roleId;
 
     @Column(nullable = false, unique = true, length = 50)

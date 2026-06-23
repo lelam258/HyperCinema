@@ -257,6 +257,14 @@ public class BranchServiceImpl implements BranchService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserSummary> listUnassignedStaff() {
+        return userRepository.findUnassignedStaff().stream()
+                .map(BranchMapper::toUserSummary)
+                .toList();
+    }
+
     private static Branch snapshot(Branch source) {
         Branch copy = new Branch();
         copy.setBranchId(source.getBranchId());

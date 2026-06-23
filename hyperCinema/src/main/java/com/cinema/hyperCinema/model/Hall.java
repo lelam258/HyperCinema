@@ -9,13 +9,14 @@ import lombok.Setter;
 import java.util.List;
 
 @Entity
-@Table(name = "Hall")
+@Table(name = "hall")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Hall {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "hall_id")
     private Integer hallId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -37,3 +38,4 @@ public class Hall {
     @OneToMany(mappedBy = "hall", cascade = CascadeType.ALL)
     private List<Seat> seats;
 }
+

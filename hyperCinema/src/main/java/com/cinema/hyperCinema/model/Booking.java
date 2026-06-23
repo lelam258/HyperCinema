@@ -10,13 +10,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "Booking")
+@Table(name = "booking")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Booking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "booking_id")
     private Integer bookingId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -57,3 +58,4 @@ public class Booking {
         createdAt = LocalDateTime.now();
     }
 }
+

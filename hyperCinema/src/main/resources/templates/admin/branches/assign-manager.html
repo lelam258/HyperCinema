@@ -1,371 +1,65 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="|Gán Manager cho Chi nhánh: ${branch.name} - HyperCinema|">Gán Manager - HyperCinema</title>
+<head th:replace="~{fragments/layout :: head(|Gán Manager - ${branch.name} - HyperCinema|)}"></head>
+<body class="min-h-screen bg-cinema-bg text-white">
 
-    <!--
-        =====================================================================
-        Assign_Manager_View — admin/branches/assign-manager.html
-        =====================================================================
-        Render form gán Manager cho Chi nhánh tại
-        GET  /admin/branches/{branchId}/managers/assign  (form)
-        POST /admin/branches/{branchId}/managers         (submit)
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('branches')}"></nav>
 
-        Model attributes do `BranchController.assignManagerForm` truyền vào:
-            * branch         — BranchDetailView (chỉ dùng branchId, name, city)
-            * candidates     — List<UserSummary> các Manager chưa được gán
-                               cho bất kỳ Chi nhánh nào (User.branch == null)
-            * assignRequest  — AssignManagerRequest trống dùng cho th:object;
-                               radio group bind qua th:field="*{userId}".
+<main class="hc-page">
+    <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+        <nav class="mb-6 flex items-center gap-2 text-sm text-cinema-muted" aria-label="Breadcrumb">
+            <a th:href="@{/admin/branches}" class="text-cinema-muted no-underline hover:text-accent">Quản lý Chi nhánh</a>
+            <span>/</span>
+            <a th:href="@{/admin/branches/{id}(id=${branch.branchId})}" th:text="${branch.name}" class="text-cinema-muted no-underline hover:text-accent">Tên chi nhánh</a>
+            <span>/</span>
+            <span class="text-white">Gán Manager</span>
+        </nav>
 
-        Flash attributes (optional):
-            * successKey, errorKey — i18n keys, resolve qua #{${key}}.
-
-        SECURITY: tất cả giá trị text từ entity render bằng `th:text` để
-        Thymeleaf escape an toàn HTML special chars. Không dùng th:utext.
-
-        Trace: Requirements 9.1, 10.1, 11.2.
-        =====================================================================
-    -->
-    <style>
-        :root {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --surface-elevated: #252525;
-            --primary-color: #ff3b30;
-            --primary-hover: #e0352b;
-            --text-primary: #ffffff;
-            --text-secondary: #aaaaaa;
-            --border-color: #333333;
-            --success-color: #30d158;
-            --info-color: #0a84ff;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            margin: 0;
-            min-height: 100vh;
-        }
-
-        .page-container {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 32px 24px 64px;
-        }
-
-        .breadcrumb {
-            margin-bottom: 16px;
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-        .breadcrumb a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .breadcrumb a:hover { color: var(--primary-color); }
-        .breadcrumb .separator { margin: 0 8px; }
-
-        h1 {
-            margin: 0 0 8px 0;
-            font-size: 26px;
-            font-weight: 700;
-            line-height: 1.25;
-        }
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-bottom: 24px;
-        }
-
-        /* ----------------------- Flash messages ----------------------- */
-        .alert {
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            border: 1px solid transparent;
-        }
-        .alert-success {
-            background-color: rgba(48, 209, 88, 0.1);
-            color: var(--success-color);
-            border-color: rgba(48, 209, 88, 0.25);
-        }
-        .alert-error {
-            background-color: rgba(255, 59, 48, 0.1);
-            color: var(--primary-color);
-            border-color: rgba(255, 59, 48, 0.25);
-        }
-
-        /* ----------------------- Card / panel ------------------------- */
-        .panel {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px 28px;
-            margin-bottom: 24px;
-        }
-        .panel h2 {
-            margin: 0 0 18px 0;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .panel h2 .panel-count {
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        /* ----------------------- Candidate list ----------------------- */
-        .candidate-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-        .candidate-row {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            gap: 16px;
-            align-items: center;
-            padding: 14px 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background-color: var(--surface-elevated);
-            cursor: pointer;
-            transition: border-color 0.2s, background-color 0.2s;
-        }
-        .candidate-row:hover {
-            border-color: #444444;
-            background-color: #2c2c2c;
-        }
-        .candidate-row input[type="radio"] {
-            width: 18px;
-            height: 18px;
-            margin: 0;
-            cursor: pointer;
-            accent-color: var(--primary-color);
-        }
-        .candidate-row input[type="radio"]:checked + .candidate-info {
-            color: var(--text-primary);
-        }
-        .candidate-row.selected {
-            border-color: var(--primary-color);
-            background-color: rgba(255, 59, 48, 0.08);
-        }
-        .candidate-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            min-width: 0;
-        }
-        .candidate-info .name {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-            word-break: break-word;
-        }
-        .candidate-info .meta {
-            font-size: 13px;
-            color: var(--text-secondary);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px 14px;
-        }
-        .candidate-info .meta span { display: inline-block; }
-
-        .empty-state {
-            padding: 28px;
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 14px;
-            background-color: var(--surface-elevated);
-            border: 1px dashed var(--border-color);
-            border-radius: 8px;
-        }
-
-        /* ----------------------- Buttons / actions -------------------- */
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 8px;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 10px 18px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            font-family: inherit;
-            text-decoration: none;
-            border: 1px solid var(--border-color);
-            background-color: var(--surface-elevated);
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s;
-        }
-        .btn:hover {
-            background-color: #303030;
-            border-color: #444444;
-        }
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: #ffffff;
-        }
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-            border-color: var(--primary-hover);
-        }
-        .btn-primary[disabled] {
-            opacity: 0.55;
-            cursor: not-allowed;
-        }
-
-        @media (max-width: 600px) {
-            .candidate-row {
-                grid-template-columns: auto 1fr;
-            }
-            .candidate-row .candidate-status {
-                grid-column: 1 / -1;
-                justify-self: start;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<div class="page-container">
-
-    <!-- Breadcrumb -->
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a th:href="@{/admin/branches}">Quản lý Chi nhánh</a>
-        <span class="separator">/</span>
-        <a th:href="@{/admin/branches/{id}(id=${branch.branchId})}"
-           th:text="${branch.name}">Tên chi nhánh</a>
-        <span class="separator">/</span>
-        <span>Gán Manager</span>
-    </nav>
-
-    <!--
-        Heading — page title theo spec REQ 9.1.
-        Toàn bộ field text render qua th:text để escape an toàn.
-    -->
-    <h1 th:text="|Gán Manager cho Chi nhánh: ${branch.name}|">
-        Gán Manager cho Chi nhánh
-    </h1>
-    <div class="subtitle">
-        <span th:text="${branch.city}">Thành phố</span>
-        <span th:if="${branch.address}"> · </span>
-        <span th:if="${branch.address}" th:text="${branch.address}">Địa chỉ</span>
-    </div>
-
-    <!--
-        Flash messages — controller (hoặc ExceptionHandler) đẩy errorKey
-        / successKey vào RedirectAttributes; resolve qua message bundle
-        bằng #{${key}}. Hiển thị qua th:text để escape giá trị resolved.
-    -->
-    <div th:if="${successKey}" class="alert alert-success" role="status"
-         th:text="#{${successKey}}">Thành công</div>
-    <div th:if="${errorKey}" class="alert alert-error" role="alert"
-         th:text="#{${errorKey}}">Lỗi</div>
-
-    <!-- =================================================================
-         Form chính — POST /admin/branches/{branchId}/managers
-         th:object="${assignRequest}" để bind userId qua radio group
-         (REQ 9.1, 9.2).
-         ================================================================= -->
-    <form method="post"
-          th:action="@{|/admin/branches/${branch.branchId}/managers|}"
-          th:object="${assignRequest}">
-
-        <section class="panel" aria-labelledby="candidates-heading">
-            <h2 id="candidates-heading">
-                Manager chưa được gán
-                <span class="panel-count"
-                      th:text="|${candidates != null ? #lists.size(candidates) : 0} người|">
-                    0 người
-                </span>
-            </h2>
-
-            <!-- Empty state — REQ 9.1 (no candidate available). -->
-            <div th:if="${candidates == null or #lists.isEmpty(candidates)}"
-                 class="empty-state">
-                Không có Manager nào chưa được gán.
-            </div>
-
-            <!--
-                Danh sách candidate — radio group bind qua th:field="*{userId}".
-                Mỗi <label> wrap toàn bộ row để click bất cứ đâu cũng chọn.
-                Ô <input> dùng th:value="${candidate.userId}" để Thymeleaf
-                tự sinh attr `id` = "userId<value>" và đánh dấu `checked`
-                khi giá trị `assignRequest.userId` khớp.
-            -->
-            <ul class="candidate-list"
-                th:if="${candidates != null and !#lists.isEmpty(candidates)}">
-                <li th:each="candidate : ${candidates}">
-                    <label class="candidate-row"
-                           th:for="|userId${candidate.userId}|">
-                        <input type="radio"
-                               th:field="*{userId}"
-                               th:value="${candidate.userId}">
-                        <div class="candidate-info">
-                            <span class="name" th:text="${candidate.fullName}">Họ và tên</span>
-                            <div class="meta">
-                                <span th:text="${candidate.email}">email@example.com</span>
-                                <span th:if="${candidate.phone}" th:text="${candidate.phone}">0xxxxxxxxx</span>
-                            </div>
-                        </div>
-                        <span class="candidate-status">
-                            <th:block th:replace="~{admin/branches/_status-badge :: statusBadge(${candidate.status})}"></th:block>
-                        </span>
-                    </label>
-                </li>
-            </ul>
-
-            <!--
-                Form-level error cho field userId (xảy ra khi Bean
-                Validation @NotNull của AssignManagerRequest fail). Thông
-                báo này hiếm khi xuất hiện vì controller đã chuyển sang
-                redirect + flash errorKey, nhưng vẫn render phòng trường
-                hợp render trực tiếp.
-            -->
-            <div th:if="${#fields.hasErrors('userId')}" class="alert alert-error" role="alert"
-                 th:errors="*{userId}">Lỗi xác thực userId</div>
-        </section>
-
-        <!--
-            Actions — Submit chỉ enable khi có ít nhất 1 candidate.
-            Cancel quay về detail của Branch hiện tại.
-        -->
-        <div class="form-actions">
-            <a class="btn"
-               th:href="@{/admin/branches/{id}(id=${branch.branchId})}">Hủy</a>
-            <button type="submit" class="btn btn-primary"
-                    th:disabled="${candidates == null or #lists.isEmpty(candidates)}">
-                Gán Manager
-            </button>
+        <div class="mb-8">
+            <h1 class="hc-page-title" th:text="|Gán Manager: ${branch.name}|">Gán Manager</h1>
+            <p class="hc-page-subtitle" th:text="|${branch.city}|">Thành phố</p>
         </div>
-    </form>
 
-</div>
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <form method="post"
+              th:action="@{|/admin/branches/${branch.branchId}/managers|}"
+              th:object="${assignRequest}"
+              class="space-y-5">
+            <section class="hc-card p-6">
+                <div class="mb-5 flex items-center justify-between gap-3 border-b border-cinema-border pb-4">
+                    <h2 class="font-serif text-lg text-white">Manager chưa được gán</h2>
+                    <span class="hc-badge border-cinema-border bg-cinema-panel-soft text-cinema-muted" th:text="|${candidates != null ? #lists.size(candidates) : 0} người|">0 người</span>
+                </div>
+
+                <div th:if="${candidates == null or #lists.isEmpty(candidates)}" class="rounded-xl border border-dashed border-cinema-border bg-cinema-panel-soft px-4 py-10 text-center text-sm text-cinema-muted">
+                    Không có Manager phù hợp để gán cho chi nhánh này.
+                </div>
+
+                <ul th:if="${candidates != null and !#lists.isEmpty(candidates)}" class="space-y-3">
+                    <li th:each="candidate : ${candidates}">
+                        <label class="flex cursor-pointer items-center gap-4 rounded-xl border border-cinema-border bg-cinema-panel-soft p-4 transition-colors hover:border-primary/60 hover:bg-cinema-panel">
+                            <input type="radio" th:field="*{userId}" th:value="${candidate.userId}" required class="h-4 w-4 accent-[#E50914]">
+                            <span class="min-w-0 flex-1">
+                                <span class="block font-semibold text-white" th:text="${candidate.fullName}">Họ và tên</span>
+                                <span class="block truncate text-sm text-cinema-muted" th:text="${candidate.email}">email@example.com</span>
+                            </span>
+                            <span class="hidden text-sm text-cinema-muted sm:inline" th:text="${candidate.phone}">0xxxxxxxxx</span>
+                        </label>
+                    </li>
+                </ul>
+                <span th:if="${#fields.hasErrors('userId')}" th:errors="*{userId}" class="mt-3 block text-xs text-danger">Lỗi chọn Manager</span>
+            </section>
+
+            <div class="flex justify-end gap-3">
+                <a class="hc-btn no-underline" th:href="@{/admin/branches/{id}(id=${branch.branchId})}">Hủy</a>
+                <button type="submit" class="hc-btn hc-btn-primary" th:disabled="${candidates == null or #lists.isEmpty(candidates)}">Gán Manager</button>
+            </div>
+        </form>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
 
 </body>
 </html>

@@ -511,7 +511,7 @@ public class DataInitializer implements CommandLineRunner {
     // ───────────────────── AUDIT LOGS ─────────────────────
     private void ensureAuditLogTable() {
         jdbcTemplate.execute("""
-                CREATE TABLE IF NOT EXISTS `Audit_Log` (
+                CREATE TABLE IF NOT EXISTS `audit_log` (
                     `log_id` INT AUTO_INCREMENT PRIMARY KEY,
                     `user_id` INT NOT NULL,
                     `entity_type` VARCHAR(100) NOT NULL,
@@ -557,3 +557,4 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 }
+

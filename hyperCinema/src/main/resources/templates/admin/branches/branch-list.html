@@ -1,559 +1,102 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Chi nhánh - HyperCinema</title>
-    <!--
-        Branch_List_View — Branch Management feature.
-
-        Trace requirement:
-          - REQ 4.1  Trang danh sách tại GET /admin/branches (Admin).
-          - REQ 4.2  Bảng 7 cột: name / city / address / phone / status badge /
-                     hallCount / createdAt.
-          - REQ 4.6  Pagination với page param 0-indexed, size mặc định 10.
-          - REQ 4.7  Sort theo cột (name | city | status | createdAt) ×
-                     direction (ASC | DESC).
-          - REQ 4.8  Hiển thị warning khi tham số status invalid (controller
-                     set warningKey = "branch.search.status_ignored").
-
-        Self-contained HTML page (theme khớp templates/auth/login.html). Toàn
-        bộ giá trị động đều render qua th:text để escape an toàn.
-    -->
-    <style>
-        :root {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --surface-elevated: #2a2a2a;
-            --primary-color: #ff3b30;
-            --primary-hover: #e0352b;
-            --text-primary: #ffffff;
-            --text-secondary: #aaaaaa;
-            --text-muted: #777777;
-            --border-color: #333333;
-            --success-color: #30d158;
-            --warning-color: #ff9f0a;
-            --info-color: #0a84ff;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            margin: 0;
-            min-height: 100vh;
-        }
-
-        .page-wrapper {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 32px 24px 64px;
-        }
-
-        .page-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-
-        .page-header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 18px;
-            border-radius: 6px;
-            border: 1px solid transparent;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-            font-family: inherit;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: #ffffff;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            color: var(--text-primary);
-            border-color: var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--text-secondary);
-        }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-            font-size: 14px;
-            border: 1px solid transparent;
-        }
-
-        .alert-success {
-            background-color: rgba(48, 209, 88, 0.1);
-            color: var(--success-color);
-            border-color: rgba(48, 209, 88, 0.25);
-        }
-
-        .alert-error {
-            background-color: rgba(255, 59, 48, 0.1);
-            color: var(--primary-color);
-            border-color: rgba(255, 59, 48, 0.25);
-        }
-
-        .alert-warning {
-            background-color: rgba(255, 159, 10, 0.1);
-            color: var(--warning-color);
-            border-color: rgba(255, 159, 10, 0.25);
-        }
-
-        .alert-info {
-            background-color: rgba(10, 132, 255, 0.1);
-            color: var(--info-color);
-            border-color: rgba(10, 132, 255, 0.25);
-        }
-
-        .filter-card {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .filter-form {
-            display: grid;
-            grid-template-columns: 2fr 1.5fr 1fr auto;
-            gap: 12px;
-            align-items: end;
-        }
-
-        @media (max-width: 800px) {
-            .filter-form {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .form-group label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-        }
-
-        .form-group input,
-        .form-group select {
-            background-color: var(--surface-elevated);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 10px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: inherit;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        .table-card {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead th {
-            background-color: #181818;
-            color: var(--text-secondary);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            text-align: left;
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border-color);
-            white-space: nowrap;
-        }
-
-        thead th a.sort-link {
-            color: inherit;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        thead th a.sort-link:hover {
-            color: var(--text-primary);
-        }
-
-        thead th a.sort-link.is-active {
-            color: var(--primary-color);
-        }
-
-        .sort-indicator {
-            font-size: 10px;
-            opacity: 0.85;
-        }
-
-        tbody td {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 14px;
-            vertical-align: middle;
-        }
-
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        tbody tr:hover {
-            background-color: rgba(255, 255, 255, 0.02);
-        }
-
-        td.col-name a {
-            color: var(--text-primary);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        td.col-name a:hover {
-            color: var(--primary-color);
-        }
-
-        td.col-numeric {
-            text-align: right;
-            font-variant-numeric: tabular-nums;
-            color: var(--text-secondary);
-        }
-
-        td.col-muted {
-            color: var(--text-secondary);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 48px 24px;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .pagination-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            padding: 16px 20px;
-            border-top: 1px solid var(--border-color);
-            background-color: #181818;
-            flex-wrap: wrap;
-        }
-
-        .pagination-info {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .pagination-controls {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            flex-wrap: wrap;
-        }
-
-        .pagination-controls a,
-        .pagination-controls span.page-current,
-        .pagination-controls span.page-disabled {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 36px;
-            height: 36px;
-            padding: 0 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            font-size: 13px;
-            text-decoration: none;
-            color: var(--text-primary);
-            background-color: var(--surface-color);
-            transition: border-color 0.2s, background-color 0.2s;
-        }
-
-        .pagination-controls a:hover {
-            border-color: var(--text-secondary);
-        }
-
-        .pagination-controls span.page-current {
-            background-color: var(--primary-color);
-            color: #ffffff;
-            border-color: var(--primary-color);
-            font-weight: 600;
-        }
-
-        .pagination-controls span.page-disabled {
-            color: var(--text-muted);
-            background-color: transparent;
-            cursor: not-allowed;
-        }
-    </style>
-</head>
+<head th:replace="~{fragments/layout :: head('Quản lý Rạp - HyperCinema')}"></head>
 <body>
-<div class="page-wrapper">
+<div class="hc-shell">
+    <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+    <nav th:replace="~{fragments/layout :: adminSidebar('branches')}"></nav>
 
-    <!-- Header với title + nút "Tạo mới" → REQ 4.1 -->
-    <div class="page-header">
-        <h1>Quản lý Chi nhánh</h1>
-        <a th:href="@{/admin/branches/new}" class="btn btn-primary">+ Tạo mới</a>
-    </div>
-
-    <!--
-        Flash messages (success / error / info) — render khi controller gắn
-        flash attribute tương ứng (PRG pattern). Khoá i18n được resolve qua
-        #{${...}}; nếu khoá không có trong messages.properties, Thymeleaf sẽ
-        in chính khoá đó (không vỡ trang).
-    -->
-    <div th:if="${successKey}" class="alert alert-success"
-         th:text="#{${successKey}}">Thành công</div>
-    <div th:if="${errorKey}" class="alert alert-error"
-         th:text="#{${errorKey}}">Có lỗi xảy ra</div>
-    <div th:if="${infoKey}" class="alert alert-info"
-         th:text="#{${infoKey}}">Thông báo</div>
-
-    <!-- Warning: status param invalid → REQ 4.8 -->
-    <div th:if="${warningKey}" class="alert alert-warning"
-         th:text="#{${warningKey}}">
-        Giá trị trạng thái không hợp lệ — đã bỏ qua bộ lọc.
-    </div>
-
-    <!--
-        Filter bar — form GET /admin/branches với 3 input (keyword / city /
-        status). Pre-fill giá trị từ criteria để giữ trạng thái tìm kiếm
-        sau khi submit (REQ 4.3, 4.4, 4.5).
-    -->
-    <div class="filter-card">
-        <form th:action="@{/admin/branches}" method="get" class="filter-form">
-
-            <div class="form-group">
-                <label for="keyword">Từ khoá</label>
-                <input type="text" id="keyword" name="keyword"
-                       placeholder="Tên hoặc địa chỉ"
-                       th:value="${criteria != null ? criteria.keyword : ''}">
+    <main class="hc-page">
+        <section class="hc-page-head">
+            <div>
+                <p class="hc-kicker">Branches</p>
+                <h1>Quản lý Rạp</h1>
+                <p>Theo dõi chi nhánh, thành phố, trạng thái vận hành và số phòng chiếu.</p>
             </div>
+            <a th:href="@{/admin/branches/new}" class="hc-button hc-button-primary">
+                <i data-lucide="plus"></i>
+                Tạo rạp
+            </a>
+        </section>
 
-            <div class="form-group">
-                <label for="city">Thành phố</label>
-                <input type="text" id="city" name="city"
-                       placeholder="Ví dụ: Hà Nội"
-                       th:value="${criteria != null ? criteria.city : ''}">
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <section class="hc-panel">
+            <div class="hc-panel-head">
+                <div>
+                    <p class="hc-kicker">Bộ lọc</p>
+                    <h2>Tìm kiếm rạp</h2>
+                </div>
+                <i data-lucide="search"></i>
             </div>
+            <form th:action="@{/admin/branches}" method="get" class="hc-form-grid">
+                <label class="hc-field" for="keyword">
+                    <span>Từ khóa</span>
+                    <input class="hc-input" type="text" id="keyword" name="keyword" placeholder="Tên hoặc địa chỉ" th:value="${criteria != null ? criteria.keyword : ''}">
+                </label>
+                <label class="hc-field" for="city">
+                    <span>Thành phố</span>
+                    <input class="hc-input" type="text" id="city" name="city" placeholder="Ví dụ: Hà Nội" th:value="${criteria != null ? criteria.city : ''}">
+                </label>
+                <label class="hc-field" for="status">
+                    <span>Trạng thái</span>
+                    <select class="hc-input cursor-pointer" id="status" name="status">
+                        <option value="" th:selected="${criteria == null or criteria.status == null or #strings.isEmpty(criteria.status)}">Tất cả</option>
+                        <option value="Active" th:selected="${criteria != null and criteria.status == 'Active'}">Hoạt động</option>
+                        <option value="Inactive" th:selected="${criteria != null and criteria.status == 'Inactive'}">Ngừng hoạt động</option>
+                        <option value="Maintenance" th:selected="${criteria != null and criteria.status == 'Maintenance'}">Bảo trì</option>
+                    </select>
+                </label>
+                <div class="hc-actions">
+                    <a th:href="@{/admin/branches}" class="hc-button hc-button-outline">Xóa lọc</a>
+                    <button type="submit" class="hc-button hc-button-primary">Tìm kiếm</button>
+                </div>
+            </form>
+        </section>
 
-            <div class="form-group">
-                <label for="status">Trạng thái</label>
-                <select id="status" name="status">
-                    <option value=""
-                            th:selected="${criteria == null or criteria.status == null or #strings.isEmpty(criteria.status)}">
-                        Tất cả
-                    </option>
-                    <option value="Active"
-                            th:selected="${criteria != null and criteria.status == 'Active'}">
-                        Active
-                    </option>
-                    <option value="Inactive"
-                            th:selected="${criteria != null and criteria.status == 'Inactive'}">
-                        Inactive
-                    </option>
-                    <option value="Maintenance"
-                            th:selected="${criteria != null and criteria.status == 'Maintenance'}">
-                        Maintenance
-                    </option>
-                </select>
+        <section class="hc-panel">
+            <div class="hc-panel-head">
+                <div>
+                    <p class="hc-kicker">Danh sách</p>
+                    <h2 th:text="|${page != null ? page.totalElements : 0} rạp|">0 rạp</h2>
+                </div>
+                <i data-lucide="building-2"></i>
             </div>
-
-            <div class="form-group">
-                <label>&nbsp;</label>
-                <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+            <div class="hc-table-wrap">
+                <table class="hc-table">
+                    <thead>
+                    <tr>
+                        <th>
+                            <a class="hc-sort-link" th:href="@{|/admin/branches?keyword=${criteria != null and criteria.keyword != null ? criteria.keyword : ''}&city=${criteria != null and criteria.city != null ? criteria.city : ''}&status=${criteria != null and criteria.status != null ? criteria.status : ''}&sort=name&direction=${criteria != null and criteria.sort == 'name' and criteria.direction == 'ASC' ? 'DESC' : 'ASC'}|}">Tên rạp</a>
+                        </th>
+                        <th>Thành phố</th>
+                        <th>Địa chỉ</th>
+                        <th>Điện thoại</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Phòng chiếu</th>
+                        <th>Ngày tạo</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${page == null or #lists.isEmpty(page.content)}">
+                        <td colspan="7" class="hc-empty">Không có rạp nào khớp với bộ lọc hiện tại.</td>
+                    </tr>
+                    <tr th:each="item : ${page != null ? page.content : {}}" th:if="${page != null and not #lists.isEmpty(page.content)}">
+                        <td><a th:href="@{|/admin/branches/${item.branchId}|}" th:text="${item.name}" class="hc-table-title">Tên rạp</a></td>
+                        <td th:text="${item.city}">Hà Nội</td>
+                        <td th:text="${item.address}">123 Street</td>
+                        <td th:text="${item.phone}">0123456789</td>
+                        <td><th:block th:replace="~{fragments/components :: statusBadge(${item.status})}"></th:block></td>
+                        <td class="text-end tabular-nums" th:text="${item.hallCount != null ? item.hallCount : 0}">0</td>
+                        <td th:text="${item.createdAt != null ? #temporals.format(item.createdAt, 'dd/MM/yyyy HH:mm') : ''}">01/01/2026</td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
-        </form>
-    </div>
-
-    <!--
-        Bảng danh sách 7 cột — REQ 4.2.
-        Cột name/city/status/createdAt có sort header (REQ 4.7); cột address,
-        phone, hallCount không sort được (vẫn hiển thị header tĩnh).
-
-        Sort URL pattern: preserve keyword/city/status hiện tại + đặt sort =
-        column-name; toggle direction nếu đang sort theo cùng cột, ngược lại
-        mặc định ASC.
-    -->
-    <div class="table-card">
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                <tr>
-                    <th>
-                        <a class="sort-link"
-                           th:classappend="${criteria != null and criteria.sort == 'name'} ? ' is-active' : ''"
-                           th:href="@{|/admin/branches?keyword=${criteria != null and criteria.keyword != null ? criteria.keyword : ''}&city=${criteria != null and criteria.city != null ? criteria.city : ''}&status=${criteria != null and criteria.status != null ? criteria.status : ''}&sort=name&direction=${criteria != null and criteria.sort == 'name' and criteria.direction == 'ASC' ? 'DESC' : 'ASC'}|}">
-                            Tên chi nhánh
-                            <span class="sort-indicator"
-                                  th:if="${criteria != null and criteria.sort == 'name'}"
-                                  th:text="${criteria.direction == 'ASC' ? '▲' : '▼'}">▲</span>
-                        </a>
-                    </th>
-                    <th>
-                        <a class="sort-link"
-                           th:classappend="${criteria != null and criteria.sort == 'city'} ? ' is-active' : ''"
-                           th:href="@{|/admin/branches?keyword=${criteria != null and criteria.keyword != null ? criteria.keyword : ''}&city=${criteria != null and criteria.city != null ? criteria.city : ''}&status=${criteria != null and criteria.status != null ? criteria.status : ''}&sort=city&direction=${criteria != null and criteria.sort == 'city' and criteria.direction == 'ASC' ? 'DESC' : 'ASC'}|}">
-                            Thành phố
-                            <span class="sort-indicator"
-                                  th:if="${criteria != null and criteria.sort == 'city'}"
-                                  th:text="${criteria.direction == 'ASC' ? '▲' : '▼'}">▲</span>
-                        </a>
-                    </th>
-                    <th>Địa chỉ</th>
-                    <th>Số điện thoại</th>
-                    <th>
-                        <a class="sort-link"
-                           th:classappend="${criteria != null and criteria.sort == 'status'} ? ' is-active' : ''"
-                           th:href="@{|/admin/branches?keyword=${criteria != null and criteria.keyword != null ? criteria.keyword : ''}&city=${criteria != null and criteria.city != null ? criteria.city : ''}&status=${criteria != null and criteria.status != null ? criteria.status : ''}&sort=status&direction=${criteria != null and criteria.sort == 'status' and criteria.direction == 'ASC' ? 'DESC' : 'ASC'}|}">
-                            Trạng thái
-                            <span class="sort-indicator"
-                                  th:if="${criteria != null and criteria.sort == 'status'}"
-                                  th:text="${criteria.direction == 'ASC' ? '▲' : '▼'}">▲</span>
-                        </a>
-                    </th>
-                    <th style="text-align: right;">Số phòng chiếu</th>
-                    <th>
-                        <a class="sort-link"
-                           th:classappend="${criteria != null and criteria.sort == 'createdAt'} ? ' is-active' : ''"
-                           th:href="@{|/admin/branches?keyword=${criteria != null and criteria.keyword != null ? criteria.keyword : ''}&city=${criteria != null and criteria.city != null ? criteria.city : ''}&status=${criteria != null and criteria.status != null ? criteria.status : ''}&sort=createdAt&direction=${criteria != null and criteria.sort == 'createdAt' and criteria.direction == 'ASC' ? 'DESC' : 'ASC'}|}">
-                            Ngày tạo
-                            <span class="sort-indicator"
-                                  th:if="${criteria != null and criteria.sort == 'createdAt'}"
-                                  th:text="${criteria.direction == 'ASC' ? '▲' : '▼'}">▲</span>
-                        </a>
-                    </th>
-                </tr>
-                </thead>
-                <tbody>
-
-                <!-- Empty-state row (REQ 4.2 — no items) -->
-                <tr th:if="${page == null or #lists.isEmpty(page.content)}">
-                    <td colspan="7" class="empty-state">
-                        Không có chi nhánh nào khớp với bộ lọc hiện tại.
-                    </td>
-                </tr>
-
-                <!-- Data rows -->
-                <tr th:each="item : ${page != null ? page.content : {}}"
-                    th:if="${page != null and not #lists.isEmpty(page.content)}">
-                    <td class="col-name">
-                        <a th:href="@{|/admin/branches/${item.branchId}|}"
-                           th:text="${item.name}">Tên chi nhánh</a>
-                    </td>
-                    <td th:text="${item.city}">Hà Nội</td>
-                    <td class="col-muted" th:text="${item.address}">123 Đường ABC</td>
-                    <td class="col-muted" th:text="${item.phone}">0123456789</td>
-                    <td>
-                        <th:block th:replace="~{admin/branches/_status-badge :: statusBadge(${item.status})}"></th:block>
-                    </td>
-                    <td class="col-numeric" th:text="${item.hallCount != null ? item.hallCount : 0}">0</td>
-                    <td class="col-muted"
-                        th:text="${item.createdAt != null ? #temporals.format(item.createdAt, 'dd/MM/yyyy HH:mm') : ''}">
-                        01/01/2025 09:00
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!--
-            Pagination footer — chỉ render khi có ít nhất 1 trang.
-            page.number là 0-indexed (Spring Data) → hiển thị +1.
-            Mỗi link pagination preserve toàn bộ filter + sort hiện tại.
-        -->
-        <div class="pagination-bar" th:if="${page != null and page.totalPages > 0}">
-            <div class="pagination-info">
-                Trang
-                <strong th:text="${page.number + 1}">1</strong>
-                /
-                <strong th:text="${page.totalPages}">1</strong>
-                — tổng
-                <strong th:text="${page.totalElements}">0</strong>
-                chi nhánh
-            </div>
-
-            <div class="pagination-controls">
-
-                <!-- Prev -->
-                <a th:if="${not page.first}"
-                   th:href="@{|/admin/branches?keyword=${criteria != null and criteria.keyword != null ? criteria.keyword : ''}&city=${criteria != null and criteria.city != null ? criteria.city : ''}&status=${criteria != null and criteria.status != null ? criteria.status : ''}&sort=${criteria != null ? criteria.sort : 'createdAt'}&direction=${criteria != null ? criteria.direction : 'DESC'}&page=${page.number - 1}&size=${page.size}|}">
-                    ‹ Trước
-                </a>
-                <span th:if="${page.first}" class="page-disabled">‹ Trước</span>
-
-                <!-- Page numbers -->
-                <th:block th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}">
-                    <span th:if="${i == page.number}"
-                          class="page-current"
-                          th:text="${i + 1}">1</span>
-                    <a th:if="${i != page.number}"
-                       th:href="@{|/admin/branches?keyword=${criteria != null and criteria.keyword != null ? criteria.keyword : ''}&city=${criteria != null and criteria.city != null ? criteria.city : ''}&status=${criteria != null and criteria.status != null ? criteria.status : ''}&sort=${criteria != null ? criteria.sort : 'createdAt'}&direction=${criteria != null ? criteria.direction : 'DESC'}&page=${i}&size=${page.size}|}"
-                       th:text="${i + 1}">1</a>
-                </th:block>
-
-                <!-- Next -->
-                <a th:if="${not page.last}"
-                   th:href="@{|/admin/branches?keyword=${criteria != null and criteria.keyword != null ? criteria.keyword : ''}&city=${criteria != null and criteria.city != null ? criteria.city : ''}&status=${criteria != null and criteria.status != null ? criteria.status : ''}&sort=${criteria != null ? criteria.sort : 'createdAt'}&direction=${criteria != null ? criteria.direction : 'DESC'}&page=${page.number + 1}&size=${page.size}|}">
-                    Sau ›
-                </a>
-                <span th:if="${page.last}" class="page-disabled">Sau ›</span>
-
-            </div>
-        </div>
-
-    </div>
-
+            <div th:replace="~{fragments/components :: pagination(${page}, ${criteria}, '/admin/branches')}"></div>
+        </section>
+    </main>
 </div>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

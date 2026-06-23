@@ -9,13 +9,14 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Showtime")
+@Table(name = "showtime")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Showtime {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "showtime_id")
     private Integer showtimeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -35,3 +36,4 @@ public class Showtime {
     @Column(nullable = false)
     private Integer price;
 }
+

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Quản lý F&B - HyperCinema')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('food')}"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner hc-fnb-page">
+        <section class="hc-fnb-head" aria-labelledby="fnb-title">
+            <div>
+                <h1 id="fnb-title" class="hc-page-title">Quản lý Bắp Nước (F&amp;B)</h1>
+                <p class="hc-page-subtitle">Quản lý danh sách sản phẩm, combo, giá bán và tồn kho tại quầy.</p>
+            </div>
+            <div class="hc-actions">
+                <a th:href="@{/admin/food-orders}" class="hc-button hc-button-outline">
+                    <i data-lucide="receipt-text"></i>
+                    Đơn F&amp;B
+                </a>
+                <a th:href="@{/admin/food-items/new}" class="hc-button hc-button-primary">
+                    <i data-lucide="plus"></i>
+                    Thêm sản phẩm
+                </a>
+            </div>
+        </section>
+
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <form th:action="@{/admin/food-items}" method="get" class="hc-fnb-toolbar" aria-label="Bộ lọc F&B">
+            <label class="hc-admin-search" for="keyword">
+                <i data-lucide="search"></i>
+                <input type="search"
+                       id="keyword"
+                       name="keyword"
+                       placeholder="Tìm theo tên sản phẩm hoặc mã..."
+                       th:value="${keyword}">
+            </label>
+            <select class="hc-select hc-fnb-select" name="categoryName" aria-label="Danh mục">
+                <option value="" th:selected="${categoryName == null or #strings.isEmpty(categoryName)}">Tất cả danh mục</option>
+                <option th:each="category : ${categories}"
+                        th:value="${category}"
+                        th:text="${category}"
+                        th:selected="${categoryName == category}">Combo</option>
+            </select>
+            <select class="hc-select hc-fnb-select" name="isAvailable" aria-label="Trạng thái">
+                <option value="" th:selected="${isAvailable == null}">Tất cả trạng thái</option>
+                <option value="true" th:selected="${isAvailable != null and isAvailable}">Còn hàng</option>
+                <option value="false" th:selected="${isAvailable != null and !isAvailable}">Ngừng bán</option>
+            </select>
+            <button type="submit" class="hc-icon-button" title="Tìm kiếm" aria-label="Tìm kiếm">
+                <i data-lucide="search"></i>
+            </button>
+            <a th:href="@{/admin/food-items}" class="hc-icon-button" title="Xóa lọc" aria-label="Xóa lọc">
+                <i data-lucide="rotate-ccw"></i>
+            </a>
+        </form>
+
+        <section class="hc-fnb-table-card" aria-label="Danh sách sản phẩm F&B">
+            <div class="hc-table-wrap">
+                <table class="hc-fnb-table">
+                    <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th>Danh mục</th>
+                        <th class="text-right">Đơn giá</th>
+                        <th>Trạng thái</th>
+                        <th class="text-right">Tồn kho</th>
+                        <th class="text-right">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${items == null or #lists.isEmpty(items)}">
+                        <td colspan="6">
+                            <div class="hc-fnb-empty">
+                                <i data-lucide="search"></i>
+                                <p>Không tìm thấy sản phẩm nào phù hợp</p>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:each="item : ${items}"
+                        th:with="categoryLower=${item.categoryName != null ? #strings.toLowerCase(item.categoryName) : ''}"
+                        th:classappend="${!item.isAvailable or item.outOfStock} ? ' is-muted' : ''">
+                        <td>
+                            <a th:href="@{|/admin/food-items/${item.itemId}|}" class="hc-fnb-product">
+                                <span class="hc-fnb-thumb">
+                                    <i th:if="${#strings.contains(categoryLower, 'combo') or #strings.contains(categoryLower, 'nước')}"
+                                       data-lucide="coffee"></i>
+                                    <i th:unless="${#strings.contains(categoryLower, 'combo') or #strings.contains(categoryLower, 'nước')}"
+                                       data-lucide="image"></i>
+                                </span>
+                                <span>
+                                    <strong th:text="${item.name}">Combo Bắp Nước 1</strong>
+                                    <small th:text="|FNB-${#numbers.formatInteger(item.itemId, 3)}|">FNB-001</small>
+                                </span>
+                            </a>
+                        </td>
+                        <td>
+                            <span class="hc-fnb-category" th:text="${item.categoryName}">Combo</span>
+                        </td>
+                        <td class="text-right tabular-nums">
+                            <strong th:text="${#numbers.formatInteger(item.price, 0, 'POINT') + ' đ'}">85.000 đ</strong>
+                        </td>
+                        <td>
+                            <span th:if="${item.isAvailable and !item.outOfStock}" class="hc-fnb-status is-live">
+                                <span></span>
+                                Còn hàng
+                            </span>
+                            <span th:if="${item.isAvailable and item.outOfStock}" class="hc-fnb-status is-danger">
+                                <span></span>
+                                Hết hàng
+                            </span>
+                            <span th:unless="${item.isAvailable}" class="hc-fnb-status is-muted">
+                                <span></span>
+                                Ngừng bán
+                            </span>
+                        </td>
+                        <td class="text-right tabular-nums" th:text="${item.stock}">150</td>
+                        <td>
+                            <div class="hc-row-actions">
+                                <a th:href="@{|/admin/food-items/${item.itemId}/edit|}" class="hc-icon-button" title="Chỉnh sửa" aria-label="Chỉnh sửa">
+                                    <i data-lucide="edit-2"></i>
+                                </a>
+                                <form th:action="@{|/admin/food-items/${item.itemId}|}"
+                                      method="post"
+                                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa mặt hàng này?');"
+                                      sec:authorize="hasRole('ADMIN')">
+                                    <input type="hidden" name="_method" value="delete">
+                                    <button type="submit" class="hc-icon-button is-danger" title="Xóa" aria-label="Xóa">
+                                        <i data-lucide="trash"></i>
+                                    </button>
+                                </form>
+                                <a th:href="@{|/admin/food-items/${item.itemId}|}" class="hc-icon-button" title="Chi tiết" aria-label="Chi tiết">
+                                    <i data-lucide="more-vertical"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

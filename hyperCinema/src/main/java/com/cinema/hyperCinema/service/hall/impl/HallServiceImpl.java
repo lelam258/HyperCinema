@@ -1,11 +1,15 @@
 package com.cinema.hyperCinema.service.hall.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.cinema.hyperCinema.dto.admin.hall.request.HallSearchCriteria;
 import com.cinema.hyperCinema.model.Branch;
 import com.cinema.hyperCinema.model.Hall;
+import com.cinema.hyperCinema.model.MaintenanceStatus;
 import com.cinema.hyperCinema.model.Role;
+import com.cinema.hyperCinema.model.Seat;
+import com.cinema.hyperCinema.model.SeatType;
 import com.cinema.hyperCinema.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -72,7 +76,9 @@ public class HallServiceImpl implements HallService {
         User current = loadActor(actor);
         String name = normalizeName(request.getName());
         String hallType = normalizeRequiredText(request.getHallType(), "hall.type.required", 50, "hall.type.too_long");
-        Integer capacity = normalizeCapacity(request.getCapacity());
+        int rowCount = normalizeLayoutSize(request.getRowCount(), "hall.rows.invalid", 26);
+        int columnCount = normalizeLayoutSize(request.getColumnCount(), "hall.columns.invalid", 50);
+        Integer capacity = rowCount * columnCount;
         String status = normalizeRequiredText(request.getStatus(), "hall.status.required", 50, "hall.status.too_long");
         Integer targetBranchId = resolveTargetBranchId(request.getBranchId(), current);
         Branch branch = branchRepository.findById(targetBranchId)
@@ -88,7 +94,9 @@ public class HallServiceImpl implements HallService {
         hall.setHallType(hallType);
         hall.setCapacity(capacity);
         hall.setStatus(status);
-        return toDetailView(hallRepository.save(hall));
+        Hall saved = hallRepository.save(hall);
+        seatRepository.saveAll(buildInitialSeats(saved, rowCount, columnCount));
+        return toDetailView(saved);
     }
 
     @Override
@@ -292,6 +300,30 @@ public class HallServiceImpl implements HallService {
             throw new HallValidationException("hall.capacity.invalid");
         }
         return capacity;
+    }
+
+    private static int normalizeLayoutSize(Integer value, String invalidKey, int max) {
+        if (value == null || value < 1 || value > max) {
+            throw new HallValidationException(invalidKey);
+        }
+        return value;
+    }
+
+    private static List<Seat> buildInitialSeats(Hall hall, int rowCount, int columnCount) {
+        List<Seat> seats = new ArrayList<>(rowCount * columnCount);
+        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+            String rowLabel = String.valueOf((char) ('A' + rowIndex));
+            for (int seatNumber = 1; seatNumber <= columnCount; seatNumber++) {
+                Seat seat = new Seat();
+                seat.setHall(hall);
+                seat.setSeatRow(rowLabel);
+                seat.setSeatNumber(seatNumber);
+                seat.setType(SeatType.STANDARD.name());
+                seat.setMaintenanceStatus(MaintenanceStatus.AVAILABLE.name());
+                seats.add(seat);
+            }
+        }
+        return seats;
     }
 
     private static boolean isAdmin(User user) {

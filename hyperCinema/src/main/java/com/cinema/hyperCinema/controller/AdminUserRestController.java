@@ -24,7 +24,7 @@ public class AdminUserRestController {
     public ResponseEntity<?> createUser(@RequestBody UserRequest request) {
         try {
             User user = new User();
-//            user.setName(request.getName());
+            user.setFullName(request.getName());
             user.setUsername(request.getUsername());
             user.setEmail(request.getEmail());
             user.setPasswordHash(request.getPassword()); // In production, hash it
@@ -49,7 +49,7 @@ public class AdminUserRestController {
     public ResponseEntity<?> updateUser(@PathVariable("id") Integer id, @RequestBody UserRequest request) {
         try {
             User userDetails = new User();
-//            userDetails.setName(request.getName());
+            userDetails.setFullName(request.getName());
             userDetails.setUsername(request.getUsername());
             userDetails.setEmail(request.getEmail());
             userDetails.setPhone(request.getPhone());
@@ -82,6 +82,16 @@ public class AdminUserRestController {
     public ResponseEntity<?> toggleUserStatus(@PathVariable("id") Integer id) {
         try {
             User updated = userService.toggleUserStatus(id);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/assign-role")
+    public ResponseEntity<?> assignRole(@PathVariable("id") Integer id, @RequestBody Integer roleId) {
+        try {
+            User updated = userService.assignUserRole(id, roleId);
             return ResponseEntity.ok(updated);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));

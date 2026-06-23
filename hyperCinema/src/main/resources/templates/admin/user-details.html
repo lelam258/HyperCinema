@@ -1,305 +1,145 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Details - HyperCinema</title>
-    <!-- Lucide Icons for premium feel -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" th:href="@{/css/admin.css(v=1.1)}">
-</head>
-<body>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(|Chi tiết người dùng - ${user.fullName} - HyperCinema|)}"></head>
+<body class="min-h-screen">
 
-<div class="dashboard-container">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="logo-container">
-            <div class="logo-icon">H</div>
-            <span class="logo-text">HyperCinema</span>
-        </div>
-        <ul class="nav-links">
-            <li>
-                <a href="#" class="nav-link">
-                    <i data-lucide="layout-dashboard"></i>
-                    <span>Dashboard</span>
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/users}" class="nav-link active">
-                    <i data-lucide="users"></i>
-                    <span>Users</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-link">
-                    <i data-lucide="film"></i>
-                    <span>Movies</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-link">
-                    <i data-lucide="calendar"></i>
-                    <span>Showtimes</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-link">
-                    <i data-lucide="ticket"></i>
-                    <span>Bookings</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-link">
-                    <i data-lucide="coffee"></i>
-                    <span>Food & Drinks</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-link">
-                    <i data-lucide="tag"></i>
-                    <span>Promotions</span>
-                </a>
-            </li>
-        </ul>
-    </aside>
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('users')}"></nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="header-row">
-            <div class="header-title">
-                <a th:href="@{/admin/users}" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; margin-bottom: 1.5rem; padding: 0.65rem 1rem;">
-                    <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
-                    <span>Back to Users</span>
-                </a>
-                <h1 th:text="'User Profile: ' + ${user.fullName}">John Admin</h1>
-                <p>Monitor user activity, access privileges, and account status details</p>
+<main class="hc-page">
+    <div class="hc-page-inner">
+        <a th:href="@{/admin/users}" class="mb-4 inline-flex text-sm text-cinema-muted no-underline hover:text-accent">← Quay lại danh sách</a>
+
+        <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h1 class="hc-page-title" th:text="${user.fullName}">Tên người dùng</h1>
+                <p class="hc-page-subtitle" th:text="|@${user.username} - ${user.email}|">@username - email</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" class="hc-btn hc-btn-primary"
+                        data-user-open="edit"
+                        th:attr="data-user-id=${user.userId},data-user-name=${user.fullName},data-user-username=${user.username},data-user-email=${user.email},data-user-phone=${user.phone},data-user-role=${user.role != null ? user.role.roleId : ''},data-user-status=${user.status}">
+                    Chỉnh sửa
+                </button>
+                <button type="button" class="hc-btn" data-user-open="role" th:attr="data-user-id=${user.userId},data-user-role=${user.role != null ? user.role.roleId : ''}">Gán role</button>
+                <button type="button" class="hc-btn" data-user-open="reset" th:attr="data-user-id=${user.userId}">Đặt mật khẩu</button>
+                <button type="button" class="hc-btn text-warning" data-user-action="toggle" th:attr="data-user-id=${user.userId}" th:text="${user.status == 'Active' ? 'Khóa tài khoản' : 'Mở tài khoản'}">Khóa tài khoản</button>
             </div>
         </div>
 
-        <!-- Detail Layout Grid -->
-        <div class="detail-grid">
-            <!-- Left Column: Profile Card -->
-            <section class="profile-card">
-                <div class="avatar-wrapper" th:text="${#strings.substring(user.fullName, 0, 2).toUpperCase()}">JO</div>
-                <h2 th:text="${user.fullName}">John Admin</h2>
-                <div class="email" th:text="${user.email}">john.admin@company.com</div>
-
-                <div class="info-list">
-                    <div class="info-item">
-                        <span class="info-label">User ID</span>
-                        <span class="info-value" th:text="${user.userId}">1</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Status</span>
-                        <span class="badge" th:classappend="${user.status == 'Active' ? 'badge-status-active' : 'badge-status-inactive'}" th:text="${user.status}">Active</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Username</span>
-                        <span class="info-value" th:text="${user.username}">john.admin</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Role</span>
-                        <span class="badge badge-role" th:classappend="${user.role != null && user.role.name == 'Administrator' ? 'badge-role-admin' : (user.role != null && user.role.name == 'Manager' ? 'badge-role-manager' : '')}" th:text="${user.role != null ? user.role.name : 'Viewer'}">Administrator</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Phone</span>
-                        <span class="info-value" th:text="${user.phone != null && user.phone != '' ? user.phone : 'N/A'}">0123456789</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Created Date</span>
-                        <span class="info-value" th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm') : 'N/A'}">2025-01-15</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Latest Login</span>
-                        <span class="info-value" th:text="${user.lastLogin != null ? #temporals.format(user.lastLogin, 'yyyy-MM-dd HH:mm') : 'N/A'}">2026-05-23 09:30</span>
-                    </div>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[22rem_1fr]">
+            <section class="hc-card p-6" aria-label="Hồ sơ người dùng">
+                <div class="mb-6 text-center">
+                    <div class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary text-2xl font-bold text-white shadow-[0_0_24px_rgba(229,9,20,0.25)]"
+                         th:text="${#strings.toUpperCase(#strings.substring(user.fullName, 0, 1))}">H</div>
+                    <h2 class="text-xl font-semibold text-white" th:text="${user.fullName}">Tên người dùng</h2>
+                    <p class="text-sm text-cinema-muted" th:text="${user.email}">email@example.com</p>
                 </div>
 
-                <div class="detail-actions">
-                    <button class="btn-primary btn" th:onclick="openEditModal([[${user.userId}]], [[${user.fullName}]], [[${user.username}]], [[${user.email}]], [[${user.phone}]], [[${user.role != null ? user.role.roleId : null}]], [[${user.status}]])">
-                        <i data-lucide="edit"></i>
-                        <span>Update User</span>
-                    </button>
-                    <button class="btn-secondary btn" th:onclick="toggleStatus([[${user.userId}]])" style="border-color: var(--danger); color: var(--danger);" th:style="${user.status == 'Inactive' ? 'border-color: var(--success); color: var(--success);' : 'border-color: var(--danger); color: var(--danger);'}">
-                        <i th:data-lucide="${user.status == 'Active' ? 'user-x' : 'user-check'}"></i>
-                        <span th:text="${user.status == 'Active' ? 'Deactivate' : 'Activate'}">Deactivate</span>
-                    </button>
-                </div>
+                <dl class="space-y-4">
+                    <div class="flex items-center justify-between gap-4"><dt class="hc-label mb-0">User ID</dt><dd class="text-white tabular-nums" th:text="${user.userId}">1</dd></div>
+                    <div class="flex items-center justify-between gap-4"><dt class="hc-label mb-0">Trạng thái</dt><dd><span th:replace="~{fragments/components :: statusBadge(${user.status})}"></span></dd></div>
+                    <div class="flex items-center justify-between gap-4"><dt class="hc-label mb-0">Vai trò</dt><dd><span class="hc-badge border-info/40 bg-info/10 text-info" th:text="${user.role != null ? user.role.name : 'Viewer'}">Role</span></dd></div>
+                    <div class="flex items-center justify-between gap-4"><dt class="hc-label mb-0">Điện thoại</dt><dd class="text-white" th:text="${user.phone != null && user.phone != '' ? user.phone : 'N/A'}">N/A</dd></div>
+                    <div class="flex items-center justify-between gap-4"><dt class="hc-label mb-0">Ngày tạo</dt><dd class="text-white" th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm') : 'N/A'}">N/A</dd></div>
+                    <div class="flex items-center justify-between gap-4"><dt class="hc-label mb-0">Đăng nhập gần nhất</dt><dd class="text-white" th:text="${user.lastLogin != null ? #temporals.format(user.lastLogin, 'yyyy-MM-dd HH:mm') : 'N/A'}">N/A</dd></div>
+                </dl>
             </section>
 
-            <!-- Right Column: Access & Permissions -->
-            <section class="permissions-card">
-                <h3>Permissions & Access</h3>
-
-                <div class="permission-row" th:each="perm : ${permissions}">
-                    <div class="permission-info">
-                        <h4 th:text="${perm.key}">Dashboard Access</h4>
-                        <p th:text="${perm.key == 'Dashboard Access' ? 'Allows access to core operational reports, ticket stats, and general analytics dashboard.' : (perm.key == 'Reports Access' ? 'Allows generating business reports, export data grids, and view financial statements.' : 'Allows full control of system accounts, role assignments, and auditing logs.')}">Access descriptions</p>
-                    </div>
-                    <div class="permission-status" th:classappend="${perm.value == 'Granted' ? 'status-granted' : 'status-denied'}">
-                        <i th:data-lucide="${perm.value == 'Granted' ? 'check-circle-2' : 'x-circle'}"></i>
-                        <span th:text="${perm.value == 'Granted' ? 'Granted' : 'Denied'}">Granted</span>
-                    </div>
+            <section class="hc-card p-6" aria-label="Quyền truy cập">
+                <h2 class="mb-4 text-lg font-semibold text-white">Quyền truy cập</h2>
+                <div class="space-y-3">
+                    <article th:each="perm : ${permissions}" class="hc-subcard flex flex-wrap items-center justify-between gap-4 p-4">
+                        <div>
+                            <h3 class="font-semibold text-white" th:text="${perm.key}">Dashboard Access</h3>
+                            <p class="mt-1 text-sm text-cinema-muted" th:switch="${perm.key}">
+                                <span th:case="'Dashboard Access'">Cho phép xem dashboard vận hành và số liệu tổng quan.</span>
+                                <span th:case="'Reports Access'">Cho phép xem và xuất báo cáo kinh doanh.</span>
+                                <span th:case="'User Management'">Cho phép quản lý tài khoản, vai trò và trạng thái.</span>
+                                <span th:case="*">Quyền được xác định theo vai trò hiện tại.</span>
+                            </p>
+                        </div>
+                        <span th:classappend="${perm.value == 'Granted'} ? ' border-success/50 bg-success/10 text-success' : ' border-danger/50 bg-danger/10 text-danger'"
+                              class="hc-badge" th:text="${perm.value == 'Granted' ? 'Cho phép' : 'Từ chối'}">Granted</span>
+                    </article>
                 </div>
 
-                <div style="margin-top: 2rem; padding: 1.5rem; background-color: rgba(9, 13, 22, 0.3); border: 1px dashed var(--border-color); border-radius: 12px;">
-                    <h4 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; color: var(--warning);">
-                        <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
-                        <span>RBAC Policy Warning</span>
-                    </h4>
-                    <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
-                        Access controls are automatically managed according to the assigned security role. Modification of specific permissions requires changing the user's operational role or updating system-wide policies in the Security configuration module.
-                    </p>
+                <div class="mt-6 rounded-xl border border-dashed border-cinema-border bg-cinema-panel-soft p-4">
+                    <h3 class="mb-2 font-semibold text-accent">RBAC policy</h3>
+                    <p class="text-sm leading-6 text-cinema-muted">Quyền truy cập được tính theo vai trò hiện tại. Muốn thay đổi quyền cụ thể, hãy đổi vai trò hoặc cập nhật chính sách bảo mật hệ thống.</p>
                 </div>
             </section>
         </div>
-    </main>
-</div>
-
-<!-- ================= EDIT MODAL ================= -->
-<div class="modal-overlay" id="editModal">
-    <div class="modal-card">
-        <div class="modal-header">
-            <h2>Update User Details</h2>
-            <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
-        </div>
-        <form id="editUserForm" onsubmit="submitEditUser(event)">
-            <input type="hidden" id="edit_id">
-            <div class="form-group">
-                <label for="edit_name">Full Name</label>
-                <input type="text" id="edit_name" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="edit_username">Username</label>
-                <input type="text" id="edit_username" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="edit_email">Email</label>
-                <input type="email" id="edit_email" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="edit_phone">Phone</label>
-                <input type="text" id="edit_phone" class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="edit_role">Role</label>
-                <select id="edit_role" class="form-control" style="background-color: var(--bg-modal);" required>
-                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}"></option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="edit_status">Status</label>
-                <select id="edit_status" class="form-control" style="background-color: var(--bg-modal);" required>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                </select>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn-secondary" onclick="closeModal('editModal')">Cancel</button>
-                <button type="submit" class="btn-primary">Save Changes</button>
-            </div>
-        </form>
     </div>
-</div>
 
-<!-- Toast notifications wrapper -->
-<div class="toast-container" id="toastContainer"></div>
-
-<!-- ================= SCRIPTS ================= -->
-<script>
-    lucide.createIcons();
-
-    function openModal(id) {
-        document.getElementById(id).classList.add('show');
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('show');
-    }
-
-    function openEditModal(id, name, username, email, phone, roleId, status) {
-        document.getElementById('edit_id').value = id;
-        document.getElementById('edit_name').value = name || '';
-        document.getElementById('edit_username').value = username || '';
-        document.getElementById('edit_email').value = email || '';
-        document.getElementById('edit_phone').value = phone || '';
-        document.getElementById('edit_role').value = roleId || '';
-        document.getElementById('edit_status').value = status || 'Active';
-        openModal('editModal');
-    }
-
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        
-        let icon = type === 'success' ? 'check-circle' : 'alert-circle';
-        
-        toast.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <i data-lucide="${icon}" style="width: 20px; height: 20px;"></i>
-                <span>${message}</span>
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="edit">
+        <section class="hc-card w-full max-w-lg p-6" role="dialog" aria-modal="true" aria-labelledby="editUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="editUserTitle" class="text-xl font-semibold text-white">Cập nhật người dùng</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
             </div>
-            <button onclick="this.parentElement.remove()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.15rem; margin-left: 1rem;">&times;</button>
-        `;
-        
-        container.appendChild(toast);
-        lucide.createIcons({nodeList: [toast]});
-        
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(10px)';
-            toast.style.transition = 'all 0.5s ease';
-            setTimeout(() => toast.remove(), 500);
-        }, 4000);
-    }
+            <form class="space-y-4" data-user-form="edit">
+                <input type="hidden" name="id">
+                <input class="hc-input" name="name" placeholder="Họ và tên" required>
+                <input class="hc-input" name="username" placeholder="Username" required>
+                <input class="hc-input" name="email" type="email" placeholder="Email" required>
+                <input class="hc-input" name="phone" placeholder="Số điện thoại" required>
+                <select class="hc-input" name="roleId" required>
+                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}">Role</option>
+                </select>
+                <select class="hc-input" name="status" required>
+                    <option value="Active">Hoạt động</option>
+                    <option value="Inactive">Ngừng hoạt động</option>
+                </select>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </section>
+    </div>
 
-    function submitEditUser(event) {
-        event.preventDefault();
-        const id = document.getElementById('edit_id').value;
-        const payload = {
-            name: document.getElementById('edit_name').value,
-            username: document.getElementById('edit_username').value,
-            email: document.getElementById('edit_email').value,
-            phone: document.getElementById('edit_phone').value,
-            roleId: parseInt(document.getElementById('edit_role').value),
-            status: document.getElementById('edit_status').value
-        };
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="role">
+        <section class="hc-card w-full max-w-md p-6" role="dialog" aria-modal="true" aria-labelledby="roleUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="roleUserTitle" class="text-xl font-semibold text-white">Gán vai trò</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
+            </div>
+            <form class="space-y-4" data-user-form="role">
+                <input type="hidden" name="id">
+                <select class="hc-input" name="roleId" required>
+                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}">Role</option>
+                </select>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Cập nhật</button>
+                </div>
+            </form>
+        </section>
+    </div>
 
-        fetch(`/api/admin/users/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('User profile updated!');
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                return response.json().then(err => { throw new Error(err.message || 'Failed to update user') });
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="reset">
+        <section class="hc-card w-full max-w-md p-6" role="dialog" aria-modal="true" aria-labelledby="resetUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="resetUserTitle" class="text-xl font-semibold text-white">Đặt lại mật khẩu</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
+            </div>
+            <form class="space-y-4" data-user-form="reset">
+                <input type="hidden" name="id">
+                <input class="hc-input" name="password" type="password" placeholder="Mật khẩu mới" required>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Cập nhật</button>
+                </div>
+            </form>
+        </section>
+    </div>
 
-    function toggleStatus(userId) {
-        fetch(`/api/admin/users/${userId}/toggle-status`, {
-            method: 'POST'
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('Status successfully toggled!');
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                throw new Error('Failed to toggle status');
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
-</script>
+    <div class="fixed bottom-5 right-5 z-[60] space-y-2" data-user-toasts></div>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <script defer th:src="@{/js/features/admin-users.js(v=1.0)}"></script>
+</main>
+
 </body>
 </html>

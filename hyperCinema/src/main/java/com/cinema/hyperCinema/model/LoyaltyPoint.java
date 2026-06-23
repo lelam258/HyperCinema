@@ -9,13 +9,14 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Loyalty_Point")
+@Table(name = "loyalty_point")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class LoyaltyPoint {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "point_id")
     private Integer pointId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -36,3 +37,4 @@ public class LoyaltyPoint {
         createdAt = LocalDateTime.now();
     }
 }
+

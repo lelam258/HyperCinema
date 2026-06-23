@@ -36,4 +36,6 @@ public interface BranchService {
     void unassignStaff(Integer branchId, Integer userId, User admin);
 
     List<UserSummary> listUnassignedManagers();
+
+    List<UserSummary> listUnassignedStaff();
 }

@@ -1,8 +1,11 @@
 package com.cinema.hyperCinema.controller.admin;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +23,9 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.cinema.hyperCinema.dto.admin.movie.request.AddGenreRequest;
@@ -33,9 +39,11 @@ import com.cinema.hyperCinema.dto.admin.movie.response.MovieDetailView;
 import com.cinema.hyperCinema.dto.admin.movie.response.MovieListItem;
 import com.cinema.hyperCinema.dto.admin.movie.response.UpdateResult;
 import com.cinema.hyperCinema.exception.movie.MovieValidationException;
+import com.cinema.hyperCinema.repository.BranchRepository;
 import com.cinema.hyperCinema.repository.GenreRepository;
 import com.cinema.hyperCinema.repository.LanguageRepository;
 import com.cinema.hyperCinema.security.CustomUserDetails;
+import com.cinema.hyperCinema.service.media.CloudinaryImageService;
 import com.cinema.hyperCinema.service.movie.MovieService;
 
 import jakarta.validation.Valid;
@@ -61,6 +69,8 @@ public class MovieController {
     private final MovieService movieService;
     private final LanguageRepository languageRepository;
     private final GenreRepository genreRepository;
+    private final BranchRepository branchRepository;
+    private final CloudinaryImageService cloudinaryImageService;
 
     @GetMapping
     public String list(@ModelAttribute("criteria") MovieSearchCriteria criteria,
@@ -112,6 +122,19 @@ public class MovieController {
         return "admin/movies/movie-form";
     }
 
+    @PostMapping(value = "/poster-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> uploadPoster(@RequestParam("posterFile") MultipartFile posterFile) {
+        try {
+            String posterUrl = cloudinaryImageService.uploadMoviePoster(posterFile);
+            return ResponseEntity.ok(Map.of("url", posterUrl));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("errorKey", ex.getMessage()));
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.internalServerError().body(Map.of("errorKey", "movie.poster_upload_failed"));
+        }
+    }
+
     @PostMapping
     public String create(@Valid @ModelAttribute("movie") MovieCreateRequest movie,
                          BindingResult bindingResult,
@@ -119,6 +142,13 @@ public class MovieController {
                          RedirectAttributes redirectAttributes,
                          Model model) {
 
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("mode", "create");
+            prepareFormDropdowns(model);
+            return "admin/movies/movie-form";
+        }
+
+        uploadPosterIfPresent(movie, bindingResult);
         if (bindingResult.hasErrors()) {
             model.addAttribute("mode", "create");
             prepareFormDropdowns(model);
@@ -191,6 +221,14 @@ public class MovieController {
                          RedirectAttributes redirectAttributes,
                          Model model) {
 
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("mode", "edit");
+            model.addAttribute("movieId", movieId);
+            prepareFormDropdowns(model);
+            return "admin/movies/movie-form";
+        }
+
+        uploadPosterIfPresent(movie, bindingResult);
         if (bindingResult.hasErrors()) {
             model.addAttribute("mode", "edit");
             model.addAttribute("movieId", movieId);
@@ -337,6 +375,46 @@ public class MovieController {
             redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
         }
         return "redirect:/admin/movies/" + movieId;
+    }
+
+    @GetMapping("/{movieId}/branches")
+    public String assignBranchForm(@PathVariable Integer movieId, Model model) {
+
+        MovieDetailView movie = movieService.findById(movieId);
+
+        model.addAttribute("movie", movie);
+        model.addAttribute("candidates", branchRepository.findBranchesNotAssignedToMovie(movieId));
+        model.addAttribute("assignBranchRequest", new AssignBranchRequest());
+
+        return "admin/movies/assign-branch";
+    }
+
+    private void uploadPosterIfPresent(MovieCreateRequest movie, BindingResult bindingResult) {
+        if (movie.getPosterFile() == null || movie.getPosterFile().isEmpty()) {
+            return;
+        }
+
+        try {
+            movie.setPosterUrl(cloudinaryImageService.uploadMoviePoster(movie.getPosterFile()));
+        } catch (IllegalArgumentException ex) {
+            bindingResult.rejectValue("posterFile", ex.getMessage());
+        } catch (IllegalStateException ex) {
+            bindingResult.rejectValue("posterFile", "movie.poster_upload_failed");
+        }
+    }
+
+    private void uploadPosterIfPresent(MovieUpdateRequest movie, BindingResult bindingResult) {
+        if (movie.getPosterFile() == null || movie.getPosterFile().isEmpty()) {
+            return;
+        }
+
+        try {
+            movie.setPosterUrl(cloudinaryImageService.uploadMoviePoster(movie.getPosterFile()));
+        } catch (IllegalArgumentException ex) {
+            bindingResult.rejectValue("posterFile", ex.getMessage());
+        } catch (IllegalStateException ex) {
+            bindingResult.rejectValue("posterFile", "movie.poster_upload_failed");
+        }
     }
 
     @PostMapping("/{movieId}/branches/{branchId}/remove")

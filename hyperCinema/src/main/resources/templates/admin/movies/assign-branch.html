@@ -1,149 +1,65 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<!--
-    =========================================================================
-    Assign_Branch_View — admin/movies/assign-branch.html
-    =========================================================================
-    Render form phân phối một Phim tới một Chi nhánh.
-
-        (form)   GET  /admin/movies/{movieId}/branches/assign   *
-        (submit) POST /admin/movies/{movieId}/branches
-
-    (*) Route GET cho trang này KHÔNG bắt buộc tồn tại; form assign inline
-        trên movie-detail.html vẫn là đường phân phối đang hoạt động. Trang
-        này là phương án phong phú hơn cho phép chọn chi nhánh qua dropdown.
-
-    Model attributes kỳ vọng:
-        * movie       — MovieDetailView (movieId + title + status cho ngữ cảnh
-                        tiêu đề + breadcrumb).
-        * candidates  — List Chi nhánh CHƯA được phân phối Phim này. Mỗi phần
-                        tử cần: branchId, name, city.
-
-    Flash attributes (optional): successKey, errorKey — i18n keys.
-
-    -------------------------------------------------------------------------
-    Di trú sang Design System dùng chung (UI Redesign task 5.5):
-      - head qua fragments/layout :: head(title)
-      - header/nav admin qua fragments/layout :: adminHeader('movies')
-      - footer qua fragments/layout :: footer
-      - status badge qua fragment hợp nhất fragments/components :: statusBadge
-      - flash messages qua fragments/components :: flashes
-      - render bằng class Component_Library (.panel, .form-group + select, .btn)
-    Toàn bộ kiểu dáng đến từ static/css/theme.css; template này KHÔNG còn khối
-    :root / <style> token nội tuyến.
-
-    BẢO TOÀN HÀNH VI (Req 5.5, 6.1, 6.2): POST action + tham số `branchId`,
-    mọi binding (th:each / th:value / th:if / th:disabled), URL/tham số, văn bản
-    tiếng Việt hiển thị và khoá i18n giữ NGUYÊN — chỉ trình bày thay đổi.
-
-    SECURITY: mọi giá trị text từ entity render bằng `th:text` để Thymeleaf
-    escape an toàn HTML special chars. Không dùng th:utext.
-
-    Tài nguyên tĩnh tham chiếu qua @{...} để bao gồm context path (Req 6.5).
-    Trace: Req 5.1, 5.4, 5.5, 5.6, 6.1, 6.2, 6.5, 4.2.
-    =========================================================================
--->
 <head th:replace="~{fragments/layout :: head(|Phân phối Phim tới Chi nhánh: ${movie.title} - HyperCinema|)}"></head>
-<body>
+<body class="min-h-screen bg-cinema-bg text-white">
 
-<header th:replace="~{fragments/layout :: adminHeader('movies')}"></header>
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('movies')}"></nav>
 
-<div class="page-wrapper container-narrow">
+<main class="hc-page">
+    <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+        <nav class="mb-6 flex items-center gap-2 text-sm text-cinema-muted" aria-label="Breadcrumb">
+            <a th:href="@{/admin/movies}" class="text-cinema-muted no-underline hover:text-accent">Quản lý Phim</a>
+            <span>/</span>
+            <a th:href="@{/admin/movies/{id}(id=${movie.movieId})}" th:text="${movie.title}" class="text-cinema-muted no-underline hover:text-accent">Tên phim</a>
+            <span>/</span>
+            <span class="text-white">Phân phối</span>
+        </nav>
 
-    <!-- Breadcrumb -->
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a th:href="@{/admin/movies}">Quản lý Phim</a>
-        <span class="separator">/</span>
-        <a th:href="@{/admin/movies/{id}(id=${movie.movieId})}"
-           th:text="${movie.title}">Tên phim</a>
-        <span class="separator">/</span>
-        <span>Phân phối tới Chi nhánh</span>
-    </nav>
-
-    <!--
-        Heading — page title. Toàn bộ field text render qua th:text để escape
-        an toàn. Status badge dùng fragment hợp nhất (giữ nguyên text trạng thái).
-    -->
-    <header class="page-header">
-        <h1 class="page-title" th:text="|Phân phối Phim: ${movie.title}|">
-            Phân phối Phim tới Chi nhánh
-        </h1>
-        <p class="page-subtitle">
-            <span>Trạng thái:</span>
-            <th:block th:replace="~{fragments/components :: statusBadge(${movie.status})}"></th:block>
-        </p>
-    </header>
-
-    <!--
-        Flash messages — controller (hoặc ExceptionHandler) đẩy errorKey /
-        successKey vào RedirectAttributes; fragment `flashes` resolve qua
-        message bundle và render escape an toàn (giữ nguyên khoá i18n + văn bản).
-    -->
-    <div th:replace="~{fragments/components :: flashes}"></div>
-
-    <!-- =================================================================
-         Form chính — POST /admin/movies/{movieId}/branches
-         Gửi tham số `branchId` (binds vào AssignBranchRequest.branchId).
-         Dùng <select> labeled thay vì th:object để render độc lập, không
-         phụ thuộc vào một command object trong model.
-         ================================================================= -->
-    <form method="post"
-          th:action="@{|/admin/movies/${movie.movieId}/branches|}">
-
-        <section class="panel" aria-labelledby="candidates-heading">
-            <h2 id="candidates-heading">
-                Chi nhánh chưa được phân phối
-                <span class="panel-count"
-                      th:text="|${candidates != null ? #lists.size(candidates) : 0} chi nhánh|">
-                    0 chi nhánh
-                </span>
-            </h2>
-
-            <!--
-                Empty state (Req 4.7): khi không còn chi nhánh nào để phân phối
-                (tất cả đã được gán hoặc hệ thống chưa có chi nhánh).
-            -->
-            <div th:if="${candidates == null or #lists.isEmpty(candidates)}"
-                 class="empty-state">
-                Tất cả chi nhánh đã được phân phối hoặc chưa có chi nhánh.
-            </div>
-
-            <!--
-                Select chi nhánh — labeled (a11y). option value=branchId,
-                text="name — city". Giữ nguyên name="branchId" (Req 6.1, 6.2).
-            -->
-            <div class="form-group"
-                 th:if="${candidates != null and !#lists.isEmpty(candidates)}">
-                <label for="branchId">Chọn Chi nhánh</label>
-                <select id="branchId" name="branchId" required>
-                    <option value="" disabled selected>-- Chọn một chi nhánh --</option>
-                    <option th:each="candidate : ${candidates}"
-                            th:value="${candidate.branchId}"
-                            th:text="|${candidate.name} — ${candidate.city}|">
-                        Tên chi nhánh — Thành phố
-                    </option>
-                </select>
-                <span class="field-hint">Chỉ hiển thị các chi nhánh chưa được phân phối Phim này.</span>
-            </div>
-        </section>
-
-        <!--
-            Actions — Submit chỉ enable khi có ít nhất 1 chi nhánh ứng viên.
-            Hủy quay về detail của Phim hiện tại.
-        -->
-        <div class="form-actions">
-            <a class="btn"
-               th:href="@{/admin/movies/{id}(id=${movie.movieId})}">Hủy</a>
-            <button type="submit" class="btn btn-primary"
-                    th:disabled="${candidates == null or #lists.isEmpty(candidates)}">
-                Phân phối
-            </button>
+        <div class="mb-8">
+            <h1 class="hc-page-title" th:text="|Phân phối Phim: ${movie.title}|">Phân phối Phim tới Chi nhánh</h1>
+            <p class="hc-page-subtitle">
+                Trạng thái:
+                <th:block th:replace="~{fragments/components :: statusBadge(${movie.status})}"></th:block>
+            </p>
         </div>
-    </form>
 
-</div>
+        <div th:replace="~{fragments/components :: flashes}"></div>
 
-<footer th:replace="~{fragments/layout :: footer}"></footer>
+        <form method="post" th:action="@{|/admin/movies/${movie.movieId}/branches|}" class="space-y-5">
+            <section class="hc-card p-6">
+                <div class="mb-5 flex items-center justify-between gap-3 border-b border-cinema-border pb-4">
+                    <h2 class="font-serif text-lg text-white">Chi nhánh chưa được phân phối</h2>
+                    <span class="hc-badge border-cinema-border bg-cinema-panel-soft text-cinema-muted" th:text="|${candidates != null ? #lists.size(candidates) : 0} chi nhánh|">0 chi nhánh</span>
+                </div>
+
+                <div th:if="${candidates == null or #lists.isEmpty(candidates)}" class="rounded-xl border border-dashed border-cinema-border bg-cinema-panel-soft px-4 py-10 text-center text-sm text-cinema-muted">
+                    Tất cả chi nhánh đã được phân phối hoặc chưa có chi nhánh.
+                </div>
+
+                <div th:if="${candidates != null and !#lists.isEmpty(candidates)}">
+                    <label for="branchId" class="hc-label">Chọn Chi nhánh</label>
+                    <select id="branchId" name="branchId" required class="hc-input cursor-pointer">
+                        <option value="" disabled selected>-- Chọn một chi nhánh --</option>
+                        <option th:each="candidate : ${candidates}"
+                                th:value="${candidate.branchId}"
+                                th:text="|${candidate.name} - ${candidate.city}|">
+                            Tên chi nhánh - Thành phố
+                        </option>
+                    </select>
+                    <span class="mt-2 block text-xs text-cinema-muted">Chỉ hiển thị các chi nhánh chưa được phân phối phim này.</span>
+                </div>
+            </section>
+
+            <div class="flex justify-end gap-3">
+                <a class="hc-btn no-underline" th:href="@{/admin/movies/{id}(id=${movie.movieId})}">Hủy</a>
+                <button type="submit" class="hc-btn hc-btn-primary" th:disabled="${candidates == null or #lists.isEmpty(candidates)}">Phân phối</button>
+            </div>
+        </form>
+    </div>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
 
 </body>
 </html>

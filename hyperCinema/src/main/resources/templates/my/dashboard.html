@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Khách hàng - HyperCinema')}"></head>
+<body class="min-h-screen hc-customer">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: customerSidebar('home')}"></nav>
+
+<main class="hc-page hc-customer-page">
+    <div class="hc-customer-home">
+        <section class="hc-customer-hero hc-customer-hero-overview" aria-labelledby="movie-home-title">
+            <div>
+                <p class="hc-kicker">Tổng quan của bạn</p>
+                <h1 id="movie-home-title" class="hc-page-title">Phim đang chiếu</h1>
+                <p class="hc-page-subtitle">Chọn phim, giữ vé và theo dõi ưu đãi thành viên trong cùng một màn hình.</p>
+            </div>
+            <div class="hc-customer-tools" aria-label="Bộ lọc phim">
+                <label class="hc-customer-control">
+                    <i data-lucide="map-pin"></i>
+                    <select aria-label="Chọn khu vực">
+                        <option>Toàn quốc</option>
+                        <option>Hồ Chí Minh</option>
+                        <option>Hà Nội</option>
+                        <option>Đà Nẵng</option>
+                    </select>
+                </label>
+                <label class="hc-customer-control">
+                    <i data-lucide="search"></i>
+                    <input type="search" placeholder="Tìm kiếm phim..." aria-label="Tìm kiếm phim">
+                </label>
+            </div>
+        </section>
+
+        <section class="hc-customer-overview" aria-label="Tổng quan người dùng">
+            <article class="hc-customer-overview-card is-member">
+                <div class="hc-customer-overview-icon">
+                    <i data-lucide="sparkles"></i>
+                </div>
+                <div>
+                    <span>Hạng thành viên</span>
+                    <strong th:text="${membershipTier}">Thành viên</strong>
+                    <small th:text="|${rewardPoints} điểm tích lũy|">0 điểm tích lũy</small>
+                </div>
+            </article>
+            <article class="hc-customer-overview-card">
+                <div class="hc-customer-overview-icon">
+                    <i data-lucide="film"></i>
+                </div>
+                <div>
+                    <span>Đang hiển thị</span>
+                    <strong th:text="${nowShowingCount}">0</strong>
+                    <small>phim sẵn sàng đặt vé</small>
+                </div>
+            </article>
+            <a th:href="@{/my/bookings}" class="hc-customer-overview-card hc-customer-overview-link">
+                <div class="hc-customer-overview-icon">
+                    <i data-lucide="tickets"></i>
+                </div>
+                <div>
+                    <span>Vé của tôi</span>
+                    <strong>Kiểm tra vé</strong>
+                    <small>Lịch sử booking và mã vào rạp</small>
+                </div>
+            </a>
+        </section>
+
+        <section class="hc-movie-grid" aria-label="Danh sách phim đang chiếu">
+            <article class="hc-movie-card" th:each="movie : ${movies}">
+                <a th:href="@{/booking/movies/{movieId}(movieId=${movie.movieId})}" class="hc-movie-poster" aria-label="Đặt vé">
+                    <img th:if="${movie.posterUrl != null and not #strings.isEmpty(movie.posterUrl)}"
+                         th:src="${movie.posterUrl}"
+                         th:alt="|Poster ${movie.title}|">
+                    <span th:unless="${movie.posterUrl != null and not #strings.isEmpty(movie.posterUrl)}"
+                          class="hc-movie-poster-empty">
+                        <i data-lucide="clapperboard"></i>
+                    </span>
+                    <span class="hc-movie-badge"
+                          th:text="${movie.status == 'NowShowing' ? 'Đang chiếu' : (movie.status == 'ComingSoon' ? 'Sắp chiếu' : (movie.status == 'Ended' ? 'Đã kết thúc' : movie.status))}">Đang chiếu</span>
+                </a>
+                <div class="hc-movie-body">
+                    <h2>
+                        <a th:href="@{/booking/movies/{movieId}(movieId=${movie.movieId})}" th:text="${movie.title}">Tên phim</a>
+                    </h2>
+                    <p>
+                        <span th:text="${movie.genreNames != null and not #lists.isEmpty(movie.genreNames) ? #strings.listJoin(movie.genreNames, ', ') : 'Điện ảnh'}">Điện ảnh</span>
+                        <span th:if="${movie.duration != null}" th:text="| • ${movie.duration} phút|"> • 120 phút</span>
+                    </p>
+                    <div class="hc-movie-meta">
+                        <span th:if="${movie.releaseDate != null}" th:text="${#temporals.format(movie.releaseDate, 'dd/MM/yyyy')}">19/06/2026</span>
+                        <span th:if="${movie.languageName != null and not #strings.isEmpty(movie.languageName)}" th:text="${movie.languageName}">Vietnamese</span>
+                    </div>
+                    <a th:href="@{/booking/movies/{movieId}(movieId=${movie.movieId})}" class="hc-movie-cta">Đặt vé ngay</a>
+                </div>
+            </article>
+
+            <div th:if="${#lists.isEmpty(movies)}" class="hc-customer-empty">
+                <i data-lucide="film"></i>
+                <h2>Chưa có phim đang chiếu</h2>
+                <p>Danh sách phim sẽ được cập nhật khi rạp mở lịch mới.</p>
+            </div>
+        </section>
+
+        <section class="hc-customer-promo" aria-label="Ưu đãi thành viên">
+            <div>
+                <p class="hc-kicker">Ưu đãi tuần này</p>
+                <h2>Ưu đãi kép thứ 3</h2>
+                <p>Giảm 20% cho học sinh - sinh viên và tặng kèm 1 bắp rang ngọt khi mua vé thứ 3 hằng tuần.</p>
+            </div>
+            <a th:href="@{/my/dashboard}" class="hc-customer-promo-cta">Xem chi tiết</a>
+        </section>
+
+        <section id="tai-khoan" class="hc-customer-account-grid" aria-label="Tài khoản của tôi">
+            <article class="hc-customer-profile-panel">
+                <div class="hc-customer-profile-head">
+                    <div class="hc-customer-profile-avatar" th:text="${#strings.substring(customerName, 0, 1)}">C</div>
+                    <div>
+                        <p class="hc-kicker">Tài khoản</p>
+                        <h2 th:text="${customerName}">Khách hàng</h2>
+                        <span th:text="${email}">email@example.com</span>
+                    </div>
+                </div>
+                <p class="hc-customer-profile-note">Thông tin này được dùng để giữ vé, nhận thông báo suất chiếu và áp dụng ưu đãi thành viên.</p>
+                <dl class="hc-customer-profile-list">
+                    <div>
+                        <dt>Hạng thành viên</dt>
+                        <dd th:text="${membershipTier}">Thành viên</dd>
+                    </div>
+                    <div>
+                        <dt>Điểm thưởng</dt>
+                        <dd th:text="${rewardPoints}">0</dd>
+                    </div>
+                    <div>
+                        <dt>Số điện thoại</dt>
+                        <dd th:text="${phone}">--</dd>
+                    </div>
+                </dl>
+            </article>
+
+            <div class="hc-customer-quick-actions">
+                <a th:href="@{/my/dashboard}" class="hc-customer-action">
+                    <i data-lucide="ticket"></i>
+                    <span>
+                        <strong>Mua vé mới</strong>
+                        <small>Chọn suất chiếu và ghế ngồi</small>
+                    </span>
+                </a>
+                <a th:href="@{/my/bookings}" class="hc-customer-action">
+                    <i data-lucide="tickets"></i>
+                    <span>
+                        <strong>Vé của tôi</strong>
+                        <small th:text="|${nowShowingCount} phim đang hiển thị|">0 phim đang hiển thị</small>
+                    </span>
+                </a>
+            </div>
+        </section>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

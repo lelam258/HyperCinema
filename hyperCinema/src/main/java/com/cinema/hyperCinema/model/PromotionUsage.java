@@ -9,13 +9,14 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Promotion_Usage")
+@Table(name = "promotion_usage")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class PromotionUsage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "usage_id")
     private Integer usageId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -38,3 +39,4 @@ public class PromotionUsage {
         usedAt = LocalDateTime.now();
     }
 }
+

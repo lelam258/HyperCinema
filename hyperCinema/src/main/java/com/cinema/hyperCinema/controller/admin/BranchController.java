@@ -238,6 +238,19 @@ public class BranchController {
         }
     }
 
+    @GetMapping("/{branchId}/staff/assign")
+    public String assignStaffForm(@PathVariable Integer branchId, Model model) {
+
+        BranchDetailView branch = branchService.findById(branchId);
+
+        model.addAttribute("branch", branch);
+        model.addAttribute("staffCandidates", branchService.listUnassignedStaff());
+        model.addAttribute("managerCandidates", branch.getManagers());
+        model.addAttribute("assignStaffRequest", new AssignStaffRequest());
+
+        return "admin/branches/assign-staff";
+    }
+
     @PostMapping("/{branchId}/managers/{userId}/unassign")
     public String unassignManager(@PathVariable Integer branchId,
                                   @PathVariable Integer userId,
@@ -265,7 +278,7 @@ public class BranchController {
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute(
                     "errorKey", "branch.assign_staff.role_invalid");
-            return "redirect:/admin/branches/" + branchId;
+            return "redirect:/admin/branches/" + branchId + "/staff/assign";
         }
 
         try {
@@ -277,6 +290,7 @@ public class BranchController {
         } catch (BranchValidationException ex) {
 
             redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
+            return "redirect:/admin/branches/" + branchId + "/staff/assign";
         }
         return "redirect:/admin/branches/" + branchId;
     }

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard Quản lý - HyperCinema')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: managerSidebar('dashboard')}"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner">
+        <div class="mb-6">
+            <h1 class="hc-page-title">Tổng quan hệ thống rạp</h1>
+            <p class="hc-page-subtitle">Thống kê chuỗi trong tháng này · Cập nhật lúc <span th:text="${lastUpdated}">--:--</span></p>
+        </div>
+
+        <section class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4" aria-label="KPI chuỗi rạp">
+            <div class="hc-card p-5">
+                <span class="hc-label">Doanh thu chuỗi</span>
+                <strong class="block text-3xl text-white tabular-nums" th:text="${#numbers.formatInteger(totalRevenue, 0, 'POINT')}">0</strong>
+                <span class="text-xs text-cinema-muted">VNĐ tháng này</span>
+            </div>
+            <div class="hc-card p-5">
+                <span class="hc-label">Vé đã bán</span>
+                <strong class="block text-3xl text-accent tabular-nums" th:text="${totalTickets}">0</strong>
+                <span class="text-xs text-cinema-muted">Toàn chuỗi</span>
+            </div>
+            <div class="hc-card p-5">
+                <span class="hc-label">Chi nhánh hoạt động</span>
+                <strong class="block text-3xl text-success tabular-nums" th:text="${activeBranches}">0</strong>
+                <span class="text-xs text-cinema-muted">Đang mở</span>
+            </div>
+            <div class="hc-card p-5">
+                <span class="hc-label">Phim đang chiếu</span>
+                <strong class="block text-3xl text-info tabular-nums" th:text="${nowShowingMovies}">0</strong>
+                <span class="text-xs text-cinema-muted">Đang chiếu</span>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <section class="hc-card overflow-hidden" aria-label="Xếp hạng chi nhánh">
+                <div class="border-b border-cinema-border p-5">
+                    <h2 class="text-lg font-semibold text-white">Chi nhánh dẫn đầu tháng này</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="hc-table">
+                        <thead><tr><th>#</th><th>Chi nhánh</th><th class="text-right">Doanh thu</th></tr></thead>
+                        <tbody>
+                        <tr th:if="${branchLeaderboard == null or #lists.isEmpty(branchLeaderboard)}">
+                            <td colspan="3" class="py-10 text-center text-cinema-muted">Chưa có dữ liệu</td>
+                        </tr>
+                        <tr th:each="branch, idx : ${branchLeaderboard}">
+                            <td th:text="${idx.index + 1}">1</td>
+                            <td class="font-semibold text-white" th:text="${branch[0]}">Chi nhánh</td>
+                            <td class="text-right tabular-nums" th:text="${#numbers.formatInteger(branch[1], 0, 'POINT')}">0</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="hc-card overflow-hidden" aria-label="Top phim">
+                <div class="border-b border-cinema-border p-5">
+                    <h2 class="text-lg font-semibold text-white">Top phim tháng này</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="hc-table">
+                        <thead><tr><th>#</th><th>Phim</th><th class="text-right">Vé</th></tr></thead>
+                        <tbody>
+                        <tr th:if="${topMovies == null or #lists.isEmpty(topMovies)}">
+                            <td colspan="3" class="py-10 text-center text-cinema-muted">Chưa có dữ liệu</td>
+                        </tr>
+                        <tr th:each="movie, idx : ${topMovies}">
+                            <td th:text="${idx.index + 1}">1</td>
+                            <td class="font-semibold text-white" th:text="${movie[0]}">Tên phim</td>
+                            <td class="text-right tabular-nums" th:text="${movie[1]}">0</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

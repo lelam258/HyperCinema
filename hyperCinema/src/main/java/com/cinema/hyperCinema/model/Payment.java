@@ -9,13 +9,14 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Payment")
+@Table(name = "payment")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "payment_id")
     private Integer paymentId;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -39,3 +40,4 @@ public class Payment {
         createdAt = LocalDateTime.now();
     }
 }
+

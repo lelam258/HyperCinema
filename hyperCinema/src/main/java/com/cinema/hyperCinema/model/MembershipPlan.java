@@ -10,13 +10,14 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
-@Table(name = "Membership_Plan")
+@Table(name = "membership_plan")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class MembershipPlan {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "plan_id")
     private Integer planId;
 
     @Column(nullable = false, length = 100)
@@ -34,3 +35,4 @@ public class MembershipPlan {
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL)
     private List<UserMembership> userMemberships;
 }
+

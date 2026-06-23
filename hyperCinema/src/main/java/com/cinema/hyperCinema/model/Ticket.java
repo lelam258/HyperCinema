@@ -7,13 +7,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "Ticket")
+@Table(name = "ticket")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Ticket {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ticket_id")
     private Integer ticketId;
 
     @ManyToOne(fetch = FetchType.LAZY)

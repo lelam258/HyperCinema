@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "Seat", uniqueConstraints = {
+@Table(name = "seat", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"hall_id", "seat_row", "seat_number"})
 })
 @Getter @Setter
@@ -16,6 +16,7 @@ public class Seat {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "seat_id")
     private Integer seatId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -34,3 +35,4 @@ public class Seat {
     @Column(name = "maintenance_status", length = 20)
     private String maintenanceStatus;
 }
+

@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "User")
+@Table(name = "user")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class User {
@@ -103,3 +103,4 @@ public class User {
         updatedAt = LocalDateTime.now();
     }
 }
+
