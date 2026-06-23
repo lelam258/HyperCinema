@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="HyperCinema (MySQL)" type="Application" factoryName="Application">
+  <configuration default="false" name="HyperCinema (MySQL)" type="Application" factoryName="Application" activateToolWindowBeforeRun="false">
     <option name="MAIN_CLASS_NAME" value="com.cinema.hyperCinema.HyperCinemaApplication" />
     <module name="hyperCinema" />
     <option name="VM_PARAMETERS" value="-Dspring.datasource.password=123456" />
