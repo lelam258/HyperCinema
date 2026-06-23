@@ -214,13 +214,35 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedInitialNotifications(User admin) {
+        // If notifications are already seeded, look for existing English mock ones and update them to Vietnamese
+        List<Notification> existing = notificationRepository.findAll();
+        for (Notification n : existing) {
+            if ("System Maintenance Scheduled".equalsIgnoreCase(n.getTitle())) {
+                n.setTitle("Lịch bảo trì hệ thống");
+                n.setMessage("Chúng tôi sẽ tiến hành bảo trì hệ thống vào ngày 26 tháng 5 năm 2026 từ 2:00 sáng đến 4:00 sáng (UTC). Các dịch vụ có thể tạm thời không khả dụng.");
+                notificationRepository.save(n);
+            } else if ("New Feature Available".equalsIgnoreCase(n.getTitle())) {
+                n.setTitle("Tính năng mới khả dụng");
+                n.setMessage("Hãy trải nghiệm tính năng phân tích thống kê mới của chúng tôi! Theo dõi và tối ưu hóa hiệu suất dữ liệu dễ dàng hơn bao giờ hết.");
+                notificationRepository.save(n);
+            } else if ("Security Alert".equalsIgnoreCase(n.getTitle())) {
+                n.setTitle("Cảnh báo bảo mật");
+                n.setMessage("Chúng tôi phát hiện đăng nhập từ một thiết bị mới. Nếu không phải bạn, vui lòng đổi mật khẩu và bảo mật tài khoản ngay lập tức.");
+                notificationRepository.save(n);
+            } else if ("Account Verification Required".equalsIgnoreCase(n.getTitle())) {
+                n.setTitle("Yêu cầu xác minh tài khoản");
+                n.setMessage("Vui lòng xác minh địa chỉ email của bạn để tiếp tục sử dụng tất cả các tính năng của tài khoản.");
+                notificationRepository.save(n);
+            }
+        }
+
         if (notificationRepository.count() > 0) return;
 
         // Seed 4 mock notifications matching the wireframes/mockups
         Notification n1 = new Notification();
         n1.setUser(admin);
-        n1.setTitle("System Maintenance Scheduled");
-        n1.setMessage("We will be performing system maintenance on May 26, 2026 from 2:00 AM to 4:00 AM UTC. Services may be temporarily unavailable.");
+        n1.setTitle("Lịch bảo trì hệ thống");
+        n1.setMessage("Chúng tôi sẽ tiến hành bảo trì hệ thống vào ngày 26 tháng 5 năm 2026 từ 2:00 sáng đến 4:00 sáng (UTC). Các dịch vụ có thể tạm thời không khả dụng.");
         n1.setType("System");
         n1.setRead(true);
         n1.setCreatedAt(LocalDateTime.now().minusHours(9));
@@ -228,8 +250,8 @@ public class DataInitializer implements CommandLineRunner {
 
         Notification n2 = new Notification();
         n2.setUser(admin);
-        n2.setTitle("New Feature Available");
-        n2.setMessage("Check out our new dashboard analytics feature! Get insights into your data like never before.");
+        n2.setTitle("Tính năng mới khả dụng");
+        n2.setMessage("Hãy trải nghiệm tính năng phân tích thống kê mới của chúng tôi! Theo dõi và tối ưu hóa hiệu suất dữ liệu dễ dàng hơn bao giờ hết.");
         n2.setType("Promotion");
         n2.setRead(false);
         n2.setCreatedAt(LocalDateTime.now().minusDays(1));
@@ -237,8 +259,8 @@ public class DataInitializer implements CommandLineRunner {
 
         Notification n3 = new Notification();
         n3.setUser(admin);
-        n3.setTitle("Security Alert");
-        n3.setMessage("We detected a login from a new device. If this wasn't you, please secure your account immediately.");
+        n3.setTitle("Cảnh báo bảo mật");
+        n3.setMessage("Chúng tôi phát hiện đăng nhập từ một thiết bị mới. Nếu không phải bạn, vui lòng đổi mật khẩu và bảo mật tài khoản ngay lập tức.");
         n3.setType("Alert");
         n3.setRead(true);
         n3.setCreatedAt(LocalDateTime.now().minusDays(1));
@@ -246,8 +268,8 @@ public class DataInitializer implements CommandLineRunner {
 
         Notification n4 = new Notification();
         n4.setUser(admin);
-        n4.setTitle("Account Verification Required");
-        n4.setMessage("Please verify your email address to continue using all features of your account.");
+        n4.setTitle("Yêu cầu xác minh tài khoản");
+        n4.setMessage("Vui lòng xác minh địa chỉ email của bạn để tiếp tục sử dụng tất cả các tính năng của tài khoản.");
         n4.setType("System");
         n4.setRead(true);
         n4.setCreatedAt(LocalDateTime.now().minusDays(5));
