@@ -1,6 +1,7 @@
 package com.cinema.hyperCinema.repository;
 
 import com.cinema.hyperCinema.model.Booking;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,14 +17,25 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     /**
+     * Kiểm tra Active_Booking_Reference: tồn tại Booking tham chiếu voucher
+     * (promotionId) với status khác giá trị truyền vào (thường là "CANCELLED").
+     * Dùng để chặn xóa voucher đang được sử dụng (Requirement 4.1, 4.2).
+     */
+    boolean existsByPromotion_PromotionIdAndStatusNot(Integer promotionId, String status);
+
+    /**
      * Top N phim theo số booking (không tính Cancelled).
      * Returns: [movieTitle, bookingCount]
      */
-    @Query(value = "SELECT m.title, COUNT(b) AS cnt "
+    default List<Object[]> findTopMoviesByBookingCount(int limit) {
+        return findTopMoviesByBookingCount(PageRequest.of(0, limit));
+    }
+
+    @Query("SELECT m.title, COUNT(b) AS cnt "
             + "FROM Booking b JOIN b.showtime s JOIN s.movie m "
             + "WHERE b.status <> 'Cancelled' "
-            + "GROUP BY m.title ORDER BY cnt DESC LIMIT :limit")
-    List<Object[]> findTopMoviesByBookingCount(@Param("limit") int limit);
+            + "GROUP BY m.title ORDER BY cnt DESC")
+    List<Object[]> findTopMoviesByBookingCount(Pageable pageable);
 
     /**
      * Tổng số vé bán (không tính Cancelled).
@@ -48,13 +60,21 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                             @Param("start") LocalDateTime start,
                                             @Param("end") LocalDateTime end);
 
-    @Query(value = "SELECT m.title, COUNT(b) AS cnt "
+    default List<Object[]> findTopMoviesByBranchId(Integer branchId, int limit) {
+        return findTopMoviesByBranchId(branchId, PageRequest.of(0, limit));
+    }
+
+    @Query("SELECT m.title, COUNT(b) AS cnt "
             + "FROM Booking b JOIN b.showtime s JOIN s.movie m JOIN s.hall h "
             + "WHERE h.branch.branchId = :branchId "
             + "AND b.status <> 'Cancelled' "
-            + "GROUP BY m.title ORDER BY cnt DESC LIMIT :limit")
+            + "GROUP BY m.title ORDER BY cnt DESC")
     List<Object[]> findTopMoviesByBranchId(@Param("branchId") Integer branchId,
-                                           @Param("limit") int limit);
+                                           Pageable pageable);
+
+    long countByUser_UserId(Integer userId);
 
     List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Integer userId, Pageable pageable);
+
+    long countByShowtime_ShowtimeId(Integer showtimeId);
 }
