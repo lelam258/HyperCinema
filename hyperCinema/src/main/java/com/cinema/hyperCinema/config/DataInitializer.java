@@ -32,7 +32,6 @@ public class DataInitializer implements CommandLineRunner {
     private final MovieRepository movieRepository;
     private final LanguageRepository languageRepository;
     private final MovieGenreRepository movieGenreRepository;
-    private final BranchMovieRepository branchMovieRepository;
     private final ShowtimeRepository showtimeRepository;
     private final BookingRepository bookingRepository;
     private final TicketRepository ticketRepository;
@@ -59,7 +58,6 @@ public class DataInitializer implements CommandLineRunner {
             MovieRepository movieRepository,
             LanguageRepository languageRepository,
             MovieGenreRepository movieGenreRepository,
-            BranchMovieRepository branchMovieRepository,
             ShowtimeRepository showtimeRepository,
             BookingRepository bookingRepository,
             TicketRepository ticketRepository,
@@ -82,7 +80,6 @@ public class DataInitializer implements CommandLineRunner {
         this.movieRepository = movieRepository;
         this.languageRepository = languageRepository;
         this.movieGenreRepository = movieGenreRepository;
-        this.branchMovieRepository = branchMovieRepository;
         this.showtimeRepository = showtimeRepository;
         this.bookingRepository = bookingRepository;
         this.ticketRepository = ticketRepository;
@@ -148,20 +145,14 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("=== DataInitializer: Bắt đầu seed dữ liệu mẫu ===");
 
             List<Role> roles = seedRoles();
-            List<Language> languages = seedLanguages();
             List<Genre> genres = seedGenres();
             List<User> users = seedUsers(roles);
             List<Branch> branches = seedBranches();
             assignBranchManagers(users, branches);
             List<Hall> halls = seedHalls(branches);
             List<Seat> allSeats = seedSeats(halls);
-            List<Movie> movies = seedMovies(languages);
-            seedMovieGenres(movies, genres);
-            seedBranchMovies(movies, branches);
-            List<Showtime> showtimes = seedShowtimes(movies, halls);
             seedFoodItems();
             ensureAuditLogTable();
-            seedBookingsAndPayments(users, showtimes, allSeats);
             seedAuditLogs(users);
 
             List<Language> languages = seedLanguages();
@@ -344,6 +335,45 @@ public class DataInitializer implements CommandLineRunner {
         return seedMovies(languages);
     }
 
+    private List<Movie> seedMovies(List<Language> languages) {
+        List<Movie> movies = new ArrayList<>();
+        if (languages.isEmpty()) {
+            return movies;
+        }
+
+        Language vietnamese = languages.get(0);
+        Language english = languages.size() > 1 ? languages.get(1) : vietnamese;
+        Language japanese = languages.size() > 2 ? languages.get(2) : vietnamese;
+        Language korean = languages.size() > 3 ? languages.get(3) : vietnamese;
+
+        movies.add(createMovie("Lat Mat 8", 135,
+                "A Vietnamese family drama with action and comedy elements.",
+                LocalDate.of(2025, 4, 30), "NowShowing", vietnamese));
+        movies.add(createMovie("Detective Conan: One-eyed Flashback", 110,
+                "A mystery case follows Conan and the police into a dangerous mountain incident.",
+                LocalDate.of(2025, 4, 18), "NowShowing", japanese));
+        movies.add(createMovie("Doraemon: Nobita's Art World Tales", 105,
+                "Nobita and friends enter a magical world hidden inside famous paintings.",
+                LocalDate.of(2025, 5, 23), "NowShowing", japanese));
+        movies.add(createMovie("Mission: Impossible - The Final Reckoning", 169,
+                "Ethan Hunt faces a final mission against a global AI threat.",
+                LocalDate.of(2025, 5, 21), "NowShowing", english));
+        movies.add(createMovie("How to Train Your Dragon", 125,
+                "A live-action fantasy adventure about Hiccup and Toothless.",
+                LocalDate.of(2025, 6, 13), "ComingSoon", english));
+        movies.add(createMovie("F1 The Movie", 155,
+                "A former driver returns to Formula 1 to mentor a young racing talent.",
+                LocalDate.of(2025, 6, 27), "ComingSoon", english));
+        movies.add(createMovie("The Roundup: Punishment", 109,
+                "Detective Ma Seok-do hunts a criminal network across borders.",
+                LocalDate.of(2024, 4, 24), "Ended", korean));
+        movies.add(createMovie("Godzilla x Kong: The New Empire", 115,
+                "Two titans face a hidden threat from deep within the Hollow Earth.",
+                LocalDate.of(2024, 3, 29), "Ended", english));
+
+        return movies;
+    }
+
     private Movie createMovie(String title, Integer duration, String description,
                               LocalDate releaseDate, String status, Language language) {
         Movie movie = new Movie();
@@ -521,16 +551,6 @@ public class DataInitializer implements CommandLineRunner {
         return halls;
     }
 
-    private String hallTypeFor(String hallName) {
-        if (hallName != null && hallName.toUpperCase().contains("IMAX")) {
-            return "IMAX";
-        }
-        if (hallName != null && hallName.toUpperCase().contains("3D")) {
-            return "3D";
-        }
-        return "2D";
-    }
-
     // ───────────────────── SEATS ─────────────────────
     private List<Seat> seedSeats(List<Hall> halls) {
         List<Seat> allSeats = new ArrayList<>();
@@ -548,107 +568,6 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
         return allSeats;
-    }
-
-    // ───────────────────── MOVIES ─────────────────────
-    private List<Movie> seedMovies(List<Language> languages) {
-        List<Movie> movies = new ArrayList<>();
-        Language vietnamese = languages.get(0);
-        Language english = languages.get(1);
-        Language korean = languages.get(2);
-
-        movies.add(createMovie("Lật Mặt 8: Vòng Tay Nắng", 135, "Phim Việt Nam đạo diễn Lý Hải", LocalDate.now().minusDays(10), "NowShowing", vietnamese));
-        movies.add(createMovie("Avengers: Doomsday", 150, "Siêu anh hùng Marvel đối đầu Doom", LocalDate.now().minusDays(5), "NowShowing", english));
-        movies.add(createMovie("Godzilla x Kong: Đế Chế Mới", 115, "Quái vật đại chiến", LocalDate.now().minusDays(3), "NowShowing", english));
-        movies.add(createMovie("Mai", 128, "Phim tâm lý xã hội Trấn Thành", LocalDate.now().minusDays(20), "NowShowing", vietnamese));
-        movies.add(createMovie("Parasite 2", 130, "Phần tiếp theo siêu phẩm Hàn Quốc", LocalDate.now().minusDays(1), "NowShowing", korean));
-        movies.add(createMovie("Inside Out 3", 100, "Phim hoạt hình Pixar về cảm xúc", LocalDate.now().plusDays(7), "ComingSoon", english));
-        movies.add(createMovie("Đào, Phở và Piano 2", 120, "Phim lịch sử Việt Nam", LocalDate.now().plusDays(14), "ComingSoon", vietnamese));
-        movies.add(createMovie("The Batman 2", 155, "Người Dơi trở lại Gotham", LocalDate.now().plusDays(21), "ComingSoon", english));
-        movies.add(createMovie("Nhà Bà Nữ 2", 118, "Phim hài Trấn Thành", LocalDate.now().minusDays(15), "NowShowing", vietnamese));
-        movies.add(createMovie("Dune: Part Three", 165, "Sử thi khoa học viễn tưởng", LocalDate.now().plusDays(30), "ComingSoon", english));
-
-        return movies;
-    }
-
-    private Movie createMovie(String title, int duration, String desc, LocalDate releaseDate, String status, Language lang) {
-        Movie m = new Movie();
-        m.setTitle(title);
-        m.setDuration(duration);
-        m.setDescription(desc);
-        m.setReleaseDate(releaseDate);
-        m.setStatus(status);
-        m.setLanguageId(lang.getLanguageId());
-        return movieRepository.save(m);
-    }
-
-    // ───────────────────── MOVIE-GENRE ─────────────────────
-    private void seedMovieGenres(List<Movie> movies, List<Genre> genres) {
-        int[][] assignments = {
-                {2, 6},         // Lật Mặt 8: Hài, Tâm lý
-                {0, 4, 7},      // Avengers: Hành động, Sci-fi, Phiêu lưu
-                {0, 4},         // Godzilla: Hành động, Sci-fi
-                {3, 6},         // Mai: Tình cảm, Tâm lý
-                {1, 6},         // Parasite 2: Kinh dị, Tâm lý
-                {5, 2},         // Inside Out 3: Hoạt hình, Hài
-                {6, 7},         // Đào Phở Piano 2: Tâm lý, Phiêu lưu
-                {0, 6},         // The Batman 2: Hành động, Tâm lý
-                {2, 3},         // Nhà Bà Nữ 2: Hài, Tình cảm
-                {4, 7},         // Dune 3: Sci-fi, Phiêu lưu
-        };
-        for (int i = 0; i < movies.size(); i++) {
-            for (int genreIdx : assignments[i]) {
-                MovieGenre mg = new MovieGenre();
-                mg.setId(new MovieGenreId(movies.get(i).getMovieId(), genres.get(genreIdx).getGenreId()));
-                mg.setMovie(movies.get(i));
-                mg.setGenre(genres.get(genreIdx));
-                movieGenreRepository.save(mg);
-            }
-        }
-    }
-
-    // ───────────────────── BRANCH-MOVIE ─────────────────────
-    private void seedBranchMovies(List<Movie> movies, List<Branch> branches) {
-        for (Movie movie : movies) {
-            if ("NowShowing".equals(movie.getStatus())) {
-                for (Branch branch : branches) {
-                    BranchMovie bm = new BranchMovie();
-                    bm.setId(new BranchMovieId(branch.getBranchId(), movie.getMovieId()));
-                    bm.setBranch(branch);
-                    bm.setMovie(movie);
-                    branchMovieRepository.save(bm);
-                }
-            }
-        }
-    }
-
-    // ───────────────────── SHOWTIMES ─────────────────────
-    private List<Showtime> seedShowtimes(List<Movie> movies, List<Hall> halls) {
-        List<Showtime> showtimes = new ArrayList<>();
-        List<Movie> nowShowing = movies.stream()
-                .filter(m -> "NowShowing".equals(m.getStatus()))
-                .toList();
-
-        for (int dayOffset = -3; dayOffset <= 3; dayOffset++) {
-            LocalDate date = LocalDate.now().plusDays(dayOffset);
-            for (Hall hall : halls) {
-                int[] startHours = {10, 14, 19};
-                for (int h = 0; h < startHours.length; h++) {
-                    Movie movie = nowShowing.get(random.nextInt(nowShowing.size()));
-                    LocalDateTime startTime = date.atTime(startHours[h], 0);
-                    LocalDateTime endTime = startTime.plusMinutes(movie.getDuration() + 15);
-
-                    Showtime st = new Showtime();
-                    st.setMovie(movie);
-                    st.setHall(hall);
-                    st.setStartTime(startTime);
-                    st.setEndTime(endTime);
-                    st.setPrice(randomPrice());
-                    showtimes.add(showtimeRepository.save(st));
-                }
-            }
-        }
-        return showtimes;
     }
 
     private void ensureShowtimes(List<Movie> movies, List<Hall> halls) {
@@ -693,11 +612,6 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
-    private int randomPrice() {
-        int[] prices = {75000, 85000, 95000, 110000, 120000, 150000};
-        return prices[random.nextInt(prices.length)];
-    }
-    
     // ───────────────────── FOOD ITEMS ─────────────────────
     private void seedFoodItems() {
         Object[][] foodData = {

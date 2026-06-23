@@ -1,10 +1,17 @@
 {
   "view": "admin/movies/movie-form",
   "title": "Tạo Phim",
-  "links": [],
-  "i18nKeys": [
-    "#{__${infoKey}__}"
+  "links": [
+    "/admin/analytics",
+    "/admin/branches",
+    "/admin/dashboard",
+    "/admin/halls",
+    "/admin/movies",
+    "/admin/notifications",
+    "/admin/payments",
+    "/admin/users"
   ],
+  "i18nKeys": [],
   "forms": [
     {
       "action": "/admin/movies",
@@ -26,6 +33,18 @@
   "tables": [],
   "pagination": null,
   "text": [
+    "H",
+    "HyperCinema",
+    "Hệ thống",
+    "Tổng quan",
+    "Báo cáo & Thống kê",
+    "Quản lý phim",
+    "Quản lý chi nhánh",
+    "Quản lý phòng chiếu",
+    "Quản lý người dùng",
+    "Thông báo & Hỗ trợ",
+    "Quản lý Giao dịch",
+    "Đăng xuất",
     "Tạo Phim",
     "Tên phim",
     "Thời lượng (phút)",
@@ -43,6 +62,8 @@
     "Phiêu lưu",
     "Có thể chọn tối đa 10 thể loại.",
     "Hủy",
-    "Tạo mới"
+    "Tạo mới",
+    "HyperCinema",
+    "© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim."
   ]
 }

@@ -36,6 +36,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
     <!-- Custom Tailwind Theme -->
     <style type="text/tailwindcss">
         @theme {
@@ -133,6 +134,18 @@
         }
     </style>
 </head>
+
+<!-- adminHeader(active) — Header/navigation for Admin -->
+<header th:fragment="adminHeader(active)">
+    <nav class="admin-nav">
+        <a th:href="@{/admin/movies}"
+           th:class="|admin-nav-link${active == 'movies' ? ' is-active' : ''}|"
+           th:aria-current="${active == 'movies' ? 'page' : null}">Quản lý Phim</a>
+        <a th:href="@{/admin/branches}"
+           th:class="|admin-nav-link${active == 'branches' ? ' is-active' : ''}|"
+           th:aria-current="${active == 'branches' ? 'page' : null}">Quản lý Chi nhánh</a>
+    </nav>
+</header>
 
 <body>
 
@@ -419,10 +432,12 @@
 <!-- ═══════════════════════════════════════════════════════════
      footer — Footer dùng chung
      ═══════════════════════════════════════════════════════════ -->
-<footer th:fragment="footer" class="border-t border-white/[0.06] mt-12">
-    <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between flex-wrap gap-2 text-sm text-slate-500">
-        <span class="font-semibold text-slate-300">HyperCinema</span>
-        <span>© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim.</span>
+<footer th:fragment="footer" class="app-footer">
+    <div class="border-t border-white/[0.06] mt-12">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between flex-wrap gap-2 text-sm text-slate-500">
+            <span class="font-semibold text-slate-300">HyperCinema</span>
+            <span>© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim.</span>
+        </div>
     </div>
 </footer>
 

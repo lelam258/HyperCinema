@@ -2,15 +2,24 @@
   "view": "admin/movies/movie-list",
   "title": "Quản lý Phim - HyperCinema",
   "links": [
+    "/admin/analytics",
+    "/admin/branches",
+    "/admin/dashboard",
+    "/admin/halls",
     "/admin/movies",
     "/admin/movies/101",
+    "/admin/movies/101/edit",
     "/admin/movies/102",
+    "/admin/movies/102/edit",
     "/admin/movies/new",
     "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=createdAt&amp;direction=ASC",
     "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=releaseDate&amp;direction=ASC",
     "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=status&amp;direction=ASC",
     "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=title&amp;direction=ASC&amp;page=1&amp;size=10",
-    "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=title&amp;direction=DESC"
+    "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=title&amp;direction=DESC",
+    "/admin/notifications",
+    "/admin/payments",
+    "/admin/users"
   ],
   "i18nKeys": [
     "#{${errorKey}}",
@@ -30,6 +39,22 @@
         "select:languageId=options[|1|2];selected=",
         "select:genreId=options[|1|2];selected=",
         "submit:Tìm kiếm"
+      ]
+    },
+    {
+      "action": "/admin/movies/101",
+      "method": "post",
+      "fields": [
+        "_method(hidden)=delete",
+        "submit:"
+      ]
+    },
+    {
+      "action": "/admin/movies/102",
+      "method": "post",
+      "fields": [
+        "_method(hidden)=delete",
+        "submit:"
       ]
     }
   ],
@@ -58,8 +83,20 @@
     ]
   },
   "text": [
+    "H",
+    "HyperCinema",
+    "Hệ thống",
+    "Tổng quan",
+    "Báo cáo & Thống kê",
+    "Quản lý phim",
+    "Quản lý chi nhánh",
+    "Quản lý phòng chiếu",
+    "Quản lý người dùng",
+    "Thông báo & Hỗ trợ",
+    "Quản lý Giao dịch",
+    "Đăng xuất",
     "Quản lý Phim",
-    "+ Tạo mới",
+    "Tạo mới",
     "Tạo phim thành công.",
     "Bộ lọc trạng thái không hợp lệ và đã bị bỏ qua.",
     "Từ khoá",
@@ -114,6 +151,8 @@
     "‹ Trước",
     "1",
     "2",
-    "Sau ›"
+    "Sau ›",
+    "HyperCinema",
+    "© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim."
   ]
 }
