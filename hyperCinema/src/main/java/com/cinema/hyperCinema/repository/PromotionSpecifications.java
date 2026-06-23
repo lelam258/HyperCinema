@@ -1,83 +1,85 @@
 package com.cinema.hyperCinema.repository;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.data.jpa.domain.Specification;
 
-import com.cinema.hyperCinema.model.Branch;
 import com.cinema.hyperCinema.model.Promotion;
 import com.cinema.hyperCinema.model.Role;
 import com.cinema.hyperCinema.model.User;
-import com.cinema.hyperCinema.model.VoucherStatus;
 
 import jakarta.persistence.criteria.Predicate;
 
+/**
+ * Specifications cho truy vấn {@link Promotion} (danh sách + tìm kiếm + lọc + phạm vi chi nhánh).
+ *
+ * <p>Đồng bộ với {@code MovieSpecifications}: các predicate được kết hợp bằng AND khi dùng cùng
+ * {@code Specification.where(...).and(...)} ở tầng service.</p>
+ */
 public final class PromotionSpecifications {
 
     private PromotionSpecifications() {
     }
 
+    /**
+     * Khớp keyword trên {@code code} HOẶC {@code title} (không phân biệt hoa thường).
+     * Trả về specification rỗng (luôn đúng) khi keyword null/blank.
+     */
     public static Specification<Promotion> codeOrTitleContains(String keyword) {
         return (root, query, cb) -> {
-            if (keyword == null || keyword.trim().isEmpty()) {
+            String normalized = trimToNull(keyword);
+            if (normalized == null) {
                 return cb.conjunction();
             }
-            String pattern = "%" + keyword.trim().toLowerCase() + "%";
-            return cb.or(
-                cb.like(cb.lower(root.get("code")), pattern),
-                cb.like(cb.lower(root.get("title")), pattern)
-            );
+            String pattern = "%" + normalized.toLowerCase() + "%";
+            Predicate codeMatch = cb.like(cb.lower(root.get("code")), pattern);
+            Predicate titleMatch = cb.like(cb.lower(root.get("title")), pattern);
+            return cb.or(codeMatch, titleMatch);
         };
     }
 
+    /**
+     * Lọc theo {@code status}. Trả về specification rỗng (luôn đúng) khi status null/blank.
+     */
     public static Specification<Promotion> hasStatus(String status) {
         return (root, query, cb) -> {
-            if (status == null || status.trim().isEmpty()) {
+            String normalized = trimToNull(status);
+            if (normalized == null) {
                 return cb.conjunction();
             }
-            return cb.equal(root.get("status"), status.trim().toUpperCase());
+            return cb.equal(root.get("status"), normalized);
         };
     }
 
+    /**
+     * Phạm vi hiển thị theo vai trò người dùng:
+     * <ul>
+     *   <li>Administrator: không ràng buộc (xem mọi voucher).</li>
+     *   <li>Manager / BranchManager: chỉ voucher thuộc chi nhánh của họ HOẶC voucher toàn hệ thống
+     *       ({@code branch_id IS NULL}).</li>
+     * </ul>
+     */
     public static Specification<Promotion> inBranchScope(User actor) {
         return (root, query, cb) -> {
-            if (actor == null) {
-                return cb.disjunction();
-            }
-            if (isAdmin(actor)) {
+            if (actor == null || isAdmin(actor)) {
                 return cb.conjunction();
             }
-            if (isManager(actor) || isBranchManager(actor)) {
-                Branch branch = actor.getBranch();
-                if (branch == null || branch.getBranchId() == null) {
-                    return cb.disjunction();
-                }
-                // matches the promotion's branch ID
-                return cb.equal(root.get("branch").get("branchId"), branch.getBranchId());
+            Integer branchId = actor.getBranch() == null ? null : actor.getBranch().getBranchId();
+            Predicate systemWide = cb.isNull(root.get("branch"));
+            if (branchId == null) {
+                // Manager chưa gán chi nhánh: chỉ thấy voucher toàn hệ thống.
+                return systemWide;
             }
-            return cb.disjunction();
+            Predicate ownBranch = cb.equal(root.get("branch").get("branchId"), branchId);
+            return cb.or(ownBranch, systemWide);
         };
     }
 
     private static boolean isAdmin(User user) {
-        return isRole(user, "Admin") || isRole(user, "Administrator");
-    }
-
-    private static boolean isManager(User user) {
-        return isRole(user, "Manager");
-    }
-
-    private static boolean isBranchManager(User user) {
-        return isRole(user, "BranchManager") || isRole(user, "Branch Manager") || isRole(user, "Branch_Manager");
-    }
-
-    private static boolean isRole(User user, String expected) {
-        if (user == null) {
+        Role role = user.getRole();
+        if (role == null) {
             return false;
         }
-        Role role = user.getRole();
-        return role != null && normalizeRoleName(expected).equals(normalizeRoleName(role.getName()));
+        String normalized = normalizeRoleName(role.getName());
+        return "ADMIN".equals(normalized) || "ADMINISTRATOR".equals(normalized);
     }
 
     private static String normalizeRoleName(String roleName) {
@@ -85,6 +87,17 @@ public final class PromotionSpecifications {
             return "";
         }
         String normalized = roleName.trim();
-        return normalized.toLowerCase().replaceAll("[\\s_-]+", "");
+        if (normalized.regionMatches(true, 0, "ROLE_", 0, 5)) {
+            normalized = normalized.substring(5);
+        }
+        return normalized.replaceAll("[\\s_]+", "").toUpperCase();
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

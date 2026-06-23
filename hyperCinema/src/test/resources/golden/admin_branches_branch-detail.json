@@ -1,0 +1,160 @@
+{
+  "view": "admin/branches/branch-detail",
+  "title": "Chi tiết Chi nhánh - CGV Vincom - HyperCinema",
+  "links": [
+    "/admin/branches",
+    "/admin/branches/11/edit",
+    "/admin/branches/11/managers/assign"
+  ],
+  "i18nKeys": [
+    "#{${errorKey}}",
+    "#{${infoKey}}",
+    "#{${successKey}}",
+    "#{${warningKey}}"
+  ],
+  "forms": [
+    {
+      "action": "/admin/branches/11/status",
+      "method": "post",
+      "fields": [
+        "select:status=options[Active|Inactive|Maintenance];selected=Active",
+        "submit:Đổi"
+      ]
+    },
+    {
+      "action": "/admin/branches/11/staff",
+      "method": "post",
+      "fields": [
+        "userId(number)=",
+        "managerId(number)=",
+        "submit:Gán Staff"
+      ]
+    },
+    {
+      "action": "/admin/branches/11",
+      "method": "post",
+      "fields": [
+        "_method(hidden)=delete",
+        "submit:Xoá"
+      ]
+    },
+    {
+      "action": "/admin/branches/11/managers/21/unassign",
+      "method": "post",
+      "fields": [
+        "submit:Bỏ gán"
+      ]
+    },
+    {
+      "action": "/admin/branches/11/staff/31/unassign",
+      "method": "post",
+      "fields": [
+        "submit:Bỏ gán"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "columnCount": 4,
+      "headers": [
+        "Tên phòng",
+        "Sức chứa",
+        "Loại",
+        "Trạng thái"
+      ]
+    },
+    {
+      "columnCount": 5,
+      "headers": [
+        "Họ và tên",
+        "Email",
+        "Số điện thoại",
+        "Trạng thái",
+        "Thao tác"
+      ]
+    },
+    {
+      "columnCount": 5,
+      "headers": [
+        "Họ và tên",
+        "Email",
+        "Số điện thoại",
+        "Trạng thái",
+        "Thao tác"
+      ]
+    }
+  ],
+  "pagination": null,
+  "text": [
+    "Quản lý Chi nhánh",
+    "/",
+    "CGV Vincom",
+    "Đã cập nhật trạng thái Chi nhánh.",
+    "CGV Vincom",
+    "Trạng thái:",
+    "Active",
+    "Chỉnh sửa",
+    "Trạng thái",
+    "Active",
+    "Inactive",
+    "Maintenance",
+    "Đổi",
+    "Gán Manager",
+    "Staff",
+    "Manager",
+    "Gán Staff",
+    "Xoá",
+    "Thông tin chung",
+    "Tên Chi nhánh",
+    "CGV Vincom",
+    "Thành phố",
+    "Hà Nội",
+    "Địa chỉ",
+    "191 Bà Triệu",
+    "Số điện thoại",
+    "0241234567",
+    "Trạng thái",
+    "Active",
+    "Giờ mở cửa",
+    "09:00",
+    "Giờ đóng cửa",
+    "22:00",
+    "Ngày tạo",
+    "15/01/2025 09:30",
+    "Phòng chiếu",
+    "1 phòng",
+    "Tên phòng",
+    "Sức chứa",
+    "Loại",
+    "Trạng thái",
+    "Phòng 1",
+    "120",
+    "2D",
+    "Active",
+    "Nhân sự Chi nhánh",
+    "Quản lý",
+    "1 người",
+    "Họ và tên",
+    "Email",
+    "Số điện thoại",
+    "Trạng thái",
+    "Thao tác",
+    "Nguyễn Văn A",
+    "a@example.com",
+    "0901112233",
+    "Active",
+    "Bỏ gán",
+    "Nhân viên",
+    "1 người",
+    "Họ và tên",
+    "Email",
+    "Số điện thoại",
+    "Trạng thái",
+    "Thao tác",
+    "Trần Thị B",
+    "b@example.com",
+    "0904445566",
+    "Active",
+    "Bỏ gán"
+  ]
+}

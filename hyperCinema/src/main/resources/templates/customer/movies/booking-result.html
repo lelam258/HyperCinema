@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Kết quả giao dịch - HyperCinema')}">
+    <title>Kết quả giao dịch - HyperCinema</title>
+</head>
+<body class="min-h-screen flex flex-col bg-[#050508]">
+
+    <!-- Header / Navbar công cộng -->
+    <header class="border-b border-white/[0.06] bg-[#0A0A0F]/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
+                <a th:href="@{/movies}" class="text-xl font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight no-underline">HyperCinema</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a th:href="@{/my/dashboard}" class="px-4 py-2 text-sm font-semibold text-primary bg-primary/10 border border-primary/20 rounded-xl hover:bg-primary/20 transition-all no-underline">Dashboard</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-3xl w-full mx-auto px-6 py-12 flex flex-col justify-center">
+        
+        <!-- SUCCESS STATUS -->
+        <div th:if="${status == 'success'}" class="glass-card p-8 border-t-4 border-t-success relative overflow-hidden shadow-2xl">
+            <div class="absolute -right-16 -top-16 w-32 h-32 rounded-full bg-success/10 blur-2xl"></div>
+            
+            <div class="flex flex-col items-center text-center mb-8 border-b border-white/10 pb-6">
+                <div class="w-16 h-16 rounded-full bg-success/10 border border-success/30 flex items-center justify-center text-success mb-4 animate-bounce">
+                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <h1 class="text-2xl font-extrabold text-white leading-tight">Đặt vé Thành Công!</h1>
+                <p class="text-sm text-slate-400 mt-2">Cảm ơn bạn đã lựa chọn dịch vụ của HyperCinema. Dưới đây là thông tin vé của bạn.</p>
+            </div>
+
+            <!-- Booking Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-8 pb-6 border-b border-white/5">
+                <div>
+                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Suất chiếu</h3>
+                    <div class="space-y-1 text-slate-300">
+                        <p class="font-bold text-white text-base" th:text="${booking.showtime.movie.title}">Tên Phim</p>
+                        <p><strong class="text-slate-400">Rạp:</strong> <span th:text="${booking.showtime.hall.branch.name}">Quận 1</span></p>
+                        <p><strong class="text-slate-400">Phòng:</strong> <span th:text="${booking.showtime.hall.name} + ' (' + ${booking.showtime.hall.hallType} + ')'">Phòng 1</span></p>
+                        <p><strong class="text-slate-400">Thời gian:</strong> <span th:text="${#temporals.format(booking.showtime.startTime, 'HH:mm dd/MM/yyyy')}">10:00 01/01</span></p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Giao dịch</h3>
+                    <div class="space-y-1 text-slate-300">
+                        <p><strong class="text-slate-400">Mã Booking:</strong> <span class="text-white font-bold" th:text="${booking.bookingId}">#123</span></p>
+                        <p><strong class="text-slate-400">Phương thức:</strong> <span>VNPay Online</span></p>
+                        <p><strong class="text-slate-400">Tổng thanh toán:</strong> <span class="text-primary font-bold" th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tickets & QR Codes List -->
+            <div class="mb-8">
+                <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Danh sách Vé & Mã QR</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div th:each="t : ${booking.tickets}" class="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col items-center gap-3">
+                        <span class="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary font-bold text-xs" th:text="'Ghế ' + ${t.seat.seatRow} + ${t.seat.seatNumber}">Ghế A1</span>
+                        
+                        <!-- Mock QR Frame -->
+                        <div class="w-24 h-24 bg-white rounded-xl p-2 flex items-center justify-center shadow-md">
+                            <div class="text-[7px] text-slate-800 font-bold border border-slate-300 border-dashed rounded-lg w-full h-full flex flex-col items-center justify-center p-1">
+                                <span class="block">TICKET QR</span>
+                                <span class="block text-[6px] text-slate-500 font-mono mt-1 select-all" th:text="${t.qrCode}">QR-X-Y</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-mono text-slate-500" th:text="${t.qrCode}">QR-X-Y</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex flex-col sm:flex-row justify-center gap-3 border-t border-white/5 pt-6">
+                <a th:href="@{/my/bookings}" class="px-6 py-2.5 text-sm font-bold text-slate-300 bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline text-center">
+                    Lịch sử đặt vé
+                </a>
+                <a th:href="@{/movies}" class="px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all no-underline text-center">
+                    Về trang chủ
+                </a>
+            </div>
+        </div>
+
+        <!-- FAILURE STATUS -->
+        <div th:if="${status != 'success'}" class="glass-card p-8 border-t-4 border-t-danger relative overflow-hidden shadow-2xl">
+            <div class="absolute -right-16 -top-16 w-32 h-32 rounded-full bg-danger/10 blur-2xl"></div>
+            
+            <div class="flex flex-col items-center text-center mb-6">
+                <div class="w-16 h-16 rounded-full bg-danger/10 border border-danger/30 flex items-center justify-center text-danger mb-4">
+                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </div>
+                <h1 class="text-2xl font-extrabold text-white leading-tight">Thanh Toán Thất Bại</h1>
+                <p class="text-sm text-slate-400 mt-2">Giao dịch qua cổng thanh toán VNPay đã bị hủy hoặc không thành công.</p>
+            </div>
+
+            <div class="p-4 bg-white/[0.02] border border-white/5 rounded-xl text-sm text-slate-300 mb-6 leading-relaxed">
+                <p><strong>Lưu ý:</strong></p>
+                <ul class="list-disc pl-5 mt-1.5 space-y-1 text-xs text-slate-400">
+                    <li>Hệ thống đã giải phóng ghế của bạn để người khác có thể đặt chỗ.</li>
+                    <li>Nếu tài khoản của bạn đã bị trừ tiền, số tiền sẽ được VNPay tự động hoàn trả (hoàn tiền) trong vòng vài ngày làm việc.</li>
+                </ul>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex justify-center gap-3 border-t border-white/5 pt-6">
+                <a th:href="@{/movies}" class="px-6 py-2.5 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/20 transition-all no-underline text-center w-full sm:w-auto">
+                    Quay lại chọn vé
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

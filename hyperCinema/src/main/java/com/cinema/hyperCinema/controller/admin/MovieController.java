@@ -43,7 +43,7 @@ import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequestMapping("/admin/movies")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 @RequiredArgsConstructor
 public class MovieController {
 
@@ -245,6 +245,7 @@ public class MovieController {
     }
 
     @DeleteMapping("/{movieId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public String deleteHard(@PathVariable Integer movieId,
                              @AuthenticationPrincipal CustomUserDetails principal,
                              RedirectAttributes redirectAttributes) {
@@ -253,6 +254,7 @@ public class MovieController {
     }
 
     @PostMapping("/{movieId}/delete")
+    @PreAuthorize("hasRole('ADMIN')")
     public String deleteHardLegacyPost(@PathVariable Integer movieId,
                                        @AuthenticationPrincipal CustomUserDetails principal,
                                        RedirectAttributes redirectAttributes) {

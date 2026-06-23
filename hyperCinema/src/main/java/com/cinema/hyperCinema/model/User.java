@@ -19,7 +19,7 @@ public class User {
     @Column(name = "user_id")
     private Integer userId;
 
-    //    @Column(nullable = false, length = 100)
+//    @Column(nullable = false, length = 100)
 //    @org.hibernate.annotations.Nationalized
 //    private String name;
     @Column(name = "full_name", nullable = false, length = 150)

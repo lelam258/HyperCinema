@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Lịch sử giao dịch cá nhân - HyperCinema')}">
+    <title>Lịch sử giao dịch cá nhân - HyperCinema</title>
+</head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: customerSidebar('payments')}"></nav>
+
+<!-- Main Content -->
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Lịch sử giao dịch</h1>
+            <p class="text-sm text-slate-400">
+                Khách hàng: <span class="text-white font-medium" th:text="${customerName}">Nguyen Van A</span> · 
+                Cập nhật: <span th:text="${lastUpdated}">--:--</span>
+            </p>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="glass-card p-6 mb-8">
+            <h2 class="text-sm font-semibold text-white mb-4 uppercase tracking-wider">Bộ lọc giao dịch</h2>
+            <form th:action="@{/my/payments}" method="get" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                
+                <!-- Status Filter -->
+                <div>
+                    <label for="status" class="block text-xs font-medium text-slate-400 mb-1.5">Trạng thái</label>
+                    <select id="status" name="status" class="w-full bg-[#111827] border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary">
+                        <option value="All" th:selected="${status == 'All'}">Tất cả trạng thái</option>
+                        <option value="Completed" th:selected="${status == 'Completed'}">Thành công (Completed)</option>
+                        <option value="Pending" th:selected="${status == 'Pending'}">Đang xử lý (Pending)</option>
+                        <option value="Failed" th:selected="${status == 'Failed'}">Thất bại (Failed)</option>
+                    </select>
+                </div>
+
+                <!-- Method Filter -->
+                <div>
+                    <label for="method" class="block text-xs font-medium text-slate-400 mb-1.5">Phương thức</label>
+                    <select id="method" name="method" class="w-full bg-[#111827] border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary">
+                        <option value="All" th:selected="${method == 'All'}">Tất cả phương thức</option>
+                        <option value="Cash" th:selected="${method == 'Cash'}">Tiền mặt tại quầy</option>
+                        <option value="VNPay" th:selected="${method == 'VNPay'}">Cổng VNPay online</option>
+                        <option value="VietQR" th:selected="${method == 'VietQR'}">Mã VietQR</option>
+                    </select>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-end gap-3">
+                    <a th:href="@{/my/payments}" class="px-4 py-2 text-sm font-semibold text-slate-400 bg-white/[0.04] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline text-center w-full">
+                        Xóa lọc
+                    </a>
+                    <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/20 transition-all cursor-pointer w-full">
+                        Lọc
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Payments Table -->
+        <div class="glass-card overflow-hidden mb-6">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-white/[0.08] bg-white/[0.02]">
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Mã GD</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Rạp / Chi nhánh</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Phim & Suất chiếu</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">Số tiền</th>
+                            <th class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">Phương thức</th>
+                            <th class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">Trạng thái</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Thời gian</th>
+                            <th class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.06]">
+                        <tr th:each="p : ${payments}" class="hover:bg-white/[0.04] transition-colors">
+                            <td class="px-6 py-4 text-white font-medium" th:text="${p.paymentId}">1</td>
+                            <td class="px-6 py-4 text-slate-300 font-medium" th:text="${p.booking.showtime.hall.branch.name}">Quận 1</td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="text-white font-semibold max-w-[200px] truncate" th:text="${p.booking.showtime.movie.title}">Name</span>
+                                    <span class="text-xs text-slate-400" th:text="${#temporals.format(p.booking.showtime.startTime, 'HH:mm dd/MM/yyyy')}">10:00 01/01</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-right text-white font-bold tabular-nums" th:text="${#numbers.formatDecimal(p.amount, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</td>
+                            <td class="px-6 py-4 text-center text-slate-300">
+                                <span class="px-2 py-1 rounded bg-white/5 border border-white/10 text-xs font-medium" th:text="${p.method}">VNPay</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span th:classappend="${p.status == 'Completed'} ? 'bg-success/15 border-success/30 text-success' : (${p.status == 'Pending'} ? 'bg-warning/15 border-warning/30 text-warning' : 'bg-danger/15 border-danger/30 text-danger')"
+                                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border"
+                                      th:text="${p.status}">STATUS</span>
+                            </td>
+                            <td class="px-6 py-4 text-slate-400 whitespace-nowrap" th:text="${#temporals.format(p.createdAt, 'HH:mm dd/MM/yyyy')}">10:00 01/01</td>
+                            <td class="px-6 py-4 text-center whitespace-nowrap">
+                                <a th:href="@{'/my/payments/' + ${p.paymentId}}" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary/20 transition-all no-underline">
+                                    Hóa đơn
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${payments.isEmpty()}">
+                            <td colspan="8" class="px-6 py-12 text-center text-slate-500">Bạn chưa thực hiện giao dịch thanh toán nào</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination Section -->
+        <div th:if="${payments.totalPages > 1}" class="flex items-center justify-between flex-wrap gap-4 border-t border-white/5 pt-6">
+            <div class="text-sm text-slate-400">
+                Hiển thị trang <span class="text-white font-semibold" th:text="${payments.number + 1}">1</span> / <span class="text-white font-semibold" th:text="${payments.totalPages}">10</span>
+            </div>
+            
+            <nav class="flex items-center gap-1.5" aria-label="Pagination Navigation">
+                <a th:href="@{/my/payments(status=${status}, method=${method}, page=${payments.number - 1})}"
+                   th:classappend="${payments.first} ? 'pointer-events-none opacity-40' : ''"
+                   class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-white/10 hover:bg-white/5 text-slate-400 hover:text-white transition-all no-underline">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </a>
+                
+                <span th:each="i : ${#numbers.sequence(0, payments.totalPages - 1)}">
+                    <a th:href="@{/my/payments(status=${status}, method=${method}, page=${i})}"
+                       th:text="${i + 1}"
+                       th:classappend="${i == payments.number} ? 'bg-primary border-primary text-white hover:bg-primary-hover' : 'border-white/10 hover:bg-white/5 text-slate-400 hover:text-white'"
+                       class="inline-flex items-center justify-center min-w-9 h-9 px-2.5 rounded-xl border text-sm font-semibold transition-all no-underline">1</a>
+                </span>
+
+                <a th:href="@{/my/payments(status=${status}, method=${method}, page=${payments.number + 1})}"
+                   th:classappend="${payments.last} ? 'pointer-events-none opacity-40' : ''"
+                   class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-white/10 hover:bg-white/5 text-slate-400 hover:text-white transition-all no-underline">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </a>
+            </nav>
+        </div>
+
+    </div>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "view": "error/movie-not-found",
+  "title": "Không tìm thấy Phim - HyperCinema",
+  "links": [
+    "/admin/movies"
+  ],
+  "i18nKeys": [
+    "#{${errorKey}}",
+    "#{movie.not_found}"
+  ],
+  "forms": [],
+  "tables": [],
+  "pagination": null,
+  "text": [
+    "404",
+    "Không tìm thấy Phim",
+    "Không tìm thấy Phim.",
+    "Về danh sách Phim"
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "view": "admin/movies/movie-form",
+  "title": "Tạo Phim",
+  "links": [],
+  "i18nKeys": [
+    "#{__${infoKey}__}"
+  ],
+  "forms": [
+    {
+      "action": "/admin/movies",
+      "method": "post",
+      "fields": [
+        "title(text)=Phim mới",
+        "duration(number)=120",
+        "releaseDate(date)=2025-01-15",
+        "posterUrl(url)=",
+        "trailerUrl(url)=",
+        "genreIds(checkbox)=1",
+        "genreIds(checkbox)=2",
+        "select:languageId=options[|1|2];selected=2",
+        "textarea:description=M&ocirc; tả phim mới.",
+        "submit:Tạo mới"
+      ]
+    }
+  ],
+  "tables": [],
+  "pagination": null,
+  "text": [
+    "Tạo Phim",
+    "Tên phim",
+    "Thời lượng (phút)",
+    "Ngày phát hành",
+    "Mô tả",
+    "M&ocirc; tả phim mới.",
+    "Ngôn ngữ",
+    "-- Chọn ngôn ngữ --",
+    "Tiếng Việt",
+    "Tiếng Anh",
+    "URL poster (tùy chọn)",
+    "URL trailer (tùy chọn)",
+    "Thể loại",
+    "Hành động",
+    "Phiêu lưu",
+    "Có thể chọn tối đa 10 thể loại.",
+    "Hủy",
+    "Tạo mới"
+  ]
+}

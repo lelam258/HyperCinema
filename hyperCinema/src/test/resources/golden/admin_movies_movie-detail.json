@@ -1,0 +1,143 @@
+{
+  "view": "admin/movies/movie-detail",
+  "title": "Chi tiết Phim - Avengers: Endgame - HyperCinema",
+  "links": [
+    "/admin/movies",
+    "/admin/movies/101/edit",
+    "https://youtu.be/abc123"
+  ],
+  "i18nKeys": [
+    "#{${errorKey}}",
+    "#{${infoKey}}",
+    "#{${successKey}}",
+    "#{${warningKey}}"
+  ],
+  "forms": [
+    {
+      "action": "/admin/movies/101/status",
+      "method": "post",
+      "fields": [
+        "select:status=options[ComingSoon|NowShowing|Ended];selected=NowShowing",
+        "submit:Đổi"
+      ]
+    },
+    {
+      "action": "/admin/movies/101/genres",
+      "method": "post",
+      "fields": [
+        "genreId(number)=",
+        "submit:Thêm thể loại"
+      ]
+    },
+    {
+      "action": "/admin/movies/101/branches",
+      "method": "post",
+      "fields": [
+        "branchId(number)=",
+        "submit:Phân phối"
+      ]
+    },
+    {
+      "action": "/admin/movies/101",
+      "method": "post",
+      "fields": [
+        "_method(hidden)=delete",
+        "submit:Xoá"
+      ]
+    },
+    {
+      "action": "/admin/movies/101/genres/1/remove",
+      "method": "post",
+      "fields": [
+        "submit:&times;"
+      ]
+    },
+    {
+      "action": "/admin/movies/101/genres/2/remove",
+      "method": "post",
+      "fields": [
+        "submit:&times;"
+      ]
+    },
+    {
+      "action": "/admin/movies/101/branches/11/remove",
+      "method": "post",
+      "fields": [
+        "submit:Gỡ phân phối"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "columnCount": 4,
+      "headers": [
+        "Tên Chi nhánh",
+        "Thành phố",
+        "Ngày phân phối",
+        "Thao tác"
+      ]
+    }
+  ],
+  "pagination": null,
+  "text": [
+    "Quản lý Phim",
+    "/",
+    "Avengers: Endgame",
+    "Đã đổi trạng thái phim.",
+    "Avengers: Endgame",
+    "Trạng thái:",
+    "NowShowing",
+    "Chỉnh sửa",
+    "Trạng thái",
+    "ComingSoon",
+    "NowShowing",
+    "Ended",
+    "Đổi",
+    "Thể loại",
+    "Thêm thể loại",
+    "Chi nhánh",
+    "Phân phối",
+    "Xoá",
+    "Thông tin chung",
+    "Poster",
+    "Tên phim",
+    "Avengers: Endgame",
+    "Thời lượng",
+    "181 phút",
+    "Ngày phát hành",
+    "15/01/2025",
+    "Ngôn ngữ",
+    "Tiếng Anh",
+    "Trạng thái",
+    "NowShowing",
+    "Trailer",
+    "Xem trailer",
+    "Ngày tạo",
+    "15/01/2025 09:30",
+    "Ngày cập nhật",
+    "15/01/2025 09:30",
+    "Mô tả",
+    "Trận chiến cuối cùng chống lại Thanos.",
+    "Thể loại",
+    "2 thể loại",
+    "Hành động",
+    "&times;",
+    "Phiêu lưu",
+    "&times;",
+    "Phân phối tới Chi nhánh",
+    "1 chi nhánh",
+    "Tên Chi nhánh",
+    "Thành phố",
+    "Ngày phân phối",
+    "Thao tác",
+    "CGV Vincom",
+    "Hà Nội",
+    "15/01/2025 09:30",
+    "Gỡ phân phối",
+    "Tóm tắt lịch chiếu",
+    "Lịch chiếu tương lai",
+    "5 suất",
+    "Lịch chiếu quá khứ",
+    "20 suất"
+  ]
+}

@@ -68,7 +68,6 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new IllegalArgumentException("Email already exists: " + user.getEmail());
         }
-
         if (user.getFullName() == null) {
             user.setFullName(user.getUsername());
         }
@@ -87,7 +86,7 @@ public class UserServiceImpl implements UserService {
         if (user.getStatus() == null) {
             user.setStatus("Active");
         }
-
+        
         return userRepository.save(user);
     }
 
@@ -106,7 +105,7 @@ public class UserServiceImpl implements UserService {
         user.setUsername(userDetails.getUsername());
         user.setEmail(userDetails.getEmail());
         user.setPhone(userDetails.getPhone());
-
+        
         if (userDetails.getRole() != null && userDetails.getRole().getRoleId() != null) {
             Role role = roleRepository.findById(userDetails.getRole().getRoleId())
                     .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + userDetails.getRole().getRoleId()));

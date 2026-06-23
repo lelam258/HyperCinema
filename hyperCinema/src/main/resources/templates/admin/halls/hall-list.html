@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Quản lý phòng chiếu - HyperCinema')}"></head>
+<head th:replace="~{fragments/layout :: head('Quản lý phòng chiếu - HyperCinema')}">
+    <title>Quản lý phòng chiếu - HyperCinema</title>
+</head>
 <body class="min-h-screen">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
@@ -84,7 +86,7 @@
                     <tbody class="divide-y divide-white/[0.06]">
                     <tr th:if="${page == null or #lists.isEmpty(page.content)}"><td colspan="9" class="px-4 py-14 text-center text-slate-500">Không có phòng chiếu nào phù hợp.</td></tr>
                     <tr th:each="item : ${page != null ? page.content : {}}" th:if="${page != null and not #lists.isEmpty(page.content)}" class="hover:bg-white/[0.04] transition-colors">
-                        <td class="px-4 py-3"><a th:href="@{|/admin/halls/${item.hallId}|}" th:text="${item.name}" class="text-white font-semibold no-underline hover:text-primary transition-colors">Hall</a></td>
+                        <td class="px-4 py-3"><a th:href="@{'/admin/halls/{id}'(id=${item.hallId})}" th:text="${item.name}" class="text-white font-semibold no-underline hover:text-primary transition-colors">Hall</a></td>
                         <td class="px-4 py-3 text-slate-300" th:text="${item.branchName}">Branch</td>
                         <td class="px-4 py-3 text-slate-400" th:text="${item.hallType}">2D</td>
                         <td class="px-4 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border border-white/10 bg-white/[0.06] text-slate-200" th:text="${item.status}">Active</span></td>
@@ -94,13 +96,13 @@
                         <td class="px-4 py-3 text-right text-slate-400 tabular-nums" th:text="${item.showtimeCount}">0</td>
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-center gap-1">
-                                <a th:href="@{|/admin/halls/${item.hallId}|}" title="Xem chi tiết" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-sky-400 hover:bg-sky-400/10 transition-all duration-200 no-underline cursor-pointer">
+                                <a th:href="@{'/admin/halls/{id}'(id=${item.hallId})}" title="Xem chi tiết" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-sky-400 hover:bg-sky-400/10 transition-all duration-200 no-underline cursor-pointer">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                 </a>
-                                <a th:href="@{|/admin/halls/${item.hallId}/edit|}" title="Chỉnh sửa" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 transition-all duration-200 no-underline cursor-pointer">
+                                <a th:href="@{'/admin/halls/{id}/edit'(id=${item.hallId})}" title="Chỉnh sửa" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 transition-all duration-200 no-underline cursor-pointer">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </a>
-                                <form th:if="${item.canDelete}" th:action="@{|/admin/halls/${item.hallId}|}" method="post" class="inline" onsubmit="return confirm('Xóa phòng chiếu này?');">
+                                <form th:if="${item.canDelete}" th:action="@{'/admin/halls/{id}'(id=${item.hallId})}" method="post" class="inline" onsubmit="return confirm('Xóa phòng chiếu này?');">
                                     <input type="hidden" name="_method" value="delete">
                                     <button type="submit" title="Xóa" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-danger hover:bg-danger/10 transition-all duration-200 cursor-pointer border-0 bg-transparent">
                                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
