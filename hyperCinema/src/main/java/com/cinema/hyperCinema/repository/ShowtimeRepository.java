@@ -1,10 +1,15 @@
 package com.cinema.hyperCinema.repository;
 
 import com.cinema.hyperCinema.model.Showtime;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
@@ -37,4 +42,33 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
     long countByHall_HallId(Integer hallId);
 
     boolean existsByHall_HallId(Integer hallId);
+
+    List<Showtime> findByStartTimeAfterOrderByStartTimeAsc(LocalDateTime startTime, Pageable pageable);
+
+    List<Showtime> findByHall_Branch_BranchIdAndStartTimeAfterOrderByStartTimeAsc(
+            Integer branchId, LocalDateTime startTime, Pageable pageable);
+
+    @Query("""
+            SELECT s
+            FROM Showtime s
+            JOIN FETCH s.movie m
+            JOIN FETCH s.hall h
+            JOIN FETCH h.branch b
+            WHERE m.movieId = :movieId
+              AND s.startTime >= :startTime
+            ORDER BY s.startTime ASC
+            """)
+    List<Showtime> findUpcomingByMovieIdWithHallAndBranch(
+            @Param("movieId") Integer movieId,
+            @Param("startTime") LocalDateTime startTime);
+
+    @Query("""
+            SELECT s
+            FROM Showtime s
+            JOIN FETCH s.movie m
+            JOIN FETCH s.hall h
+            JOIN FETCH h.branch b
+            WHERE s.showtimeId = :showtimeId
+            """)
+    Optional<Showtime> findByIdWithMovieHallAndBranch(@Param("showtimeId") Integer showtimeId);
 }
