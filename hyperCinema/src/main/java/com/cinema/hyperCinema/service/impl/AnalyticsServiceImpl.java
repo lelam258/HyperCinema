@@ -155,14 +155,14 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         // Fetch completed food orders in range
         List<FoodOrder> currentOrders = getFoodOrders(start, end, branchId);
-        long totalRevenue = currentOrders.stream().mapToLong(FoodOrder::getTotalPrice).sum();
+        long totalRevenue = currentOrders.stream().mapToLong(FoodOrder::getTotalAmount).sum();
 
         // Growth (compare against previous period)
         long daysBetween = ChronoUnit.DAYS.between(from, to);
         LocalDateTime prevStart = from.minusDays(daysBetween + 1).atStartOfDay();
         LocalDateTime prevEnd = from.minusDays(1).atTime(LocalTime.MAX);
         List<FoodOrder> prevOrders = getFoodOrders(prevStart, prevEnd, branchId);
-        long prevRevenue = prevOrders.stream().mapToLong(FoodOrder::getTotalPrice).sum();
+        long prevRevenue = prevOrders.stream().mapToLong(FoodOrder::getTotalAmount).sum();
         double revenueGrowth = calculateGrowth(totalRevenue, prevRevenue);
 
         // Collect Food Order Items details
@@ -174,10 +174,10 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         for (FoodOrder order : currentOrders) {
             if (order.getItems() == null) continue;
             for (FoodOrderItem item : order.getItems()) {
-                String pName = item.getFood().getName();
-                String category = item.getFood().getCategory();
+                String pName = item.getFoodItem().getName();
+                String category = item.getFoodItem().getCategoryName();
                 int qty = item.getQuantity();
-                long itemTotal = (long) item.getPrice() * qty;
+                long itemTotal = (long) item.getUnitPrice() * qty;
 
                 if ("Food".equalsIgnoreCase(category)) {
                     foodUnits += qty;
@@ -190,7 +190,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                     m.put("name", pName);
                     m.put("category", category);
                     m.put("qty", 0L);
-                    m.put("price", (long) item.getPrice());
+                    m.put("price", (long) item.getUnitPrice());
                     m.put("revenue", 0L);
                     return m;
                 });
@@ -505,7 +505,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     }
 
     private List<FoodOrder> getFoodOrders(LocalDateTime start, LocalDateTime end, Integer branchId) {
-        String jpql = "SELECT DISTINCT fo FROM FoodOrder fo JOIN FETCH fo.items i JOIN FETCH i.food JOIN fo.booking bk JOIN bk.showtime s JOIN s.hall h " +
+        String jpql = "SELECT DISTINCT fo FROM FoodOrder fo JOIN FETCH fo.items i JOIN FETCH i.foodItem JOIN fo.booking bk JOIN bk.showtime s JOIN s.hall h " +
                 "WHERE fo.status = 'Completed' AND fo.createdAt BETWEEN :start AND :end ";
         if (branchId != null) {
             jpql += "AND h.branch.branchId = :branchId ";

@@ -4,7 +4,7 @@
     Manager Dashboard — Premium Dark-Gold Glassmorphic Rebuild
     Trace Requirement: Chain Manager Overview Dashboard
 -->
-<head th:replace="~{fragments/layout :: head('Manager Dashboard - HyperCinema')}"></head>
+<head th:replace="~{fragments/layout :: head('Tổng quan - HyperCinema')}"></head>
 <body class="min-h-screen">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
@@ -16,8 +16,8 @@
 
         <!-- Page Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Chain Management Dashboard</h1>
-            <p class="text-sm text-slate-400">Chain-wide performance overview · Last updated at <span th:text="${lastUpdated}">--:--</span></p>
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Trang tổng quan chuỗi rạp</h1>
+            <p class="text-sm text-slate-400">Tổng quan hoạt động toàn chuỗi · Cập nhật mới nhất lúc <span th:text="${lastUpdated}">--:--</span></p>
         </div>
 
         <!-- ═══════════════════ KPI CARDS ═══════════════════ -->
@@ -29,7 +29,7 @@
                 </div>
                 <div class="flex flex-col gap-0.5">
                     <span class="text-2xl font-bold text-white tabular-nums" th:text="${#numbers.formatInteger(totalRevenue != null ? totalRevenue : 0, 0, 'COMMA')}">0</span>
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Monthly Revenue (VND)</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Doanh thu tháng (đ)</span>
                 </div>
             </div>
             <!-- Total Tickets -->
@@ -39,7 +39,7 @@
                 </div>
                 <div class="flex flex-col gap-0.5">
                     <span class="text-2xl font-bold text-white tabular-nums" th:text="${totalTickets}">0</span>
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Tickets Sold (Month)</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Vé đã bán (Tháng)</span>
                 </div>
             </div>
             <!-- Active Branches -->
@@ -49,7 +49,7 @@
                 </div>
                 <div class="flex flex-col gap-0.5">
                     <span class="text-2xl font-bold text-white tabular-nums" th:text="${activeBranches}">0</span>
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Active Branches</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Chi nhánh hoạt động</span>
                 </div>
             </div>
             <!-- Now Showing Movies -->
@@ -59,14 +59,14 @@
                 </div>
                 <div class="flex flex-col gap-0.5">
                     <span class="text-2xl font-bold text-white tabular-nums" th:text="${nowShowingMovies}">0</span>
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Now Showing</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Phim đang chiếu</span>
                 </div>
             </div>
         </div>
 
         <!-- ═══════════════════ CHARTS ═══════════════════ -->
         <div class="glass-card p-6 mb-8">
-            <h2 class="text-base font-semibold text-white mb-4">Chain Revenue (Last 14 Days)</h2>
+            <h2 class="text-base font-semibold text-white mb-4">Doanh thu toàn chuỗi (14 ngày gần nhất)</h2>
             <div class="relative h-[280px]">
                 <canvas id="revenueChart"></canvas>
             </div>
@@ -77,15 +77,15 @@
             <!-- Branch Leaderboard -->
             <div class="glass-card overflow-hidden">
                 <div class="px-5 py-4 border-b border-white/[0.08] bg-white/[0.02]">
-                    <h2 class="text-base font-semibold text-white">Branch Revenue Leaderboard</h2>
+                    <h2 class="text-base font-semibold text-white">Bảng xếp hạng doanh thu chi nhánh</h2>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-white/[0.08]">
-                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Rank</th>
-                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Branch</th>
-                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Revenue (VND)</th>
+                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Hạng</th>
+                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Chi nhánh</th>
+                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Doanh thu (đ)</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/[0.06]">
@@ -95,7 +95,7 @@
                                 <td class="px-5 py-3 text-right text-slate-400 tabular-nums" th:text="${#numbers.formatInteger(row[1] != null ? row[1] : 0, 0, 'COMMA')}">0</td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(branchLeaderboard)}">
-                                <td colspan="3" class="px-5 py-10 text-center text-slate-500">No branch revenue records found</td>
+                                <td colspan="3" class="px-5 py-10 text-center text-slate-500">Không tìm thấy dữ liệu doanh thu chi nhánh nào</td>
                             </tr>
                         </tbody>
                     </table>
@@ -105,15 +105,15 @@
             <!-- Top Movies -->
             <div class="glass-card overflow-hidden">
                 <div class="px-5 py-4 border-b border-white/[0.08] bg-white/[0.02]">
-                    <h2 class="text-base font-semibold text-white">Top Movies Chain-wide</h2>
+                    <h2 class="text-base font-semibold text-white">Phim bán chạy toàn chuỗi</h2>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-white/[0.08]">
                                 <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">#</th>
-                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Movie</th>
-                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Bookings</th>
+                                <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Phim</th>
+                                <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-white/[0.02]">Booking</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/[0.06]">
@@ -123,7 +123,7 @@
                                 <td class="px-5 py-3 text-right text-slate-400 tabular-nums" th:text="${movie[1]}">0</td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(topMovies)}">
-                                <td colspan="3" class="px-5 py-10 text-center text-slate-500">No movie booking records found</td>
+                                <td colspan="3" class="px-5 py-10 text-center text-slate-500">Không tìm thấy dữ liệu booking phim nào</td>
                             </tr>
                         </tbody>
                     </table>
@@ -148,7 +148,7 @@
         data: {
             labels: Array.from(revenueLabels),
             datasets: [{
-                label: 'Revenue (VND)',
+                label: 'Doanh thu (đ)',
                 data: Array.from(revenueValues),
                 backgroundColor: 'rgba(245, 158, 11, 0.25)',
                 borderColor: '#F59E0B',

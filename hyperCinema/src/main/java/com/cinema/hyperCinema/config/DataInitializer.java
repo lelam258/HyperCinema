@@ -38,9 +38,11 @@ public class DataInitializer implements CommandLineRunner {
     private final PaymentRepository paymentRepository;
     private final FoodItemRepository foodItemRepository;
     private final AuditLogRepository auditLogRepository;
-    private final LanguageRepository languageRepository;
     private final FoodOrderRepository foodOrderRepository;
     private final FoodOrderItemRepository foodOrderItemRepository;
+    private final UserMembershipRepository userMembershipRepository;
+    private final MembershipPlanRepository membershipPlanRepository;
+    private final NotificationRepository notificationRepository;
     private final JdbcTemplate jdbcTemplate;
     private final PasswordEncoder passwordEncoder;
 
@@ -62,9 +64,11 @@ public class DataInitializer implements CommandLineRunner {
             PaymentRepository paymentRepository,
             FoodItemRepository foodItemRepository,
             AuditLogRepository auditLogRepository,
-            LanguageRepository languageRepository,
             FoodOrderRepository foodOrderRepository,
             FoodOrderItemRepository foodOrderItemRepository,
+            UserMembershipRepository userMembershipRepository,
+            MembershipPlanRepository membershipPlanRepository,
+            NotificationRepository notificationRepository,
             JdbcTemplate jdbcTemplate,
             PasswordEncoder passwordEncoder) {
         this.roleRepository = roleRepository;
@@ -82,9 +86,11 @@ public class DataInitializer implements CommandLineRunner {
         this.paymentRepository = paymentRepository;
         this.foodItemRepository = foodItemRepository;
         this.auditLogRepository = auditLogRepository;
-        this.languageRepository = languageRepository;
         this.foodOrderRepository = foodOrderRepository;
         this.foodOrderItemRepository = foodOrderItemRepository;
+        this.userMembershipRepository = userMembershipRepository;
+        this.membershipPlanRepository = membershipPlanRepository;
+        this.notificationRepository = notificationRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.passwordEncoder = passwordEncoder;
     }
@@ -92,7 +98,31 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        boolean resetDb = false;
+        if (resetDb) {
+            System.out.println("=== Resetting database to clear foreign key mismatches ===");
+            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
+            String[] tables = {
+                "Audit_Log", "Booking", "Branch_Movie", "FoodOrder", "FoodOrderItem",
+                "Hall", "Loyalty_Point", "Movie", "Movie_Genre", "Notification",
+                "Payment", "Promotion", "Promotion_Usage", "Review", "Role",
+                "Seat", "Seat_Reservation", "Showtime", "Ticket", "User", "User_Membership",
+                "Branch", "Language", "Membership_Plan", "FoodItem"
+            };
+            for (String table : tables) {
+                try {
+                    jdbcTemplate.execute("DROP TABLE IF EXISTS `" + table + "`");
+                } catch (Exception e) {
+                    System.out.println("Failed to drop " + table + ": " + e.getMessage());
+                }
+            }
+            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
+            System.out.println("=== Database reset complete. Please restart the application. ===");
+            System.exit(0);
+        }
+
         if (userRepository.findByUsername("admin").isPresent()) {
+            User admin = userRepository.findByUsername("admin").get();
             if (bookingRepository.count() == 0) {
                 System.out.println("=== DataInitializer: admin present, but bookings missing. Seeding showtimes & bookings ===");
                 List<User> users = userRepository.findAll();
@@ -106,7 +136,11 @@ public class DataInitializer implements CommandLineRunner {
                 seedBookingsPaymentsAndFood(users, showtimes, allSeats);
                 System.out.println("=== DataInitializer: Finished seeding showtimes & bookings ===");
             }
+            seedPlansAndMemberships(userRepository.findAll());
+            seedInitialNotifications(admin);
             return;
+        }
+
         if (roleRepository.count() == 0) {
             System.out.println("=== DataInitializer: Bắt đầu seed dữ liệu mẫu ===");
 
@@ -120,20 +154,104 @@ public class DataInitializer implements CommandLineRunner {
             seedFoodItems();
             ensureAuditLogTable();
             seedAuditLogs(users);
+
+            List<Language> languages = seedLanguages();
+            List<Movie> movies = seedMovies(genres, languages);
+            List<Showtime> showtimes = seedShowtimes(movies, halls);
+            seedBookingsPaymentsAndFood(users, showtimes, allSeats);
+
+            // Seed plans, memberships and notifications
+            seedPlansAndMemberships(users);
+            User admin = users.stream().filter(u -> "admin".equalsIgnoreCase(u.getUsername())).findFirst().orElse(null);
+            if (admin != null) {
+                seedInitialNotifications(admin);
+            }
         }
 
-        List<Language> languages = ensureLanguages();
-        List<Genre> currentGenres = ensureGenres();
-        List<Movie> movies = ensureMovies(languages);
-        ensureMovieGenres(movies, currentGenres);
-        ensureShowtimes(movies, hallRepository.findAll());
-
-        List<Language> languages = seedLanguages();
-        List<Movie> movies = seedMovies(genres, languages);
-        List<Showtime> showtimes = seedShowtimes(movies, halls);
-        seedBookingsPaymentsAndFood(users, showtimes, allSeats);
-
         System.out.println("=== DataInitializer: Hoàn tất seed dữ liệu mẫu ===");
+    }
+
+    private void seedPlansAndMemberships(List<User> users) {
+        if (membershipPlanRepository.count() > 0) return;
+
+        MembershipPlan vip = new MembershipPlan();
+        vip.setName("VIP Plan");
+        vip.setDiscountPercent(java.math.BigDecimal.valueOf(10.0));
+        vip.setPrice(150000);
+        vip.setDurationDays(30);
+        vip = membershipPlanRepository.save(vip);
+
+        MembershipPlan gold = new MembershipPlan();
+        gold.setName("Gold Plan");
+        gold.setDiscountPercent(java.math.BigDecimal.valueOf(20.0));
+        gold.setPrice(300000);
+        gold.setDurationDays(90);
+        gold = membershipPlanRepository.save(gold);
+
+        // Assign to customer1 (Nguyễn Minh Tuấn) and customer2 (Trần Thu Hà)
+        User customer1 = users.stream().filter(u -> "customer1".equalsIgnoreCase(u.getUsername())).findFirst().orElse(null);
+        User customer2 = users.stream().filter(u -> "customer2".equalsIgnoreCase(u.getUsername())).findFirst().orElse(null);
+
+        if (customer1 != null) {
+            UserMembership um1 = new UserMembership();
+            um1.setUser(customer1);
+            um1.setPlan(vip);
+            um1.setStartDate(LocalDate.now().minusDays(5));
+            um1.setEndDate(LocalDate.now().plusDays(25));
+            um1.setStatus("Active");
+            userMembershipRepository.save(um1);
+        }
+
+        if (customer2 != null) {
+            UserMembership um2 = new UserMembership();
+            um2.setUser(customer2);
+            um2.setPlan(gold);
+            um2.setStartDate(LocalDate.now().minusDays(10));
+            um2.setEndDate(LocalDate.now().plusDays(80));
+            um2.setStatus("Active");
+            userMembershipRepository.save(um2);
+        }
+    }
+
+    private void seedInitialNotifications(User admin) {
+        if (notificationRepository.count() > 0) return;
+
+        // Seed 4 mock notifications matching the wireframes/mockups
+        Notification n1 = new Notification();
+        n1.setUser(admin);
+        n1.setTitle("System Maintenance Scheduled");
+        n1.setMessage("We will be performing system maintenance on May 26, 2026 from 2:00 AM to 4:00 AM UTC. Services may be temporarily unavailable.");
+        n1.setType("System");
+        n1.setRead(true);
+        n1.setCreatedAt(LocalDateTime.now().minusHours(9));
+        notificationRepository.save(n1);
+
+        Notification n2 = new Notification();
+        n2.setUser(admin);
+        n2.setTitle("New Feature Available");
+        n2.setMessage("Check out our new dashboard analytics feature! Get insights into your data like never before.");
+        n2.setType("Promotion");
+        n2.setRead(false);
+        n2.setCreatedAt(LocalDateTime.now().minusDays(1));
+        notificationRepository.save(n2);
+
+        Notification n3 = new Notification();
+        n3.setUser(admin);
+        n3.setTitle("Security Alert");
+        n3.setMessage("We detected a login from a new device. If this wasn't you, please secure your account immediately.");
+        n3.setType("Alert");
+        n3.setRead(true);
+        n3.setCreatedAt(LocalDateTime.now().minusDays(1));
+        notificationRepository.save(n3);
+
+        Notification n4 = new Notification();
+        n4.setUser(admin);
+        n4.setTitle("Account Verification Required");
+        n4.setMessage("Please verify your email address to continue using all features of your account.");
+        n4.setType("System");
+        n4.setRead(true);
+        n4.setCreatedAt(LocalDateTime.now().minusDays(5));
+        notificationRepository.save(n4);
     }
 
     // ───────────────────── ROLES ─────────────────────
@@ -499,20 +617,6 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     // ───────────────────── LANGUAGES & MOVIES ─────────────────────
-    private List<Language> seedLanguages() {
-        List<Language> languages;
-        if (languageRepository.count() == 0) {
-            languages = new ArrayList<>();
-            for (String name : new String[]{"English", "Vietnamese"}) {
-                Language l = new Language();
-                l.setName(name);
-                languages.add(languageRepository.save(l));
-            }
-        } else {
-            languages = languageRepository.findAll();
-        }
-        return languages;
-    }
 
     private List<Movie> seedMovies(List<Genre> genres, List<Language> languages) {
         List<Movie> movies;
@@ -530,14 +634,6 @@ public class DataInitializer implements CommandLineRunner {
         }
         return movies;
     }
-            int ticketCount = 1 + random.nextInt(3);
-            List<Seat> bookingSeats = new ArrayList<>(ticketCount);
-            for (int t = 0; t < ticketCount && seatIdx + t < allSeats.size(); t++) {
-                bookingSeats.add(allSeats.get((seatIdx + t) % allSeats.size()));
-            }
-            long totalPrice = bookingSeats.stream()
-                    .mapToLong(seat -> SeatPricing.priceFor(seat.getType()))
-                    .sum();
 
     private Movie createMovie(String title, int duration, String description, LocalDate releaseDate, String status, Integer languageId) {
         Movie m = new Movie();
@@ -610,18 +706,9 @@ public class DataInitializer implements CommandLineRunner {
 
         System.out.println("=== Seeding bookings, payments and food orders ===");
         int bookingCount = 0;
-
         for (Showtime st : showtimes) {
             if (st.getStartTime().isAfter(now)) {
                 continue;
-            for (int t = 0; t < bookingSeats.size() && seatIdx < allSeats.size(); t++) {
-                Ticket ticket = new Ticket();
-                ticket.setBooking(booking);
-                ticket.setSeat(bookingSeats.get(t));
-                ticket.setQrCode("QR-" + booking.getBookingId() + "-" + t);
-                ticket.setStatus("Cancelled".equals(bookingStatus) ? "Cancelled" : "Active");
-                ticketRepository.save(ticket);
-                seatIdx++;
             }
 
             if (random.nextDouble() > 0.8) {
@@ -702,20 +789,22 @@ public class DataInitializer implements CommandLineRunner {
 
                             FoodOrderItem orderItem = new FoodOrderItem();
                             orderItem.setFoodOrder(foodOrder);
-                            orderItem.setFood(item);
+                            orderItem.setFoodItem(item);
+                            orderItem.setItemId(item.getItemId());
                             orderItem.setQuantity(qty);
-                            orderItem.setPrice(item.getPrice());
+                            orderItem.setUnitPrice(item.getPrice());
                             orderItems.add(orderItem);
 
                             foodTotal += (long) item.getPrice() * qty;
                         }
 
-                        foodOrder.setTotalPrice(foodTotal);
-                        foodOrder.setItems(orderItems);
-                        foodOrderRepository.save(foodOrder);
+                        foodOrder.setTotalAmount((int) foodTotal);
+                        foodOrder.setItems(new ArrayList<>());
+                        final FoodOrder savedFoodOrder = foodOrderRepository.save(foodOrder);
 
                         for (FoodOrderItem item : orderItems) {
-                            foodOrderItemRepository.save(item);
+                            item.setOrderId(savedFoodOrder.getOrderId());
+                            savedFoodOrder.getItems().add(item);
                         }
                     }
                 }

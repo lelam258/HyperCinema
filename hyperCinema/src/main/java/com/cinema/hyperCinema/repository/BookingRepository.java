@@ -57,4 +57,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                            @Param("limit") int limit);
 
     List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Integer userId, Pageable pageable);
+
+    boolean existsByPromotion_PromotionIdAndStatusNot(Integer promotionId, String status);
 }

@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Thông báo & Hỗ trợ - HyperCinema')}"></head>
+<body class="min-h-screen bg-[#050505] text-[#F8FAFC]">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('notifications')}"></nav>
+
+<!-- Page styles -->
+<style>
+    .modal-overlay {
+        display: none;
+    }
+    .modal-overlay.show {
+        display: flex !important;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes slideUp {
+        from { transform: translateY(15px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .animate-fadeIn {
+        animation: fadeIn 0.20s ease-out forwards;
+    }
+    .animate-slideUp {
+        animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+</style>
+
+<!-- Main Content -->
+<main class="md:ml-64 min-h-screen flex flex-col">
+    <div class="flex-1 max-w-4xl w-full mx-auto px-6 py-8">
+
+        <!-- Tab Switches -->
+        <div class="flex items-center gap-2 mb-8 bg-white/[0.02] border border-white/[0.06] p-1.5 rounded-xl w-fit">
+            <button id="tab-receive-btn" onclick="switchTab('receive')" 
+                    class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer bg-[#0B0B10] text-white border border-white/[0.08]">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v4" />
+                </svg>
+                Nhận thông báo
+            </button>
+            <button id="tab-send-btn" onclick="switchTab('send')" 
+                    class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer text-slate-400 hover:text-slate-200">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                Gửi thông báo
+            </button>
+        </div>
+
+        <!-- Section: Receive Notifications -->
+        <div id="receive-notifications-section" class="animate-slideUp">
+            <!-- Header Block -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+                            Thông báo
+                        </h2>
+                        <p class="text-sm text-slate-400 mt-1" id="unread-summary-text">
+                            Bạn có <span class="font-semibold text-primary" id="unread-count-display-1" th:text="${unreadCount}">0</span> thông báo chưa đọc<span id="unread-plural" th:text="${unreadCount == 1 ? '' : ''}"></span>
+                        </p>
+                    </div>
+                </div>
+                <!-- Dynamic Circle Counter -->
+                <div class="w-8 h-8 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-white text-sm font-semibold shadow-inner" 
+                     id="unread-badge-counter" th:text="${unreadCount}">
+                    0
+                </div>
+            </div>
+
+            <!-- Notifications Inbox List -->
+            <div class="space-y-4">
+                <div th:each="n : ${notifications}" 
+                     th:id="'notification-card-' + ${n.notificationId}"
+                     th:onclick="'openNotificationDetails(' + ${n.notificationId} + ')'"
+                     th:data-read="${n.read}"
+                     class="notification-item glass-card p-5 flex items-start gap-4 cursor-pointer hover:bg-white/[0.06] hover:border-primary/30 transition-all duration-200"
+                     th:classappend="${!n.read} ? 'border-primary/20 bg-white/[0.04]' : 'border-white/[0.04] bg-white/[0.01] opacity-75'">
+                     
+                     <!-- Type-based icon -->
+                     <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                          th:classappend="${n.type == 'System' ? 'bg-info/10 text-info' : (n.type == 'Alert' ? 'bg-danger/10 text-danger animate-pulse' : 'bg-warning/10 text-warning')}">
+                          
+                          <!-- System Icon -->
+                          <svg th:if="${n.type == 'System'}" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <!-- Alert Icon -->
+                          <svg th:if="${n.type == 'Alert'}" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <!-- Promotion Icon -->
+                          <svg th:if="${n.type == 'Promotion'}" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                          </svg>
+                     </div>
+                     
+                     <!-- Body -->
+                     <div class="flex-1 min-w-0">
+                         <div class="flex items-start justify-between gap-4 mb-1">
+                             <h3 class="font-semibold text-white truncate text-base" th:text="${n.title}">Notification Title</h3>
+                             <span class="text-xs text-slate-400 shrink-0 mt-0.5 timestamp-val" 
+                                   th:data-raw-date="${n.createdAt}" 
+                                   th:text="${n.createdAt}">Timestamp</span>
+                         </div>
+                         <p class="text-sm text-slate-400 truncate mb-3" th:text="${n.message}">Notification Message Content</p>
+                         
+                         <div class="flex items-center gap-2.5 flex-wrap">
+                              <!-- Category badge -->
+                              <span class="px-2 py-0.5 rounded text-[11px] font-semibold tracking-wide uppercase"
+                                    th:text="${n.type == 'System' ? 'Hệ thống' : (n.type == 'Alert' ? 'Cảnh báo' : 'Khuyến mãi')}"
+                                    th:classappend="${n.type == 'System' ? 'bg-info/10 text-info border border-info/20' : (n.type == 'Alert' ? 'bg-danger/10 text-danger border border-danger/20' : 'bg-warning/10 text-warning border border-warning/20')}">System</span>
+                              
+                              <!-- Unread visual indicator -->
+                              <span th:id="'unread-tag-' + ${n.notificationId}" 
+                                    th:classappend="${n.read} ? 'hidden' : ''"
+                                    class="flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold tracking-wide uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                                  Chưa đọc
+                              </span>
+                         </div>
+                     </div>
+                     
+                     <!-- Right chevron/check -->
+                     <div class="self-center shrink-0 text-slate-500 hover:text-white transition-colors">
+                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                         </svg>
+                     </div>
+                </div>
+
+                <!-- Empty State -->
+                <div th:if="${#lists.isEmpty(notifications)}" class="glass-card p-12 text-center border-dashed border-white/10">
+                    <svg class="w-12 h-12 text-slate-600 mx-auto mb-4 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <h3 class="text-lg font-semibold text-slate-300">Không có thông báo</h3>
+                    <p class="text-sm text-slate-500 mt-1">Hiện tại chưa có thông báo nào được nhận.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Send Notification Form -->
+        <div id="send-notification-section" class="hidden animate-slideUp">
+            <!-- Header Block -->
+            <div class="flex items-start gap-4 mb-8">
+                <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Gửi thông báo</h2>
+                    <p class="text-sm text-slate-400 mt-1">Tạo và gửi thông báo hàng loạt tới người dùng.</p>
+                </div>
+            </div>
+
+            <!-- Broadcast form -->
+            <form id="broadcastForm" onsubmit="event.preventDefault()" class="glass-card p-6 md:p-8 space-y-6">
+                
+                <!-- Notification Title -->
+                <div>
+                    <label for="title" class="block text-sm font-semibold text-slate-300 mb-2">Tiêu đề thông báo *</label>
+                    <input type="text" id="title" maxlength="100" oninput="updateCharCounter('title', 'title-counter', 100)"
+                           class="w-full px-4 py-3 bg-white/[0.02] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm"
+                           placeholder="Nhập tiêu đề thông báo" required />
+                    <div id="title-counter" class="text-[11px] text-slate-500 mt-1.5 text-right">0/100 ký tự</div>
+                </div>
+
+                <!-- Targeted Recipients (Checkboxes) -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2">Người nhận *</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- All Users -->
+                        <label class="flex items-start gap-3 p-3.5 bg-white/[0.01] border border-white/10 rounded-xl cursor-pointer hover:bg-white/[0.04] hover:border-primary/20 transition-all select-none">
+                            <input type="checkbox" name="segments" value="All Users" class="w-4 h-4 rounded border-white/20 text-primary focus:ring-primary bg-slate-900 mt-0.5 cursor-pointer" />
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-white">Tất cả người dùng</span>
+                                <span class="text-[11px] text-slate-400 mt-0.5">Gửi tới toàn bộ người dùng hệ thống</span>
+                            </div>
+                        </label>
+                        <!-- Premium Users -->
+                        <label class="flex items-start gap-3 p-3.5 bg-white/[0.01] border border-white/10 rounded-xl cursor-pointer hover:bg-white/[0.04] hover:border-primary/20 transition-all select-none">
+                            <input type="checkbox" name="segments" value="Premium Users" class="w-4 h-4 rounded border-white/20 text-primary focus:ring-primary bg-slate-900 mt-0.5 cursor-pointer" />
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-white">Thành viên Premium</span>
+                                <span class="text-[11px] text-slate-400 mt-0.5">Người dùng đang có gói thành viên Premium</span>
+                            </div>
+                        </label>
+                        <!-- Free Users -->
+                        <label class="flex items-start gap-3 p-3.5 bg-white/[0.01] border border-white/10 rounded-xl cursor-pointer hover:bg-white/[0.04] hover:border-primary/20 transition-all select-none">
+                            <input type="checkbox" name="segments" value="Free Users" class="w-4 h-4 rounded border-white/20 text-primary focus:ring-primary bg-slate-900 mt-0.5 cursor-pointer" />
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-white">Thành viên Free</span>
+                                <span class="text-[11px] text-slate-400 mt-0.5">Người dùng chưa đăng ký gói thành viên</span>
+                            </div>
+                        </label>
+                        <!-- Admin Users -->
+                        <label class="flex items-start gap-3 p-3.5 bg-white/[0.01] border border-white/10 rounded-xl cursor-pointer hover:bg-white/[0.04] hover:border-primary/20 transition-all select-none">
+                            <input type="checkbox" name="segments" value="Admin Users" class="w-4 h-4 rounded border-white/20 text-primary focus:ring-primary bg-slate-900 mt-0.5 cursor-pointer" />
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-white">Quản trị viên</span>
+                                <span class="text-[11px] text-slate-400 mt-0.5">Quản trị viên và người vận hành hệ thống</span>
+                            </div>
+                        </label>
+                        <!-- New Users -->
+                        <label class="flex items-start gap-3 p-3.5 bg-white/[0.01] border border-white/10 rounded-xl cursor-pointer hover:bg-white/[0.04] hover:border-primary/20 transition-all select-none">
+                            <input type="checkbox" name="segments" value="New Users" class="w-4 h-4 rounded border-white/20 text-primary focus:ring-primary bg-slate-900 mt-0.5 cursor-pointer" />
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-white">Người dùng mới</span>
+                                <span class="text-[11px] text-slate-400 mt-0.5">Người dùng mới đăng ký trong 7 ngày qua</span>
+                            </div>
+                        </label>
+                    </div>
+                    <div id="recipients-error" class="text-xs text-danger mt-1.5 hidden flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        Vui lòng chọn ít nhất một nhóm đối tượng nhận.
+                    </div>
+                </div>
+
+                <!-- Notification Type (Dropdown) -->
+                <div>
+                    <label for="type" class="block text-sm font-semibold text-slate-300 mb-2">Notification Type</label>
+                    <div class="relative">
+                        <select id="type" 
+                                class="w-full px-4 py-3 bg-slate-950 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm appearance-none cursor-pointer">
+                            <option value="System">System</option>
+                            <option value="Promotion">Promotion</option>
+                            <option value="Alert">Alert</option>
+                        </select>
+                        <span class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Message Content -->
+                <div>
+                    <label for="message" class="block text-sm font-semibold text-slate-300 mb-2">Message Content *</label>
+                    <textarea id="message" rows="5" maxlength="500" oninput="updateCharCounter('message', 'message-counter', 500)"
+                              class="w-full px-4 py-3 bg-white/[0.02] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm resize-none"
+                              placeholder="Enter notification message" required></textarea>
+                    <div id="message-counter" class="text-[11px] text-slate-500 mt-1.5 text-right">0/500 characters</div>
+                </div>
+
+                <!-- Schedule Date/Time -->
+                <div>
+                    <label for="scheduledAt" class="block text-sm font-semibold text-slate-300 mb-2">Schedule Date/Time</label>
+                    <input type="datetime-local" id="scheduledAt"
+                           class="w-full px-4 py-3 bg-white/[0.02] border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm cursor-pointer" />
+                    <p class="text-xs text-slate-500 mt-1.5">Leave empty to send immediately. Must be in the future to schedule.</p>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 pt-4 border-t border-white/[0.06]">
+                    <!-- Send Now Button -->
+                    <button type="button" onclick="submitSendAction('now')"
+                            class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-amber-500 hover:from-primary-hover hover:to-amber-600 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-primary/10 hover:shadow-primary/20 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                        Send Now
+                    </button>
+
+                    <!-- Schedule Button -->
+                    <button type="button" onclick="submitSendAction('schedule')"
+                            class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/[0.04] border border-white/10 hover:bg-white/[0.08] text-white text-sm font-bold rounded-xl transition-all cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Schedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<!-- Details Modal -->
+<div id="detailModal" class="modal-overlay fixed inset-0 z-50 items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden animate-fadeIn">
+    <div class="glass-card w-full max-w-xl animate-slideUp overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-white/[0.08] flex items-start justify-between gap-4">
+            <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg id="modal-icon" class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <!-- Populated via Javascript -->
+                    </svg>
+                </div>
+                <div>
+                    <h3 id="modal-title" class="text-lg font-bold text-white tracking-tight">Tiêu đề thông báo</h3>
+                    <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <span id="modal-type" class="px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase">Hệ thống</span>
+                        <span id="modal-timestamp" class="text-xs text-slate-400">Thời gian</span>
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer transition-colors">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="px-6 py-6 text-sm text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto" id="modal-message">
+            Nội dung thông báo
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-white/[0.02] border-t border-white/[0.08] flex items-center justify-end gap-3">
+            <button id="modal-unread-btn" onclick="markUnreadFromModal()"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white cursor-pointer transition-all">
+                Đánh dấu chưa đọc
+            </button>
+            <button onclick="closeDetailModal()"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-950 border border-white/15 text-white cursor-pointer transition-all">
+                Đóng
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full"></div>
+
+<!-- Scripts -->
+<script th:inline="javascript">
+    const initialTab = /*[[${tab}]]*/ 'receive';
+</script>
+
+<script>
+    let currentNotificationId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        switchTab(initialTab || 'receive');
+        
+        // Format relative times
+        document.querySelectorAll('.timestamp-val').forEach(el => {
+            const raw = el.getAttribute('data-raw-date');
+            if (raw) {
+                el.textContent = formatRelativeTime(raw);
+            }
+        });
+    });
+
+    // 1. Tab switching controller
+    function switchTab(tab) {
+        const receiveSection = document.getElementById('receive-notifications-section');
+        const sendSection = document.getElementById('send-notification-section');
+        const receiveBtn = document.getElementById('tab-receive-btn');
+        const sendBtn = document.getElementById('tab-send-btn');
+        
+        if (tab === 'receive') {
+            receiveSection.classList.remove('hidden');
+            sendSection.classList.add('hidden');
+            
+            // Active Tab Style
+            receiveBtn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-[#0B0B10] text-white border border-white/[0.08] cursor-pointer";
+            sendBtn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-slate-200 cursor-pointer";
+        } else {
+            receiveSection.classList.add('hidden');
+            sendSection.classList.remove('hidden');
+            
+            // Active Tab Style
+            sendBtn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-[#0B0B10] text-white border border-white/[0.08] cursor-pointer";
+            receiveBtn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-slate-200 cursor-pointer";
+        }
+    }
+
+    // 2. Relative time formatter helper
+    function formatRelativeTime(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) {
+            return dateStr;
+        }
+        const now = new Date();
+        const diffMs = now - date;
+        const diffSec = Math.floor(diffMs / 1000);
+        const diffMin = Math.floor(diffSec / 60);
+        const diffHr = Math.floor(diffMin / 60);
+        const diffDays = Math.floor(diffHr / 24);
+
+        if (diffSec < 60) {
+            return 'Vừa xong';
+        } else if (diffMin < 60) {
+            return `${diffMin} phút trước`;
+        } else if (diffHr < 24) {
+            return `${diffHr} giờ trước`;
+        } else if (diffDays === 1) {
+            return 'Hôm qua';
+        } else if (diffDays < 7) {
+            return `${diffDays} ngày trước`;
+        } else {
+            const options = { month: 'long', day: 'numeric' };
+            if (date.getFullYear() !== now.getFullYear()) {
+                options.year = 'numeric';
+            }
+            return date.toLocaleDateString('vi-VN', options);
+        }
+    }
+
+    // 3. Real-time character counters helper
+    function updateCharCounter(inputId, counterId, maxLen) {
+        const input = document.getElementById(inputId);
+        const counter = document.getElementById(counterId);
+        if (input && counter) {
+            const len = input.value.length;
+            counter.textContent = `${len}/${maxLen} ký tự`;
+            if (len > maxLen) {
+                counter.classList.add('text-danger');
+            } else {
+                counter.classList.remove('text-danger');
+            }
+        }
+    }
+
+    // 4. Modal Opening & Async Loader
+    function openNotificationDetails(id) {
+        currentNotificationId = id;
+        
+        fetch(`/api/admin/notifications/${id}`)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Không thể tải chi tiết thông báo.');
+            }
+        })
+        .then(data => {
+            // Update modal text fields
+            document.getElementById('modal-title').textContent = data.title;
+            document.getElementById('modal-message').textContent = data.message;
+            
+            const typeMap = {
+                'System': 'Hệ thống',
+                'Alert': 'Cảnh báo',
+                'Promotion': 'Khuyến mãi'
+            };
+            document.getElementById('modal-type').textContent = typeMap[data.type] || data.type;
+            document.getElementById('modal-timestamp').textContent = data.createdAt;
+            
+            // Adjust badges
+            const typeBadge = document.getElementById('modal-type');
+            if (data.type === 'System') {
+                typeBadge.className = "px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase bg-info/10 text-info border border-info/20";
+                setModalIcon('System');
+            } else if (data.type === 'Alert') {
+                typeBadge.className = "px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase bg-danger/10 text-danger border border-danger/20";
+                setModalIcon('Alert');
+            } else {
+                typeBadge.className = "px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase bg-warning/10 text-warning border border-warning/20";
+                setModalIcon('Promotion');
+            }
+            
+            // Update Card read status in UI (fades background, hides ping dot)
+            updateCardState(id, true);
+            
+            // Synchronize unread badge and texts
+            updateUnreadCountUI(data.unreadCount);
+            
+            // Toggle visibility of mark as unread button in modal (only show when it is read)
+            const unreadBtn = document.getElementById('modal-unread-btn');
+            unreadBtn.classList.remove('hidden');
+
+            // Open Modal
+            const modal = document.getElementById('detailModal');
+            modal.classList.add('show');
+        })
+        .catch(error => {
+            showToast(error.message, 'danger');
+        });
+    }
+
+    function setModalIcon(type) {
+        const iconContainer = document.getElementById('modal-icon');
+        if (type === 'System') {
+            iconContainer.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            `;
+        } else if (type === 'Alert') {
+            iconContainer.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            `;
+        } else {
+            iconContainer.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+            `;
+        }
+    }
+
+    function closeDetailModal() {
+        const modal = document.getElementById('detailModal');
+        modal.classList.remove('show');
+        currentNotificationId = null;
+    }
+
+    // 5. Mark As Unread from Detail Modal
+    function markUnreadFromModal() {
+        if (!currentNotificationId) return;
+        
+        fetch(`/api/admin/notifications/mark-unread/${currentNotificationId}`, {
+            method: 'POST',
+            headers: buildHeaders()
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Không thể đánh dấu thông báo là chưa đọc.');
+            }
+        })
+        .then(data => {
+            // Restore unread style client-side
+            updateCardState(data.id, false);
+            
+            // Sync unread values
+            updateUnreadCountUI(data.unreadCount);
+            
+            // Close modal & notify success
+            closeDetailModal();
+            showToast('Đã đánh dấu thông báo là chưa đọc.');
+        })
+        .catch(error => {
+            showToast(error.message, 'danger');
+        });
+    }
+
+    // Client-side visual state sync helpers
+    function updateCardState(id, isRead) {
+        const card = document.getElementById(`notification-card-${id}`);
+        const tag = document.getElementById(`unread-tag-${id}`);
+        if (card) {
+            card.setAttribute('data-read', isRead);
+            if (isRead) {
+                card.classList.remove('border-primary/20', 'bg-white/[0.04]');
+                card.classList.add('border-white/[0.04]', 'bg-white/[0.01]', 'opacity-75');
+                if (tag) tag.classList.add('hidden');
+            } else {
+                card.classList.add('border-primary/20', 'bg-white/[0.04]');
+                card.classList.remove('border-white/[0.04]', 'bg-white/[0.01]', 'opacity-75');
+                if (tag) tag.classList.remove('hidden');
+            }
+        }
+    }
+
+    function updateUnreadCountUI(unreadCount) {
+        const textSpan = document.getElementById('unread-count-display-1');
+        const badge = document.getElementById('unread-badge-counter');
+        const pluralSpan = document.getElementById('unread-plural');
+        
+        if (textSpan) textSpan.textContent = unreadCount;
+        if (badge) badge.textContent = unreadCount;
+        if (pluralSpan) {
+            pluralSpan.textContent = '';
+        }
+    }
+
+    // 6. Broadcast composition and validation submit
+    function submitSendAction(mode) {
+        const title = document.getElementById('title').value.trim();
+        const type = document.getElementById('type').value;
+        const message = document.getElementById('message').value.trim();
+        const scheduledAtInput = document.getElementById('scheduledAt').value;
+        
+        // Validation Checks
+        if (!title) {
+            showToast('Tiêu đề không được để trống.', 'danger');
+            return;
+        }
+        if (title.length > 100) {
+            showToast('Tiêu đề không được vượt quá 100 ký tự.', 'danger');
+            return;
+        }
+        if (!message) {
+            showToast('Nội dung thông báo không được để trống.', 'danger');
+            return;
+        }
+        if (message.length > 500) {
+            showToast('Nội dung thông báo không được vượt quá 500 ký tự.', 'danger');
+            return;
+        }
+        
+        // Recipient Selection Checks
+        const checkboxes = document.querySelectorAll('input[name="segments"]:checked');
+        const segments = Array.from(checkboxes).map(cb => cb.value);
+        
+        const errEl = document.getElementById('recipients-error');
+        if (segments.length === 0) {
+            errEl.classList.remove('hidden');
+            showToast('Vui lòng chọn ít nhất một nhóm đối tượng nhận.', 'danger');
+            return;
+        } else {
+            errEl.classList.add('hidden');
+        }
+        
+        let scheduledAt = null;
+        if (mode === 'schedule') {
+            if (!scheduledAtInput) {
+                showToast('Vui lòng chọn ngày và giờ trong tương lai để lên lịch.', 'danger');
+                return;
+            }
+            scheduledAt = scheduledAtInput;
+            
+            // Format check & safety: append seconds if needed
+            if (scheduledAt.length === 16) {
+                scheduledAt += ":00";
+            }
+            
+            const schedDate = new Date(scheduledAt);
+            if (schedDate <= new Date()) {
+                showToast('Thời gian lên lịch phải ở trong tương lai.', 'danger');
+                return;
+            }
+        }
+        
+        const payload = {
+            title: title,
+            type: type,
+            message: message,
+            segments: segments,
+            scheduledAt: scheduledAt
+        };
+        
+        fetch('/api/admin/notifications/send', {
+            method: 'POST',
+            headers: buildHeaders(),
+            body: JSON.stringify(payload)
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json().then(data => {
+                    showToast(data.message || 'Đã gửi thông báo thành công.');
+                    document.getElementById('broadcastForm').reset();
+                    updateCharCounter('title', 'title-counter', 100);
+                    updateCharCounter('message', 'message-counter', 500);
+                    
+                    // Delay and redirect to refresh list
+                    setTimeout(() => {
+                        window.location.href = '/admin/notifications?tab=receive';
+                    }, 1500);
+                });
+            } else {
+                return response.json().then(err => {
+                    throw new Error(err.error || 'Không thể gửi thông báo.');
+                });
+            }
+        })
+        .catch(error => {
+            showToast(error.message, 'danger');
+        });
+    }
+
+    // CSRF header builder
+    function buildHeaders() {
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        };
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        if (csrfToken && csrfHeader) {
+            headers[csrfHeader] = csrfToken;
+        }
+        return headers;
+    }
+
+    // Dynamic toast component injector
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `flex items-center justify-between gap-4 p-4 border rounded-xl shadow-xl backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0 ${
+            type === 'success' 
+            ? 'bg-success/10 border-success/20 text-success' 
+            : 'bg-danger/10 border-danger/20 text-danger'
+        }`;
+        
+        toast.innerHTML = `
+            <div class="flex items-center gap-2.5">
+                ${
+                    type === 'success'
+                    ? '<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+                    : '<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>'
+                }
+                <span class="text-xs font-semibold text-white">${message}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer text-sm leading-none shrink-0">&times;</button>
+        `;
+        
+        container.appendChild(toast);
+        // Force reflow
+        toast.offsetHeight;
+        toast.classList.remove('translate-y-2', 'opacity-0');
+        
+        setTimeout(() => {
+            toast.classList.add('translate-y-2', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+</script>
+</body>
+</html>

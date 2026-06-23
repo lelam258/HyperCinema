@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Reporting & Analytics - HyperCinema')}"></head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Báo cáo & Thống kê - HyperCinema')}"></head>
 <body class="min-h-screen bg-[#050505] text-[#F8FAFC]">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
@@ -14,15 +14,15 @@
         <!-- Page Header -->
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
             <div>
-                <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Reporting & Analytics</h1>
-                <p class="text-sm text-slate-400">Monitor performance across branches, products, and halls.</p>
+                <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Báo cáo & Thống kê</h1>
+                <p class="text-sm text-slate-400">Theo dõi hiệu suất của các chi nhánh, sản phẩm và phòng chiếu.</p>
             </div>
             <div class="text-xs text-slate-500 md:text-right">
-                System Time Â· Updated at <span th:text="${lastUpdated}">--:--</span>
+                Giờ hệ thống · Cập nhật lúc <span th:text="${lastUpdated}">--:--</span>
             </div>
         </div>
 
-        <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FILTERS BAR â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+        <!-- ═══════════════════ FILTERS BAR ═══════════════════ -->
         <div class="glass-card p-6 mb-8">
             <form th:action="@{${baseUrl}}" method="get" class="flex flex-col md:flex-row items-end gap-5">
                 <input type="hidden" name="tab" th:value="${tab}"/>
@@ -30,24 +30,24 @@
                 <div class="w-full md:w-auto flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <!-- Date From -->
                     <div class="flex flex-col gap-1.5">
-                        <label for="from" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">From Date</label>
+                        <label for="from" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Từ ngày</label>
                         <input type="date" id="from" name="from" th:value="${from}"
                                class="w-full px-4 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
                     </div>
 
                     <!-- Date To -->
                     <div class="flex flex-col gap-1.5">
-                        <label for="to" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">To Date</label>
+                        <label for="to" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Đến ngày</label>
                         <input type="date" id="to" name="to" th:value="${to}"
                                class="w-full px-4 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
                     </div>
 
                     <!-- Branch Selector -->
                     <div class="flex flex-col gap-1.5">
-                        <label for="branchId" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Cinema Branch</label>
+                        <label for="branchId" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Chi nhánh rạp</label>
                         <select id="branchId" th:name="${restrictBranch ? '' : 'branchId'}" th:disabled="${restrictBranch}"
                                 class="w-full px-4 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer">
-                            <option th:if="${!restrictBranch}" value="">All Branches</option>
+                            <option th:if="${!restrictBranch}" value="">Tất cả chi nhánh</option>
                             <option th:each="b : ${branches}" th:value="${b.branchId}" th:text="${b.name}" th:selected="${b.branchId == branchId}"></option>
                         </select>
                         <input type="hidden" name="branchId" th:value="${branchId}" th:if="${restrictBranch}"/>
@@ -57,34 +57,34 @@
                 <div class="w-full md:w-auto">
                     <button type="submit"
                             class="w-full md:w-auto px-6 py-2 bg-gradient-to-r from-primary to-amber-500 hover:from-primary-hover hover:to-amber-600 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-primary/10 hover:shadow-primary/20 cursor-pointer">
-                        Apply Filters
+                        Áp dụng
                     </button>
                 </div>
             </form>
         </div>
 
-        <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SUB TABS NAVIGATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+        <!-- ═══════════════════ SUB TABS NAVIGATION ═══════════════════ -->
         <div class="border-b border-white/[0.06] mb-8">
             <div class="flex gap-8">
                 <a th:href="@{${baseUrl}(tab='ticket', from=${from}, to=${to}, branchId=${branchId})}"
                    th:classappend="${tab == 'ticket'} ? 'border-primary text-primary font-semibold' : 'border-transparent text-slate-400 hover:text-white'"
                    class="pb-4 border-b-2 text-sm transition-all duration-200 no-underline">
-                    Ticket Sales & Revenue
+                    Doanh thu & Bán vé
                 </a>
                 <a th:href="@{${baseUrl}(tab='fb', from=${from}, to=${to}, branchId=${branchId})}"
                    th:classappend="${tab == 'fb'} ? 'border-primary text-primary font-semibold' : 'border-transparent text-slate-400 hover:text-white'"
                    class="pb-4 border-b-2 text-sm transition-all duration-200 no-underline">
-                    Food & Beverage Sales
+                    Doanh thu Đồ ăn & Nước uống
                 </a>
                 <a th:href="@{${baseUrl}(tab='occupancy', from=${from}, to=${to}, branchId=${branchId})}"
                    th:classappend="${tab == 'occupancy'} ? 'border-primary text-primary font-semibold' : 'border-transparent text-slate-400 hover:text-white'"
                    class="pb-4 border-b-2 text-sm transition-all duration-200 no-underline">
-                    Hall Occupancy & Peak Times
+                    Công suất phòng & Khung giờ cao điểm
                 </a>
             </div>
         </div>
 
-        <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TAB 1: TICKET SALES & REVENUE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+        <!-- ═══════════════════ TAB 1: TICKET SALES & REVENUE ═══════════════════ -->
         <div th:if="${tab == 'ticket'}" class="space-y-8 animate-fadeIn">
             <!-- KPI Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -100,7 +100,7 @@
                                   class="text-[10px] font-bold px-1.5 py-0.5 rounded border"
                                   th:text="${report.ticketGrowth >= 0 ? '+' : ''} + ${#numbers.formatDecimal(report.ticketGrowth, 1, 1)} + '%'">+0.0%</span>
                         </div>
-                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Total Tickets Sold</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Tổng vé đã bán</span>
                     </div>
                 </div>
 
@@ -117,7 +117,7 @@
                                   class="text-[10px] font-bold px-1.5 py-0.5 rounded border"
                                   th:text="${report.revenueGrowth >= 0 ? '+' : ''} + ${#numbers.formatDecimal(report.revenueGrowth, 1, 1)} + '%'">+0.0%</span>
                         </div>
-                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Total Revenue</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Tổng doanh thu</span>
                     </div>
                 </div>
 
@@ -134,7 +134,7 @@
                                   class="text-[10px] font-bold px-1.5 py-0.5 rounded border"
                                   th:text="${report.avgPriceGrowth >= 0 ? '+' : ''} + ${#numbers.formatDecimal(report.avgPriceGrowth, 1, 1)} + '%'">+0.0%</span>
                         </div>
-                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Avg. Ticket Price</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Giá vé trung bình</span>
                     </div>
                 </div>
 
@@ -148,7 +148,7 @@
                             <span class="text-2xl font-bold text-white tracking-tight" th:text="${report.activeBranches}">0</span>
                             <span class="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-white/5 border-white/10 text-slate-400">Static</span>
                         </div>
-                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Active Branches</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Chi nhánh hoạt động</span>
                     </div>
                 </div>
             </div>
@@ -156,7 +156,7 @@
             <!-- Revenue Over Time Line Chart -->
             <div class="glass-card p-6">
                 <div class="flex items-center justify-between gap-4 mb-6">
-                    <h2 class="text-base font-semibold text-white">Revenue Over Time</h2>
+                    <h2 class="text-base font-semibold text-white">Doanh thu theo thời gian</h2>
                     <div class="flex items-center gap-2">
                         <a th:href="@{|${baseUrl}/export|(type='ticket', from=${from}, to=${to}, branchId=${branchId}, format='excel')}"
                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
@@ -178,22 +178,22 @@
             <!-- Breakdown Table -->
             <div class="glass-card overflow-hidden">
                 <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
-                    <h2 class="text-base font-semibold text-white">Ticket Sales Breakdown</h2>
+                    <h2 class="text-base font-semibold text-white">Chi tiết bán vé</h2>
                     <a th:href="@{|${baseUrl}/export|(type='ticket', from=${from}, to=${to}, branchId=${branchId}, format='csv')}"
                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
-                        Export
+                        Xuất file
                     </a>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-white/[0.08] text-slate-400">
-                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Branch</th>
-                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Date</th>
-                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Tickets Sold</th>
-                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Revenue</th>
-                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Avg. Price</th>
-                                <th class="px-6 py-3.5 text-center text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Action</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Chi nhánh</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Ngày</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Số vé bán</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Doanh thu</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Giá TB</th>
+                                <th class="px-6 py-3.5 text-center text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Hành động</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/[0.06] text-slate-300">
@@ -208,12 +208,12 @@
                                 <td class="px-6 py-4 text-center">
                                     <button th:onclick="showDetailModal([[${row.branch}]], [[${row.date}]], [[${row.tickets}]], [[${row.revenue}]], [[${row.avgPrice}]])"
                                             class="text-xs font-bold text-primary hover:text-primary-hover hover:underline cursor-pointer bg-transparent border-none">
-                                        View Detail
+                                        Xem chi tiết
                                     </button>
                                 </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(report.breakdown)}">
-                                <td colspan="6" class="px-6 py-12 text-center text-slate-500">No ticket sales data recorded for the selected criteria.</td>
+                                <td colspan="6" class="px-6 py-12 text-center text-slate-500">Không có dữ liệu bán vé nào được ghi nhận cho các tiêu chí đã chọn.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -221,7 +221,7 @@
             </div>
         </div>
 
-        <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TAB 2: F&B SALES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+        <!-- ═══════════════════ TAB 2: F&B SALES ═══════════════════ -->
         <div th:if="${tab == 'fb'}" class="space-y-8 animate-fadeIn">
             <!-- KPI Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -232,8 +232,8 @@
                     </div>
                     <div class="flex flex-col">
                         <span class="text-2xl font-bold text-white tracking-tight" th:text="${#numbers.formatInteger(report.foodUnits, 0, 'COMMA')}">0</span>
-                        <span class="text-[10px] text-slate-400 mt-0.5">units across all food products</span>
-                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Food Units Sold</span>
+                        <span class="text-[10px] text-slate-400 mt-0.5">đơn vị sản phẩm đồ ăn</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Số lượng đồ ăn bán ra</span>
                     </div>
                 </div>
 
@@ -244,8 +244,8 @@
                     </div>
                     <div class="flex flex-col">
                         <span class="text-2xl font-bold text-white tracking-tight" th:text="${#numbers.formatInteger(report.beverageUnits, 0, 'COMMA')}">0</span>
-                        <span class="text-[10px] text-slate-400 mt-0.5">units across all beverage products</span>
-                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Beverage Units Sold</span>
+                        <span class="text-[10px] text-slate-400 mt-0.5">đơn vị sản phẩm đồ uống</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Số lượng đồ uống bán ra</span>
                     </div>
                 </div>
 
@@ -263,7 +263,7 @@
                                   class="text-[10px] font-bold px-1.5 py-0.5 rounded border"
                                   th:text="${report.revenueGrowth >= 0 ? '+' : ''} + ${#numbers.formatDecimal(report.revenueGrowth, 1, 1)} + '%'">+0.0%</span>
                         </div>
-                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Total F&B Revenue</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Tổng doanh thu F&B</span>
                     </div>
                 </div>
             </div>
@@ -272,10 +272,10 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 <div class="lg:col-span-2 glass-card p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-base font-semibold text-white">Product Sales Volume</h3>
+                        <h3 class="text-base font-semibold text-white">Số lượng sản phẩm bán ra</h3>
                         <a th:href="@{|${baseUrl}/export|(type='fb', from=${from}, to=${to}, branchId=${branchId}, format='csv')}"
                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
-                            Export
+                            Xuất file
                         </a>
                     </div>
                     <div class="relative h-[300px]">
@@ -283,13 +283,13 @@
                     </div>
                 </div>
                 <div class="glass-card p-6 flex flex-col justify-between">
-                    <h3 class="text-base font-semibold text-white mb-4">F&B Split</h3>
+                    <h3 class="text-base font-semibold text-white mb-4">Cơ cấu doanh thu dịch vụ</h3>
                     <div class="relative h-[220px] flex items-center justify-center">
                         <canvas id="fbPieChart"></canvas>
                     </div>
                     <div class="mt-4 flex items-center justify-center gap-5 text-xs text-slate-400">
-                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-primary"></span>Food</span>
-                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-info"></span>Beverage</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-primary"></span>Đồ ăn</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-info"></span>Đồ uống</span>
                         <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-purple-500"></span>Combo</span>
                     </div>
                 </div>
@@ -298,16 +298,16 @@
             <!-- Detail List Table -->
             <div class="glass-card overflow-hidden">
                 <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <h2 class="text-base font-semibold text-white">F&B Sales Detail</h2>
+                    <h2 class="text-base font-semibold text-white">Chi tiết doanh thu dịch vụ</h2>
                     <div class="flex flex-wrap items-center gap-2" id="fbFilterContainer">
                         <button onclick="filterFbTable('All', this)" class="px-3 py-1 rounded-full text-xs font-semibold bg-primary text-white border border-primary/20 transition-all cursor-pointer">
-                            All
+                            Tất cả
                         </button>
                         <button onclick="filterFbTable('Food', this)" class="px-3 py-1 rounded-full text-xs font-semibold bg-white/[0.04] text-slate-400 border border-white/10 hover:text-white transition-all cursor-pointer">
-                            Food
+                            Đồ ăn
                         </button>
                         <button onclick="filterFbTable('Beverage', this)" class="px-3 py-1 rounded-full text-xs font-semibold bg-white/[0.04] text-slate-400 border border-white/10 hover:text-white transition-all cursor-pointer">
-                            Beverage
+                            Đồ uống
                         </button>
                         <button onclick="filterFbTable('Combo', this)" class="px-3 py-1 rounded-full text-xs font-semibold bg-white/[0.04] text-slate-400 border border-white/10 hover:text-white transition-all cursor-pointer">
                             Combo
@@ -318,11 +318,11 @@
                     <table class="w-full text-sm" id="fbDetailsTable">
                         <thead>
                             <tr class="border-b border-white/[0.08] text-slate-400">
-                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Product Name</th>
-                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Category</th>
-                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Qty Sold</th>
-                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Unit Price</th>
-                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Total Revenue</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Tên sản phẩm</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Danh mục</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Số lượng bán</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Đơn giá</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Tổng doanh thu</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/[0.06] text-slate-300">
@@ -331,7 +331,7 @@
                                 <td class="px-6 py-4">
                                     <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border"
                                           th:classappend="${p.category == 'Food'} ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : (${p.category == 'Beverage'} ? 'bg-info/10 border-info/20 text-info' : 'bg-purple-500/10 border-purple-500/20 text-purple-400')"
-                                          th:text="${p.category}">Category</span>
+                                          th:text="${p.category == 'Food' ? 'Đồ ăn' : (p.category == 'Beverage' ? 'Đồ uống' : 'Combo')}">Category</span>
                                 </td>
                                 <td class="px-6 py-4 text-right tabular-nums font-semibold" th:text="${#numbers.formatInteger(p.qty, 0, 'COMMA')}">0</td>
                                 <td class="px-6 py-4 text-right tabular-nums text-slate-400"
@@ -340,7 +340,7 @@
                                     th:text="'$' + ${#numbers.formatDecimal(p.revenue / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(report.products)}">
-                                <td colspan="5" class="px-6 py-12 text-center text-slate-500">No food and beverage sales data found.</td>
+                                <td colspan="5" class="px-6 py-12 text-center text-slate-500">Không tìm thấy dữ liệu doanh thu dịch vụ nào.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -348,7 +348,7 @@
             </div>
         </div>
 
-        <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TAB 3: HALL OCCUPANCY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+        <!-- ═══════════════════ TAB 3: HALL OCCUPANCY ═══════════════════ -->
         <div th:if="${tab == 'occupancy'}" class="space-y-8 animate-fadeIn">
             <!-- KPI Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -363,7 +363,7 @@
                         <div class="w-full bg-white/5 rounded-full h-1.5 mt-2 overflow-hidden border border-white/5">
                             <div class="bg-primary h-1.5 rounded-full transition-all duration-500" th:style="'width: ' + ${report.avgOccupancy} + '%'"></div>
                         </div>
-                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Avg. Occupancy</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Tỷ lệ lấp đầy TB</span>
                     </div>
                 </div>
 
@@ -374,8 +374,8 @@
                     </div>
                     <div class="flex flex-col">
                         <span class="text-2xl font-bold text-white tracking-tight" th:text="${report.peakHour}">6 PM</span>
-                        <span class="text-[10px] text-slate-400 mt-0.5">highest demand across all halls</span>
-                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Peak Booking Hour</span>
+                        <span class="text-[10px] text-slate-400 mt-0.5">nhu cầu cao nhất toàn hệ thống</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Giờ cao điểm bán vé</span>
                     </div>
                 </div>
 
@@ -386,8 +386,8 @@
                     </div>
                     <div class="flex flex-col">
                         <span class="text-base font-bold text-white tracking-tight leading-snug truncate max-w-[220px]" th:text="${report.mostUsedHall}">Hall C</span>
-                        <span class="text-[10px] text-slate-400 mt-0.5">Top utilization among all resources</span>
-                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Most Used Hall</span>
+                        <span class="text-[10px] text-slate-400 mt-0.5">tần suất sử dụng cao nhất chuỗi</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Phòng hoạt động nhiều nhất</span>
                     </div>
                 </div>
             </div>
@@ -396,10 +396,10 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 <div class="lg:col-span-2 glass-card p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-base font-semibold text-white">Peak Time Analytics</h3>
+                        <h3 class="text-base font-semibold text-white">Thống kê theo khung giờ</h3>
                         <a th:href="@{|${baseUrl}/export|(type='occupancy', from=${from}, to=${to}, branchId=${branchId}, format='csv')}"
                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
-                            Export
+                            Xuất file
                         </a>
                     </div>
                     <div class="relative h-[300px]">
@@ -407,7 +407,7 @@
                     </div>
                 </div>
                 <div class="glass-card p-6 flex flex-col justify-between">
-                    <h3 class="text-base font-semibold text-white mb-4">Hall Capacity Allocation</h3>
+                    <h3 class="text-base font-semibold text-white mb-4">Hiệu suất lấp đầy phòng chiếu</h3>
                     <div class="relative h-[250px] flex items-center justify-center">
                         <canvas id="occupancyRadarChart"></canvas>
                     </div>
@@ -417,22 +417,22 @@
             <!-- Hall Utilization Table -->
             <div class="glass-card overflow-hidden">
                 <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
-                    <h2 class="text-base font-semibold text-white">Hall Utilization Table</h2>
+                    <h2 class="text-base font-semibold text-white">Chi tiết hiệu suất phòng chiếu</h2>
                     <a th:href="@{|${baseUrl}/export|(type='occupancy', from=${from}, to=${to}, branchId=${branchId}, format='csv')}"
                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
-                        Export
+                        Xuất file
                     </a>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-white/[0.08] text-slate-400">
-                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Hall</th>
-                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Branch</th>
-                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Capacity</th>
-                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Seats Used</th>
-                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Occupancy Rate</th>
-                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Peak Hour</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Phòng chiếu</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Chi nhánh</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Sức chứa</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Ghế đã bán</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Tỷ lệ lấp đầy</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Giờ cao điểm</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/[0.06] text-slate-300">
@@ -454,7 +454,7 @@
                                 <td class="px-6 py-4 font-medium text-slate-400" th:text="${h.peakHour}">6 PM</td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(report.halls)}">
-                                <td colspan="6" class="px-6 py-12 text-center text-slate-500">No hall statistics available.</td>
+                                <td colspan="6" class="px-6 py-12 text-center text-slate-500">Không có thống kê phòng chiếu nào.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -464,11 +464,11 @@
 
     </div>
 
-    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DETAIL MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <!-- ═══════════════════ DETAIL MODAL ═══════════════════ -->
     <div id="detailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden animate-fadeIn">
         <div class="glass-card w-full max-w-md overflow-hidden animate-slideUp">
             <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
-                <h3 class="text-base font-semibold text-white">Daily Performance Details</h3>
+                <h3 class="text-base font-semibold text-white">Chi tiết hiệu suất ngày</h3>
                 <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
@@ -476,32 +476,32 @@
             <div class="p-6 space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="flex flex-col">
-                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Branch</span>
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Chi nhánh</span>
                         <span id="modalBranch" class="text-sm font-semibold text-white mt-0.5">-</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Reporting Date</span>
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Ngày báo cáo</span>
                         <span id="modalDate" class="text-sm font-semibold text-white mt-0.5">-</span>
                     </div>
                 </div>
 
                 <div class="border-t border-white/[0.06] pt-4 grid grid-cols-3 gap-4">
                     <div class="flex flex-col">
-                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Tickets</span>
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Vé bán</span>
                         <span id="modalTickets" class="text-base font-bold text-white mt-0.5 tabular-nums">-</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Revenue</span>
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Doanh thu</span>
                         <span id="modalRevenue" class="text-base font-bold text-primary mt-0.5 tabular-nums">-</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Avg Price</span>
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Giá TB</span>
                         <span id="modalAvg" class="text-base font-bold text-slate-400 mt-0.5 tabular-nums">-</span>
                     </div>
                 </div>
 
                 <div class="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-[11px] text-slate-400 mt-2">
-                    <p class="leading-relaxed">This statistics record logs ticket sales transactions. Food & Beverage orders attached to tickets are reported separately in the F&B dashboard tab.</p>
+                    <p class="leading-relaxed">Thống kê này ghi nhận các giao dịch bán vé. Đơn hàng Đồ ăn & Nước uống đi kèm vé được báo cáo riêng ở tab Báo cáo Dịch vụ.</p>
                 </div>
             </div>
             <div class="px-6 py-4 border-t border-white/[0.08] bg-white/[0.02] flex justify-end">
@@ -603,7 +603,7 @@
             labels: labels,
             datasets: [
                 {
-                    label: 'Revenue ($)',
+                    label: 'Doanh thu ($)',
                     data: usdRevenueValues,
                     borderColor: '#CA8A04',
                     backgroundColor: 'rgba(202, 138, 4, 0.1)',
@@ -613,7 +613,7 @@
                     yAxisID: 'y'
                 },
                 {
-                    label: 'Tickets Sold',
+                    label: 'Vé đã bán',
                     data: ticketValues,
                     borderColor: '#0A84FF',
                     backgroundColor: 'transparent',
@@ -636,9 +636,9 @@
                     callbacks: {
                         label: function(context) {
                             if (context.datasetIndex === 0) {
-                                return 'Revenue: $' + context.raw.toFixed(2);
+                                return 'Doanh thu: $' + context.raw.toFixed(2);
                             }
-                            return 'Tickets Sold: ' + context.raw;
+                            return 'Vé đã bán: ' + context.raw;
                         }
                     }
                 }
@@ -691,7 +691,7 @@
         data: {
             labels: labels,
             datasets: [{
-                label: 'Quantity Sold',
+                label: 'Số lượng bán',
                 data: quantities,
                 backgroundColor: backgroundColors,
                 borderColor: borderColors,
@@ -726,7 +726,7 @@
     new Chart(document.getElementById('fbPieChart'), {
         type: 'doughnut',
         data: {
-            labels: ['Food', 'Beverage', 'Combo'],
+            labels: ['Đồ ăn', 'Đồ uống', 'Combo'],
             datasets: [{
                 data: [foodRev, bevRev, comboRev],
                 backgroundColor: ['#CA8A04', '#0A84FF', '#A855F7'],
@@ -784,7 +784,7 @@
                 tooltip: {
                     callbacks: {
                         label: function(ctx) {
-                            return 'Booked Seats: ' + ctx.raw;
+                            return 'Ghế đã bán: ' + ctx.raw;
                         }
                     }
                 }
@@ -812,7 +812,7 @@
         data: {
             labels: radarLabels,
             datasets: [{
-                label: 'Occupancy Rate (%)',
+                label: 'Tỷ lệ lấp đầy (%)',
                 data: radarData,
                 backgroundColor: 'rgba(10, 132, 255, 0.15)',
                 borderColor: '#0A84FF',
@@ -850,4 +850,3 @@
 
 </body>
 </html>
-
