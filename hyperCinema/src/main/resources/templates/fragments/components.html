@@ -11,25 +11,25 @@
 <!-- statusBadge(status) — Badge trạng thái -->
 <th:block th:fragment="statusBadge(status)" th:switch="${status}">
     <span th:case="'ComingSoon'"
-          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-info/15 border border-info/30 text-info"
+          class="badge badge-info inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-info/15 border border-info/30 text-info"
           th:text="${status}">ComingSoon</span>
     <span th:case="'NowShowing'"
-          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-success/15 border border-success/30 text-success"
+          class="badge badge-success inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-success/15 border border-success/30 text-success"
           th:text="${status}">NowShowing</span>
     <span th:case="'Ended'"
-          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-white/10 border border-white/20 text-slate-300"
+          class="badge badge-neutral inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-white/10 border border-white/20 text-slate-300"
           th:text="${status}">Ended</span>
     <span th:case="'Active'"
-          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-success/15 border border-success/30 text-success"
+          class="badge badge-success inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-success/15 border border-success/30 text-success"
           th:text="${status}">Active</span>
     <span th:case="'Maintenance'"
-          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-warning/15 border border-warning/30 text-warning"
+          class="badge badge-warning inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-warning/15 border border-warning/30 text-warning"
           th:text="${status}">Maintenance</span>
     <span th:case="'Inactive'"
-          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-white/10 border border-white/20 text-slate-300"
+          class="badge badge-neutral inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-white/10 border border-white/20 text-slate-300"
           th:text="${status}">Inactive</span>
     <span th:case="*"
-          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-white/10 border border-white/20 text-slate-400"
+          class="badge badge-neutral inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-white/10 border border-white/20 text-slate-400"
           th:text="'Không xác định'">Không xác định</span>
 </th:block>
 

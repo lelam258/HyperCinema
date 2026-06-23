@@ -4,9 +4,7 @@
     Admin Dashboard — Tailwind CSS Rebuild
     KPI Cards + Charts (Chart.js) + Tables + Quick Actions
 -->
-<head th:replace="~{fragments/layout :: head('Dashboard - HyperCinema')}">
-    <title>Dashboard - HyperCinema</title>
-</head>
+<head th:replace="~{fragments/layout :: head('Tổng quan - HyperCinema')}"></head>
 <body class="min-h-screen">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
@@ -18,7 +16,7 @@
 
         <!-- Page Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Dashboard</h1>
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Tổng quan</h1>
             <p class="text-sm text-slate-400">Tổng quan hệ thống · Cập nhật lúc <span th:text="${lastUpdated}">--:--</span></p>
         </div>
 
@@ -32,7 +30,7 @@
                 <div class="flex flex-col gap-0.5">
                     <span class="text-2xl font-bold text-white tabular-nums" th:text="${totalUsers}">0</span>
                     <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Người dùng</span>
-                    <span class="text-[11px] text-slate-500 mt-0.5" th:text="'Active: ' + ${activeUsers}">Active: 0</span>
+                    <span class="text-[11px] text-slate-500 mt-0.5" th:text="'Đang hoạt động: ' + ${activeUsers}">Active: 0</span>
                 </div>
             </div>
             <!-- Branches -->
@@ -43,7 +41,7 @@
                 <div class="flex flex-col gap-0.5">
                     <span class="text-2xl font-bold text-white tabular-nums" th:text="${totalBranches}">0</span>
                     <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Chi nhánh</span>
-                    <span class="text-[11px] text-slate-500 mt-0.5" th:text="'Active: ' + ${activeBranches}">Active: 0</span>
+                    <span class="text-[11px] text-slate-500 mt-0.5" th:text="'Đang hoạt động: ' + ${activeBranches}">Active: 0</span>
                 </div>
             </div>
             <!-- Movies -->
@@ -246,10 +244,19 @@
     const roleValues = /*[[${roleValues}]]*/ [];
     const roleColors = ['#CA8A04', '#F59E0B', '#32D74B', '#0A84FF', '#A855F7'];
 
+    const roleNameMap = {
+        'ADMIN': 'Quản trị viên',
+        'MANAGER': 'Quản lý',
+        'BRANCH_MANAGER': 'Quản lý chi nhánh',
+        'STAFF': 'Nhân viên',
+        'CUSTOMER': 'Khách hàng'
+    };
+    const translatedRoleLabels = Array.from(roleLabels).map(role => roleNameMap[role] || role);
+
     new Chart(document.getElementById('roleChart'), {
         type: 'doughnut',
         data: {
-            labels: Array.from(roleLabels),
+            labels: translatedRoleLabels,
             datasets: [{
                 data: Array.from(roleValues),
                 backgroundColor: roleColors.slice(0, roleLabels.length || roleLabels.size || 5),

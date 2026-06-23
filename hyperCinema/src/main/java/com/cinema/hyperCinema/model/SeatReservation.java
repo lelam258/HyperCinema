@@ -16,6 +16,7 @@ public class SeatReservation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "reservation_id")
     private Integer reservationId;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1,7 +1,16 @@
 {
   "view": "admin/branches/branch-form",
   "title": "Tạo Chi nhánh",
-  "links": [],
+  "links": [
+    "/admin/analytics",
+    "/admin/branches",
+    "/admin/dashboard",
+    "/admin/halls",
+    "/admin/movies",
+    "/admin/notifications",
+    "/admin/payments",
+    "/admin/users"
+  ],
   "i18nKeys": [
     "#{__${infoKey}__}"
   ],
@@ -23,6 +32,18 @@
   "tables": [],
   "pagination": null,
   "text": [
+    "H",
+    "HyperCinema",
+    "Hệ thống",
+    "Tổng quan",
+    "Báo cáo & Thống kê",
+    "Quản lý phim",
+    "Quản lý chi nhánh",
+    "Quản lý phòng chiếu",
+    "Quản lý người dùng",
+    "Thông báo & Hỗ trợ",
+    "Quản lý Giao dịch",
+    "Đăng xuất",
     "Tạo Chi nhánh",
     "Tên chi nhánh",
     "Địa chỉ",
@@ -31,6 +52,8 @@
     "Giờ mở cửa",
     "Giờ đóng cửa",
     "Hủy",
-    "Tạo mới"
+    "Tạo mới",
+    "HyperCinema",
+    "© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim."
   ]
 }

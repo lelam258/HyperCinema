@@ -41,9 +41,6 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
-    @Column(nullable = false, length = 50)
-    private String status = "Active";
-
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
@@ -68,6 +65,9 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id")
     private User manager;
+
+    @Column(nullable = false, length = 50)
+    private String status = "Active";
 
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;

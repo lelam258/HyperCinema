@@ -68,7 +68,10 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new IllegalArgumentException("Email already exists: " + user.getEmail());
         }
-        
+        if (user.getFullName() == null) {
+            user.setFullName(user.getUsername());
+        }
+
         if (user.getRole() == null || user.getRole().getRoleId() == null) {
             // Default to Viewer if no role specified
             Role defaultRole = roleRepository.findByName("Viewer")

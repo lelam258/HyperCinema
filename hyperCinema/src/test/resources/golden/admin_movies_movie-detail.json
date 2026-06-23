@@ -2,16 +2,18 @@
   "view": "admin/movies/movie-detail",
   "title": "Chi tiết Phim - Avengers: Endgame - HyperCinema",
   "links": [
+    "/admin/analytics",
+    "/admin/branches",
+    "/admin/dashboard",
+    "/admin/halls",
     "/admin/movies",
-    "/admin/movies/101/edit",
+    "/admin/movies/101/branches",
+    "/admin/notifications",
+    "/admin/payments",
+    "/admin/users",
     "https://youtu.be/abc123"
   ],
-  "i18nKeys": [
-    "#{${errorKey}}",
-    "#{${infoKey}}",
-    "#{${successKey}}",
-    "#{${warningKey}}"
-  ],
+  "i18nKeys": [],
   "forms": [
     {
       "action": "/admin/movies/101/status",
@@ -19,30 +21,6 @@
       "fields": [
         "select:status=options[ComingSoon|NowShowing|Ended];selected=NowShowing",
         "submit:Đổi"
-      ]
-    },
-    {
-      "action": "/admin/movies/101/genres",
-      "method": "post",
-      "fields": [
-        "genreId(number)=",
-        "submit:Thêm thể loại"
-      ]
-    },
-    {
-      "action": "/admin/movies/101/branches",
-      "method": "post",
-      "fields": [
-        "branchId(number)=",
-        "submit:Phân phối"
-      ]
-    },
-    {
-      "action": "/admin/movies/101",
-      "method": "post",
-      "fields": [
-        "_method(hidden)=delete",
-        "submit:Xoá"
       ]
     },
     {
@@ -80,6 +58,18 @@
   ],
   "pagination": null,
   "text": [
+    "H",
+    "HyperCinema",
+    "Hệ thống",
+    "Tổng quan",
+    "Báo cáo & Thống kê",
+    "Quản lý phim",
+    "Quản lý chi nhánh",
+    "Quản lý phòng chiếu",
+    "Quản lý người dùng",
+    "Thông báo & Hỗ trợ",
+    "Quản lý Giao dịch",
+    "Đăng xuất",
     "Quản lý Phim",
     "/",
     "Avengers: Endgame",
@@ -87,17 +77,11 @@
     "Avengers: Endgame",
     "Trạng thái:",
     "NowShowing",
-    "Chỉnh sửa",
-    "Trạng thái",
     "ComingSoon",
     "NowShowing",
     "Ended",
     "Đổi",
-    "Thể loại",
-    "Thêm thể loại",
-    "Chi nhánh",
-    "Phân phối",
-    "Xoá",
+    "Quản lý Phân phối",
     "Thông tin chung",
     "Poster",
     "Tên phim",
@@ -138,6 +122,8 @@
     "Lịch chiếu tương lai",
     "5 suất",
     "Lịch chiếu quá khứ",
-    "20 suất"
+    "20 suất",
+    "HyperCinema",
+    "© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim."
   ]
 }

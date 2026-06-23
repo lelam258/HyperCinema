@@ -16,6 +16,7 @@ public class LoyaltyPoint {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "point_id")
     private Integer pointId;
 
     @ManyToOne(fetch = FetchType.LAZY)

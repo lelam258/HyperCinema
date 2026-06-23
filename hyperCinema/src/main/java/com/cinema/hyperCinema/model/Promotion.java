@@ -17,6 +17,7 @@ public class Promotion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "promotion_id")
     private Integer promotionId;
 
     @Column(nullable = false, length = 255)

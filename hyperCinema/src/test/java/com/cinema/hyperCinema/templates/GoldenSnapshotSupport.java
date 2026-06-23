@@ -239,7 +239,7 @@ public final class GoldenSnapshotSupport {
     private static final Pattern THEAD_TH = Pattern.compile("<th\\b[^>]*>(.*?)</th>", Pattern.DOTALL);
     private static final Pattern TITLE = Pattern.compile("<title\\b[^>]*>(.*?)</title>", Pattern.DOTALL);
     private static final Pattern PAGINATION_BAR =
-            Pattern.compile("<div class=\"pagination-bar\"[^>]*>(.*?)</div>\\s*</div>", Pattern.DOTALL);
+            Pattern.compile("<div[^>]*class=\"[^\"]*(?:pagination-bar|flex items-center justify-between gap-4 px-5 py-4)[^\"]*\"[^>]*>(.*?)</div>\\s*</div>", Pattern.DOTALL);
 
     private static String attr(String attrs, String name) {
         Matcher m = Pattern.compile(name + "=\"([^\"]*)\"").matcher(attrs);
@@ -300,6 +300,9 @@ public final class GoldenSnapshotSupport {
             String body = f.group(2);
             FormManifest fm = new FormManifest();
             fm.action = attr(attrs, "action");
+            if (fm.action != null && fm.action.contains("/logout")) {
+                continue;
+            }
             String method = attr(attrs, "method");
             fm.method = method == null ? "get" : method.toLowerCase(Locale.ROOT);
             fm.fields = new ArrayList<>();
@@ -398,7 +401,7 @@ public final class GoldenSnapshotSupport {
                 // fixture). Trạng thái sort hiện hành đã được nắm qua `links` (href
                 // sort + toggle direction), nên không mất thông tin hành vi.
                 String cell = th.group(1).replaceAll(
-                        "(?s)<span class=\"sort-indicator\"[^>]*>.*?</span>", " ");
+                        "(?s)<span[^>]*>.*?</span>", " ");
                 headers.add(textOf(cell));
             }
             if (headers.isEmpty()) {
@@ -420,17 +423,35 @@ public final class GoldenSnapshotSupport {
         String bar = pb.group(0);
         PaginationManifest pm = new PaginationManifest();
 
-        Matcher info = Pattern.compile("<div class=\"pagination-info\">(.*?)</div>", Pattern.DOTALL).matcher(bar);
-        pm.info = info.find() ? textOf(info.group(1)) : null;
+        // 1. Parse Info
+        Matcher infoOld = Pattern.compile("<div class=\"pagination-info\">(.*?)</div>", Pattern.DOTALL).matcher(bar);
+        if (infoOld.find()) {
+            pm.info = textOf(infoOld.group(1));
+        } else {
+            Matcher infoNew = Pattern.compile("<div class=\"text-sm text-slate-400\">(.*?)</div>", Pattern.DOTALL).matcher(bar);
+            if (infoNew.find()) {
+                pm.info = textOf(infoNew.group(1));
+            }
+        }
 
+        // 2. Parse Controls Block
         pm.controls = new ArrayList<>();
-        Matcher ctrlBlock = Pattern.compile(
+        String controls = bar;
+        Matcher ctrlBlockOld = Pattern.compile(
                 "<div class=\"pagination-controls\">(.*?)</div>", Pattern.DOTALL).matcher(bar);
-        String controls = ctrlBlock.find() ? ctrlBlock.group(1) : bar;
+        if (ctrlBlockOld.find()) {
+            controls = ctrlBlockOld.group(1);
+        } else {
+            Matcher ctrlBlockNew = Pattern.compile(
+                    "<div class=\"inline-flex items-center gap-1 flex-wrap\">(.*?)</div>", Pattern.DOTALL).matcher(bar);
+            if (ctrlBlockNew.find()) {
+                controls = ctrlBlockNew.group(1);
+            }
+        }
 
-        // các link (kèm page= param) và span trạng thái (disabled/current)
+        // 3. Parse tokens inside controls
         Matcher token = Pattern.compile(
-                "<a\\b([^>]*)>(.*?)</a>|<span class=\"(page-current|page-disabled)\"[^>]*>(.*?)</span>",
+                "<a\\b([^>]*)>(.*?)</a>|<span\\b([^>]*)>(.*?)</span>",
                 Pattern.DOTALL).matcher(controls);
         while (token.find()) {
             if (token.group(1) != null) {
@@ -438,9 +459,6 @@ public final class GoldenSnapshotSupport {
                 String label = textOf(token.group(2));
                 String pageParam = "";
                 if (href != null) {
-                    // href đã render bị HTML-escape (&amp;) nên ký tự ngay trước
-                    // "page=" có thể là ';'. Bắt trực tiếp giá trị số (page index
-                    // 0-indexed) để không phụ thuộc ký tự phân tách.
                     Matcher pp = Pattern.compile("page=([0-9]+)").matcher(href);
                     if (pp.find()) {
                         pageParam = pp.group(1);
@@ -448,7 +466,13 @@ public final class GoldenSnapshotSupport {
                 }
                 pm.controls.add("a:" + label + "(page=" + pageParam + ")");
             } else {
-                pm.controls.add(token.group(3) + ":" + textOf(token.group(4)));
+                String spanAttrs = token.group(3);
+                String label = textOf(token.group(4));
+                String type = "page-disabled";
+                if (spanAttrs != null && (spanAttrs.contains("page-current") || spanAttrs.contains("bg-gradient-to-r") || spanAttrs.contains("from-primary"))) {
+                    type = "page-current";
+                }
+                pm.controls.add(type + ":" + label);
             }
         }
         return pm;

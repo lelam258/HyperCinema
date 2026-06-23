@@ -1,14 +1,18 @@
 {
   "view": "admin/branches/assign-manager",
-  "title": "Gán Manager cho Chi nhánh: CGV Vincom - HyperCinema",
+  "title": "Gán Manager - CGV Vincom - HyperCinema",
   "links": [
+    "/admin/analytics",
     "/admin/branches",
-    "/admin/branches/11"
+    "/admin/branches/11",
+    "/admin/dashboard",
+    "/admin/halls",
+    "/admin/movies",
+    "/admin/notifications",
+    "/admin/payments",
+    "/admin/users"
   ],
-  "i18nKeys": [
-    "#{${errorKey}}",
-    "#{${successKey}}"
-  ],
+  "i18nKeys": [],
   "forms": [
     {
       "action": "/admin/branches/11/managers",
@@ -23,25 +27,38 @@
   "tables": [],
   "pagination": null,
   "text": [
+    "H",
+    "HyperCinema",
+    "Hệ thống",
+    "Tổng quan",
+    "Báo cáo & Thống kê",
+    "Quản lý phim",
+    "Quản lý chi nhánh",
+    "Quản lý phòng chiếu",
+    "Quản lý người dùng",
+    "Thông báo & Hỗ trợ",
+    "Quản lý Giao dịch",
+    "Đăng xuất",
     "Quản lý Chi nhánh",
     "/",
     "CGV Vincom",
     "/",
     "Gán Manager",
-    "Gán Manager cho Chi nhánh: CGV Vincom",
+    "Gán Manager",
     "Hà Nội",
-    "·",
+    "-",
     "191 Bà Triệu",
     "Manager chưa được gán",
     "2 người",
     "Lê Văn C",
     "c@example.com",
-    "0907778899",
     "Active",
     "Phạm Thị D",
     "d@example.com",
     "Active",
     "Hủy",
-    "Gán Manager"
+    "Gán Manager",
+    "HyperCinema",
+    "© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim."
   ]
 }
