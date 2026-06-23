@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(|Chi tiết Voucher - ${voucher.code} - HyperCinema|)}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('vouchers')}"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner max-w-5xl">
+        <a th:href="@{/admin/vouchers}" class="mb-4 inline-flex text-sm text-cinema-muted no-underline hover:text-accent">← Quay lại Voucher</a>
+
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <section class="hc-card mb-6 p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h1 class="hc-page-title" th:text="${voucher.title}">Tên voucher</h1>
+                    <div class="mt-2 flex flex-wrap items-center gap-3">
+                        <span class="rounded-lg border border-cinema-border bg-cinema-panel-soft px-3 py-1 font-mono text-sm text-white" th:text="${voucher.code}">CODE</span>
+                        <span th:switch="${voucher.status}">
+                            <span th:case="'ACTIVE'" class="hc-badge border-success/50 bg-success/10 text-success">Đang hoạt động</span>
+                            <span th:case="'INACTIVE'" class="hc-badge border-cinema-border text-cinema-muted">Ngừng hoạt động</span>
+                            <span th:case="'EXPIRED'" class="hc-badge border-danger/50 bg-danger/10 text-danger">Hết hạn</span>
+                            <span th:case="*" class="hc-badge border-cinema-border text-cinema-muted" th:text="${voucher.status}">?</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <a th:href="@{/admin/vouchers/{id}/edit(id=${voucher.voucherId})}" class="hc-btn hc-btn-primary no-underline">Chỉnh sửa</a>
+                    <form th:if="${voucher.status == 'ACTIVE' or voucher.status == 'INACTIVE'}" method="post" th:action="@{/admin/vouchers/{id}/status(id=${voucher.voucherId})}">
+                        <input type="hidden" name="status" th:value="${voucher.status == 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'}">
+                        <button type="submit" class="hc-btn" th:text="${voucher.status == 'ACTIVE' ? 'Ngừng hoạt động' : 'Kích hoạt'}">Đổi trạng thái</button>
+                    </form>
+                    <form method="post" th:action="@{/admin/vouchers/{id}(id=${voucher.voucherId})}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa voucher này?');">
+                        <input type="hidden" name="_method" value="delete">
+                        <button type="submit" class="hc-btn text-danger hover:text-red-300">Xóa</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_20rem]">
+            <section class="hc-card p-6" aria-label="Thông tin voucher">
+                <h2 class="mb-4 text-lg font-semibold text-white">Thông tin chi tiết</h2>
+                <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div><dt class="hc-label mb-1">Tiêu đề</dt><dd class="text-white" th:text="${voucher.title}">Tiêu đề</dd></div>
+                    <div><dt class="hc-label mb-1">Mã voucher</dt><dd class="font-mono text-white" th:text="${voucher.code}">CODE</dd></div>
+                    <div><dt class="hc-label mb-1">Loại giảm giá</dt><dd class="text-white" th:text="${voucher.discountType == 'PERCENTAGE' ? 'Phần trăm (%)' : (voucher.discountType == 'FIXED_AMOUNT' ? 'Số tiền cố định' : voucher.discountType)}">Loại</dd></div>
+                    <div><dt class="hc-label mb-1">Giá trị giảm</dt><dd class="text-xl font-bold text-accent tabular-nums" th:text="${voucher.discountType == 'PERCENTAGE' ? voucher.discountValue + '%' : #numbers.formatInteger(voucher.discountValue, 0, 'POINT') + ' đ'}">10%</dd></div>
+                    <div><dt class="hc-label mb-1">Đơn tối thiểu</dt><dd class="text-white tabular-nums" th:text="${voucher.minOrderValue != null ? #numbers.formatInteger(voucher.minOrderValue, 0, 'POINT') + ' đ' : 'N/A'}">0 đ</dd></div>
+                    <div><dt class="hc-label mb-1">Đã dùng / Tối đa</dt><dd class="text-white tabular-nums" th:text="|${voucher.usedCount} / ${voucher.maxUses}|">0 / 100</dd></div>
+                    <div><dt class="hc-label mb-1">Ngày bắt đầu</dt><dd class="text-white" th:text="${voucher.startDate != null ? #temporals.format(voucher.startDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">N/A</dd></div>
+                    <div><dt class="hc-label mb-1">Ngày kết thúc</dt><dd class="text-white" th:text="${voucher.endDate != null ? #temporals.format(voucher.endDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">N/A</dd></div>
+                </dl>
+            </section>
+
+            <aside class="space-y-6">
+                <section class="hc-card p-6" aria-label="Phạm vi áp dụng">
+                    <h2 class="mb-4 text-lg font-semibold text-white">Phạm vi</h2>
+                    <dl class="space-y-4">
+                        <div><dt class="hc-label mb-1">Theo chi nhánh</dt><dd class="text-white" th:text="${voucher.branchSpecific} ? 'Có' : 'Không, toàn hệ thống'">Không</dd></div>
+                        <div th:if="${voucher.branchSpecific}"><dt class="hc-label mb-1">Chi nhánh</dt><dd class="text-white" th:text="${voucher.branchName} ?: 'N/A'">Branch</dd></div>
+                    </dl>
+                </section>
+
+                <section class="hc-card p-6" aria-label="Hiệu suất voucher">
+                    <h2 class="mb-4 text-lg font-semibold text-white">Lượt sử dụng</h2>
+                    <div class="mb-3 flex items-end justify-between">
+                        <span class="text-3xl font-bold text-white" th:text="${voucher.usedCount != null ? voucher.usedCount : 0}">0</span>
+                        <span class="text-sm text-cinema-muted" th:text="|/ ${voucher.maxUses != null ? voucher.maxUses : 0}|">/ 100</span>
+                    </div>
+                    <div class="h-2 overflow-hidden rounded-full bg-cinema-panel-soft">
+                        <div class="h-full rounded-full bg-accent"
+                             th:style="${voucher.maxUses != null and voucher.maxUses > 0 ? 'width:' + ((voucher.usedCount != null ? voucher.usedCount : 0) * 100 / voucher.maxUses) + '%' : 'width:0%'}"></div>
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>
