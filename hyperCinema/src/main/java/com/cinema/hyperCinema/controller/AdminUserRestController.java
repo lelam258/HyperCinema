@@ -24,7 +24,7 @@ public class AdminUserRestController {
     public ResponseEntity<?> createUser(@RequestBody UserRequest request) {
         try {
             User user = new User();
-//            user.setName(request.getName());
+            user.setFullName(request.getName());
             user.setUsername(request.getUsername());
             user.setEmail(request.getEmail());
             user.setPasswordHash(request.getPassword()); // In production, hash it
@@ -49,7 +49,7 @@ public class AdminUserRestController {
     public ResponseEntity<?> updateUser(@PathVariable("id") Integer id, @RequestBody UserRequest request) {
         try {
             User userDetails = new User();
-//            userDetails.setName(request.getName());
+            userDetails.setFullName(request.getName());
             userDetails.setUsername(request.getUsername());
             userDetails.setEmail(request.getEmail());
             userDetails.setPhone(request.getPhone());

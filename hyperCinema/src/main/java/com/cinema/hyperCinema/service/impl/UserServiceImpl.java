@@ -5,6 +5,7 @@ import com.cinema.hyperCinema.model.User;
 import com.cinema.hyperCinema.repository.RoleRepository;
 import com.cinema.hyperCinema.repository.UserRepository;
 import com.cinema.hyperCinema.service.UserService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,10 +20,12 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository) {
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -40,7 +43,7 @@ public class UserServiceImpl implements UserService {
                     String q = query.toLowerCase().trim();
                     return (u.getUsername() != null && u.getUsername().toLowerCase().contains(q))
                             || (u.getEmail() != null && u.getEmail().toLowerCase().contains(q))
-//                            || (u.getName() != null && u.getName().toLowerCase().contains(q))
+                            || (u.getFullName() != null && u.getFullName().toLowerCase().contains(q))
                             || (u.getRole() != null && u.getRole().getName().toLowerCase().contains(q));
                 })
                 .filter(u -> {
@@ -86,6 +89,10 @@ public class UserServiceImpl implements UserService {
         if (user.getStatus() == null) {
             user.setStatus("Active");
         }
+
+        if (user.getPasswordHash() != null) {
+            user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+        }
         
         return userRepository.save(user);
     }
@@ -101,7 +108,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Email already exists: " + userDetails.getEmail());
         }
 
-//        user.setName(userDetails.getName());
+        user.setFullName(userDetails.getFullName());
         user.setUsername(userDetails.getUsername());
         user.setEmail(userDetails.getEmail());
         user.setPhone(userDetails.getPhone());
@@ -148,7 +155,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User resetUserPassword(Integer id, String newPassword) {
         User user = getUserById(id);
-        user.setPasswordHash(newPassword); // In production, this would be encrypted
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
         return userRepository.save(user);
     }
 
