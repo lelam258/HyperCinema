@@ -1,33 +1,49 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+### Java
+# Compiled class file
+*.class
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Log file
+*.log
 
-### IntelliJ IDEA ###
+# Package Files
+*.jar
+*.war
+*.ear
+
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+### Windows
+# Windows thumbnail cache files
+Thumbs.db
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows shortcuts
+*.lnk
+.agent
+openspec
+hyperCinema/.m2-codex
+.codex
 .idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
+.m2-codex
+hyperCinema/.m2
+AGENTS.md
+docs
+hyperCinema/CONFIGURATION.md
+.kiro
+.tmp
+.vscode
+design-system
+hyperCinema/src/test/resources/golden
+hyperCinema/.jqwik-database
+hyperCinema/check-jar.ps1
+hyperCinema/deps.txt
+*.zip
+hyperCinema/src/test/java
+template
