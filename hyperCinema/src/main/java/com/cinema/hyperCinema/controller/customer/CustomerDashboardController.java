@@ -3,24 +3,25 @@ package com.cinema.hyperCinema.controller.customer;
 import com.cinema.hyperCinema.model.User;
 import com.cinema.hyperCinema.model.Booking;
 import com.cinema.hyperCinema.model.Payment;
+import com.cinema.hyperCinema.model.Notification;
 import com.cinema.hyperCinema.repository.BookingRepository;
 import com.cinema.hyperCinema.security.CustomUserDetails;
 import com.cinema.hyperCinema.service.PaymentService;
+import com.cinema.hyperCinema.service.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/my")
@@ -28,10 +29,23 @@ public class CustomerDashboardController {
 
     private final BookingRepository bookingRepository;
     private final PaymentService paymentService;
+    private final NotificationService notificationService;
 
-    public CustomerDashboardController(BookingRepository bookingRepository, PaymentService paymentService) {
+    public CustomerDashboardController(BookingRepository bookingRepository, 
+                                       PaymentService paymentService, 
+                                       NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
         this.paymentService = paymentService;
+        this.notificationService = notificationService;
+    }
+
+    @ModelAttribute
+    public void addCommonAttributes(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        if (userDetails != null) {
+            User user = userDetails.getUser();
+            long unreadCount = notificationService.countUnreadNotifications(user);
+            model.addAttribute("unreadNotificationCount", unreadCount);
+        }
     }
 
     @GetMapping({"/dashboard", ""})
@@ -101,5 +115,36 @@ public class CustomerDashboardController {
         model.addAttribute("lastUpdated", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")));
 
         return "my/payment/detail";
+    }
+
+    @GetMapping("/notifications")
+    public String notifications(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        User user = userDetails.getUser();
+        List<Notification> notifications = notificationService.getReceivedNotifications(user);
+        
+        model.addAttribute("customerName", user.getFullName());
+        model.addAttribute("notifications", notifications);
+        model.addAttribute("lastUpdated", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")));
+        
+        return "my/notifications";
+    }
+
+    @PostMapping("/notifications/{id}/read")
+    @ResponseBody
+    public ResponseEntity<?> markNotificationAsRead(
+            @PathVariable("id") Integer id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        try {
+            User user = userDetails.getUser();
+            Notification notification = notificationService.markAsRead(id, user);
+            long unreadCount = notificationService.countUnreadNotifications(user);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "unreadCount", unreadCount
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }
