@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.util.List;
 
 @Entity
-@Table(name = "FoodItem")
+@Table(name = "food_item")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class FoodItem {
@@ -49,3 +49,4 @@ public class FoodItem {
         if (stock == null) stock = 0;
     }
 }
+

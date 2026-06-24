@@ -22,6 +22,7 @@ import com.cinema.hyperCinema.model.User;
 import com.cinema.hyperCinema.model.UserMembership;
 import com.cinema.hyperCinema.repository.LoyaltyPointRepository;
 import com.cinema.hyperCinema.repository.UserMembershipRepository;
+import com.cinema.hyperCinema.repository.UserRepository;
 import com.cinema.hyperCinema.service.dashboard.BranchManagerDashboardService;
 import com.cinema.hyperCinema.service.dashboard.ManagerDashboardService;
 import com.cinema.hyperCinema.service.ui.WorkspaceUiDataService;
@@ -34,17 +35,20 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
     private final BranchManagerDashboardService branchDashboardService;
     private final LoyaltyPointRepository loyaltyPointRepository;
     private final UserMembershipRepository userMembershipRepository;
+    private final UserRepository userRepository;
     private final UiDisplayMapper displayMapper;
 
     public WorkspaceUiDataServiceImpl(ManagerDashboardService managerDashboardService,
                                       BranchManagerDashboardService branchDashboardService,
                                       LoyaltyPointRepository loyaltyPointRepository,
                                       UserMembershipRepository userMembershipRepository,
+                                      UserRepository userRepository,
                                       UiDisplayMapper displayMapper) {
         this.managerDashboardService = managerDashboardService;
         this.branchDashboardService = branchDashboardService;
         this.loyaltyPointRepository = loyaltyPointRepository;
         this.userMembershipRepository = userMembershipRepository;
+        this.userRepository = userRepository;
         this.displayMapper = displayMapper;
     }
 
@@ -79,6 +83,7 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
 
     @Override
     public WorkspaceDashboardView getBranchDashboard(User actor) {
+        actor = reloadUserWithBranch(actor);
         Branch branch = actor != null ? actor.getBranch() : null;
         if (branch == null) {
             return emptyBranchDashboard(actor);
@@ -107,6 +112,7 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
 
     @Override
     public WorkspaceDashboardView getStaffDashboard(User actor) {
+        actor = reloadUserWithBranch(actor);
         Branch branch = actor != null ? actor.getBranch() : null;
         boolean assigned = branch != null;
         return WorkspaceDashboardView.builder()
@@ -154,6 +160,13 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
                 .actions(branchActions(null))
                 .lastUpdated(displayMapper.dateTime(LocalDateTime.now()))
                 .build();
+    }
+
+    private User reloadUserWithBranch(User actor) {
+        if (actor == null || actor.getUserId() == null) {
+            return actor;
+        }
+        return userRepository.findByIdWithRoleAndBranch(actor.getUserId()).orElse(actor);
     }
 
     private MetricCardView metric(String key, String label, long value, String helperText, String icon) {

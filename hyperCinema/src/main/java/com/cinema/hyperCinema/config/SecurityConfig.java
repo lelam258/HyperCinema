@@ -27,8 +27,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/api/**")
+            )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate", "/api/auth/verify-email", "/movies/**", "/movies", "/api/payment/vnpay-return").permitAll()
+                .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate", "/api/auth/verify-email").permitAll()
+                .requestMatchers(HttpMethod.GET, "/vnpay-return", "/api/payment/vnpay-return").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 // ===== Branch Management — REQ 11.1, 11.2, 11.4 =====
                 // Mutation endpoints (POST/PUT/PATCH/DELETE) — Admin only
@@ -75,8 +79,34 @@ public class SecurityConfig {
                         "/admin/halls/**").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
                 .requestMatchers(HttpMethod.DELETE,
                         "/admin/halls/**").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
+                .requestMatchers(HttpMethod.GET,
+                        "/admin/showtimes",
+                        "/admin/showtimes/",
+                        "/admin/showtimes/new",
+                        "/admin/showtimes/*",
+                        "/admin/showtimes/*/edit").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
+                .requestMatchers(HttpMethod.POST,
+                        "/admin/showtimes",
+                        "/admin/showtimes/**").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
+                .requestMatchers(HttpMethod.PUT,
+                        "/admin/showtimes/**").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
+                .requestMatchers(HttpMethod.PATCH,
+                        "/admin/showtimes/**").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
+                .requestMatchers(HttpMethod.DELETE,
+                        "/admin/showtimes/**").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
+                .requestMatchers(HttpMethod.GET, "/admin/seats")
+                        .hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
+                .requestMatchers("/admin/food-orders", "/admin/food-orders/**")
+                        .hasAnyRole("ADMIN", "MANAGER", "STAFF")
+                .requestMatchers("/admin/food-items", "/admin/food-items/**",
+                        "/admin/food/items", "/admin/food/items/**")
+                        .hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers("/admin/vouchers", "/admin/vouchers/**")
+                        .hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
                 // Catch-all for /admin/**
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/manager/bookings", "/manager/bookings/**").hasRole("MANAGER")
+                .requestMatchers("/staff/bookings", "/staff/bookings/**").hasRole("STAFF")
                 .requestMatchers("/manager/**").hasRole("MANAGER")
                 .requestMatchers("/branch/**").hasAnyRole("BRANCH_MANAGER", "BRANCHMANAGER")
                 .requestMatchers("/staff/**").hasRole("STAFF")

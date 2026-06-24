@@ -9,9 +9,23 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Integer>, JpaSpecificationExecutor<Payment> {
+
+    Optional<Payment> findByBooking_BookingId(Integer bookingId);
+
+    @Query("SELECT p FROM Payment p "
+            + "JOIN FETCH p.booking b "
+            + "WHERE p.status = 'Pending' "
+            + "AND b.status = 'Pending' "
+            + "AND ("
+            + "  (p.expiresAt IS NOT NULL AND p.expiresAt <= :now) "
+            + "  OR (p.expiresAt IS NULL AND p.createdAt <= :fallbackCreatedBefore)"
+            + ")")
+    List<Payment> findExpiredPendingPayments(@Param("now") LocalDateTime now,
+                                             @Param("fallbackCreatedBefore") LocalDateTime fallbackCreatedBefore);
 
     @Query("SELECT SUM(p.amount) FROM Payment p "
             + "WHERE p.createdAt BETWEEN :start AND :end "
@@ -40,4 +54,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer>, JpaS
     Long sumRevenueByBranchAndDateRange(@Param("branchId") Integer branchId,
                                         @Param("start") LocalDateTime start,
                                         @Param("end") LocalDateTime end);
+
+    long countByBooking_Showtime_ShowtimeId(Integer showtimeId);
 }

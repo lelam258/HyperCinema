@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Đặt vé - HyperCinema')}"></head>
+<body class="min-h-screen hc-customer hc-customer-booking-shell">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: customerSidebar('booking')}"></nav>
+
+<main class="hc-page hc-customer-booking-page">
+    <div class="hc-page-inner hc-customer-booking-inner">
+        <section class="hc-page-head">
+            <div>
+                <p class="hc-kicker">Khách hàng</p>
+                <h1 class="hc-page-title"
+                    th:text="${selectedShowtime != null ? selectedShowtime.movieTitle : 'Mua vé ngay'}">
+                    Mua vé ngay
+                </h1>
+                <p th:if="${selectedShowtime == null}" class="hc-page-subtitle">
+                    Chọn phim, suất chiếu và ghế ngồi cho buổi xem tiếp theo.
+                </p>
+                <div th:if="${selectedShowtime != null}" class="hc-booking-title-meta">
+                    <span class="hc-age-badge">T16</span>
+                    <span th:text="${#temporals.format(selectedShowtime.startTime, 'HH:mm - dd/MM/yyyy')}">13:00 - 20/06/2026</span>
+                    <span th:text="${selectedShowtime.branchName}">HyperCinema</span>
+                    <span>
+                        <span th:text="${selectedShowtime.hallName}">Phòng 01</span>
+                        <span th:if="${selectedShowtime.hallType != null}" th:text="| (${selectedShowtime.hallType})|">(2D)</span>
+                    </span>
+                </div>
+            </div>
+            <a th:href="@{/my/bookings}" class="hc-button hc-button-primary hc-customer-primary">
+                <i data-lucide="tickets"></i>
+                Vé của tôi
+            </a>
+        </section>
+
+        <section class="hc-booking-workspace" data-booking-root aria-label="Booking workflow">
+            <div class="hc-booking-main-stack">
+                <div th:if="${bookingError}" class="hc-alert hc-alert-danger" th:text="${bookingError}">
+                    Không thể đặt vé.
+                </div>
+                <section class="hc-panel hc-seat-selection-panel">
+                    <div class="hc-screen-line" aria-hidden="true"></div>
+
+                    <div th:if="${seats != null and not #lists.isEmpty(seats)}"
+                         class="hc-seat-grid hc-booking-seat-grid"
+                         data-booking-seat-grid>
+                        <button th:each="seat : ${seats}"
+                                type="button"
+                                class="hc-seat"
+                                th:classappend="${seat.selectable} ? '' : ' is-reserved'"
+                                th:disabled="${!seat.selectable}"
+                                th:data-seat-id="${seat.seatId}"
+                                th:data-seat-row="${seat.row}"
+                                th:data-seat-number="${seat.number}"
+                                th:data-seat-price="${seat.price}"
+                                th:data-seat-label="${seat.label}"
+                                th:data-seat-type="${seat.type}"
+                                th:title="|${seat.label} - ${seat.displayPrice}|"
+                                th:text="${seat.label}">
+                            A1
+                        </button>
+                    </div>
+
+                    <div th:if="${seats == null or #lists.isEmpty(seats)}" class="hc-customer-empty">
+                        <i data-lucide="armchair"></i>
+                        <h2>Chưa có sơ đồ ghế</h2>
+                        <p>Hãy chọn suất chiếu từ trang phim để xem ghế khả dụng.</p>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="hc-booking-side-rail">
+                <section th:if="${selectedShowtime != null}" class="hc-panel hc-rail-movie-card">
+                    <h2>Thông tin đặt vé</h2>
+                    <div class="hc-selected-showtime hc-rail-showtime">
+                        <div class="hc-selected-poster">
+                            <img th:if="${selectedShowtime.posterUrl != null and not #strings.isEmpty(selectedShowtime.posterUrl)}"
+                                 th:src="${selectedShowtime.posterUrl}"
+                                 th:alt="|Poster ${selectedShowtime.movieTitle}|">
+                            <i th:unless="${selectedShowtime.posterUrl != null and not #strings.isEmpty(selectedShowtime.posterUrl)}"
+                               data-lucide="clapperboard"></i>
+                        </div>
+                        <div>
+                            <h3 th:text="${selectedShowtime.movieTitle}">Tên phim</h3>
+                            <p>2D Phụ đề Việt</p>
+                            <span class="hc-room-chip" th:text="${selectedShowtime.hallName}">Phòng 01</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section th:if="${foodItems != null and not #lists.isEmpty(foodItems)}" class="hc-panel hc-fnb-panel">
+                    <h2>Combo bắp nước</h2>
+                    <div class="hc-fnb-list">
+                        <article th:each="food : ${foodItems}"
+                                 class="hc-fnb-item"
+                                 th:data-food-id="${food.itemId}"
+                                 th:data-food-name="${food.name}"
+                                 th:data-food-price="${food.price}">
+                            <div>
+                                <strong th:text="${food.name}">Combo Bắp Nước</strong>
+                                <span th:text="|${food.categoryName} - ${food.displayPrice}|">Combo - 85.000 VND</span>
+                            </div>
+                            <div class="hc-fnb-stepper">
+                                <button type="button" data-food-decrease aria-label="Giảm số lượng">-</button>
+                                <span data-food-quantity>0</span>
+                                <button type="button" data-food-increase aria-label="Tăng số lượng">+</button>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="hc-panel hc-booking-empty-state">
+                    <i data-lucide="ticket"></i>
+                    <strong data-booking-seat-summary>Chưa chọn ghế nào</strong>
+                    <span>Vui lòng chọn ghế trên sơ đồ</span>
+                </section>
+
+                <section class="hc-panel hc-summary-panel">
+                    <dl class="hc-summary-list">
+                        <div class="hc-summary-total">
+                            <dt>Tạm tính</dt>
+                            <dd data-booking-total>0 VND</dd>
+                        </div>
+                    </dl>
+                    <div class="hc-actions hc-actions-stacked">
+                        <form th:if="${selectedShowtime != null}"
+                              th:action="@{/booking}"
+                              method="post"
+                              data-booking-form>
+                            <input type="hidden" name="showtimeId" th:value="${selectedShowtime.showtimeId}">
+                            <div data-booking-selected-seats></div>
+                            <div data-booking-selected-food></div>
+                            <button type="submit"
+                                    class="hc-button hc-button-primary hc-customer-primary"
+                                    data-booking-submit
+                                    disabled>
+                                Tiếp tục thanh toán
+                            </button>
+                        </form>
+                        <button th:if="${selectedShowtime == null}"
+                                type="button"
+                                class="hc-button hc-button-primary hc-customer-primary"
+                                data-booking-submit
+                                disabled>
+                            Tiếp tục thanh toán
+                        </button>
+                        <a th:if="${selectedShowtime != null}"
+                           th:href="@{/booking/movies/{movieId}(movieId=${selectedShowtime.movieId})}"
+                           class="hc-button hc-button-outline">Quay lại phim</a>
+                        <a th:if="${selectedShowtime == null}" th:href="@{/my/dashboard}" class="hc-button hc-button-outline">Quay lại phim</a>
+                    </div>
+                </section>
+            </aside>
+        </section>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>
