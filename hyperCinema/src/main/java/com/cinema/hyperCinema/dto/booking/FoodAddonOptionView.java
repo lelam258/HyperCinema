@@ -1,4 +1,4 @@
-package com.cinema.hyperCinema.dto.ui.booking;
+package com.cinema.hyperCinema.dto.booking;
 
 import lombok.*;
 

@@ -68,14 +68,13 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
     @Override
     @Transactional(readOnly = true)
     public List<ShowtimeOptionView> upcomingShowtimes(User actor, int limit) {
+        // đặt thời gian tại thời điểm hiện tại
         LocalDateTime now = LocalDateTime.now();
+
         Branch branch = actor != null ? actor.getBranch() : null;
-        if (isOperationalUser(actor) && branch == null) {
-            return Collections.emptyList();
-        }
         List<Showtime> showtimes = branch != null
                 ? showtimeRepository.findByHall_Branch_BranchIdAndStartTimeAfterOrderByStartTimeAsc(
-                        branch.getBranchId(), now, PageRequest.of(0, limit))
+                branch.getBranchId(), now, PageRequest.of(0, limit))
                 : showtimeRepository.findByStartTimeAfterOrderByStartTimeAsc(now, PageRequest.of(0, limit));
         return showtimes.stream()
                 .map(this::toShowtimeOption)
@@ -104,9 +103,6 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
     @Override
     @Transactional(readOnly = true)
     public List<FoodAddonOptionView> availableFoodItems(User actor) {
-        if (isOperationalUser(actor) && actor.getBranch() == null) {
-            return Collections.emptyList();
-        }
         return foodItemRepository.findByIsAvailableTrueAndStockGreaterThanOrderByCategoryNameAscNameAsc(0)
                 .stream()
                 .map(this::toFoodOption)
@@ -149,7 +145,6 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
                 .branchName(showtime.getHall() != null && showtime.getHall().getBranch() != null
                         ? showtime.getHall().getBranch().getName() : "")
                 .hallName(showtime.getHall() != null ? showtime.getHall().getName() : "")
-                .formatLabel(formatLabel(showtime))
                 .startTime(showtime.getStartTime())
                 .endTime(showtime.getEndTime())
                 .basePrice(SeatPricing.priceFor("STANDARD"))
@@ -203,33 +198,12 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
     }
 
     private boolean canAccessShowtime(Showtime showtime, User actor) {
-        if (actor == null) {
-            return true;
-        }
-        if (isOperationalUser(actor) && actor.getBranch() == null) {
-            return false;
-        }
-        if (actor.getBranch() == null) {
+        if (actor == null || actor.getBranch() == null) {
             return true;
         }
         Integer actorBranchId = actor.getBranch().getBranchId();
         return showtime.getHall() != null
                 && showtime.getHall().getBranch() != null
                 && actorBranchId.equals(showtime.getHall().getBranch().getBranchId());
-    }
-
-    private String formatLabel(Showtime showtime) {
-        String hallType = showtime.getHall() != null ? showtime.getHall().getHallType() : null;
-        return hallType != null && !hallType.isBlank() ? hallType : "2D";
-    }
-
-    private boolean isOperationalUser(User actor) {
-        if (actor == null || actor.getRole() == null || actor.getRole().getName() == null) {
-            return false;
-        }
-        String roleName = actor.getRole().getName();
-        return "Staff".equalsIgnoreCase(roleName)
-                || "Manager".equalsIgnoreCase(roleName)
-                || "BranchManager".equalsIgnoreCase(roleName);
     }
 }

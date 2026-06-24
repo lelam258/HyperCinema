@@ -1,12 +1,8 @@
 package com.cinema.hyperCinema.dto.ui.booking;
 
-import java.time.LocalDateTime;
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -22,8 +18,6 @@ public class ShowtimeOptionView {
     private String branchName;
 
     private String hallName;
-
-    private String formatLabel;
 
     private LocalDateTime startTime;
 

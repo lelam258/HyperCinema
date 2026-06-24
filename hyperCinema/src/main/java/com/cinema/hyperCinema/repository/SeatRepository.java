@@ -14,8 +14,4 @@ public interface SeatRepository extends JpaRepository<Seat, Integer> {
     boolean existsByHall_HallId(Integer hallId);
 
     List<Seat> findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(Integer hallId);
-
-    boolean existsByHall_HallIdAndSeatRowAndSeatNumber(Integer hallId, String seatRow, Integer seatNumber);
-
-    void deleteByHall_HallId(Integer hallId);
 }
