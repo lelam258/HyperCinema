@@ -13,6 +13,8 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
+    List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Integer userId);
+
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     /**
@@ -57,4 +59,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                            @Param("limit") int limit);
 
     List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Integer userId, Pageable pageable);
+
+    boolean existsByPromotion_PromotionIdAndStatusNot(Integer promotionId, String status);
 }

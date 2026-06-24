@@ -5,7 +5,9 @@
     Dùng chung cho create (POST /admin/movies) và edit (POST /admin/movies/{movieId}).
     Giữ nguyên 100% Thymeleaf bindings.
 -->
-<head th:replace="~{fragments/layout :: head(${mode == 'edit'} ? 'Chỉnh sửa Phim' : 'Tạo Phim')}"></head>
+<head th:replace="~{fragments/layout :: head(${mode == 'edit'} ? 'Chỉnh sửa Phim' : 'Tạo Phim')}">
+    <title>Tạo Phim</title>
+</head>
 <body class="min-h-screen">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
@@ -23,9 +25,9 @@
             <div th:replace="~{fragments/components :: flashes}"></div>
 
             <form th:object="${movie}"
-                  th:action="${mode == 'edit'} ? @{|/admin/movies/${movieId}|} : @{/admin/movies}"
+                  th:action="${mode == 'edit'} ? @{/admin/movies/{id}(id=${movieId})} : @{/admin/movies}"
                   th:data-mode="${mode}"
-                  th:data-api-url="${mode == 'edit'} ? @{|/api/admin/movies/${movieId}|} : @{/api/admin/movies}"
+                  th:data-api-url="${mode == 'edit'} ? @{/api/admin/movies/{id}(id=${movieId})} : @{/api/admin/movies}"
                   method="post" novalidate class="space-y-5" id="movieForm">
 
                 <!-- Global errors -->
@@ -95,7 +97,7 @@
 
                 <!-- Thể loại -->
                 <div>
-                    <label for="genreIds" class="block text-sm font-medium text-slate-400 mb-2">Thể loại</label>
+                    <label class="block text-sm font-medium text-slate-400 mb-2">Thể loại</label>
                     <div class="flex flex-wrap gap-3 p-4 bg-white/[0.03] border rounded-xl" th:classappend="${#fields.hasErrors('genreIds')} ? ' border-danger!' : ' border-white/10'">
                         <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-slate-300 hover:text-white transition-colors" th:each="g : ${genres}">
                             <input type="checkbox" name="genreIds" th:value="${g.genreId}" th:checked="${movie.genreIds != null and #lists.contains(movie.genreIds, g.genreId)}"
@@ -110,7 +112,7 @@
 
                 <!-- Actions -->
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
-                    <a th:href="${mode == 'edit'} ? @{|/admin/movies/${movieId}|} : @{/admin/movies}"
+                    <a th:href="@{${mode == 'edit' ? '/admin/movies/' + movieId : '/admin/movies'}}"
                        class="px-5 py-2.5 text-sm font-medium text-slate-300 bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Hủy</a>
                     <button type="submit" id="movieSubmitButton" th:text="${mode == 'edit'} ? 'Lưu thay đổi' : 'Tạo mới'"
                             class="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 cursor-pointer">Tạo mới</button>
@@ -155,7 +157,7 @@
                     return;
                 }
 
-                window.location.href = result.redirectUrl || form.action;
+                window.location.href = result['redirectUrl'] || form.action;
             } catch (error) {
                 showClientErrors(form, {
                     message: 'Không thể kết nối tới API. Vui lòng thử lại.'
@@ -224,7 +226,7 @@
         }
 
         function showClientErrors(formElement, result) {
-            const errors = Array.isArray(result.errors) ? result.errors : [];
+            const errors = Array.isArray(result['errors']) ? result['errors'] : [];
             errors.forEach((error) => {
                 const field = formElement.querySelector(`[name="${CSS.escape(error.field)}"]`);
                 if (!field) {
@@ -235,7 +237,7 @@
                     `<span data-client-error class="block text-xs text-danger mt-1">${escapeHtml(error.message)}</span>`);
             });
 
-            const message = result.message || 'Không thể lưu thay đổi.';
+            const message = result['message'] || 'Không thể lưu thay đổi.';
             formElement.insertAdjacentHTML('afterbegin',
                 `<div data-client-error class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-danger/10 border border-danger/25 text-danger text-sm" role="alert">${escapeHtml(message)}</div>`);
         }

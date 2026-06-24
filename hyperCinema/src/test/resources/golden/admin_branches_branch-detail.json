@@ -1,0 +1,135 @@
+{
+  "view": "admin/branches/branch-detail",
+  "title": "Chi tiết Chi nhánh - CGV Vincom - HyperCinema",
+  "links": [
+    "/admin/analytics",
+    "/admin/branches",
+    "/admin/branches/11/managers/assign",
+    "/admin/branches/11/staff/assign",
+    "/admin/dashboard",
+    "/admin/halls",
+    "/admin/movies",
+    "/admin/notifications",
+    "/admin/payments",
+    "/admin/users"
+  ],
+  "i18nKeys": [],
+  "forms": [
+    {
+      "action": "/admin/branches/11/status",
+      "method": "post",
+      "fields": [
+        "select:status=options[Active|Inactive|Maintenance];selected=Active",
+        "submit:Đổi"
+      ]
+    },
+    {
+      "action": "/admin/branches/11/managers/21/unassign",
+      "method": "post",
+      "fields": [
+        "submit:Bỏ gán"
+      ]
+    },
+    {
+      "action": "/admin/branches/11/staff/31/unassign",
+      "method": "post",
+      "fields": [
+        "submit:Bỏ gán"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "columnCount": 2,
+      "headers": [
+        "Mã phòng",
+        "Tên phòng"
+      ]
+    },
+    {
+      "columnCount": 3,
+      "headers": [
+        "Họ tên",
+        "Email",
+        "Thao tác"
+      ]
+    },
+    {
+      "columnCount": 3,
+      "headers": [
+        "Họ tên",
+        "Email",
+        "Thao tác"
+      ]
+    }
+  ],
+  "pagination": null,
+  "text": [
+    "H",
+    "HyperCinema",
+    "Hệ thống",
+    "Tổng quan",
+    "Báo cáo & Thống kê",
+    "Quản lý phim",
+    "Quản lý chi nhánh",
+    "Quản lý phòng chiếu",
+    "Quản lý người dùng",
+    "Thông báo & Hỗ trợ",
+    "Quản lý Giao dịch",
+    "Đăng xuất",
+    "Quản lý Chi nhánh",
+    "/",
+    "CGV Vincom",
+    "Đã cập nhật trạng thái Chi nhánh.",
+    "CGV Vincom",
+    "Trạng thái:",
+    "Active",
+    "Active",
+    "Inactive",
+    "Maintenance",
+    "Đổi",
+    "Gán Manager",
+    "Gán Staff",
+    "Thông tin chung",
+    "Tên Chi nhánh",
+    "CGV Vincom",
+    "Thành phố",
+    "Hà Nội",
+    "Địa chỉ",
+    "191 Bà Triệu",
+    "Số điện thoại",
+    "0241234567",
+    "Trạng thái",
+    "Active",
+    "Giờ mở cửa",
+    "09:00",
+    "Giờ đóng cửa",
+    "22:00",
+    "Ngày tạo",
+    "15/01/2025 09:30",
+    "Phòng chiếu",
+    "1 phòng",
+    "Mã phòng",
+    "Tên phòng",
+    "1",
+    "Phòng 1",
+    "Quản lý",
+    "1 người",
+    "Họ tên",
+    "Email",
+    "Thao tác",
+    "Nguyễn Văn A",
+    "a@example.com",
+    "Bỏ gán",
+    "Nhân viên",
+    "1 người",
+    "Họ tên",
+    "Email",
+    "Thao tác",
+    "Trần Thị B",
+    "b@example.com",
+    "Bỏ gán",
+    "HyperCinema",
+    "© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim."
+  ]
+}

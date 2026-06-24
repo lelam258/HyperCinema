@@ -1,9 +1,8 @@
 package com.cinema.hyperCinema.exception.branch;
 
+import java.io.Serial;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
-
-import java.io.Serial;
 
 @ResponseStatus(HttpStatus.BAD_REQUEST)
 public class BranchValidationException extends BranchException {

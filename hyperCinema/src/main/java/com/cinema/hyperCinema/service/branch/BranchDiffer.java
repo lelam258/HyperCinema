@@ -1,14 +1,15 @@
 package com.cinema.hyperCinema.service.branch;
 
-import com.cinema.hyperCinema.dto.admin.branch.response.FieldChange;
-import com.cinema.hyperCinema.model.Branch;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+
+import org.springframework.stereotype.Component;
+
+import com.cinema.hyperCinema.dto.admin.branch.response.FieldChange;
+import com.cinema.hyperCinema.model.Branch;
 
 @Component
 public class BranchDiffer {

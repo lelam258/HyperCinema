@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+    Customer Dashboard — Premium Dark-Gold Glassmorphic Rebuild
+-->
+<head th:replace="~{fragments/layout :: head('Tổng quan của tôi - HyperCinema')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: customerSidebar('dashboard')}"></nav>
+
+<!-- Main Content -->
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- Page Header -->
+        <div class="mb-8 font-sans">
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-1" th:text="'Xin chào, ' + ${customerName}">Xin chào, Khách hàng</h1>
+            <p class="text-sm text-slate-400">Chào mừng đến với HyperCinema · Cập nhật lần cuối lúc <span th:text="${lastUpdated}">--:--</span></p>
+        </div>
+
+        <!-- ═══════════════════ INFO CARDS ═══════════════════ -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+            <!-- Membership Tier -->
+            <div class="glass-card p-5 flex items-start gap-4 transition-all duration-300 hover:border-white/15 cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-warning/15 flex items-center justify-center shrink-0"><svg class="w-6 h-6 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-2xl font-bold text-white tracking-tight" th:text="${membershipTier}">Gold</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Hạng thành viên</span>
+                </div>
+            </div>
+            <!-- Reward Points -->
+            <div class="glass-card p-5 flex items-start gap-4 transition-all duration-300 hover:border-white/15 cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0"><svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg></div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-2xl font-bold text-white tabular-nums" th:text="${rewardPoints}">0</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Điểm tích lũy</span>
+                </div>
+            </div>
+            <!-- Member Profile -->
+            <div class="glass-card p-5 flex items-start gap-4 transition-all duration-300 hover:border-white/15 cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-info/15 flex items-center justify-center shrink-0"><svg class="w-6 h-6 text-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-white truncate" th:text="${email}">customer@gmail.com</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide" th:text="${phone}">0900000000</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="glass-card p-8 text-center max-w-2xl mx-auto mt-12">
+            <h2 class="text-xl font-bold text-white mb-3">Bạn đã sẵn sàng xem phim chưa?</h2>
+            <p class="text-sm text-slate-400 mb-6">Khám phá các suất chiếu hiện tại và đặt vé ngay lập tức.</p>
+            <a th:href="@{/}" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-amber-500 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5">
+                Đặt vé ngay
+            </a>
+        </div>
+
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

@@ -6,12 +6,12 @@ import com.cinema.hyperCinema.model.Branch;
 import com.cinema.hyperCinema.model.User;
 import com.cinema.hyperCinema.repository.AuditLogRepository;
 import com.cinema.hyperCinema.repository.UserRepository;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.LinkedHashMap;
 import java.util.List;

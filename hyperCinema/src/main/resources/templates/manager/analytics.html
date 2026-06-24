@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Báo cáo & Thống kê - HyperCinema')}"></head>
+<body class="min-h-screen bg-[#050505] text-[#F8FAFC]">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:if="${baseUrl.startsWith('/manager')}" th:replace="~{fragments/layout :: managerSidebar('analytics')}"></nav>
+<nav th:if="${baseUrl.startsWith('/branch')}" th:replace="~{fragments/layout :: branchSidebar('analytics')}"></nav>
+
+<!-- Main Content -->
+<main class="md:ml-64 min-h-screen flex flex-col">
+    <div class="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
+
+        <!-- Page Header -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Báo cáo & Thống kê</h1>
+                <p class="text-sm text-slate-400">Theo dõi hiệu suất của các chi nhánh, sản phẩm và phòng chiếu.</p>
+            </div>
+            <div class="text-xs text-slate-500 md:text-right">
+                Giờ hệ thống · Cập nhật lúc <span th:text="${lastUpdated}">--:--</span>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ FILTERS BAR ═══════════════════ -->
+        <div class="glass-card p-6 mb-8">
+            <form th:action="@{${baseUrl}}" method="get" class="flex flex-col md:flex-row items-end gap-5">
+                <input type="hidden" name="tab" th:value="${tab}"/>
+
+                <div class="w-full md:w-auto flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Date From -->
+                    <div class="flex flex-col gap-1.5">
+                        <label for="from" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Từ ngày</label>
+                        <input type="date" id="from" name="from" th:value="${from}"
+                               class="w-full px-4 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                    </div>
+
+                    <!-- Date To -->
+                    <div class="flex flex-col gap-1.5">
+                        <label for="to" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Đến ngày</label>
+                        <input type="date" id="to" name="to" th:value="${to}"
+                               class="w-full px-4 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                    </div>
+
+                    <!-- Branch Selector -->
+                    <div class="flex flex-col gap-1.5">
+                        <label for="branchId" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Chi nhánh rạp</label>
+                        <select id="branchId" th:name="${restrictBranch ? '' : 'branchId'}" th:disabled="${restrictBranch}"
+                                class="w-full px-4 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer">
+                            <option th:if="${!restrictBranch}" value="">Tất cả chi nhánh</option>
+                            <option th:each="b : ${branches}" th:value="${b.branchId}" th:text="${b.name}" th:selected="${b.branchId == branchId}"></option>
+                        </select>
+                        <input type="hidden" name="branchId" th:value="${branchId}" th:if="${restrictBranch}"/>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-auto">
+                    <button type="submit"
+                            class="w-full md:w-auto px-6 py-2 bg-gradient-to-r from-primary to-amber-500 hover:from-primary-hover hover:to-amber-600 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-primary/10 hover:shadow-primary/20 cursor-pointer">
+                        Áp dụng
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ═══════════════════ SUB TABS NAVIGATION ═══════════════════ -->
+        <div class="border-b border-white/[0.06] mb-8">
+            <div class="flex gap-8">
+                <a th:href="@{${baseUrl}(tab='ticket', from=${from}, to=${to}, branchId=${branchId})}"
+                   th:classappend="${tab == 'ticket'} ? 'border-primary text-primary font-semibold' : 'border-transparent text-slate-400 hover:text-white'"
+                   class="pb-4 border-b-2 text-sm transition-all duration-200 no-underline">
+                    Doanh thu & Bán vé
+                </a>
+                <a th:href="@{${baseUrl}(tab='fb', from=${from}, to=${to}, branchId=${branchId})}"
+                   th:classappend="${tab == 'fb'} ? 'border-primary text-primary font-semibold' : 'border-transparent text-slate-400 hover:text-white'"
+                   class="pb-4 border-b-2 text-sm transition-all duration-200 no-underline">
+                    Doanh thu Đồ ăn & Nước uống
+                </a>
+                <a th:href="@{${baseUrl}(tab='occupancy', from=${from}, to=${to}, branchId=${branchId})}"
+                   th:classappend="${tab == 'occupancy'} ? 'border-primary text-primary font-semibold' : 'border-transparent text-slate-400 hover:text-white'"
+                   class="pb-4 border-b-2 text-sm transition-all duration-200 no-underline">
+                    Công suất phòng & Khung giờ cao điểm
+                </a>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ TAB 1: TICKET SALES & REVENUE ═══════════════════ -->
+        <div th:if="${tab == 'ticket'}" class="space-y-8 animate-fadeIn">
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- Total Tickets -->
+                <div class="glass-card p-5 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg>
+                    </div>
+                    <div class="flex flex-col flex-1">
+                        <div class="flex justify-between items-start">
+                            <span class="text-2xl font-bold text-white tracking-tight" th:text="${#numbers.formatInteger(report.totalTickets, 0, 'COMMA')}">0</span>
+                            <span th:classappend="${report.ticketGrowth >= 0} ? 'bg-success/15 border-success/30 text-success' : 'bg-danger/15 border-danger/30 text-danger'"
+                                  class="text-[10px] font-bold px-1.5 py-0.5 rounded border"
+                                  th:text="${report.ticketGrowth >= 0 ? '+' : ''} + ${#numbers.formatDecimal(report.ticketGrowth, 1, 1)} + '%'">+0.0%</span>
+                        </div>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Tổng vé đã bán</span>
+                    </div>
+                </div>
+
+                <!-- Total Revenue -->
+                <div class="glass-card p-5 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16v1M10 11h4" /></svg>
+                    </div>
+                    <div class="flex flex-col flex-1">
+                        <div class="flex justify-between items-start">
+                            <span class="text-2xl font-bold text-white tracking-tight"
+                                  th:text="'$' + ${#numbers.formatDecimal(report.totalRevenue / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                            <span th:classappend="${report.revenueGrowth >= 0} ? 'bg-success/15 border-success/30 text-success' : 'bg-danger/15 border-danger/30 text-danger'"
+                                  class="text-[10px] font-bold px-1.5 py-0.5 rounded border"
+                                  th:text="${report.revenueGrowth >= 0 ? '+' : ''} + ${#numbers.formatDecimal(report.revenueGrowth, 1, 1)} + '%'">+0.0%</span>
+                        </div>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Tổng doanh thu</span>
+                    </div>
+                </div>
+
+                <!-- Avg Ticket Price -->
+                <div class="glass-card p-5 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-info/10 border border-info/20 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    </div>
+                    <div class="flex flex-col flex-1">
+                        <div class="flex justify-between items-start">
+                            <span class="text-2xl font-bold text-white tracking-tight"
+                                  th:text="'$' + ${#numbers.formatDecimal(report.avgPrice / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                            <span th:classappend="${report.avgPriceGrowth >= 0} ? 'bg-success/15 border-success/30 text-success' : 'bg-danger/15 border-danger/30 text-danger'"
+                                  class="text-[10px] font-bold px-1.5 py-0.5 rounded border"
+                                  th:text="${report.avgPriceGrowth >= 0 ? '+' : ''} + ${#numbers.formatDecimal(report.avgPriceGrowth, 1, 1)} + '%'">+0.0%</span>
+                        </div>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Giá vé trung bình</span>
+                    </div>
+                </div>
+
+                <!-- Active Branches -->
+                <div class="glass-card p-5 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-success/10 border border-success/20 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                    </div>
+                    <div class="flex flex-col flex-1">
+                        <div class="flex justify-between items-start">
+                            <span class="text-2xl font-bold text-white tracking-tight" th:text="${report.activeBranches}">0</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-white/5 border-white/10 text-slate-400">Static</span>
+                        </div>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Chi nhánh hoạt động</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Over Time Line Chart -->
+            <div class="glass-card p-6">
+                <div class="flex items-center justify-between gap-4 mb-6">
+                    <h2 class="text-base font-semibold text-white">Doanh thu theo thời gian</h2>
+                    <div class="flex items-center gap-2">
+                        <a th:href="@{|${baseUrl}/export|(type='ticket', from=${from}, to=${to}, branchId=${branchId}, format='excel')}"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            Excel
+                        </a>
+                        <a th:href="@{|${baseUrl}/export|(type='ticket', from=${from}, to=${to}, branchId=${branchId}, format='pdf')}"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4" /></svg>
+                            PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="relative h-[350px]">
+                    <canvas id="ticketSalesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Breakdown Table -->
+            <div class="glass-card overflow-hidden">
+                <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
+                    <h2 class="text-base font-semibold text-white">Chi tiết bán vé</h2>
+                    <a th:href="@{|${baseUrl}/export|(type='ticket', from=${from}, to=${to}, branchId=${branchId}, format='csv')}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
+                        Xuất file
+                    </a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-white/[0.08] text-slate-400">
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Chi nhánh</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Ngày</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Số vé bán</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Doanh thu</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Giá TB</th>
+                                <th class="px-6 py-3.5 text-center text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/[0.06] text-slate-300">
+                            <tr th:each="row : ${report.breakdown}" class="hover:bg-white/[0.02] transition-colors">
+                                <td class="px-6 py-4 text-white font-medium" th:text="${row.branch}">Branch Name</td>
+                                <td class="px-6 py-4" th:text="${row.date}">Date</td>
+                                <td class="px-6 py-4 text-right tabular-nums font-semibold" th:text="${#numbers.formatInteger(row.tickets, 0, 'COMMA')}">0</td>
+                                <td class="px-6 py-4 text-right tabular-nums text-primary"
+                                    th:text="'$' + ${#numbers.formatDecimal(row.revenue / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                                <td class="px-6 py-4 text-right tabular-nums text-slate-400"
+                                    th:text="'$' + ${#numbers.formatDecimal(row.avgPrice / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                                <td class="px-6 py-4 text-center">
+                                    <button th:onclick="showDetailModal([[${row.branch}]], [[${row.date}]], [[${row.tickets}]], [[${row.revenue}]], [[${row.avgPrice}]])"
+                                            class="text-xs font-bold text-primary hover:text-primary-hover hover:underline cursor-pointer bg-transparent border-none">
+                                        Xem chi tiết
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(report.breakdown)}">
+                                <td colspan="6" class="px-6 py-12 text-center text-slate-500">Không có dữ liệu bán vé nào được ghi nhận cho các tiêu chí đã chọn.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ TAB 2: F&B SALES ═══════════════════ -->
+        <div th:if="${tab == 'fb'}" class="space-y-8 animate-fadeIn">
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <!-- Food Units Sold -->
+                <div class="glass-card p-5 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-2xl font-bold text-white tracking-tight" th:text="${#numbers.formatInteger(report.foodUnits, 0, 'COMMA')}">0</span>
+                        <span class="text-[10px] text-slate-400 mt-0.5">đơn vị sản phẩm đồ ăn</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Số lượng đồ ăn bán ra</span>
+                    </div>
+                </div>
+
+                <!-- Beverage Units Sold -->
+                <div class="glass-card p-5 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-info/10 border border-info/20 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-2xl font-bold text-white tracking-tight" th:text="${#numbers.formatInteger(report.beverageUnits, 0, 'COMMA')}">0</span>
+                        <span class="text-[10px] text-slate-400 mt-0.5">đơn vị sản phẩm đồ uống</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Số lượng đồ uống bán ra</span>
+                    </div>
+                </div>
+
+                <!-- Total F&B Revenue -->
+                <div class="glass-card p-5 bg-gradient-to-r from-[#0C0A04] to-[#120F06] border-primary/20 flex items-start gap-4 relative overflow-hidden">
+                    <div class="absolute right-0 bottom-0 translate-y-1/4 translate-x-1/4 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
+                    <div class="w-12 h-12 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16v1M10 11h4" /></svg>
+                    </div>
+                    <div class="flex flex-col flex-1">
+                        <div class="flex justify-between items-start">
+                            <span class="text-2xl font-bold text-white tracking-tight"
+                                  th:text="'$' + ${#numbers.formatDecimal(report.totalRevenue / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                            <span th:classappend="${report.revenueGrowth >= 0} ? 'bg-success/15 border-success/30 text-success' : 'bg-danger/15 border-danger/30 text-danger'"
+                                  class="text-[10px] font-bold px-1.5 py-0.5 rounded border"
+                                  th:text="${report.revenueGrowth >= 0 ? '+' : ''} + ${#numbers.formatDecimal(report.revenueGrowth, 1, 1)} + '%'">+0.0%</span>
+                        </div>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Tổng doanh thu F&B</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div class="lg:col-span-2 glass-card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base font-semibold text-white">Số lượng sản phẩm bán ra</h3>
+                        <a th:href="@{|${baseUrl}/export|(type='fb', from=${from}, to=${to}, branchId=${branchId}, format='csv')}"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
+                            Xuất file
+                        </a>
+                    </div>
+                    <div class="relative h-[300px]">
+                        <canvas id="fbVolumeChart"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card p-6 flex flex-col justify-between">
+                    <h3 class="text-base font-semibold text-white mb-4">Cơ cấu doanh thu dịch vụ</h3>
+                    <div class="relative h-[220px] flex items-center justify-center">
+                        <canvas id="fbPieChart"></canvas>
+                    </div>
+                    <div class="mt-4 flex items-center justify-center gap-5 text-xs text-slate-400">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-primary"></span>Đồ ăn</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-info"></span>Đồ uống</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-purple-500"></span>Combo</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail List Table -->
+            <div class="glass-card overflow-hidden">
+                <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <h2 class="text-base font-semibold text-white">Chi tiết doanh thu dịch vụ</h2>
+                    <div class="flex flex-wrap items-center gap-2" id="fbFilterContainer">
+                        <button onclick="filterFbTable('All', this)" class="px-3 py-1 rounded-full text-xs font-semibold bg-primary text-white border border-primary/20 transition-all cursor-pointer">
+                            Tất cả
+                        </button>
+                        <button onclick="filterFbTable('Food', this)" class="px-3 py-1 rounded-full text-xs font-semibold bg-white/[0.04] text-slate-400 border border-white/10 hover:text-white transition-all cursor-pointer">
+                            Đồ ăn
+                        </button>
+                        <button onclick="filterFbTable('Beverage', this)" class="px-3 py-1 rounded-full text-xs font-semibold bg-white/[0.04] text-slate-400 border border-white/10 hover:text-white transition-all cursor-pointer">
+                            Đồ uống
+                        </button>
+                        <button onclick="filterFbTable('Combo', this)" class="px-3 py-1 rounded-full text-xs font-semibold bg-white/[0.04] text-slate-400 border border-white/10 hover:text-white transition-all cursor-pointer">
+                            Combo
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm" id="fbDetailsTable">
+                        <thead>
+                            <tr class="border-b border-white/[0.08] text-slate-400">
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Tên sản phẩm</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Danh mục</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Số lượng bán</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Đơn giá</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Tổng doanh thu</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/[0.06] text-slate-300">
+                            <tr th:each="p : ${report.products}" class="hover:bg-white/[0.02] transition-colors fb-table-row" th:data-category="${p.category}">
+                                <td class="px-6 py-4 text-white font-medium" th:text="${p.name}">Product Name</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border"
+                                          th:classappend="${p.category == 'Food'} ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : (${p.category == 'Beverage'} ? 'bg-info/10 border-info/20 text-info' : 'bg-purple-500/10 border-purple-500/20 text-purple-400')"
+                                          th:text="${p.category == 'Food' ? 'Đồ ăn' : (p.category == 'Beverage' ? 'Đồ uống' : 'Combo')}">Category</span>
+                                </td>
+                                <td class="px-6 py-4 text-right tabular-nums font-semibold" th:text="${#numbers.formatInteger(p.qty, 0, 'COMMA')}">0</td>
+                                <td class="px-6 py-4 text-right tabular-nums text-slate-400"
+                                    th:text="'$' + ${#numbers.formatDecimal(p.price / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                                <td class="px-6 py-4 text-right tabular-nums text-primary"
+                                    th:text="'$' + ${#numbers.formatDecimal(p.revenue / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(report.products)}">
+                                <td colspan="5" class="px-6 py-12 text-center text-slate-500">Không tìm thấy dữ liệu doanh thu dịch vụ nào.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ TAB 3: HALL OCCUPANCY ═══════════════════ -->
+        <div th:if="${tab == 'occupancy'}" class="space-y-8 animate-fadeIn">
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <!-- Avg Occupancy -->
+                <div class="glass-card p-5 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>
+                    </div>
+                    <div class="flex-1 flex flex-col">
+                        <span class="text-2xl font-bold text-white tracking-tight" th:text="${#numbers.formatDecimal(report.avgOccupancy, 1, 1)} + '%'">0.0%</span>
+                        <!-- Custom progress bar -->
+                        <div class="w-full bg-white/5 rounded-full h-1.5 mt-2 overflow-hidden border border-white/5">
+                            <div class="bg-primary h-1.5 rounded-full transition-all duration-500" th:style="'width: ' + ${report.avgOccupancy} + '%'"></div>
+                        </div>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Tỷ lệ lấp đầy TB</span>
+                    </div>
+                </div>
+
+                <!-- Peak Booking Hour -->
+                <div class="glass-card p-5 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-info/10 border border-info/20 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-2xl font-bold text-white tracking-tight" th:text="${report.peakHour}">6 PM</span>
+                        <span class="text-[10px] text-slate-400 mt-0.5">nhu cầu cao nhất toàn hệ thống</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Giờ cao điểm bán vé</span>
+                    </div>
+                </div>
+
+                <!-- Most Used Hall -->
+                <div class="glass-card p-5 bg-gradient-to-r from-[#0A0D14] to-[#0D121F] border-info/20 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-info/20 border border-info/30 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.111L12 12m0 0l3.889-3.889M12 12l3.889 3.889M12 12L8.111 8.111M3 12a9 9 0 1118 0 9 9 0 01-18 0z" /></svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-base font-bold text-white tracking-tight leading-snug truncate max-w-[220px]" th:text="${report.mostUsedHall}">Hall C</span>
+                        <span class="text-[10px] text-slate-400 mt-0.5">tần suất sử dụng cao nhất chuỗi</span>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-2">Phòng hoạt động nhiều nhất</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Occupancy Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div class="lg:col-span-2 glass-card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base font-semibold text-white">Thống kê theo khung giờ</h3>
+                        <a th:href="@{|${baseUrl}/export|(type='occupancy', from=${from}, to=${to}, branchId=${branchId}, format='csv')}"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
+                            Xuất file
+                        </a>
+                    </div>
+                    <div class="relative h-[300px]">
+                        <canvas id="occupancyHourlyChart"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card p-6 flex flex-col justify-between">
+                    <h3 class="text-base font-semibold text-white mb-4">Hiệu suất lấp đầy phòng chiếu</h3>
+                    <div class="relative h-[250px] flex items-center justify-center">
+                        <canvas id="occupancyRadarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hall Utilization Table -->
+            <div class="glass-card overflow-hidden">
+                <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
+                    <h2 class="text-base font-semibold text-white">Chi tiết hiệu suất phòng chiếu</h2>
+                    <a th:href="@{|${baseUrl}/export|(type='occupancy', from=${from}, to=${to}, branchId=${branchId}, format='csv')}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
+                        Xuất file
+                    </a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-white/[0.08] text-slate-400">
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Phòng chiếu</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Chi nhánh</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Sức chứa</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Ghế đã bán</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Tỷ lệ lấp đầy</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Giờ cao điểm</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/[0.06] text-slate-300">
+                            <tr th:each="h : ${report.halls}" class="hover:bg-white/[0.02] transition-colors">
+                                <td class="px-6 py-4 text-white font-medium" th:text="${h.hallName}">Hall Name</td>
+                                <td class="px-6 py-4" th:text="${h.branchName}">Branch Name</td>
+                                <td class="px-6 py-4 text-right tabular-nums" th:text="${h.capacity}">0</td>
+                                <td class="px-6 py-4 text-right tabular-nums font-semibold" th:text="${#numbers.formatInteger(h.tickets, 0, 'COMMA')}">0</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-12 text-left tabular-nums text-xs font-semibold" th:text="${#numbers.formatDecimal(h.occupancyRate, 1, 1)} + '%'">0.0%</span>
+                                        <div class="w-24 bg-white/5 rounded-full h-1.5 overflow-hidden border border-white/5 shrink-0">
+                                            <div class="h-1.5 rounded-full transition-all duration-300"
+                                                 th:classappend="${h.occupancyRate >= 85} ? 'bg-danger' : (${h.occupancyRate >= 65} ? 'bg-amber-500' : 'bg-primary')"
+                                                 th:style="'width: ' + ${h.occupancyRate} + '%'"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-medium text-slate-400" th:text="${h.peakHour}">6 PM</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(report.halls)}">
+                                <td colspan="6" class="px-6 py-12 text-center text-slate-500">Không có thống kê phòng chiếu nào.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ═══════════════════ DETAIL MODAL ═══════════════════ -->
+    <div id="detailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden animate-fadeIn">
+        <div class="glass-card w-full max-w-md overflow-hidden animate-slideUp">
+            <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
+                <h3 class="text-base font-semibold text-white">Chi tiết hiệu suất ngày</h3>
+                <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Chi nhánh</span>
+                        <span id="modalBranch" class="text-sm font-semibold text-white mt-0.5">-</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Ngày báo cáo</span>
+                        <span id="modalDate" class="text-sm font-semibold text-white mt-0.5">-</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-white/[0.06] pt-4 grid grid-cols-3 gap-4">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Vé bán</span>
+                        <span id="modalTickets" class="text-base font-bold text-white mt-0.5 tabular-nums">-</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Doanh thu</span>
+                        <span id="modalRevenue" class="text-base font-bold text-primary mt-0.5 tabular-nums">-</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Giá TB</span>
+                        <span id="modalAvg" class="text-base font-bold text-slate-400 mt-0.5 tabular-nums">-</span>
+                    </div>
+                </div>
+
+                <div class="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-[11px] text-slate-400 mt-2">
+                    <p class="leading-relaxed">Thống kê này ghi nhận các giao dịch bán vé. Đơn hàng Đồ ăn & Nước uống đi kèm vé được báo cáo riêng ở tab Báo cáo Dịch vụ.</p>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-white/[0.08] bg-white/[0.02] flex justify-end">
+                <button onclick="closeDetailModal()" class="px-4 py-2 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
+                    Dismiss
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    // â”€â”€ COMMON CHART STYLING OPTIONS â”€â”€
+    const chartFont = { family: "'Fira Sans', sans-serif" };
+    const gridColor = 'rgba(255, 255, 255, 0.04)';
+    const textColor = '#94A3B8';
+
+    const tab = /*[[${tab}]]*/ 'ticket';
+
+    // â”€â”€ INTERACTIVE TABLE CATEGORY FILTER (F&B) â”€â”€
+    function filterFbTable(category, btnElement) {
+        // Toggle active button style
+        const buttons = document.querySelectorAll('#fbFilterContainer button');
+        buttons.forEach(btn => {
+            btn.className = "px-3 py-1 rounded-full text-xs font-semibold bg-white/[0.04] text-slate-400 border border-white/10 hover:text-white transition-all cursor-pointer";
+        });
+        btnElement.className = "px-3 py-1 rounded-full text-xs font-semibold bg-primary text-white border border-primary/20 transition-all cursor-pointer";
+
+        // Filter table rows
+        const rows = document.querySelectorAll('.fb-table-row');
+        rows.forEach(row => {
+            const rowCat = row.getAttribute('data-category');
+            if (category === 'All' || rowCat === category) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+
+    // â”€â”€ VIEW DETAILS MODAL HANDLERS â”€â”€
+    function showDetailModal(branch, date, tickets, revenue, avg) {
+        document.getElementById('modalBranch').innerText = branch;
+        document.getElementById('modalDate').innerText = date;
+        document.getElementById('modalTickets').innerText = Number(tickets).toLocaleString('en-US');
+
+        // Convert values to USD in Javascript for modal presentation
+        const usdRev = Number(revenue) / 25000.0;
+        const usdAvg = Number(avg) / 25000.0;
+
+        document.getElementById('modalRevenue').innerText = '$' + usdRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('modalAvg').innerText = '$' + usdAvg.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const modal = document.getElementById('detailModal');
+        modal.classList.remove('hidden');
+    }
+
+    function closeDetailModal() {
+        const modal = document.getElementById('detailModal');
+        modal.classList.add('hidden');
+    }
+
+    // Close modal on escape key or clicking backdrop
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeDetailModal();
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const detailModal = document.getElementById('detailModal');
+        if (detailModal) {
+            detailModal.addEventListener('click', function(e) {
+                if (e.target === this) closeDetailModal();
+            });
+        }
+    });
+
+    /*]]>*/
+</script>
+
+<script th:if="${tab == 'ticket'}" th:inline="javascript">
+    /*<![CDATA[*/
+    const labels = /*[[${report.timelineLabels}]]*/ [];
+    const revenueValues = /*[[${report.timelineRevenue}]]*/ [];
+    const ticketValues = /*[[${report.timelineTickets}]]*/ [];
+
+    // Convert VND revenue values to USD in Javascript for line chart
+    const usdRevenueValues = revenueValues.map(v => v / 25000.0);
+
+    new Chart(document.getElementById('ticketSalesChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Doanh thu ($)',
+                    data: usdRevenueValues,
+                    borderColor: '#CA8A04',
+                    backgroundColor: 'rgba(202, 138, 4, 0.1)',
+                    borderWidth: 2.5,
+                    tension: 0.35,
+                    fill: true,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Vé đã bán',
+                    data: ticketValues,
+                    borderColor: '#0A84FF',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.2,
+                    yAxisID: 'y1',
+                    borderDash: [5, 5]
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { color: textColor, font: chartFont }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            if (context.datasetIndex === 0) {
+                                return 'Doanh thu: $' + context.raw.toFixed(2);
+                            }
+                            return 'Vé đã bán: ' + context.raw;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: gridColor },
+                    ticks: { color: textColor, font: chartFont }
+                },
+                y: {
+                    position: 'left',
+                    grid: { color: gridColor },
+                    ticks: {
+                        color: textColor,
+                        font: chartFont,
+                        callback: function(value) { return '$' + value; }
+                    }
+                },
+                y1: {
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: textColor, font: chartFont }
+                }
+            }
+        }
+    });
+    /*]]>*/
+</script>
+
+<script th:if="${tab == 'fb'}" th:inline="javascript">
+    /*<![CDATA[*/
+    const labels = /*[[${report.productLabels}]]*/ [];
+    const quantities = /*[[${report.productQuantities}]]*/ [];
+    const categories = /*[[${report.productCategories}]]*/ [];
+
+    // Product comparison bar chart colors
+    const backgroundColors = categories.map(cat => {
+        if (cat && cat.toLowerCase() === 'food') return 'rgba(202, 138, 4, 0.5)'; // Gold
+        if (cat && cat.toLowerCase() === 'beverage') return 'rgba(10, 132, 255, 0.5)'; // Blue
+        return 'rgba(168, 85, 247, 0.5)'; // Purple (Combo)
+    });
+    const borderColors = categories.map(cat => {
+        if (cat && cat.toLowerCase() === 'food') return '#CA8A04';
+        if (cat && cat.toLowerCase() === 'beverage') return '#0A84FF';
+        return '#A855F7';
+    });
+
+    new Chart(document.getElementById('fbVolumeChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Số lượng bán',
+                data: quantities,
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
+                borderWidth: 1.5,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    grid: { color: gridColor },
+                    ticks: { color: textColor, font: chartFont }
+                },
+                y: {
+                    grid: { color: gridColor },
+                    ticks: { color: textColor, font: chartFont }
+                }
+            }
+        }
+    });
+
+    // F&B Split Pie Chart
+    const foodRev = /*[[${report.foodRevenue}]]*/ 0;
+    const bevRev = /*[[${report.beverageRevenue}]]*/ 0;
+    const comboRev = /*[[${report.comboRevenue}]]*/ 0;
+
+    new Chart(document.getElementById('fbPieChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Đồ ăn', 'Đồ uống', 'Combo'],
+            datasets: [{
+                data: [foodRev, bevRev, comboRev],
+                backgroundColor: ['#CA8A04', '#0A84FF', '#A855F7'],
+                borderColor: '#050505',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+    /*]]>*/
+</script>
+
+<script th:if="${tab == 'occupancy'}" th:inline="javascript">
+    /*<![CDATA[*/
+    const hours = /*[[${report.hourlyLabels}]]*/ [];
+    const tickets = /*[[${report.hourlyTickets}]]*/ [];
+    const levels = /*[[${report.hourlyLevels}]]*/ [];
+
+    // Color bars based on capacity levels
+    const backgroundColors = levels.map(lvl => {
+        if (lvl === 'high') return 'rgba(255, 69, 58, 0.6)'; // Soft red
+        if (lvl === 'medium') return 'rgba(255, 214, 10, 0.6)'; // Yellow
+        return 'rgba(255, 255, 255, 0.15)'; // Slate
+    });
+    const borderColors = levels.map(lvl => {
+        if (lvl === 'high') return '#FF453A';
+        if (lvl === 'medium') return '#FFD60A';
+        return 'rgba(255, 255, 255, 0.3)';
+    });
+
+    new Chart(document.getElementById('occupancyHourlyChart'), {
+        type: 'bar',
+        data: {
+            labels: hours,
+            datasets: [{
+                data: tickets,
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
+                borderWidth: 1.5,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return 'Ghế đã bán: ' + ctx.raw;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: gridColor },
+                    ticks: { color: textColor, font: chartFont }
+                },
+                y: {
+                    grid: { color: gridColor },
+                    ticks: { color: textColor, font: chartFont }
+                }
+            }
+        }
+    });
+
+    // Radar chart
+    const halls = /*[[${report.halls}]]*/ [];
+    const radarLabels = halls.map(h => h.hallName);
+    const radarData = halls.map(h => h.occupancyRate);
+
+    new Chart(document.getElementById('occupancyRadarChart'), {
+        type: 'radar',
+        data: {
+            labels: radarLabels,
+            datasets: [{
+                label: 'Tỷ lệ lấp đầy (%)',
+                data: radarData,
+                backgroundColor: 'rgba(10, 132, 255, 0.15)',
+                borderColor: '#0A84FF',
+                pointBackgroundColor: '#0A84FF',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#0A84FF',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
+                    grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                    pointLabels: { color: textColor, font: chartFont },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.4)',
+                        backdropColor: 'transparent',
+                        font: { size: 9 }
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                }
+            }
+        }
+    });
+    /*]]>*/
+</script>
+
+</body>
+</html>

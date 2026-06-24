@@ -16,6 +16,7 @@ public class PromotionUsage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "usage_id")
     private Integer usageId;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -12,6 +12,7 @@ public class UserMembership {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_membership_id")
     private Integer userMembershipId;
 
     @ManyToOne(fetch = FetchType.LAZY)
