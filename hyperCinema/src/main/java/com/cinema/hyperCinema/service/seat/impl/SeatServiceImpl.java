@@ -109,6 +109,7 @@ public class SeatServiceImpl implements SeatService {
 
         // Xóa các ghế cũ
         seatRepository.deleteByHall_HallId(hallId);
+        seatRepository.flush(); // Force immediate execution of deletion in DB
 
         char startRow = request.getRowStart().charAt(0);
         char endRow = request.getRowEnd().charAt(0);
