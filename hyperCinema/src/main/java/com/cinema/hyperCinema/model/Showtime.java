@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Showtime")
+@Table(name = "showtime")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Showtime {
@@ -35,4 +35,13 @@ public class Showtime {
 
     @Column(nullable = false)
     private Integer price;
+
+    @Column(nullable = false, length = 50)
+    private String status;
+
+    @PrePersist
+    protected void onCreate() {
+        if (status == null) status = "ACTIVE";
+    }
 }
+

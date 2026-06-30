@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "Booking")
+@Table(name = "booking")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Booking {
@@ -58,3 +58,4 @@ public class Booking {
         createdAt = LocalDateTime.now();
     }
 }
+

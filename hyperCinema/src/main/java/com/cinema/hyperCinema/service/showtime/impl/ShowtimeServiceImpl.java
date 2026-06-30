@@ -46,6 +46,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ShowtimeServiceImpl implements ShowtimeService {
 
+    private static final String STATUS_ACTIVE = "Active";
+    private static final String SHOWTIME_ACTIVE = "ACTIVE";
+    private static final String SHOWTIME_CANCELLED = "CANCELLED";
+
     private final ShowtimeRepository showtimeRepository;
     private final MovieRepository movieRepository;
     private final BranchRepository branchRepository;
@@ -99,7 +103,9 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     public ShowtimeDetailView create(ShowtimeCreateRequest request, User actor) {
         User current = loadActor(actor);
         Movie movie = loadMovie(request.getMovieId());
+        ensureMovieSchedulable(movie);
         Hall hall = loadHall(request.getHallId());
+        ensureHallActive(hall);
         Integer branchId = resolveTargetBranchId(request.getBranchId(), hall, current);
         validateMovieAssignment(movie.getMovieId(), branchId);
         validateCreateOrUpdate(null, hall.getHallId(), request.getStartTime(), request.getEndTime());
@@ -109,7 +115,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         showtime.setHall(hall);
         showtime.setStartTime(request.getStartTime());
         showtime.setEndTime(request.getEndTime());
-        showtime.setPrice(0);
+        showtime.setPrice(request.getPrice() == null ? 0 : request.getPrice());
+        showtime.setStatus(SHOWTIME_ACTIVE);
         return toDetailView(showtimeRepository.save(showtime));
     }
 
@@ -121,7 +128,9 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         ensureEditable(showtimeId, showtime);
 
         Movie movie = loadMovie(request.getMovieId());
+        ensureMovieSchedulable(movie);
         Hall hall = loadHall(request.getHallId());
+        ensureHallActive(hall);
         Integer branchId = resolveTargetBranchId(request.getBranchId(), hall, current);
         validateMovieAssignment(movie.getMovieId(), branchId);
         validateCreateOrUpdate(showtimeId, hall.getHallId(), request.getStartTime(), request.getEndTime());
@@ -130,7 +139,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         showtime.setHall(hall);
         showtime.setStartTime(request.getStartTime());
         showtime.setEndTime(request.getEndTime());
-        showtime.setPrice(showtime.getPrice() == null ? 0 : showtime.getPrice());
+        showtime.setPrice(request.getPrice() == null ? 0 : request.getPrice());
+        showtime.setStatus(SHOWTIME_ACTIVE);
         return toDetailView(showtimeRepository.save(showtime));
     }
 
@@ -140,7 +150,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         Showtime showtime = loadShowtime(showtimeId);
         assertCanManageBranch(current, showtimeBranchId(showtime));
         ensureNoDependencies(showtimeId);
-        showtimeRepository.delete(showtime);
+        showtime.setStatus(SHOWTIME_CANCELLED);
+        showtimeRepository.save(showtime);
     }
 
     @Override
@@ -155,16 +166,19 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             scopedBranchId = current.getBranch().getBranchId();
         }
         List<BranchOption> branches = admin
-                ? branchRepository.findAll(Sort.by(Sort.Direction.ASC, "name")).stream()
+                ? branchRepository.findByStatusIgnoreCase("Active", Sort.by(Sort.Direction.ASC, "name")).stream()
                         .map(this::toBranchOption)
                         .toList()
                 : List.of();
-        List<HallListItem> halls = (admin ? hallRepository.findAll(Sort.by(Sort.Direction.ASC, "name"))
-                : (scopedBranchId == null ? List.<Hall>of() : hallRepository.findByBranch_BranchId(scopedBranchId)))
+        List<HallListItem> halls = (admin ? hallRepository.findByStatusIgnoreCaseOrderByNameAsc(STATUS_ACTIVE)
+                : (scopedBranchId == null ? List.<Hall>of()
+                        : hallRepository.findByBranch_BranchIdAndStatusIgnoreCase(scopedBranchId, STATUS_ACTIVE)))
                 .stream()
                 .map(this::toHallOption)
                 .toList();
-        List<MovieOption> movies = movieRepository.findAll(Sort.by(Sort.Direction.ASC, "title")).stream()
+        List<MovieOption> movies = movieRepository.findByStatusNotIgnoreCase(
+                        "Ended",
+                        Sort.by(Sort.Direction.ASC, "title")).stream()
                 .map(this::toMovieOption)
                 .toList();
         return ShowtimeManagementContext.builder()
@@ -223,6 +237,22 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         }
         return hallRepository.findById(hallId)
                 .orElseThrow(() -> new ShowtimeValidationException("showtime.hall.required"));
+    }
+
+    private void ensureHallActive(Hall hall) {
+        if (!STATUS_ACTIVE.equalsIgnoreCase(hall.getStatus())) {
+            throw new ShowtimeValidationException("showtime.hall.inactive");
+        }
+        Branch branch = hall.getBranch();
+        if (branch == null || !STATUS_ACTIVE.equalsIgnoreCase(branch.getStatus())) {
+            throw new ShowtimeValidationException("showtime.branch.inactive");
+        }
+    }
+
+    private void ensureMovieSchedulable(Movie movie) {
+        if ("Ended".equalsIgnoreCase(movie.getStatus())) {
+            throw new ShowtimeValidationException("showtime.movie.ended");
+        }
     }
 
     private Integer resolveSearchBranchId(Integer requestedBranchId, User actor) {
@@ -354,6 +384,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         long reservationCount = seatReservationRepository.countByShowtime_ShowtimeId(showtimeId);
         long paymentCount = paymentRepository.countByBooking_Showtime_ShowtimeId(showtimeId);
         boolean past = showtime.getStartTime() != null && showtime.getStartTime().isBefore(LocalDateTime.now());
+        boolean cancelled = SHOWTIME_CANCELLED.equals(showtime.getStatus());
         boolean hasDependencies = bookingCount > 0 || ticketCount > 0 || reservationCount > 0 || paymentCount > 0;
         return ShowtimeDetailView.builder()
                 .showtimeId(showtimeId)
@@ -372,8 +403,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .reservationCount(reservationCount)
                 .paymentCount(paymentCount)
                 .past(past)
-                .canDelete(!hasDependencies)
-                .canEditSchedule(!hasDependencies && !past)
+                .canDelete(!cancelled && !hasDependencies)
+                .canEditSchedule(!cancelled && !hasDependencies && !past)
                 .build();
     }
 
