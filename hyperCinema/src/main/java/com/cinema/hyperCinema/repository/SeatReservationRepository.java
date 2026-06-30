@@ -18,4 +18,8 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
     List<Integer> findActiveReservedSeatIds(@Param("showtimeId") Integer showtimeId,
                                             @Param("status") String status,
                                             @Param("now") LocalDateTime now);
+
+    List<SeatReservation> findByShowtime_ShowtimeIdAndExpiredAtAfter(Integer showtimeId, LocalDateTime now);
+
+    long countByShowtime_ShowtimeId(Integer showtimeId);
 }

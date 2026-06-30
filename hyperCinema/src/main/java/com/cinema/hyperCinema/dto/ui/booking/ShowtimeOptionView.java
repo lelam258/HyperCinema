@@ -19,6 +19,8 @@ public class ShowtimeOptionView {
 
     private String hallName;
 
+    private String formatLabel;
+
     private LocalDateTime startTime;
 
     private LocalDateTime endTime;

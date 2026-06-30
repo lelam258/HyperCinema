@@ -10,6 +10,10 @@ import java.util.List;
 
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Integer> {
+
+    List<Ticket> findByBooking_Showtime_ShowtimeIdAndBooking_StatusNot(Integer showtimeId, String status);
+
+    long countByBooking_Showtime_ShowtimeId(Integer showtimeId);
     @Query("SELECT t.seat.seatId FROM Ticket t "
             + "WHERE t.booking.showtime.showtimeId = :showtimeId "
             + "AND t.status NOT IN :cancelledStatuses")

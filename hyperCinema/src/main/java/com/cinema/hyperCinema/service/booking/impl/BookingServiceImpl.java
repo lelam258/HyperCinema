@@ -20,6 +20,7 @@ public class BookingServiceImpl implements BookingService {
     private static final String STATUS_CANCELLED = "CANCELLED";
     private static final String STATUS_CANCELLED_LEGACY = "Cancelled";
     private static final String MAINTENANCE = "UNDER_MAINTENANCE";
+    private static final String SHOWTIME_CANCELLED = "CANCELLED";
     private static final String PAYMENT_PENDING = "Pending";
     private static final String PAYMENT_METHOD_VIETQR = "VietQR";
     private static final String FOOD_ORDER_PENDING = "PENDING";
@@ -93,6 +94,10 @@ public class BookingServiceImpl implements BookingService {
 
         Showtime showtime = findShowtimeWithDetails(showtimeId)
                 .orElseThrow(() -> new IllegalStateException("Suất chiếu không tồn tại."));
+
+        if (SHOWTIME_CANCELLED.equals(showtime.getStatus())) {
+            throw new IllegalStateException("Suất chiếu không tồn tại.");
+        }
 
         List<Seat> seats = seatRepository.findAllById(seatIds);
         if (seats.size() != seatIds.size()

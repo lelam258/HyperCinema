@@ -124,11 +124,18 @@ public String movieBooking(@PathVariable Integer movieId,
             return "redirect:/payment/vietqr/" + savedBooking.getBookingId();
         } catch (IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
-            return "redirect:/my/dashboard";
+            return customerFlow(userDetails) ? "redirect:/my/dashboard" : "redirect:/staff/booking";
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
-            return "redirect:/booking?showtimeId=" + showtimeId;
+            return customerFlow(userDetails)
+                    ? "redirect:/booking?showtimeId=" + showtimeId
+                    : "redirect:/staff/booking";
         }
+    }
+
+    private boolean customerFlow(CustomUserDetails userDetails) {
+        return userDetails != null && userDetails.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_CUSTOMER".equals(authority.getAuthority()));
     }
 
     private void addCustomerModel(User user, Model model) {
