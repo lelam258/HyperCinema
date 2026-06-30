@@ -1,215 +1,60 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head(|Chi tiết phòng chiếu - ${hall.name} - HyperCinema|)}">
-    <title>Chi tiết phòng chiếu - ${hall.name} - HyperCinema</title>
-</head>
+<head th:replace="~{fragments/layout :: head(|Chi tiết phòng chiếu - ${hall.name} - HyperCinema|)}"></head>
 <body class="min-h-screen">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
 <nav th:replace="${hallContext.admin} ? ~{fragments/layout :: adminSidebar('halls')} : (${hallContext.sidebar == 'manager'} ? ~{fragments/layout :: managerSidebar('halls')} : ~{fragments/layout :: branchSidebar('halls')})"></nav>
 
-<main class="md:ml-64 min-h-screen">
-    <div class="max-w-5xl mx-auto px-6 py-8">
-        <nav class="flex items-center gap-2 text-sm text-slate-400 mb-6" aria-label="Breadcrumb">
-            <a th:href="@{/admin/halls}" class="text-slate-400 hover:text-primary transition-colors no-underline">Quản lý phòng chiếu</a>
-            <span class="text-slate-600">/</span>
-            <span class="text-slate-200" th:text="${hall.name}">Hall</span>
+<main class="hc-page">
+    <div class="hc-page-inner max-w-5xl">
+        <nav class="mb-6 flex items-center gap-2 text-sm text-cinema-muted" aria-label="Breadcrumb">
+            <a th:href="@{/admin/halls}" class="text-cinema-muted no-underline hover:text-accent">Quản lý phòng chiếu</a>
+            <span>/</span>
+            <span class="text-white" th:text="${hall.name}">Hall</span>
         </nav>
 
         <div th:replace="~{fragments/components :: flashes}"></div>
 
-        <!-- Hall Info Header -->
-        <div class="glass-card p-6 mb-6">
-            <div class="flex flex-wrap justify-between items-start gap-4">
+        <section class="hc-card mb-6 p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-white" th:text="${hall.name}">Hall</h1>
-                    <p class="text-sm text-slate-400 mt-1" th:text="|${hall.branchName} - ${hall.city}|">Branch</p>
+                    <h1 class="hc-page-title" th:text="${hall.name}">Hall</h1>
+                    <p class="hc-page-subtitle" th:text="|${hall.branchName} - ${hall.city}|">Branch</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <a th:href="@{'/admin/halls/{id}/edit'(id=${hall.hallId})}" class="px-4 py-2 text-sm font-medium text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Chỉnh sửa</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div class="glass-card p-6">
-                <h2 class="text-lg font-semibold text-white mb-4">Thông tin phòng</h2>
-                <div class="space-y-4">
-                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Mã phòng</span><span class="text-white tabular-nums" th:text="${hall.hallId}">1</span></div>
-                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Tên phòng</span><span class="text-white" th:text="${hall.name}">Hall</span></div>
-                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Loại phòng</span><span class="text-white" th:text="${hall.hallType}">2D</span></div>
-                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Trạng thái</span><span class="text-white" th:text="${hall.status}">Active</span></div>
-                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Sức chứa</span><span class="text-white tabular-nums" th:text="${hall.capacity}">0</span></div>
-                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Số ghế đã cấu hình</span><span class="text-white tabular-nums" th:text="${hall.seatCount}">0</span></div>
-                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Số suất chiếu</span><span class="text-white tabular-nums" th:text="${hall.showtimeCount}">0</span></div>
+                <div class="flex flex-wrap gap-2">
+                    <a th:href="@{|/admin/halls/${hall.hallId}/seats|}" class="hc-btn hc-btn-accent no-underline">Sơ đồ ghế</a>
+                    <a th:href="@{|/admin/halls/${hall.hallId}/edit|}" class="hc-btn hc-btn-primary no-underline">Chỉnh sửa</a>
                 </div>
             </div>
-            <div class="glass-card p-6">
-                <h2 class="text-lg font-semibold text-white mb-4">Chi nhánh</h2>
-                <div class="space-y-4">
-                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Tên chi nhánh</span><span class="text-white" th:text="${hall.branchName}">Branch</span></div>
-                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Thành phố</span><span class="text-white" th:text="${hall.city}">City</span></div>
-                    <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Địa chỉ</span><span class="text-white" th:text="${hall.address}">Address</span></div>
-                </div>
-            </div>
-        </div>
+        </section>
 
-        <!-- Seat Management Section -->
-        <div class="glass-card p-6">
-            <div class="flex items-center justify-between gap-4 flex-wrap mb-6 border-b border-white/[0.06] pb-4">
-                <div>
-                    <h2 class="text-xl font-bold text-white">Sơ đồ ghế ngồi</h2>
-                    <p class="text-xs text-slate-400 mt-1">Cấu hình cách sắp xếp ghế và phân loại ghế cho phòng chiếu.</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <a th:href="@{'/admin/halls/' + ${hall.hallId} + '/seats/generate'}"
-                       th:onclick="${hall.seatCount > 0} ? 'return confirm(\'Phòng chiếu này đã có sơ đồ ghế. Việc thiết lập sơ đồ mới sẽ XÓA HOÀN TOÀN sơ đồ ghế cũ. Bạn có chắc chắn muốn tiếp tục?\');' : ''"
-                       class="px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 cursor-pointer no-underline">
-                        Thiết lập sơ đồ mới
-                    </a>
-                    <form th:if="${hall.seatCount > 0}" th:action="@{'/admin/halls/' + ${hall.hallId} + '/seats/clear'}" method="post" onsubmit="return confirm('Xóa toàn bộ sơ đồ ghế hiện tại? Thao tác này không thể khôi phục.');">
-                        <button type="submit" class="px-4 py-2 text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all cursor-pointer">
-                            Xóa sơ đồ
-                        </button>
-                    </form>
-                </div>
-            </div>
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <section class="hc-card p-6" aria-label="Thông tin phòng">
+                <h2 class="mb-4 text-lg font-semibold text-white">Thông tin phòng</h2>
+                <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div><dt class="hc-label mb-1">Mã phòng</dt><dd class="text-white tabular-nums" th:text="${hall.hallId}">1</dd></div>
+                    <div><dt class="hc-label mb-1">Tên phòng</dt><dd class="text-white" th:text="${hall.name}">Hall</dd></div>
+                    <div><dt class="hc-label mb-1">Loại phòng</dt><dd class="text-white" th:text="${hall.hallType}">2D</dd></div>
+                    <div><dt class="hc-label mb-1">Trạng thái</dt><dd><span th:replace="~{fragments/components :: statusBadge(${hall.status})}"></span></dd></div>
+                    <div><dt class="hc-label mb-1">Sức chứa</dt><dd class="text-white tabular-nums" th:text="${hall.capacity}">0</dd></div>
+                    <div><dt class="hc-label mb-1">Số ghế</dt><dd class="text-white tabular-nums" th:text="${hall.seatCount}">0</dd></div>
+                    <div><dt class="hc-label mb-1">Số suất chiếu</dt><dd class="text-white tabular-nums" th:text="${hall.showtimeCount}">0</dd></div>
+                </dl>
+            </section>
 
-            <!-- If no seats configured -->
-            <div th:if="${seats == null or #lists.isEmpty(seats)}" class="py-12 text-center">
-                <div class="w-16 h-16 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
-                </div>
-                <h3 class="text-base font-bold text-white mb-1">Chưa cấu hình sơ đồ ghế</h3>
-                <p class="text-sm text-slate-500 max-w-sm mx-auto mb-4">Phòng chiếu này chưa có ghế nào. Vui lòng tạo sơ đồ ghế tự động bằng cách nhấp vào nút bên dưới.</p>
-                <a th:href="@{'/admin/halls/' + ${hall.hallId} + '/seats/generate'}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-amber-500 text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 cursor-pointer no-underline text-xs">
-                    Tạo sơ đồ tự động
-                </a>
-            </div>
-
-            <!-- Seat Grid View -->
-            <div th:if="${seats != null and not #lists.isEmpty(seats)}" class="relative overflow-x-auto p-4 bg-black/20 rounded-xl border border-white/5">
-                <!-- Screen Indicator -->
-                <div class="w-full max-w-md mx-auto text-center mb-10">
-                    <div class="h-1.5 w-full bg-slate-600 rounded-full shadow-[0_-4px_10px_rgba(255,255,255,0.2)]"></div>
-                    <span class="text-[10px] font-bold tracking-widest text-slate-400 uppercase mt-2 block">Màn Hình Chiếu</span>
-                </div>
-
-                <!-- Legend -->
-                <div class="flex flex-wrap justify-center gap-4 mb-8 text-xs">
-                    <div class="flex items-center gap-2"><div class="w-6 h-6 rounded border border-slate-500/30 bg-slate-700/20"></div><span class="text-slate-400">Standard</span></div>
-                    <div class="flex items-center gap-2"><div class="w-6 h-6 rounded border border-primary/50 bg-primary/10"></div><span class="text-slate-400">VIP (+20k)</span></div>
-                    <div class="flex items-center gap-2"><div class="w-12 h-6 rounded border border-pink-500/50 bg-pink-500/10"></div><span class="text-slate-400">Double (Giá x2)</span></div>
-                </div>
-
-                <!-- Grid Rows -->
-                <div class="flex flex-col gap-3 min-w-[600px] pb-4">
-                    <div th:each="row : ${#lists.sort(#lists.toList(#sets.toSet(seats.![seatRow])))}" class="flex items-center justify-center gap-3">
-                        <div class="w-6 text-sm font-bold text-slate-400 text-right" th:text="${#strings.trim(row)}">A</div>
-                        
-                        <div class="flex items-center gap-2">
-                            <div th:each="seat : ${seats}" th:if="${#strings.trim(seat.seatRow) == #strings.trim(row)}"
-                                 th:data-id="${seat.seatId}"
-                                 th:data-row="${seat.seatRow}"
-                                 th:data-number="${seat.seatNumber}"
-                                 th:data-type="${seat.type}"
-                                 th:onclick="'openEditSeatModalFromElement(this)'"
-                                 th:classappend="${seat.type == 'VIP'} ? 'border-primary/50 bg-primary/10 hover:bg-primary/20 text-amber-200' : (${seat.type == 'Double'} ? 'col-span-2 w-16 border-pink-500/50 bg-pink-500/10 hover:bg-pink-500/20 text-pink-200' : 'border-slate-500/30 bg-slate-700/20 hover:bg-slate-700/40 text-slate-300')"
-                                 class="w-7 h-7 rounded flex items-center justify-center text-[10px] font-bold border transition-colors cursor-pointer select-none"
-                                 th:title="|Hàng ${seat.seatRow} - Ghế ${seat.seatNumber} (${seat.type})|">
-                                <span th:text="${seat.seatNumber}">1</span>
-                            </div>
-                        </div>
-                        
-                        <div class="w-6 text-sm font-bold text-slate-400 text-left" th:text="${#strings.trim(row)}">A</div>
-                    </div>
-                </div>
-
-                <!-- Add seat inline form -->
-                <div class="mt-8 pt-6 border-t border-white/[0.06] max-w-md mx-auto">
-                    <h3 class="text-sm font-bold text-white mb-3 text-center">Thêm ghế đơn lẻ</h3>
-                    <form th:action="@{'/admin/halls/' + ${hall.hallId} + '/seats/add'}" method="post" class="flex gap-2">
-                        <input type="text" name="seatRow" placeholder="Hàng (VD: A)" required maxlength="1" class="w-32 px-2 py-1.5 bg-white/[0.06] border border-white/10 rounded-lg text-xs text-white uppercase text-center focus:outline-none focus:border-primary">
-                        <input type="number" name="seatNumber" placeholder="Số (VD: 11)" required min="1" max="99" class="w-32 px-2 py-1.5 bg-white/[0.06] border border-white/10 rounded-lg text-xs text-white text-center focus:outline-none focus:border-primary">
-                        <select name="type" required class="flex-1 px-2 py-1.5 bg-white/[0.06] border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-primary">
-                            <option value="Standard">Standard</option>
-                            <option value="VIP">VIP</option>
-                            <option value="Double">Double</option>
-                        </select>
-                        <button type="submit" class="px-4 py-1.5 bg-gradient-to-r from-primary to-amber-500 text-white text-xs font-semibold rounded-lg hover:shadow-md transition-all cursor-pointer">Thêm</button>
-                    </form>
-                </div>
-            </div>
+            <section class="hc-card p-6" aria-label="Thông tin chi nhánh">
+                <h2 class="mb-4 text-lg font-semibold text-white">Chi nhánh</h2>
+                <dl class="space-y-4">
+                    <div><dt class="hc-label mb-1">Tên chi nhánh</dt><dd class="text-white" th:text="${hall.branchName}">Branch</dd></div>
+                    <div><dt class="hc-label mb-1">Thành phố</dt><dd class="text-white" th:text="${hall.city}">City</dd></div>
+                    <div><dt class="hc-label mb-1">Địa chỉ</dt><dd class="text-white" th:text="${hall.address}">Address</dd></div>
+                </dl>
+            </section>
         </div>
     </div>
-
-    <!-- Edit Seat Modal -->
-    <div id="editSeatModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
-        <div class="glass-card w-full max-w-sm p-6 relative">
-            <button onclick="closeEditSeatModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-            <h3 class="text-lg font-bold text-white mb-4">Cập nhật ghế <span id="modalSeatCode" class="text-primary">A-1</span></h3>
-            
-            <form id="editSeatForm" method="post" class="space-y-4">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <div>
-                    <label for="seatTypeSelect" class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wide">Loại ghế</label>
-                    <select id="seatTypeSelect" name="type" class="w-full px-3 py-2 bg-white/[0.06] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary cursor-pointer">
-                        <option value="Standard">Standard</option>
-                        <option value="VIP">VIP</option>
-                        <option value="Double">Double</option>
-                    </select>
-                </div>
-                
-                <div class="flex gap-2 pt-2">
-                    <button type="submit" class="flex-1 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl hover:shadow-md transition-all cursor-pointer">Lưu thay đổi</button>
-                </div>
-            </form>
-
-            <form id="deleteSeatForm" method="post" class="mt-2">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <button type="submit" onclick="return confirm('Bạn có chắc muốn xóa ghế này khỏi sơ đồ?')" class="w-full py-2 text-sm font-semibold text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all cursor-pointer">Xóa ghế này</button>
-            </form>
-        </div>
-    </div>
-
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </main>
-
-<script th:inline="javascript">
-    function openEditSeatModalFromElement(element) {
-        const seatId = element.getAttribute('data-id');
-        const seatRow = element.getAttribute('data-row');
-        const seatNumber = element.getAttribute('data-number');
-        const seatType = element.getAttribute('data-type');
-        openEditSeatModal(seatId, seatRow, seatNumber, seatType);
-    }
-
-    function openEditSeatModal(seatId, seatRow, seatNumber, seatType) {
-        const hallId = [[${hall.hallId}]];
-        
-        document.getElementById('modalSeatCode').innerText = seatRow + '-' + seatNumber;
-        document.getElementById('seatTypeSelect').value = seatType;
-        
-        document.getElementById('editSeatForm').action = '/admin/halls/' + hallId + '/seats/update/' + seatId;
-        document.getElementById('deleteSeatForm').action = '/admin/halls/' + hallId + '/seats/delete/' + seatId;
-        
-        document.getElementById('editSeatModal').classList.remove('hidden');
-    }
-
-    function closeEditSeatModal() {
-        document.getElementById('editSeatModal').classList.add('hidden');
-    }
-
-    // Đóng modal khi click ra ngoài
-    window.onclick = function(event) {
-        const modal = document.getElementById('editSeatModal');
-        if (event.target == modal) {
-            closeEditSeatModal();
-        }
-    }
-</script>
 
 </body>
 </html>

@@ -6,8 +6,8 @@
     <section class="hc-card w-full max-w-md p-8 text-center" role="alert" aria-labelledby="error-title">
         <p class="mb-2 text-5xl font-bold text-white" th:text="${status} ?: 403">403</p>
         <h1 class="mb-3 text-xl font-semibold text-white" id="error-title">Truy cập bị từ chối</h1>
-        <p class="mb-8 text-sm leading-6 text-cinema-muted" th:text="${errorKey != null} ? #{__${errorKey}__} : #{movie.access_denied}">Bạn không có quyền truy cập Phim này.</p>
-        <a class="hc-btn hc-btn-primary no-underline" th:href="@{/admin/movies}">Về danh sách Phim</a>
+        <p class="mb-8 text-sm leading-6 text-cinema-muted" th:text="${errorKey != null} ? #{__${errorKey}__} : #{voucher.access_denied}">Bạn không có quyền truy cập Voucher này.</p>
+        <a class="hc-btn hc-btn-primary no-underline" th:href="@{/admin/vouchers}">Về danh sách Voucher</a>
     </section>
 </main>
 </body>

@@ -43,7 +43,7 @@ public final class PromotionSpecifications {
         return (root, query, cb) -> {
             String normalized = trimToNull(status);
             if (normalized == null) {
-                return cb.conjunction();
+                return cb.equal(root.get("status"), "ACTIVE");
             }
             return cb.equal(root.get("status"), normalized);
         };
