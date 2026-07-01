@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.util.List;
 
 @Entity
-@Table(name = "Hall")
+@Table(name = "hall")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Hall {
@@ -38,3 +38,4 @@ public class Hall {
     @OneToMany(mappedBy = "hall", cascade = CascadeType.ALL)
     private List<Seat> seats;
 }
+

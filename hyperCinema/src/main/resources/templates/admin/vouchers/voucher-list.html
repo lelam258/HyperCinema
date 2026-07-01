@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Quản lý Voucher - HyperCinema')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('vouchers')}"></nav>
+
+<main class="hc-page hc-admin-page">
+    <header class="hc-admin-topbar">
+        <nav class="hc-admin-crumb" aria-label="Breadcrumb">
+            <a th:href="@{/admin/dashboard}">Admin</a>
+            <span>/</span>
+            <strong>Quản lý Voucher</strong>
+        </nav>
+        <div class="hc-admin-tools">
+            <label class="hc-admin-search">
+                <span class="sr-only">Tìm vé, khách hàng</span>
+                <i data-lucide="search"></i>
+                <input type="search" placeholder="Tìm vé, khách hàng...">
+            </label>
+            <button type="button" class="hc-admin-icon" aria-label="Thông báo">
+                <i data-lucide="bell"></i>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <div class="hc-page-inner hc-voucher-shell">
+        <div class="hc-voucher-head">
+            <div>
+                <h1>Quản lý Khuyến mãi (Voucher)</h1>
+                <p>Thiết lập và theo dõi các chương trình ưu đãi, mã giảm giá</p>
+            </div>
+            <a th:href="@{/admin/vouchers/new}" class="hc-btn hc-btn-primary hc-voucher-create no-underline">
+                <i data-lucide="plus"></i>
+                Tạo Voucher Mới
+            </a>
+        </div>
+
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <form th:action="@{/admin/vouchers}" method="get" class="hc-voucher-filters" aria-label="Bộ lọc voucher">
+            <input type="hidden" name="sort" th:value="${criteria != null ? criteria.sort : 'createdAt'}">
+            <input type="hidden" name="direction" th:value="${criteria != null ? criteria.direction : 'DESC'}">
+            <input type="hidden" name="size" th:value="${criteria != null ? criteria.size : 10}">
+            <label class="hc-voucher-search">
+                <span class="sr-only">Từ khóa</span>
+                <i data-lucide="search"></i>
+                <input type="text" id="keyword" name="keyword" placeholder="Tìm theo mã hoặc tên chương trình..." th:value="${criteria != null ? criteria.keyword : ''}">
+            </label>
+            <select id="status" name="status" class="hc-voucher-select" onchange="this.form.submit()">
+                <option value="" th:selected="${criteria == null or criteria.status == null or #strings.isEmpty(criteria.status)}">Tất cả trạng thái</option>
+                <option value="ACTIVE" th:selected="${criteria != null and criteria.status == 'ACTIVE'}">Đang diễn ra</option>
+                <option value="INACTIVE" th:selected="${criteria != null and criteria.status == 'INACTIVE'}">Tạm dừng</option>
+                <option value="EXPIRED" th:selected="${criteria != null and criteria.status == 'EXPIRED'}">Đã kết thúc</option>
+            </select>
+            <button type="submit" class="sr-only">Tìm kiếm</button>
+        </form>
+
+        <section class="hc-voucher-stats" aria-label="Thống kê voucher">
+            <article class="hc-voucher-stat">
+                <span class="hc-voucher-stat-icon is-green"><i data-lucide="ticket-percent"></i></span>
+                <div>
+                    <strong th:text="${page != null ? page.totalElements : 0}">0</strong>
+                    <p>Tổng chương trình</p>
+                </div>
+            </article>
+            <article class="hc-voucher-stat">
+                <span class="hc-voucher-stat-icon is-blue"><i data-lucide="tag"></i></span>
+                <div>
+                    <strong th:text="${page != null and page.content != null ? page.content.?[status == 'ACTIVE'].size() : 0}">0</strong>
+                    <p>Chương trình đang chạy</p>
+                </div>
+            </article>
+        </section>
+
+        <section class="hc-voucher-table-card" aria-label="Danh sách voucher">
+            <div class="overflow-x-auto">
+                <table class="hc-voucher-table">
+                    <thead>
+                    <tr>
+                        <th>Chương trình / Mã</th>
+                        <th>Loại / Mức giảm</th>
+                        <th>Thời gian</th>
+                        <th>Trạng thái</th>
+                        <th>Đã dùng / Giới hạn</th>
+                        <th class="text-right">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${page == null or #lists.isEmpty(page.content)}">
+                        <td colspan="6" class="hc-voucher-empty">Chưa có voucher nào phù hợp.</td>
+                    </tr>
+                    <tr th:each="item : ${page != null ? page.content : {}}" th:if="${page != null and not #lists.isEmpty(page.content)}">
+                        <td>
+                            <a th:href="@{|/admin/vouchers/${item.voucherId}|}" class="hc-voucher-title no-underline" th:text="${item.title}">Giam 20% cho khach hang moi</a>
+                            <span class="hc-voucher-code" th:text="${item.code}">XINCHAO20</span>
+                        </td>
+                        <td>
+                            <span class="hc-voucher-type" th:text="${item.discountType == 'PERCENTAGE' ? 'Giảm phần trăm' : (item.discountType == 'FIXED_AMOUNT' ? 'Giảm tiền mặt' : item.discountType)}">Giam phan tram</span>
+                            <strong class="hc-voucher-discount" th:text="${item.discountType == 'PERCENTAGE' ? item.discountValue + '%' : #numbers.formatInteger(item.discountValue, 0, 'POINT') + ' d'}">20%</strong>
+                        </td>
+                        <td>
+                            <div class="hc-voucher-date">
+                                <i data-lucide="calendar-days"></i>
+                                <span>Bắt đầu: </span>
+                                <strong th:text="${item.startDate != null ? #temporals.format(item.startDate, 'dd/MM/yyyy') : '--'}">01/10/2023</strong>
+                            </div>
+                            <div class="hc-voucher-date is-muted">
+                                <i data-lucide="calendar-days"></i>
+                                <span>Kết thúc: </span>
+                                <strong th:text="${item.endDate != null ? #temporals.format(item.endDate, 'dd/MM/yyyy') : '--'}">31/12/2023</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <span th:switch="${item.status}">
+                                <span th:case="'ACTIVE'" class="hc-voucher-status is-active"><span></span>Đang diễn ra</span>
+                                <span th:case="'INACTIVE'" class="hc-voucher-status is-paused"><span></span>Tạm dừng</span>
+                                <span th:case="'EXPIRED'" class="hc-voucher-status is-ended"><span></span>Đã kết thúc</span>
+                                <span th:case="*" class="hc-voucher-status is-ended"><span></span><span th:text="${item.status}">Khác</span></span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="hc-voucher-usage">
+                                <strong th:text="${item.usedCount != null ? item.usedCount : 0}">0</strong>
+                                <span>/</span>
+                                <span th:text="${item.maxUses != null ? item.maxUses : 0}">1000</span>
+                            </div>
+                            <div class="hc-voucher-progress" aria-hidden="true">
+                                <span th:style="${item.maxUses != null and item.maxUses > 0 ? 'width:' + (((item.usedCount != null ? item.usedCount : 0) * 100) / item.maxUses) + '%' : 'width:0%'}"></span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="hc-voucher-actions">
+                                <a th:href="@{|/admin/vouchers/${item.voucherId}/edit|}" class="hc-voucher-action" aria-label="Sửa voucher">
+                                    <i data-lucide="pencil"></i>
+                                </a>
+                                <form th:action="@{|/admin/vouchers/${item.voucherId}/delete|}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa voucher này?');">
+                                    <button type="submit" class="hc-voucher-action" aria-label="Xóa voucher">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+                                </form>
+                                <a th:href="@{|/admin/vouchers/${item.voucherId}|}" class="hc-voucher-action" aria-label="Xem voucher">
+                                    <i data-lucide="more-vertical"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="hc-voucher-pagination" th:if="${page != null and page.totalPages > 0}">
+                <p>Trang <strong th:text="${page.number + 1}">1</strong> / <strong th:text="${page.totalPages}">1</strong> - <strong th:text="${page.totalElements}">0</strong> voucher</p>
+                <div>
+                    <a th:if="${not page.first}" th:href="@{/admin/vouchers(keyword=${criteria != null ? criteria.keyword : null},status=${criteria != null ? criteria.status : null},sort=${criteria != null ? criteria.sort : 'createdAt'},direction=${criteria != null ? criteria.direction : 'DESC'},page=${page.number - 1},size=${page.size})}" class="hc-btn no-underline">Trước</a>
+                    <span th:if="${page.first}" class="hc-btn cursor-not-allowed opacity-50">Trước</span>
+                    <a th:if="${not page.last}" th:href="@{/admin/vouchers(keyword=${criteria != null ? criteria.keyword : null},status=${criteria != null ? criteria.status : null},sort=${criteria != null ? criteria.sort : 'createdAt'},direction=${criteria != null ? criteria.direction : 'DESC'},page=${page.number + 1},size=${page.size})}" class="hc-btn no-underline">Sau</a>
+                    <span th:if="${page.last}" class="hc-btn cursor-not-allowed opacity-50">Sau</span>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<script defer th:src="@{/js/ui/sidebar.js(v=1.0)}"></script>
+<script defer th:src="@{/js/ui/dropdown.js(v=1.0)}"></script>
+<script defer th:src="@{/js/ui/dialog.js(v=1.0)}"></script>
+<script defer th:src="@{/js/ui/toast.js(v=1.0)}"></script>
+</body>
+</html>
