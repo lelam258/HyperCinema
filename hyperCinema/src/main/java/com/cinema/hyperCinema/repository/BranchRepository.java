@@ -1,6 +1,7 @@
 package com.cinema.hyperCinema.repository;
 
 import com.cinema.hyperCinema.model.Branch;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -19,4 +20,6 @@ public interface BranchRepository
     long countByStatus(String status);
 
     List<Branch> findAllByOrderByNameAsc();
+
+    List<Branch> findByStatusIgnoreCase(String status, Sort sort);
 }
