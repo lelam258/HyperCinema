@@ -8,17 +8,36 @@ import java.util.List;
 
 @Repository
 public interface FoodItemRepository extends JpaRepository<FoodItem, Integer> {
+    List<FoodItem> findByIsAvailableTrueAndStockGreaterThanOrderByCategoryNameAscNameAsc(Integer stock);
+
+    List<FoodItem> findByIsAvailableTrueOrderByCategoryNameAscNameAsc();
 
     List<FoodItem> findAllByOrderByCategoryNameAscNameAsc();
 
-    List<FoodItem> findByNameContainingIgnoreCase(String keyword);
+    List<FoodItem> findByNameContainingIgnoreCaseOrderByCategoryNameAscNameAsc(String name);
 
-    List<FoodItem> findByCategoryName(String categoryName);
+    List<FoodItem> findByCategoryNameOrderByCategoryNameAscNameAsc(String categoryName);
 
-    List<FoodItem> findByIsAvailable(Boolean isAvailable);
+    List<FoodItem> findByIsAvailableOrderByCategoryNameAscNameAsc(Boolean isAvailable);
 
-    List<FoodItem> findByIsAvailableTrueAndStockGreaterThanOrderByCategoryNameAscNameAsc(Integer stock);
+    List<FoodItem> findByNameContainingIgnoreCaseAndCategoryNameAndIsAvailableOrderByCategoryNameAscNameAsc(
+            String name, String categoryName, Boolean isAvailable);
 
-    List<FoodItem> findByNameContainingIgnoreCaseAndCategoryNameAndIsAvailable(
-            String keyword, String categoryName, Boolean isAvailable);
+    default List<FoodItem> findByNameContainingIgnoreCase(String name) {
+        return findByNameContainingIgnoreCaseOrderByCategoryNameAscNameAsc(name);
+    }
+
+    default List<FoodItem> findByCategoryName(String categoryName) {
+        return findByCategoryNameOrderByCategoryNameAscNameAsc(categoryName);
+    }
+
+    default List<FoodItem> findByIsAvailable(Boolean isAvailable) {
+        return findByIsAvailableOrderByCategoryNameAscNameAsc(isAvailable);
+    }
+
+    default List<FoodItem> findByNameContainingIgnoreCaseAndCategoryNameAndIsAvailable(
+            String name, String categoryName, Boolean isAvailable) {
+        return findByNameContainingIgnoreCaseAndCategoryNameAndIsAvailableOrderByCategoryNameAscNameAsc(
+                name, categoryName, isAvailable);
+    }
 }

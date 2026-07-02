@@ -1,37 +1,16 @@
 package com.cinema.hyperCinema.service.booking.impl;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import com.cinema.hyperCinema.model.*;
+import com.cinema.hyperCinema.repository.*;
+import com.cinema.hyperCinema.service.booking.BookingService;
+import com.cinema.hyperCinema.util.SeatPricing;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cinema.hyperCinema.model.Booking;
-import com.cinema.hyperCinema.model.FoodItem;
-import com.cinema.hyperCinema.model.FoodOrder;
-import com.cinema.hyperCinema.model.FoodOrderItem;
-import com.cinema.hyperCinema.model.Payment;
-import com.cinema.hyperCinema.model.Seat;
-import com.cinema.hyperCinema.model.Showtime;
-import com.cinema.hyperCinema.model.Ticket;
-import com.cinema.hyperCinema.model.User;
-import com.cinema.hyperCinema.repository.BookingRepository;
-import com.cinema.hyperCinema.repository.FoodItemRepository;
-import com.cinema.hyperCinema.repository.FoodOrderItemRepository;
-import com.cinema.hyperCinema.repository.FoodOrderRepository;
-import com.cinema.hyperCinema.repository.PaymentRepository;
-import com.cinema.hyperCinema.repository.SeatRepository;
-import com.cinema.hyperCinema.repository.SeatReservationRepository;
-import com.cinema.hyperCinema.repository.ShowtimeRepository;
-import com.cinema.hyperCinema.repository.TicketRepository;
-import com.cinema.hyperCinema.service.booking.BookingService;
-import com.cinema.hyperCinema.util.SeatPricing;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -41,6 +20,7 @@ public class BookingServiceImpl implements BookingService {
     private static final String STATUS_CANCELLED = "CANCELLED";
     private static final String STATUS_CANCELLED_LEGACY = "Cancelled";
     private static final String MAINTENANCE = "UNDER_MAINTENANCE";
+    private static final String SHOWTIME_CANCELLED = "CANCELLED";
     private static final String PAYMENT_PENDING = "Pending";
     private static final String PAYMENT_METHOD_VIETQR = "VietQR";
     private static final String FOOD_ORDER_PENDING = "PENDING";
@@ -109,18 +89,22 @@ public class BookingServiceImpl implements BookingService {
                                               List<Integer> foodItemIds,
                                               List<Integer> foodQuantities) {
         if (seatIds == null || seatIds.isEmpty()) {
-            throw new IllegalArgumentException("Vui lÃ²ng chá»n Ã­t nháº¥t má»™t gháº¿.");
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất một ghế.");
         }
 
         Showtime showtime = findShowtimeWithDetails(showtimeId)
-                .orElseThrow(() -> new IllegalStateException("Suáº¥t chiáº¿u khÃ´ng tá»“n táº¡i."));
+                .orElseThrow(() -> new IllegalStateException("Suất chiếu không tồn tại."));
+
+        if (SHOWTIME_CANCELLED.equals(showtime.getStatus())) {
+            throw new IllegalStateException("Suất chiếu không tồn tại.");
+        }
 
         List<Seat> seats = seatRepository.findAllById(seatIds);
         if (seats.size() != seatIds.size()
                 || seats.stream().anyMatch(seat -> !seat.getHall().getHallId().equals(showtime.getHall().getHallId()))
                 || seats.stream().anyMatch(seat -> MAINTENANCE.equals(seat.getMaintenanceStatus()))
                 || hasUnavailableSeats(showtimeId, seatIds)) {
-            throw new IllegalArgumentException("Má»™t sá»‘ gháº¿ vá»«a Ä‘Æ°á»£c Ä‘áº·t. Vui lÃ²ng chá»n láº¡i.");
+            throw new IllegalArgumentException("Ghế đã được đặt. Vui lòng chọn lại.");
         }
 
         List<FoodSelection> foodSelections = selectedFood(foodItemIds, foodQuantities);
@@ -166,7 +150,7 @@ public class BookingServiceImpl implements BookingService {
             return List.of();
         }
         if (foodQuantities == null || foodItemIds.size() != foodQuantities.size()) {
-            throw new IllegalArgumentException("ThÃ´ng tin F&B khÃ´ng há»£p lá»‡.");
+            throw new IllegalArgumentException("Thông tin F&B không hợp lệ");
         }
 
         List<FoodSelection> selections = new ArrayList<>();
@@ -178,12 +162,12 @@ public class BookingServiceImpl implements BookingService {
             }
 
             FoodItem item = foodItemRepository.findById(itemId)
-                    .orElseThrow(() -> new IllegalArgumentException("Sáº£n pháº©m F&B khÃ´ng tá»“n táº¡i."));
+                    .orElseThrow(() -> new IllegalArgumentException("Sản phẩm F&B không tồn tại."));
             if (!Boolean.TRUE.equals(item.getIsAvailable())) {
-                throw new IllegalArgumentException("Má»™t sáº£n pháº©m F&B hiá»‡n khÃ´ng cÃ²n bÃ¡n.");
+                throw new IllegalArgumentException("sản phẩm F&B hiện không còn bán.");
             }
             if (item.getStock() == null || item.getStock() < quantity) {
-                throw new IllegalArgumentException("Má»™t sáº£n pháº©m F&B khÃ´ng Ä‘á»§ tá»“n kho.");
+                throw new IllegalArgumentException("s phẩm F&B không cofn tồn kho.");
             }
             selections.add(new FoodSelection(item, quantity));
         }

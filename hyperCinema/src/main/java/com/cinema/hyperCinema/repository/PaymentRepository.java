@@ -4,6 +4,7 @@ import com.cinema.hyperCinema.model.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -11,9 +12,20 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PaymentRepository extends JpaRepository<Payment, Integer> {
+public interface PaymentRepository extends JpaRepository<Payment, Integer>, JpaSpecificationExecutor<Payment> {
 
     Optional<Payment> findByBooking_BookingId(Integer bookingId);
+
+    @Query("SELECT p FROM Payment p "
+            + "JOIN FETCH p.booking b "
+            + "WHERE p.status = 'Pending' "
+            + "AND b.status = 'Pending' "
+            + "AND ("
+            + "  (p.expiresAt IS NOT NULL AND p.expiresAt <= :now) "
+            + "  OR (p.expiresAt IS NULL AND p.createdAt <= :fallbackCreatedBefore)"
+            + ")")
+    List<Payment> findExpiredPendingPayments(@Param("now") LocalDateTime now,
+                                             @Param("fallbackCreatedBefore") LocalDateTime fallbackCreatedBefore);
 
     @Query("SELECT SUM(p.amount) FROM Payment p "
             + "WHERE p.createdAt BETWEEN :start AND :end "

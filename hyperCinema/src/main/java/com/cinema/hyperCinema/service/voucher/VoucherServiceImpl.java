@@ -193,6 +193,7 @@ public class VoucherServiceImpl implements VoucherService {
             }
             Branch branch = branchRepository.findById(request.getBranchId())
                     .orElseThrow(() -> new VoucherValidationException("voucher.branch.not_found"));
+            ensureBranchActive(branch);
             voucher.setBranch(branch);
         } else {
             voucher.setBranch(null);
@@ -335,6 +336,7 @@ public class VoucherServiceImpl implements VoucherService {
             if (!request.getBranchId().equals(currentBranchId)) {
                 Branch branch = branchRepository.findById(request.getBranchId())
                         .orElseThrow(() -> new VoucherValidationException("voucher.branch.not_found"));
+                ensureBranchActive(branch);
                 voucher.setBranch(branch);
                 hasChanges = true;
             }
@@ -380,13 +382,8 @@ public class VoucherServiceImpl implements VoucherService {
         // 2) Phân quyền: Manager chỉ xóa được voucher thuộc chi nhánh mình; Admin mọi voucher (Req 7.x).
         assertCanManage(loadedActor, voucher);
 
-        // 3) Chặn xóa nếu còn Active_Booking_Reference (Booking tham chiếu voucher có status != CANCELLED) — Req 4.2.
-        if (bookingRepository.existsByPromotion_PromotionIdAndStatusNot(voucherId, "CANCELLED")) {
-            throw new VoucherValidationException("voucher.has_active_booking");
-        }
-
-        // 4) Không còn ràng buộc → xóa voucher khỏi hệ thống — Req 4.1.
-        promotionRepository.delete(voucher);
+        voucher.setStatus(VoucherStatus.INACTIVE.name());
+        promotionRepository.save(voucher);
     }
 
     @Override
@@ -482,6 +479,12 @@ public class VoucherServiceImpl implements VoucherService {
 
     private static Integer branchId(Branch branch) {
         return branch == null ? null : branch.getBranchId();
+    }
+
+    private static void ensureBranchActive(Branch branch) {
+        if (branch == null || !"Active".equalsIgnoreCase(branch.getStatus())) {
+            throw new VoucherValidationException("voucher.branch.inactive");
+        }
     }
 
     // ----------------------------------------------------------------------

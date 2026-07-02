@@ -1,9 +1,9 @@
 package com.cinema.hyperCinema.dto.admin.branch.request;
 
+import java.util.Set;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PositiveOrZero;
-
-import java.util.Set;
 
 public class BranchSearchCriteria {
 

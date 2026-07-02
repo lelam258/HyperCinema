@@ -212,13 +212,26 @@ public class VoucherController {
         }
         return "redirect:/admin/vouchers/" + voucherId;
     }
-
+//Frontend gọi bằng JS/fetch theo chuẩn REST
     @DeleteMapping("/{voucherId}")
     @PreAuthorize("@voucherAccessGuard.canManage(authentication, #voucherId)")
     public String delete(@PathVariable Integer voucherId,
                          @AuthenticationPrincipal CustomUserDetails principal,
                          RedirectAttributes redirectAttributes) {
+        return deleteVoucher(voucherId, principal, redirectAttributes);
+    }
 
+    @PostMapping("/{voucherId}/delete")
+    @PreAuthorize("@voucherAccessGuard.canManage(authentication, #voucherId)")
+    public String deletePost(@PathVariable Integer voucherId,
+                             @AuthenticationPrincipal CustomUserDetails principal,
+                             RedirectAttributes redirectAttributes) {
+        return deleteVoucher(voucherId, principal, redirectAttributes);
+    }
+
+    private String deleteVoucher(Integer voucherId,
+                                 CustomUserDetails principal,
+                                 RedirectAttributes redirectAttributes) {
         try {
             voucherService.delete(voucherId, principal.getUser());
 
@@ -232,6 +245,6 @@ public class VoucherController {
     }
 
     private void prepareFormDropdowns(Model model) {
-        model.addAttribute("branches", branchRepository.findAll(Sort.by("name")));
+        model.addAttribute("branches", branchRepository.findByStatusIgnoreCase("Active", Sort.by("name")));
     }
 }

@@ -19,7 +19,7 @@ public class User {
     @Column(name = "user_id")
     private Integer userId;
 
-    //    @Column(nullable = false, length = 100)
+//    @Column(nullable = false, length = 100)
 //    @org.hibernate.annotations.Nationalized
 //    private String name;
     @Column(name = "full_name", nullable = false, length = 150)
@@ -40,9 +40,6 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id")
     private Role role;
-
-    @Column(nullable = false, length = 50)
-    private String status = "Active";
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
@@ -68,6 +65,9 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id")
     private User manager;
+
+    @Column(nullable = false, length = 50)
+    private String status = "Active";
 
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;

@@ -1,13 +1,14 @@
 package com.cinema.hyperCinema.validation;
 
+import java.time.LocalTime;
+
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
+
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.constraintvalidation.SupportedValidationTarget;
 import jakarta.validation.constraintvalidation.ValidationTarget;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
-
-import java.time.LocalTime;
 
 @SupportedValidationTarget(ValidationTarget.ANNOTATED_ELEMENT)
 public class BranchTimeRangeValidator

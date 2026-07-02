@@ -11,15 +11,6 @@ import java.util.List;
 
 @Repository
 public interface SeatReservationRepository extends JpaRepository<SeatReservation, Integer> {
-
-    /**
-     * Check if any reservation exists for the given seat with the specified status
-     * and expiration time after the provided timestamp.
-     * Used for active reference check before seat deletion
-     * (e.g., status = 'ACTIVE' and expiredAt > now).
-     */
-    boolean existsBySeat_SeatIdAndStatusAndExpiredAtAfter(Integer seatId, String status, LocalDateTime now);
-
     @Query("SELECT r.seat.seatId FROM SeatReservation r "
             + "WHERE r.showtime.showtimeId = :showtimeId "
             + "AND r.status = :status "
@@ -27,6 +18,8 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
     List<Integer> findActiveReservedSeatIds(@Param("showtimeId") Integer showtimeId,
                                             @Param("status") String status,
                                             @Param("now") LocalDateTime now);
+
+    List<SeatReservation> findByShowtime_ShowtimeIdAndExpiredAtAfter(Integer showtimeId, LocalDateTime now);
 
     long countByShowtime_ShowtimeId(Integer showtimeId);
 }

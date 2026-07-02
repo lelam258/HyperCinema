@@ -1,5 +1,6 @@
 package com.cinema.hyperCinema.service.hall.impl;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +44,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class HallServiceImpl implements HallService {
 
+    private static final String STATUS_ACTIVE = "Active";
+    private static final String STATUS_INACTIVE = "Inactive";
+
     private final HallRepository hallRepository;
     private final BranchRepository branchRepository;
     private final SeatRepository seatRepository;
@@ -83,6 +87,7 @@ public class HallServiceImpl implements HallService {
         Integer targetBranchId = resolveTargetBranchId(request.getBranchId(), current);
         Branch branch = branchRepository.findById(targetBranchId)
                 .orElseThrow(() -> new HallValidationException("hall.branch.required"));
+        ensureBranchActive(branch);
 
         if (hallRepository.existsByBranch_BranchIdAndNameIgnoreCase(targetBranchId, name)) {
             throw new HallValidationException("hall.name.duplicate");
@@ -95,7 +100,7 @@ public class HallServiceImpl implements HallService {
         hall.setCapacity(capacity);
         hall.setStatus(status);
         Hall saved = hallRepository.save(hall);
-        seatRepository.saveAll(buildInitialSeats(saved, rowCount, columnCount));
+        seatRepository.saveAll(buildInitialSeats(saved, rowCount, columnCount, status));
         return toDetailView(saved);
     }
 
@@ -117,6 +122,7 @@ public class HallServiceImpl implements HallService {
             ensureCanMove(hallId);
             Branch targetBranch = branchRepository.findById(request.getBranchId())
                     .orElseThrow(() -> new HallValidationException("hall.branch.required"));
+            ensureBranchActive(targetBranch);
             hall.setBranch(targetBranch);
             targetBranchId = targetBranch.getBranchId();
         } else if (!isAdmin(current) && request.getBranchId() != null
@@ -133,7 +139,9 @@ public class HallServiceImpl implements HallService {
         hall.setHallType(hallType);
         hall.setCapacity(capacity);
         hall.setStatus(status);
-        return toDetailView(hallRepository.save(hall));
+        Hall saved = hallRepository.save(hall);
+        syncSeatMaintenanceStatus(saved.getHallId(), saved.getStatus());
+        return toDetailView(saved);
     }
 
     @Override
@@ -143,7 +151,9 @@ public class HallServiceImpl implements HallService {
                 .orElseThrow(() -> new HallNotFoundException(hallId));
         assertCanManageBranch(current, hallBranchId(hall));
         ensureCanDelete(hallId);
-        hallRepository.delete(hall);
+        hall.setStatus(STATUS_INACTIVE);
+        hallRepository.save(hall);
+        syncSeatMaintenanceStatus(hallId, hall.getStatus());
     }
 
     @Override
@@ -156,7 +166,7 @@ public class HallServiceImpl implements HallService {
             lockedBranch = toBranchOption(current.getBranch());
         }
         List<BranchOption> branches = admin
-                ? branchRepository.findAll(Sort.by(Sort.Direction.ASC, "name")).stream()
+                ? branchRepository.findByStatusIgnoreCase("Active", Sort.by(Sort.Direction.ASC, "name")).stream()
                         .map(this::toBranchOption)
                         .toList()
                 : List.of();
@@ -214,6 +224,12 @@ public class HallServiceImpl implements HallService {
         throw new HallValidationException("hall.access.denied");
     }
 
+    private void ensureBranchActive(Branch branch) {
+        if (branch == null || !STATUS_ACTIVE.equalsIgnoreCase(branch.getStatus())) {
+            throw new HallValidationException("hall.branch.inactive");
+        }
+    }
+
     private void ensureCanMove(Integer hallId) {
         if (seatRepository.existsByHall_HallId(hallId) || showtimeRepository.existsByHall_HallId(hallId)) {
             throw new HallValidationException("hall.branch.cannot_move_with_dependencies");
@@ -221,7 +237,7 @@ public class HallServiceImpl implements HallService {
     }
 
     private void ensureCanDelete(Integer hallId) {
-        if (seatRepository.existsByHall_HallId(hallId) || showtimeRepository.existsByHall_HallId(hallId)) {
+        if (showtimeRepository.existsByHall_HallIdAndStartTimeAfter(hallId, LocalDateTime.now())) {
             throw new HallValidationException("hall.cannot_delete_with_dependencies");
         }
     }
@@ -242,7 +258,8 @@ public class HallServiceImpl implements HallService {
                 .status(hall.getStatus())
                 .seatCount(seatCount)
                 .showtimeCount(showtimeCount)
-                .canDelete(seatCount == 0 && showtimeCount == 0)
+                .canDelete(!STATUS_INACTIVE.equalsIgnoreCase(hall.getStatus())
+                        && !showtimeRepository.existsByHall_HallIdAndStartTimeAfter(hallId, LocalDateTime.now()))
                 .build();
     }
 
@@ -263,7 +280,8 @@ public class HallServiceImpl implements HallService {
                 .status(hall.getStatus())
                 .seatCount(seatCount)
                 .showtimeCount(showtimeCount)
-                .canDelete(seatCount == 0 && showtimeCount == 0)
+                .canDelete(!STATUS_INACTIVE.equalsIgnoreCase(hall.getStatus())
+                        && !showtimeRepository.existsByHall_HallIdAndStartTimeAfter(hallId, LocalDateTime.now()))
                 .build();
     }
 
@@ -309,8 +327,20 @@ public class HallServiceImpl implements HallService {
         return value;
     }
 
-    private static List<Seat> buildInitialSeats(Hall hall, int rowCount, int columnCount) {
+    private void syncSeatMaintenanceStatus(Integer hallId, String hallStatus) {
+        seatRepository.updateMaintenanceStatusByHallId(hallId, maintenanceStatusForHallStatus(hallStatus));
+    }
+
+    private static String maintenanceStatusForHallStatus(String hallStatus) {
+        if ("Active".equalsIgnoreCase(hallStatus)) {
+            return MaintenanceStatus.AVAILABLE.name();
+        }
+        return MaintenanceStatus.UNDER_MAINTENANCE.name();
+    }
+
+    private static List<Seat> buildInitialSeats(Hall hall, int rowCount, int columnCount, String hallStatus) {
         List<Seat> seats = new ArrayList<>(rowCount * columnCount);
+        String seatMaintenanceStatus = maintenanceStatusForHallStatus(hallStatus);
         for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
             String rowLabel = String.valueOf((char) ('A' + rowIndex));
             for (int seatNumber = 1; seatNumber <= columnCount; seatNumber++) {
@@ -319,7 +349,7 @@ public class HallServiceImpl implements HallService {
                 seat.setSeatRow(rowLabel);
                 seat.setSeatNumber(seatNumber);
                 seat.setType(SeatType.STANDARD.name());
-                seat.setMaintenanceStatus(MaintenanceStatus.AVAILABLE.name());
+                seat.setMaintenanceStatus(seatMaintenanceStatus);
                 seats.add(seat);
             }
         }

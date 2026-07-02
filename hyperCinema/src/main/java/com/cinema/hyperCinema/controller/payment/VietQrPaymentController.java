@@ -49,7 +49,7 @@ public class VietQrPaymentController {
         Booking booking = bookingService.findById(bookingId).orElse(null);
         if (booking == null || !canAccess(booking, principal)) {
             redirectAttributes.addFlashAttribute("bookingError", "Khong tim thay booking can thanh toan.");
-            return "redirect:/my/dashboard";
+            return redirectForDeniedAccess(principal);
         }
 
         String transferContent = transferContent(bookingId);
@@ -61,6 +61,10 @@ public class VietQrPaymentController {
         model.addAttribute("accountName", accountName);
         model.addAttribute("qrUrl", qrUrl(booking, transferContent));
         model.addAttribute("vietQrConfigured", isConfigured());
+        if (isStaff(principal) || isManager(principal)) {
+            addOperationalContext(principal, model);
+            return "staff/vietqr-payment";
+        }
         return "my/vietqr-payment";
     }
 
@@ -71,20 +75,102 @@ public class VietQrPaymentController {
         Booking booking = bookingService.findById(bookingId).orElse(null);
         if (booking == null || !canAccess(booking, principal)) {
             redirectAttributes.addFlashAttribute("bookingError", "Khong tim thay booking can xac nhan.");
-            return "redirect:/my/dashboard";
+            return redirectForDeniedAccess(principal);
         }
 
-        bookingPaymentService.confirmPayment(bookingId);
-        redirectAttributes.addFlashAttribute("bookingSuccess", "Da xac nhan thanh toan VietQR.");
-        return "redirect:/my/bookings";
+        try {
+            bookingPaymentService.confirmPayment(bookingId);
+            redirectAttributes.addFlashAttribute("bookingSuccess", "Da xac nhan thanh toan VietQR.");
+            return redirectAfterConfirm(principal, bookingId);
+        } catch (IllegalStateException ex) {
+            redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
+            return redirectAfterConfirmError(principal, booking);
+        }
     }
 
     private boolean canAccess(Booking booking, CustomUserDetails principal) {
         if (principal == null || principal.getUser() == null) {
             return false;
         }
+        if (isCustomer(principal)) {
+            return ownerMatches(booking, principal);
+        }
+        if (isStaff(principal) || isManager(principal)) {
+            return ownerMatches(booking, principal) || sameBranch(booking, principal);
+        }
+        return false;
+    }
+
+    private boolean ownerMatches(Booking booking, CustomUserDetails principal) {
         return booking.getUser() != null
                 && booking.getUser().getUserId().equals(principal.getUser().getUserId());
+    }
+
+    private boolean sameBranch(Booking booking, CustomUserDetails principal) {
+        if (principal.getUser().getBranch() == null
+                || booking.getShowtime() == null
+                || booking.getShowtime().getHall() == null
+                || booking.getShowtime().getHall().getBranch() == null) {
+            return false;
+        }
+        Integer userBranchId = principal.getUser().getBranch().getBranchId();
+        Integer bookingBranchId = booking.getShowtime().getHall().getBranch().getBranchId();
+        return userBranchId != null && userBranchId.equals(bookingBranchId);
+    }
+
+    private void addOperationalContext(CustomUserDetails principal, Model model) {
+        boolean managerContext = isManager(principal);
+        model.addAttribute("managerContext", managerContext);
+        model.addAttribute("staffName", principal.getUser().getFullName());
+        model.addAttribute("branchName", principal.getUser().getBranch() != null
+                ? principal.getUser().getBranch().getName()
+                : "Chua phan cong chi nhanh");
+        model.addAttribute("returnUrl", managerContext ? "/manager/bookings" : "/staff/booking");
+        model.addAttribute("bookingsUrl", managerContext ? "/manager/bookings" : "/staff/bookings");
+    }
+
+    private String redirectForDeniedAccess(CustomUserDetails principal) {
+        if (isStaff(principal)) {
+            return "redirect:/staff/booking";
+        }
+        if (isManager(principal)) {
+            return "redirect:/manager/bookings";
+        }
+        return "redirect:/my/dashboard";
+    }
+
+    private String redirectAfterConfirm(CustomUserDetails principal, Integer bookingId) {
+        if (isStaff(principal)) {
+            return "redirect:/staff/bookings/" + bookingId;
+        }
+        if (isManager(principal)) {
+            return "redirect:/manager/bookings/" + bookingId;
+        }
+        return "redirect:/my/bookings";
+    }
+
+    private String redirectAfterConfirmError(CustomUserDetails principal, Booking booking) {
+        if (isStaff(principal) || isManager(principal)) {
+            return "redirect:/payment/vietqr/" + booking.getBookingId();
+        }
+        return "redirect:/booking?showtimeId=" + booking.getShowtime().getShowtimeId();
+    }
+
+    private boolean isCustomer(CustomUserDetails principal) {
+        return hasRole(principal, "ROLE_CUSTOMER");
+    }
+
+    private boolean isStaff(CustomUserDetails principal) {
+        return hasRole(principal, "ROLE_STAFF");
+    }
+
+    private boolean isManager(CustomUserDetails principal) {
+        return hasRole(principal, "ROLE_MANAGER");
+    }
+
+    private boolean hasRole(CustomUserDetails principal, String role) {
+        return principal != null && principal.getAuthorities().stream()
+                .anyMatch(authority -> role.equals(authority.getAuthority()));
     }
 
     private boolean isConfigured() {

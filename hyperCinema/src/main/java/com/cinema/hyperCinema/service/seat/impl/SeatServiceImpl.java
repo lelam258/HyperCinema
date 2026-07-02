@@ -1,41 +1,30 @@
 package com.cinema.hyperCinema.service.seat.impl;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.cinema.hyperCinema.dto.admin.seat.request.SeatGenerateRequest;
+import com.cinema.hyperCinema.dto.admin.seat.request.SeatUpdateRequest;
+import com.cinema.hyperCinema.dto.admin.seat.response.SeatDetailView;
+import com.cinema.hyperCinema.dto.admin.seat.response.SeatListItem;
+import com.cinema.hyperCinema.dto.admin.seat.response.SeatMapView;
+import com.cinema.hyperCinema.dto.admin.seat.response.ShowtimeSeatView;
+import com.cinema.hyperCinema.exception.hall.HallNotFoundException;
+import com.cinema.hyperCinema.exception.hall.HallValidationException;
+import com.cinema.hyperCinema.exception.seat.SeatNotFoundException;
+import com.cinema.hyperCinema.exception.seat.SeatValidationException;
+import com.cinema.hyperCinema.model.*;
+import com.cinema.hyperCinema.repository.*;
+import com.cinema.hyperCinema.service.seat.SeatService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cinema.hyperCinema.dto.admin.seat.request.SeatBulkCreateRequest;
-import com.cinema.hyperCinema.dto.admin.seat.request.SeatCreateRequest;
-import com.cinema.hyperCinema.dto.admin.seat.request.SeatUpdateRequest;
-import com.cinema.hyperCinema.dto.admin.seat.response.BulkCreateResult;
-import com.cinema.hyperCinema.dto.admin.seat.response.SeatListItem;
-import com.cinema.hyperCinema.dto.admin.seat.response.SeatManagementContext;
-import com.cinema.hyperCinema.dto.admin.seat.response.SeatMapView;
-import com.cinema.hyperCinema.exception.seat.SeatNotFoundException;
-import com.cinema.hyperCinema.exception.seat.SeatValidationException;
-import com.cinema.hyperCinema.model.Branch;
-import com.cinema.hyperCinema.model.Hall;
-import com.cinema.hyperCinema.model.MaintenanceStatus;
-import com.cinema.hyperCinema.model.Role;
-import com.cinema.hyperCinema.model.Seat;
-import com.cinema.hyperCinema.model.SeatType;
-import com.cinema.hyperCinema.model.User;
-import com.cinema.hyperCinema.repository.HallRepository;
-import com.cinema.hyperCinema.repository.SeatRepository;
-import com.cinema.hyperCinema.repository.SeatReservationRepository;
-import com.cinema.hyperCinema.repository.TicketRepository;
-import com.cinema.hyperCinema.repository.UserRepository;
-import com.cinema.hyperCinema.service.seat.SeatService;
-
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -44,495 +33,342 @@ public class SeatServiceImpl implements SeatService {
 
     private final SeatRepository seatRepository;
     private final HallRepository hallRepository;
+    private final ShowtimeRepository showtimeRepository;
     private final TicketRepository ticketRepository;
     private final SeatReservationRepository seatReservationRepository;
     private final UserRepository userRepository;
 
-    // ── Public API ──────────────────────────────────────────────────────────────
+    private static final String SHOWTIME_CANCELLED = "CANCELLED";
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SeatDetailView> getSeatsByHall(Integer hallId, User actor) {
+        User current = loadActor(actor);
+        Hall hall = hallRepository.findById(hallId)
+                .orElseThrow(() -> new HallNotFoundException(hallId));
+        assertCanManageBranch(current, hallBranchId(hall));
+
+        return seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId).stream()
+                .map(this::toDetailView)
+                .toList();
+    }
 
     @Override
     @Transactional(readOnly = true)
     public SeatMapView getSeatMap(Integer hallId, User actor) {
         User current = loadActor(actor);
-        Hall hall = resolveHall(hallId);
-        assertCanManageHall(current, hall);
+        Hall hall = hallRepository.findById(hallId)
+                .orElseThrow(() -> new HallNotFoundException(hallId));
+        assertCanManageBranch(current, hallBranchId(hall));
 
-        List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId);
-        List<SeatListItem> items = seats.stream()
-                .map(this::toSeatListItem)
+        boolean hasActiveReference = showtimeRepository.existsByHall_HallId(hallId);
+        List<SeatListItem> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId).stream()
+                .map(seat -> toListItem(seat, hasActiveReference))
                 .toList();
 
-        Branch branch = hall.getBranch();
         return SeatMapView.builder()
                 .hallId(hall.getHallId())
                 .hallName(hall.getName())
-                .branchName(branch == null ? "" : branch.getName())
-                .seats(items)
-                .totalSeats(items.size())
-                .empty(items.isEmpty())
+                .branchName(hall.getBranch() != null ? hall.getBranch().getName() : "")
+                .seats(seats)
+                .totalSeats(seats.size())
+                .empty(seats.isEmpty())
                 .build();
     }
 
     @Override
-    public SeatListItem create(Integer hallId, SeatCreateRequest request, User actor) {
-        User current = loadActor(actor);
-        Hall hall = resolveHall(hallId);
-        assertCanManageHall(current, hall);
-
-        // Validate seatRow
-        String seatRow = request.getSeatRow();
-        if (seatRow == null || seatRow.isBlank()) {
-            throw new SeatValidationException("seat.row.required");
-        }
-        if (seatRow.length() > 5) {
-            throw new SeatValidationException("seat.row.too_long");
+    @Transactional(readOnly = true)
+    public List<ShowtimeSeatView> getSeatsForShowtime(Integer showtimeId) {
+        Showtime showtime = showtimeRepository.findById(showtimeId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy suất chiếu ID: " + showtimeId));
+        if (SHOWTIME_CANCELLED.equals(showtime.getStatus())) {
+            throw new IllegalArgumentException("Không tìm thấy suất chiếu ID: " + showtimeId);
         }
 
-        // Validate seatNumber
-        Integer seatNumber = request.getSeatNumber();
-        if (seatNumber == null || seatNumber < 1) {
-            throw new SeatValidationException("seat.number.invalid");
-        }
+        Hall hall = showtime.getHall();
+        List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hall.getHallId());
 
-        // Validate type
-        String type = request.getType();
-        if (type == null || type.isBlank() || !isValidSeatType(type)) {
-            throw new SeatValidationException("seat.type.invalid");
-        }
+        // Tìm các ghế đã đặt
+        List<Ticket> activeTickets = ticketRepository.findByBooking_Showtime_ShowtimeIdAndBooking_StatusNot(showtimeId, "Cancelled");
+        Set<Integer> bookedSeatIds = activeTickets.stream()
+                .map(ticket -> ticket.getSeat().getSeatId())
+                .collect(Collectors.toSet());
 
-        // Validate maintenanceStatus (optional)
-        String maintenanceStatus = request.getMaintenanceStatus();
-        if (maintenanceStatus != null && !maintenanceStatus.isBlank()) {
-            if (!isValidMaintenanceStatus(maintenanceStatus)) {
-                throw new SeatValidationException("seat.maintenance_status.invalid");
+        // Tìm các ghế đang được giữ tạm thời
+        List<SeatReservation> activeReservations = seatReservationRepository.findByShowtime_ShowtimeIdAndExpiredAtAfter(showtimeId, LocalDateTime.now());
+        Set<Integer> reservedSeatIds = activeReservations.stream()
+                .map(res -> res.getSeat().getSeatId())
+                .collect(Collectors.toSet());
+
+        Integer basePrice = showtime.getPrice();
+
+        return seats.stream().map(seat -> {
+            String status = "AVAILABLE";
+            if (bookedSeatIds.contains(seat.getSeatId())) {
+                status = "BOOKED";
+            } else if (reservedSeatIds.contains(seat.getSeatId())) {
+                status = "RESERVED";
             }
-        } else {
-            maintenanceStatus = MaintenanceStatus.AVAILABLE.name();
-        }
 
-        // Check duplicate
-        if (seatRepository.existsByHall_HallIdAndSeatRowAndSeatNumber(hallId, seatRow, seatNumber)) {
-            throw new SeatValidationException("seat.duplicate");
-        }
+            Integer finalPrice = basePrice;
+            if ("VIP".equalsIgnoreCase(seat.getType())) {
+                finalPrice += 20000; // Phụ thu ghế VIP
+            } else if ("Double".equalsIgnoreCase(seat.getType())) {
+                finalPrice = basePrice * 2; // Ghế đôi tính giá gấp đôi
+            }
 
-        // Create and save seat
-        Seat seat = new Seat();
-        seat.setHall(hall);
-        seat.setSeatRow(seatRow);
-        seat.setSeatNumber(seatNumber);
-        seat.setType(type.toUpperCase());
-        seat.setMaintenanceStatus(maintenanceStatus.toUpperCase());
-
-        Seat saved = seatRepository.save(seat);
-        return toSeatListItem(saved);
+            return ShowtimeSeatView.builder()
+                    .seatId(seat.getSeatId())
+                    .seatRow(seat.getSeatRow())
+                    .seatNumber(seat.getSeatNumber())
+                    .type(seat.getType())
+                    .status(status)
+                    .finalPrice(finalPrice)
+                    .build();
+        }).toList();
     }
 
     @Override
-    public BulkCreateResult bulkCreate(Integer hallId, SeatBulkCreateRequest request, User actor) {
+    public void generateSeats(Integer hallId, SeatGenerateRequest request, User actor) {
         User current = loadActor(actor);
-        Hall hall = resolveHall(hallId);
-        assertCanManageHall(current, hall);
+        Hall hall = hallRepository.findById(hallId)
+                .orElseThrow(() -> new HallNotFoundException(hallId));
+        assertCanManageBranch(current, hallBranchId(hall));
 
-        List<SeatBulkCreateRequest.RowSpec> rows = request.getRows();
-
-        // Validate each RowSpec
-        for (SeatBulkCreateRequest.RowSpec row : rows) {
-            if (row.getRowLabel() == null || row.getRowLabel().isBlank()) {
-                throw new SeatValidationException("seat.row.required");
-            }
-            if (row.getRowLabel().length() > 5) {
-                throw new SeatValidationException("seat.row.too_long");
-            }
-            if (row.getSeatCount() == null || row.getSeatCount() < 1) {
-                throw new SeatValidationException("seat.number.invalid");
-            }
+        // Kiểm tra xem đã có suất chiếu nào liên quan chưa (nếu có, không cho đổi sơ đồ ghế)
+        if (showtimeRepository.existsByHall_HallId(hallId)) {
+            throw new SeatValidationException("seat.cannot_generate_with_showtimes");
         }
 
-        // Determine type: use provided value if valid, else default to STANDARD
-        String type;
-        if (request.getType() != null && !request.getType().isBlank()) {
-            if (!isValidSeatType(request.getType())) {
-                throw new SeatValidationException("seat.type.invalid");
-            }
-            type = request.getType().toUpperCase();
-        } else {
-            type = SeatType.STANDARD.name();
+        // Reuse existing seats where possible; seats outside the new layout are moved to maintenance.
+        char startRow = request.getRowStart().charAt(0);
+        char endRow = request.getRowEnd().charAt(0);
+
+        if (startRow > endRow) {
+            throw new SeatValidationException("seat.generate.invalid_row_range");
         }
 
-        // Determine maintenanceStatus: use provided value if valid, else default to AVAILABLE
-        String maintenanceStatus;
-        if (request.getMaintenanceStatus() != null && !request.getMaintenanceStatus().isBlank()) {
-            if (!isValidMaintenanceStatus(request.getMaintenanceStatus())) {
-                throw new SeatValidationException("seat.maintenance_status.invalid");
-            }
-            maintenanceStatus = request.getMaintenanceStatus().toUpperCase();
-        } else {
-            maintenanceStatus = MaintenanceStatus.AVAILABLE.name();
+        Set<String> vipRows = new HashSet<>(request.getVipRows() != null ? request.getVipRows() : List.of());
+        Set<String> doubleRows = new HashSet<>(request.getDoubleRows() != null ? request.getDoubleRows() : List.of());
+        List<Seat> existingSeats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId);
+        Map<String, Seat> existingByPosition = new HashMap<>();
+        for (Seat existingSeat : existingSeats) {
+            existingByPosition.put(seatKey(existingSeat.getSeatRow(), existingSeat.getSeatNumber()), existingSeat);
         }
+        Set<String> activeLayoutKeys = new HashSet<>();
 
-        List<Integer> columnAislesAfter = parsePositiveIntegerList(request.getColumnAislesAfter());
+        int totalCapacity = 0;
+        for (char r = startRow; r <= endRow; r++) {
+            String rowStr = String.valueOf(r);
+            if (doubleRows.contains(rowStr)) {
+                int totalCustomers = request.getSeatsPerRow();
+                int doubleSeatsCount = totalCustomers / 2;
+                int col = 1;
 
-        // Generate all (rowLabel, seatNumber) pairs and check internal duplicates
-        List<String> keys = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
-
-        for (SeatBulkCreateRequest.RowSpec row : rows) {
-            String rowLabel = row.getRowLabel().trim();
-            for (int num = 1; num <= row.getSeatCount(); num++) {
-                int seatNumber = displaySeatNumber(num, columnAislesAfter);
-                String key = rowLabel + "-" + seatNumber;
-                // Check internal duplicates
-                if (!seen.add(key)) {
-                    throw new SeatValidationException("seat.bulk.internal_duplicate");
+                for (int i = 0; i < doubleSeatsCount; i++) {
+                    upsertSeat(hall, existingByPosition, activeLayoutKeys, rowStr, col++, "Double");
+                    totalCapacity += 2;
                 }
-                keys.add(key);
+            } else {
+                String seatType = vipRows.contains(rowStr) ? "VIP" : "Standard";
+                for (int col = 1; col <= request.getSeatsPerRow(); col++) {
+                    upsertSeat(hall, existingByPosition, activeLayoutKeys, rowStr, col, seatType);
+                    totalCapacity += 1;
+                }
             }
         }
 
-        // Check DB duplicates via batch query
-        if (!keys.isEmpty()) {
-            List<Seat> existing = seatRepository.findByHallIdAndRowNumberKeys(hallId, keys);
-            if (!existing.isEmpty()) {
-                throw new SeatValidationException("seat.bulk.conflict");
+        for (Seat existingSeat : existingSeats) {
+            if (!activeLayoutKeys.contains(seatKey(existingSeat.getSeatRow(), existingSeat.getSeatNumber()))) {
+                existingSeat.setMaintenanceStatus(MaintenanceStatus.UNDER_MAINTENANCE.name());
+                seatRepository.save(existingSeat);
             }
         }
 
-        // Create Seat entities for all pairs
-        List<Seat> seats = new ArrayList<>();
-        for (SeatBulkCreateRequest.RowSpec row : rows) {
-            String rowLabel = row.getRowLabel().trim();
-            for (int num = 1; num <= row.getSeatCount(); num++) {
-                int seatNumber = displaySeatNumber(num, columnAislesAfter);
-                Seat seat = new Seat();
-                seat.setHall(hall);
-                seat.setSeatRow(rowLabel);
-                seat.setSeatNumber(seatNumber);
-                seat.setType(type);
-                seat.setMaintenanceStatus(maintenanceStatus);
-                seats.add(seat);
-            }
-        }
-
-        // Save all
-        List<Seat> saved = seatRepository.saveAll(seats);
-
-        return BulkCreateResult.builder()
-                .createdCount(saved.size())
-                .hallId(hallId)
-                .build();
+        // Cập nhật sức chứa thực tế cho phòng chiếu
+        hall.setCapacity(totalCapacity);
+        hallRepository.save(hall);
     }
 
     @Override
-    public BulkCreateResult addRow(Integer hallId, String type, User actor) {
+    public void updateSeat(Integer seatId, SeatUpdateRequest request, User actor) {
         User current = loadActor(actor);
-        Hall hall = resolveHall(hallId);
-        assertCanManageHall(current, hall);
-
-        String seatType = seatTypeOrDefault(type);
-        List<Seat> existingSeats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId);
-        if (existingSeats.isEmpty()) {
-            throw new SeatValidationException("seat.layout.empty");
-        }
-
-        String nextRow = nextRowLabel(existingSeats);
-        List<Integer> seatNumbers = existingSeats.stream()
-                .map(Seat::getSeatNumber)
-                .filter(number -> number != null && number > 0)
-                .distinct()
-                .sorted()
-                .toList();
-        if (seatNumbers.isEmpty()) {
-            throw new SeatValidationException("seat.layout.empty");
-        }
-
-        List<Seat> newSeats = new ArrayList<>();
-        for (Integer seatNumber : seatNumbers) {
-            Seat seat = new Seat();
-            seat.setHall(hall);
-            seat.setSeatRow(nextRow);
-            seat.setSeatNumber(seatNumber);
-            seat.setType(seatType);
-            seat.setMaintenanceStatus(MaintenanceStatus.AVAILABLE.name());
-            newSeats.add(seat);
-        }
-
-        List<Seat> saved = seatRepository.saveAll(newSeats);
-        return BulkCreateResult.builder()
-                .createdCount(saved.size())
-                .hallId(hallId)
-                .build();
-    }
-
-    @Override
-    public BulkCreateResult addColumn(Integer hallId, String type, User actor) {
-        User current = loadActor(actor);
-        Hall hall = resolveHall(hallId);
-        assertCanManageHall(current, hall);
-
-        String seatType = seatTypeOrDefault(type);
-        List<Seat> existingSeats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId);
-        if (existingSeats.isEmpty()) {
-            throw new SeatValidationException("seat.layout.empty");
-        }
-
-        Map<String, Integer> maxNumberByRow = new LinkedHashMap<>();
-        for (Seat seat : existingSeats) {
-            maxNumberByRow.merge(seat.getSeatRow(), seat.getSeatNumber(), Math::max);
-        }
-
-        List<Seat> newSeats = new ArrayList<>();
-        for (Map.Entry<String, Integer> entry : maxNumberByRow.entrySet()) {
-            Seat seat = new Seat();
-            seat.setHall(hall);
-            seat.setSeatRow(entry.getKey());
-            seat.setSeatNumber(entry.getValue() + 1);
-            seat.setType(seatType);
-            seat.setMaintenanceStatus(MaintenanceStatus.AVAILABLE.name());
-            newSeats.add(seat);
-        }
-
-        List<Seat> saved = seatRepository.saveAll(newSeats);
-        return BulkCreateResult.builder()
-                .createdCount(saved.size())
-                .hallId(hallId)
-                .build();
-    }
-
-    @Override
-    public void insertColumnAisle(Integer hallId, Integer afterColumn, User actor) {
-        User current = loadActor(actor);
-        Hall hall = resolveHall(hallId);
-        assertCanManageHall(current, hall);
-
-        if (afterColumn == null || afterColumn < 1) {
-            throw new SeatValidationException("seat.aisle.invalid");
-        }
-
-        List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId).stream()
-                .filter(seat -> seat.getSeatNumber() != null && seat.getSeatNumber() > afterColumn)
-                .sorted(Comparator.comparing(Seat::getSeatNumber).reversed())
-                .toList();
-
-        for (Seat seat : seats) {
-            seat.setSeatNumber(seat.getSeatNumber() + 1);
-            seatRepository.saveAndFlush(seat);
-        }
-    }
-
-    @Override
-    public void insertRowAisle(Integer hallId, String afterRow, User actor) {
-        User current = loadActor(actor);
-        Hall hall = resolveHall(hallId);
-        assertCanManageHall(current, hall);
-
-        if (afterRow == null || afterRow.trim().length() != 1) {
-            throw new SeatValidationException("seat.aisle.invalid");
-        }
-
-        char after = Character.toUpperCase(afterRow.trim().charAt(0));
-        if (after < 'A' || after >= 'Z') {
-            throw new SeatValidationException("seat.aisle.invalid");
-        }
-
-        List<Seat> existingSeats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId);
-        Map<Character, List<Seat>> seatsByRow = new LinkedHashMap<>();
-        for (Seat seat : existingSeats) {
-            String row = seat.getSeatRow();
-            if (row == null || row.trim().length() != 1) {
-                throw new SeatValidationException("seat.aisle.invalid");
-            }
-            char label = Character.toUpperCase(row.trim().charAt(0));
-            if (label > after) {
-                seatsByRow.computeIfAbsent(label, ignored -> new ArrayList<>()).add(seat);
-            }
-        }
-
-        List<Character> rowLabels = new ArrayList<>(seatsByRow.keySet());
-        rowLabels.sort(Comparator.reverseOrder());
-        for (Character label : rowLabels) {
-            char next = (char) (label + 1);
-            if (next > 'Z') {
-                throw new SeatValidationException("seat.aisle.invalid");
-            }
-            for (Seat seat : seatsByRow.get(label)) {
-                seat.setSeatRow(String.valueOf(next));
-            }
-            seatRepository.saveAllAndFlush(seatsByRow.get(label));
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public SeatListItem findById(Integer seatId, User actor) {
         Seat seat = seatRepository.findById(seatId)
                 .orElseThrow(() -> new SeatNotFoundException(seatId));
+        assertCanManageBranch(current, hallBranchId(seat.getHall()));
 
-        User current = loadActor(actor);
-        assertCanManageHall(current, seat.getHall());
+        if (showtimeRepository.existsByHall_HallId(seat.getHall().getHallId())) {
+            throw new SeatValidationException("seat.cannot_modify_with_showtimes");
+        }
 
-        return toSeatListItem(seat);
+        String row = request.getSeatRow() != null ? request.getSeatRow().trim().toUpperCase() : seat.getSeatRow();
+        Integer number = request.getSeatNumber() != null ? request.getSeatNumber() : seat.getSeatNumber();
+        if (!row.equalsIgnoreCase(seat.getSeatRow()) || !number.equals(seat.getSeatNumber())) {
+            boolean duplicate = seatRepository.existsByHall_HallIdAndSeatRowAndSeatNumberAndSeatIdNot(
+                    seat.getHall().getHallId(), row, number, seatId);
+            if (duplicate) {
+                throw new SeatValidationException("seat.duplicate");
+            }
+        }
+
+        seat.setSeatRow(row);
+        seat.setSeatNumber(number);
+        seat.setType(request.getType());
+        if (request.getMaintenanceStatus() != null && !request.getMaintenanceStatus().isBlank()) {
+            seat.setMaintenanceStatus(normalizeMaintenanceStatus(request.getMaintenanceStatus()));
+        }
+        seatRepository.save(seat);
     }
 
     @Override
-    public SeatListItem update(Integer seatId, SeatUpdateRequest request, User actor) {
-        // 1. Load seat
+    public void updateSeatMaintenance(Integer seatId, String maintenanceStatus, User actor) {
+        User current = loadActor(actor);
         Seat seat = seatRepository.findById(seatId)
                 .orElseThrow(() -> new SeatNotFoundException(seatId));
+        assertCanManageBranch(current, hallBranchId(seat.getHall()));
 
-        // 2. Auth check
+        seat.setMaintenanceStatus(normalizeMaintenanceStatus(maintenanceStatus));
+        seatRepository.save(seat);
+    }
+
+    @Override
+    public void deleteSeat(Integer seatId, User actor) {
         User current = loadActor(actor);
-        assertCanManageHall(current, seat.getHall());
+        Seat seat = seatRepository.findById(seatId)
+                .orElseThrow(() -> new SeatNotFoundException(seatId));
+        assertCanManageBranch(current, hallBranchId(seat.getHall()));
 
-        // 3. Validate fields
-        String seatRow = request.getSeatRow();
-        if (seatRow == null || seatRow.isBlank()) {
-            throw new SeatValidationException("seat.row.required");
-        }
-        if (seatRow.length() > 5) {
-            throw new SeatValidationException("seat.row.too_long");
+        if (showtimeRepository.existsByHall_HallId(seat.getHall().getHallId())) {
+            throw new SeatValidationException("seat.cannot_modify_with_showtimes");
         }
 
-        Integer seatNumber = request.getSeatNumber();
-        if (seatNumber == null || seatNumber < 1) {
-            throw new SeatValidationException("seat.number.invalid");
-        }
-
-        String type = request.getType();
-        if (type == null || type.isBlank() || !isValidSeatType(type)) {
-            throw new SeatValidationException("seat.type.invalid");
-        }
-
-        String maintenanceStatus = request.getMaintenanceStatus();
-        if (maintenanceStatus == null || maintenanceStatus.isBlank() || !isValidMaintenanceStatus(maintenanceStatus)) {
-            throw new SeatValidationException("seat.maintenance_status.invalid");
-        }
-
-        // 4. Check duplicate excluding self
         Hall hall = seat.getHall();
-        if (seatRepository.existsByHall_HallIdAndSeatRowAndSeatNumberAndSeatIdNot(
-                hall.getHallId(), seatRow, seatNumber, seatId)) {
+        int capacityChange = "Double".equalsIgnoreCase(seat.getType()) ? 2 : 1;
+        seat.setMaintenanceStatus(MaintenanceStatus.UNDER_MAINTENANCE.name());
+        seatRepository.save(seat);
+
+        // Giảm sức chứa thực tế
+        hall.setCapacity(Math.max(0, hall.getCapacity() - capacityChange));
+        hallRepository.save(hall);
+    }
+
+    @Override
+    public void addSingleSeat(Integer hallId, SeatUpdateRequest request, User actor) {
+        User current = loadActor(actor);
+        Hall hall = hallRepository.findById(hallId)
+                .orElseThrow(() -> new HallNotFoundException(hallId));
+        assertCanManageBranch(current, hallBranchId(hall));
+
+        if (showtimeRepository.existsByHall_HallId(hallId)) {
+            throw new SeatValidationException("seat.cannot_modify_with_showtimes");
+        }
+
+        String rowStr = request.getSeatRow().toUpperCase().trim();
+        Integer num = request.getSeatNumber();
+
+        Optional<Seat> existingSeat = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId).stream()
+                .filter(existing -> rowStr.equalsIgnoreCase(existing.getSeatRow())
+                        && num.equals(existing.getSeatNumber()))
+                .findFirst();
+        if (existingSeat.isPresent()
+                && !MaintenanceStatus.UNDER_MAINTENANCE.name().equals(existingSeat.get().getMaintenanceStatus())) {
             throw new SeatValidationException("seat.duplicate");
         }
 
-        // 5. Update fields
-        seat.setSeatRow(seatRow);
-        seat.setSeatNumber(seatNumber);
-        seat.setType(type.toUpperCase());
-        seat.setMaintenanceStatus(maintenanceStatus.toUpperCase());
+        Seat seat = existingSeat.orElseGet(() -> {
+                    Seat newSeat = new Seat();
+                    newSeat.setHall(hall);
+                    newSeat.setSeatRow(rowStr);
+                    newSeat.setSeatNumber(num);
+                    return newSeat;
+                });
+        seat.setType(request.getType());
+        seat.setMaintenanceStatus(MaintenanceStatus.AVAILABLE.name());
+        seatRepository.save(seat);
 
-        // 6. Persist
-        Seat saved = seatRepository.save(seat);
-
-        // 7. Return DTO
-        return toSeatListItem(saved);
+        // Tăng sức chứa thực tế
+        int capacityChange = "Double".equalsIgnoreCase(request.getType()) ? 2 : 1;
+        hall.setCapacity(hall.getCapacity() + capacityChange);
+        hallRepository.save(hall);
     }
 
     @Override
-    public void delete(Integer seatId, User actor) {
-        // 1. Load seat
-        Seat seat = seatRepository.findById(seatId)
-                .orElseThrow(() -> new SeatNotFoundException(seatId));
-
-        // 2. Auth check
+    public void clearAllSeats(Integer hallId, User actor) {
         User current = loadActor(actor);
-        assertCanManageHall(current, seat.getHall());
+        Hall hall = hallRepository.findById(hallId)
+                .orElseThrow(() -> new HallNotFoundException(hallId));
+        assertCanManageBranch(current, hallBranchId(hall));
 
-        // 3. Check active references
-        if (hasActiveReference(seatId)) {
-            throw new SeatValidationException("seat.has_active_reference");
+        if (showtimeRepository.existsByHall_HallId(hallId)) {
+            throw new SeatValidationException("seat.cannot_modify_with_showtimes");
         }
 
-        // 4. Delete
-        seatRepository.delete(seat);
+        seatRepository.updateMaintenanceStatusByHallId(hallId, MaintenanceStatus.UNDER_MAINTENANCE.name());
+        hall.setCapacity(0);
+        hallRepository.save(hall);
     }
 
-    @Override
-    public SeatListItem toggleMaintenance(Integer seatId, String newStatus, User actor) {
-        // 1. Load seat
-        Seat seat = seatRepository.findById(seatId)
-                .orElseThrow(() -> new SeatNotFoundException(seatId));
-
-        // 2. Auth check
-        User current = loadActor(actor);
-        assertCanManageHall(current, seat.getHall());
-
-        // 3. Validate newStatus
-        if (newStatus == null || newStatus.isBlank() || !isValidMaintenanceStatus(newStatus)) {
-            throw new SeatValidationException("seat.maintenance_status.invalid");
+    private void upsertSeat(Hall hall,
+                            Map<String, Seat> existingByPosition,
+                            Set<String> activeLayoutKeys,
+                            String row,
+                            Integer number,
+                            String type) {
+        String key = seatKey(row, number);
+        activeLayoutKeys.add(key);
+        Seat seat = existingByPosition.get(key);
+        if (seat == null) {
+            seat = new Seat();
+            seat.setHall(hall);
+            seat.setSeatRow(row);
+            seat.setSeatNumber(number);
         }
-
-        // 4. Update maintenance status
-        seat.setMaintenanceStatus(newStatus.toUpperCase());
-
-        // 5. Persist
-        Seat saved = seatRepository.save(seat);
-
-        // 6. Return DTO
-        return toSeatListItem(saved);
+        seat.setType(type);
+        seat.setMaintenanceStatus(MaintenanceStatus.AVAILABLE.name());
+        seatRepository.save(seat);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public SeatManagementContext managementContext(Integer hallId, User actor) {
-        User current = loadActor(actor);
-        Hall hall = resolveHall(hallId);
-        assertCanManageHall(current, hall);
-
-        Branch branch = hall.getBranch();
-        return SeatManagementContext.builder()
-                .admin(isAdmin(current))
-                .sidebar(sidebarFor(current))
-                .hallId(hall.getHallId())
-                .hallName(hall.getName())
-                .branchName(branch == null ? "" : branch.getName())
-                .build();
+    private static String seatKey(String row, Integer number) {
+        return row + "-" + number;
     }
 
-    // ── Internal helpers ────────────────────────────────────────────────────────
+    private static String normalizeMaintenanceStatus(String status) {
+        if (MaintenanceStatus.UNDER_MAINTENANCE.name().equalsIgnoreCase(status)) {
+            return MaintenanceStatus.UNDER_MAINTENANCE.name();
+        }
+        if (MaintenanceStatus.AVAILABLE.name().equalsIgnoreCase(status)) {
+            return MaintenanceStatus.AVAILABLE.name();
+        }
+        throw new SeatValidationException("seat.maintenance_status.invalid");
+    }
 
     private User loadActor(User actor) {
         if (actor == null || actor.getUserId() == null) {
-            throw new SeatValidationException("seat.access.denied");
+            throw new HallValidationException("hall.access.denied");
         }
         return userRepository.findById(actor.getUserId())
-                .orElseThrow(() -> new SeatValidationException("seat.access.denied"));
+                .orElseThrow(() -> new HallValidationException("hall.access.denied"));
     }
 
-    private void assertCanManageHall(User actor, Hall hall) {
+    private void assertCanManageBranch(User actor, Integer branchId) {
         if (isAdmin(actor)) {
             return;
         }
-        Integer hallBranchId = hallBranchId(hall);
-        Integer actorBranchId = actorBranchId(actor);
-        if (actorBranchId == null || !actorBranchId.equals(hallBranchId)) {
-            throw new SeatValidationException("seat.access.denied");
+        Integer scopedBranchId = forcedBranchId(actor);
+        if (scopedBranchId == null || !scopedBranchId.equals(branchId)) {
+            throw new HallValidationException("hall.branch.scope_denied");
         }
     }
 
-    private Hall resolveHall(Integer hallId) {
-        return hallRepository.findById(hallId)
-                .orElseThrow(() -> new SeatNotFoundException(hallId));
-    }
-
-    private SeatListItem toSeatListItem(Seat seat) {
-        boolean hasActive = hasActiveReference(seat.getSeatId());
-        return SeatListItem.builder()
-                .seatId(seat.getSeatId())
-                .seatRow(seat.getSeatRow())
-                .seatNumber(seat.getSeatNumber())
-                .type(seat.getType())
-                .maintenanceStatus(seat.getMaintenanceStatus())
-                .hasActiveReference(hasActive)
-                .build();
-    }
-
-    private boolean hasActiveReference(Integer seatId) {
-        boolean hasTicket = ticketRepository.existsBySeat_SeatIdAndStatusNot(seatId, "CANCELLED");
-        if (hasTicket) {
-            return true;
+    private Integer forcedBranchId(User actor) {
+        if (isManager(actor) || isBranchManager(actor)) {
+            Branch branch = actor.getBranch();
+            return branch == null ? null : branch.getBranchId();
         }
-        return seatReservationRepository.existsBySeat_SeatIdAndStatusAndExpiredAtAfter(
-                seatId, "ACTIVE", LocalDateTime.now());
+        if (isAdmin(actor)) {
+            return null;
+        }
+        throw new HallValidationException("hall.access.denied");
     }
 
     private static Integer hallBranchId(Hall hall) {
@@ -540,9 +376,25 @@ public class SeatServiceImpl implements SeatService {
         return branch == null ? null : branch.getBranchId();
     }
 
-    private static Integer actorBranchId(User actor) {
-        Branch branch = actor.getBranch();
-        return branch == null ? null : branch.getBranchId();
+    private SeatDetailView toDetailView(Seat seat) {
+        return SeatDetailView.builder()
+                .seatId(seat.getSeatId())
+                .hallId(seat.getHall().getHallId())
+                .seatRow(seat.getSeatRow())
+                .seatNumber(seat.getSeatNumber())
+                .type(seat.getType())
+                .build();
+    }
+
+    private SeatListItem toListItem(Seat seat, boolean hasActiveReference) {
+        return SeatListItem.builder()
+                .seatId(seat.getSeatId())
+                .seatRow(seat.getSeatRow())
+                .seatNumber(seat.getSeatNumber())
+                .type(seat.getType())
+                .maintenanceStatus(seat.getMaintenanceStatus())
+                .hasActiveReference(hasActiveReference)
+                .build();
     }
 
     private static boolean isAdmin(User user) {
@@ -571,103 +423,5 @@ public class SeatServiceImpl implements SeatService {
             normalized = normalized.substring(5);
         }
         return normalized.replaceAll("[\\s_]+", "").toUpperCase();
-    }
-
-    private static String sidebarFor(User user) {
-        if (isAdmin(user)) {
-            return "admin";
-        }
-        if (isManager(user) || isBranchManager(user)) {
-            return "manager";
-        }
-        return "branch";
-    }
-
-    private static boolean isValidSeatType(String type) {
-        try {
-            SeatType.valueOf(type.toUpperCase());
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
-    private static boolean isValidMaintenanceStatus(String status) {
-        try {
-            MaintenanceStatus.valueOf(status.toUpperCase());
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
-    private static String seatTypeOrDefault(String type) {
-        if (type == null || type.isBlank()) {
-            return SeatType.STANDARD.name();
-        }
-        if (!isValidSeatType(type)) {
-            throw new SeatValidationException("seat.type.invalid");
-        }
-        return type.toUpperCase();
-    }
-
-    private static String nextRowLabel(List<Seat> existingSeats) {
-        char maxRow = 0;
-        for (Seat seat : existingSeats) {
-            String row = seat.getSeatRow();
-            if (row == null || row.trim().length() != 1) {
-                throw new SeatValidationException("seat.row.invalid");
-            }
-            char label = Character.toUpperCase(row.trim().charAt(0));
-            if (label < 'A' || label > 'Z') {
-                throw new SeatValidationException("seat.row.invalid");
-            }
-            if (label > maxRow) {
-                maxRow = label;
-            }
-        }
-        if (maxRow == 0) {
-            return "A";
-        }
-        if (maxRow >= 'Z') {
-            throw new SeatValidationException("seat.row.too_long");
-        }
-        return String.valueOf((char) (maxRow + 1));
-    }
-
-    private static List<Integer> parsePositiveIntegerList(String value) {
-        List<Integer> result = new ArrayList<>();
-        if (value == null || value.isBlank()) {
-            return result;
-        }
-        String[] parts = value.split(",");
-        Set<Integer> seen = new HashSet<>();
-        for (String part : parts) {
-            String trimmed = part.trim();
-            if (trimmed.isEmpty()) {
-                continue;
-            }
-            try {
-                int number = Integer.parseInt(trimmed);
-                if (number < 1 || !seen.add(number)) {
-                    throw new SeatValidationException("seat.aisle.invalid");
-                }
-                result.add(number);
-            } catch (NumberFormatException ex) {
-                throw new SeatValidationException("seat.aisle.invalid");
-            }
-        }
-        result.sort(Integer::compareTo);
-        return result;
-    }
-
-    private static int displaySeatNumber(int logicalSeatNumber, List<Integer> columnAislesAfter) {
-        int offset = 0;
-        for (Integer aisleAfter : columnAislesAfter) {
-            if (logicalSeatNumber > aisleAfter) {
-                offset++;
-            }
-        }
-        return logicalSeatNumber + offset;
     }
 }

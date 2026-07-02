@@ -35,5 +35,13 @@ public class Showtime {
 
     @Column(nullable = false)
     private Integer price;
+
+    @Column(nullable = false, length = 50)
+    private String status;
+
+    @PrePersist
+    protected void onCreate() {
+        if (status == null) status = "ACTIVE";
+    }
 }
 

@@ -69,6 +69,8 @@ public class SecurityConfig {
                         "/admin/halls/",
                         "/admin/halls/new",
                         "/admin/halls/*",
+                        "/admin/halls/*/seats",
+                        "/admin/halls/*/seats/**",
                         "/admin/halls/*/edit").hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
                 .requestMatchers(HttpMethod.POST,
                         "/admin/halls",
@@ -105,6 +107,8 @@ public class SecurityConfig {
                         .hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
                 // Catch-all for /admin/**
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/manager/bookings", "/manager/bookings/**").hasRole("MANAGER")
+                .requestMatchers("/staff/bookings", "/staff/bookings/**").hasRole("STAFF")
                 .requestMatchers("/manager/**").hasRole("MANAGER")
                 .requestMatchers("/branch/**").hasAnyRole("BRANCH_MANAGER", "BRANCHMANAGER")
                 .requestMatchers("/staff/**").hasRole("STAFF")

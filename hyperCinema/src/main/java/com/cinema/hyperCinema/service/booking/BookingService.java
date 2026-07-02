@@ -1,11 +1,11 @@
 package com.cinema.hyperCinema.service.booking;
 
-import java.util.List;
-import java.util.Optional;
-
 import com.cinema.hyperCinema.model.Booking;
 import com.cinema.hyperCinema.model.Showtime;
 import com.cinema.hyperCinema.model.User;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface BookingService {
 

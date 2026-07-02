@@ -37,6 +37,8 @@ public class DataInitializer implements CommandLineRunner {
     private final TicketRepository ticketRepository;
     private final PaymentRepository paymentRepository;
     private final FoodItemRepository foodItemRepository;
+    private final FoodOrderRepository foodOrderRepository;
+    private final FoodOrderItemRepository foodOrderItemRepository;
     private final AuditLogRepository auditLogRepository;
     private final JdbcTemplate jdbcTemplate;
     private final PasswordEncoder passwordEncoder;
@@ -58,6 +60,8 @@ public class DataInitializer implements CommandLineRunner {
             TicketRepository ticketRepository,
             PaymentRepository paymentRepository,
             FoodItemRepository foodItemRepository,
+            FoodOrderRepository foodOrderRepository,
+            FoodOrderItemRepository foodOrderItemRepository,
             AuditLogRepository auditLogRepository,
             JdbcTemplate jdbcTemplate,
             PasswordEncoder passwordEncoder) {
@@ -75,6 +79,8 @@ public class DataInitializer implements CommandLineRunner {
         this.ticketRepository = ticketRepository;
         this.paymentRepository = paymentRepository;
         this.foodItemRepository = foodItemRepository;
+        this.foodOrderRepository = foodOrderRepository;
+        this.foodOrderItemRepository = foodOrderItemRepository;
         this.auditLogRepository = auditLogRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.passwordEncoder = passwordEncoder;
@@ -103,6 +109,8 @@ public class DataInitializer implements CommandLineRunner {
         List<Movie> movies = ensureMovies(languages);
         ensureMovieGenres(movies, currentGenres);
         ensureShowtimes(movies, hallRepository.findAll());
+        ensureSeedBranchAssignments();
+        ensureBookingsAndPayments();
 
         System.out.println("=== DataInitializer: Hoàn tất seed dữ liệu mẫu ===");
     }
@@ -354,6 +362,74 @@ public class DataInitializer implements CommandLineRunner {
         userRepository.save(users.get(10));
     }
 
+    private void ensureSeedBranchAssignments() {
+        List<Branch> branches = branchRepository.findAll().stream()
+                .sorted((left, right) -> left.getBranchId().compareTo(right.getBranchId()))
+                .toList();
+        if (branches.size() < 3) {
+            return;
+        }
+
+        Role managerRole = roleRepository.findAll().stream()
+                .filter(role -> "Manager".equalsIgnoreCase(role.getName()))
+                .findFirst()
+                .orElse(null);
+        Role staffRole = roleRepository.findAll().stream()
+                .filter(role -> "Staff".equalsIgnoreCase(role.getName()))
+                .findFirst()
+                .orElse(null);
+        if (managerRole == null || staffRole == null) {
+            return;
+        }
+
+        String encodedPw = passwordEncoder.encode("123456");
+        User managerHcm = ensureSeedUser("Quan ly HCM", "manager1@hypercinema.vn", "manager1",
+                encodedPw, "0901000002", managerRole);
+        User managerHn = ensureSeedUser("Quan ly Ha Noi", "manager2@hypercinema.vn", "manager2",
+                encodedPw, "0901000003", managerRole);
+        User managerDn = ensureSeedUser("Quan ly Da Nang", "manager3@hypercinema.vn", "manager3",
+                encodedPw, "0901000007", managerRole);
+
+        assignSeedManager(managerHcm, branches.get(0));
+        assignSeedManager(managerHn, branches.get(1));
+        assignSeedManager(managerDn, branches.get(2));
+
+        assignSeedStaff(ensureSeedUser("Nhan vien 1", "staff1@hypercinema.vn", "staff1",
+                encodedPw, "0902000001", staffRole), branches.get(0), managerHcm);
+        assignSeedStaff(ensureSeedUser("Nhan vien 2", "staff2@hypercinema.vn", "staff2",
+                encodedPw, "0902000002", staffRole), branches.get(0), managerHcm);
+        assignSeedStaff(ensureSeedUser("Nhan vien 3", "staff3@hypercinema.vn", "staff3",
+                encodedPw, "0902000003", staffRole), branches.get(1), managerHn);
+        assignSeedStaff(ensureSeedUser("Nhan vien 4", "staff4@hypercinema.vn", "staff4",
+                encodedPw, "0902000004", staffRole), branches.get(1), managerHn);
+        assignSeedStaff(ensureSeedUser("Nhan vien 5", "staff5@hypercinema.vn", "staff5",
+                encodedPw, "0902000005", staffRole), branches.get(2), managerDn);
+    }
+
+    private User ensureSeedUser(String fullName,
+                                String email,
+                                String username,
+                                String encodedPw,
+                                String phone,
+                                Role role) {
+        return userRepository.findByUsername(username)
+                .orElseGet(() -> createUser(fullName, email, username, encodedPw, phone, role));
+    }
+
+    private void assignSeedManager(User manager, Branch branch) {
+        manager.setBranch(branch);
+        manager.setManager(null);
+        manager.setStatus("Active");
+        userRepository.save(manager);
+    }
+
+    private void assignSeedStaff(User staff, Branch branch, User manager) {
+        staff.setBranch(branch);
+        staff.setManager(manager);
+        staff.setStatus("Active");
+        userRepository.save(staff);
+    }
+
     // ───────────────────── HALLS ─────────────────────
     private List<Hall> seedHalls(List<Branch> branches) {
         List<Hall> halls = new ArrayList<>();
@@ -460,52 +536,119 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     // ───────────────────── BOOKINGS + PAYMENTS ─────────────────────
-    private void seedBookingsAndPayments(List<User> users, List<Showtime> showtimes, List<Seat> allSeats) {
-        List<User> customers = users.subList(11, Math.min(21, users.size()));
-        String[] statuses = {"Confirmed", "Confirmed", "Confirmed", "Completed", "Completed", "Cancelled"};
-        String[] methods = {"VNPay", "VietQR", "Cash", "VNPay", "VietQR"};
-
-        int seatIdx = 0;
-        for (int i = 0; i < 50 && i < showtimes.size(); i++) {
-            Showtime st = showtimes.get(i % showtimes.size());
-            User customer = customers.get(i % customers.size());
-            String bookingStatus = statuses[i % statuses.length];
-
-            int ticketCount = 1 + random.nextInt(3);
-            List<Seat> bookingSeats = new ArrayList<>(ticketCount);
-            for (int t = 0; t < ticketCount && seatIdx + t < allSeats.size(); t++) {
-                bookingSeats.add(allSeats.get((seatIdx + t) % allSeats.size()));
-            }
-            long totalPrice = bookingSeats.stream()
-                    .mapToLong(seat -> SeatPricing.priceFor(seat.getType()))
-                    .sum();
-
-            Booking booking = new Booking();
-            booking.setUser(customer);
-            booking.setShowtime(st);
-            booking.setTotalPrice(totalPrice);
-            booking.setStatus(bookingStatus);
-            booking = bookingRepository.save(booking);
-
-            for (int t = 0; t < bookingSeats.size() && seatIdx < allSeats.size(); t++) {
-                Ticket ticket = new Ticket();
-                ticket.setBooking(booking);
-                ticket.setSeat(bookingSeats.get(t));
-                ticket.setQrCode("QR-" + booking.getBookingId() + "-" + t);
-                ticket.setStatus("Cancelled".equals(bookingStatus) ? "Cancelled" : "Active");
-                ticketRepository.save(ticket);
-                seatIdx++;
-            }
-
-            if (!"Cancelled".equals(bookingStatus)) {
-                Payment payment = new Payment();
-                payment.setBooking(booking);
-                payment.setAmount(totalPrice);
-                payment.setMethod(methods[i % methods.length]);
-                payment.setStatus("Completed");
-                paymentRepository.save(payment);
-            }
+    private void ensureBookingsAndPayments() {
+        if (bookingRepository.count() >= 12) {
+            return;
         }
+
+        List<User> customers = userRepository.findAll().stream()
+                .filter(user -> user.getRole() != null && "Customer".equalsIgnoreCase(user.getRole().getName()))
+                .toList();
+        List<Showtime> showtimes = showtimeRepository.findAll();
+        List<FoodItem> foodItems = foodItemRepository.findAll();
+
+        if (customers.isEmpty() || showtimes.isEmpty()) {
+            return;
+        }
+
+        String[] bookingStatuses = {
+                "Confirmed", "Completed", "Pending", "Pending", "Cancelled", "Confirmed",
+                "Pending", "Completed", "Confirmed", "Pending", "Cancelled", "Completed"
+        };
+        String[] paymentStatuses = {
+                "Completed", "Completed", "Pending", "Pending", "Failed", "Completed",
+                "Pending", "Completed", "Completed", "Pending", "Failed", "Completed"
+        };
+        String[] paymentMethods = {"VNPay", "VietQR", "VNPay", "VietQR", "VNPay", "Cash"};
+
+        int created = 0;
+        for (int i = 0; i < showtimes.size() && created < 36; i++) {
+            Showtime showtime = showtimes.get(i);
+            List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(showtime.getHall().getHallId());
+            if (seats.isEmpty()) {
+                continue;
+            }
+
+            String bookingStatus = bookingStatuses[created % bookingStatuses.length];
+            String paymentStatus = paymentStatuses[created % paymentStatuses.length];
+            User customer = customers.get(created % customers.size());
+            int seatOffset = (created * 3) % Math.max(seats.size(), 1);
+            int ticketCount = 1 + random.nextInt(3);
+            List<Seat> bookingSeats = new ArrayList<>();
+            for (int t = 0; t < ticketCount && t < seats.size(); t++) {
+                bookingSeats.add(seats.get((seatOffset + t) % seats.size()));
+            }
+
+            Booking booking = createSeedBooking(customer, showtime, bookingSeats, bookingStatus);
+            createSeedPayment(booking, paymentMethods[created % paymentMethods.length], paymentStatus, created);
+            createSeedFoodOrder(booking, foodItems, created);
+            created++;
+        }
+    }
+
+    private Booking createSeedBooking(User customer, Showtime showtime, List<Seat> seats, String status) {
+        long seatTotal = seats.stream()
+                .mapToLong(seat -> SeatPricing.priceFor(seat.getType()))
+                .sum();
+
+        Booking booking = new Booking();
+        booking.setUser(customer);
+        booking.setShowtime(showtime);
+        booking.setTotalPrice(seatTotal);
+        booking.setStatus(status);
+        booking = bookingRepository.save(booking);
+
+        for (int i = 0; i < seats.size(); i++) {
+            Ticket ticket = new Ticket();
+            ticket.setBooking(booking);
+            ticket.setSeat(seats.get(i));
+            ticket.setQrCode("SEED-" + booking.getBookingId() + "-" + (i + 1));
+            ticket.setStatus("Cancelled".equals(status) ? "Cancelled" : "Active");
+            ticketRepository.save(ticket);
+        }
+
+        return booking;
+    }
+
+    private void createSeedPayment(Booking booking, String method, String status, int index) {
+        Payment payment = new Payment();
+        payment.setBooking(booking);
+        payment.setAmount(booking.getTotalPrice());
+        payment.setMethod(method);
+        payment.setStatus(status);
+
+        if ("Pending".equals(status)) {
+            boolean expiredSample = index % 4 == 3;
+            payment.setExpiresAt(LocalDateTime.now().plusMinutes(expiredSample ? -5 : 15));
+        }
+
+        paymentRepository.save(payment);
+    }
+
+    private void createSeedFoodOrder(Booking booking, List<FoodItem> foodItems, int index) {
+        if (foodItems.isEmpty() || index % 3 == 1) {
+            return;
+        }
+
+        FoodItem item = foodItems.get(index % foodItems.size());
+        FoodOrder order = new FoodOrder();
+        order.setBooking(booking);
+        order.setStatus(switch (booking.getStatus()) {
+            case "Confirmed", "Completed" -> "CONFIRMED";
+            case "Cancelled" -> "CANCELLED";
+            default -> "PENDING";
+        });
+        order.setTotalAmount(item.getPrice());
+        order = foodOrderRepository.save(order);
+
+        FoodOrderItem orderItem = new FoodOrderItem();
+        orderItem.setOrderId(order.getOrderId());
+        orderItem.setItemId(item.getItemId());
+        orderItem.setFoodOrder(order);
+        orderItem.setFoodItem(item);
+        orderItem.setQuantity(1);
+        orderItem.setUnitPrice(item.getPrice());
+        foodOrderItemRepository.save(orderItem);
     }
 
     // ───────────────────── AUDIT LOGS ─────────────────────

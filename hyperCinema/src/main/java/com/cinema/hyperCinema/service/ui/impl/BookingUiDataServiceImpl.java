@@ -40,6 +40,7 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
     private static final String STATUS_CANCELLED_LEGACY = "Cancelled";
     private static final String STATUS_RESERVED = "ACTIVE";
     private static final String MAINTENANCE = "UNDER_MAINTENANCE";
+    private static final String SHOWTIME_CANCELLED = "CANCELLED";
 
     private final ShowtimeRepository showtimeRepository;
     private final SeatRepository seatRepository;
@@ -68,11 +69,13 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
     @Override
     @Transactional(readOnly = true)
     public List<ShowtimeOptionView> upcomingShowtimes(User actor, int limit) {
+        // đặt thời gian tại thời điểm hiện tại
         LocalDateTime now = LocalDateTime.now();
+
         Branch branch = actor != null ? actor.getBranch() : null;
         List<Showtime> showtimes = branch != null
                 ? showtimeRepository.findByHall_Branch_BranchIdAndStartTimeAfterOrderByStartTimeAsc(
-                        branch.getBranchId(), now, PageRequest.of(0, limit))
+                branch.getBranchId(), now, PageRequest.of(0, limit))
                 : showtimeRepository.findByStartTimeAfterOrderByStartTimeAsc(now, PageRequest.of(0, limit));
         return showtimes.stream()
                 .map(this::toShowtimeOption)
@@ -83,7 +86,7 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
     @Transactional(readOnly = true)
     public List<SeatAvailabilityView> seatAvailability(Integer showtimeId, User actor) {
         Showtime showtime = showtimeRepository.findById(showtimeId).orElse(null);
-        if (showtime == null || !canAccessShowtime(showtime, actor)) {
+        if (showtime == null || SHOWTIME_CANCELLED.equals(showtime.getStatus()) || !canAccessShowtime(showtime, actor)) {
             return Collections.emptyList();
         }
         List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(
@@ -143,6 +146,9 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
                 .branchName(showtime.getHall() != null && showtime.getHall().getBranch() != null
                         ? showtime.getHall().getBranch().getName() : "")
                 .hallName(showtime.getHall() != null ? showtime.getHall().getName() : "")
+                .formatLabel(showtime.getHall() != null && showtime.getHall().getHallType() != null
+                        ? showtime.getHall().getHallType()
+                        : "Standard")
                 .startTime(showtime.getStartTime())
                 .endTime(showtime.getEndTime())
                 .basePrice(SeatPricing.priceFor("STANDARD"))
