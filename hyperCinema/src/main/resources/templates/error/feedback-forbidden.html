@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Từ chối truy cập - HyperCinema')}"></head>
+<body class="min-h-screen">
+<main class="flex min-h-screen items-center justify-center px-6 py-10 bg-[#050508]">
+    <section class="glass-card w-full max-w-md p-8 text-center" role="alert" aria-labelledby="error-title">
+        <p class="mb-2 text-5xl font-bold text-red-500" th:text="${status} ?: 403">403</p>
+        <h1 class="mb-3 text-xl font-semibold text-white" id="error-title">Từ chối truy cập</h1>
+        <p class="mb-8 text-sm leading-6 text-slate-400" th:text="${errorKey != null} ? #{__${errorKey}__} : #{feedback.access_denied}">Bạn không có quyền chỉnh sửa phản hồi này.</p>
+        <a class="inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-primary to-amber-500 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 no-underline cursor-pointer" th:href="@{/feedback}">Về danh sách phản hồi</a>
+    </section>
+</main>
+</body>
+</html>

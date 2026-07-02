@@ -28,7 +28,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate", "/api/auth/verify-email", "/movies/**", "/movies", "/api/payment/vnpay-return").permitAll()
+                .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate", "/api/auth/verify-email", "/movies/**", "/movies", "/api/payment/vnpay-return", "/feedback", "/feedback/**").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 // ===== Branch Management — REQ 11.1, 11.2, 11.4 =====
                 // Mutation endpoints (POST/PUT/PATCH/DELETE) — Admin only
