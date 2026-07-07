@@ -83,11 +83,11 @@
                                      th:data-price="${seat.finalPrice}"
                                      th:data-type="${seat.type}"
                                      th:data-status="${seat.status}"
-                                     th:onclick="${isLoggedInCustomer} ? 'toggleSeatSelection(this)' : null"
-                                     th:classappend="${seat.status == 'BOOKED'} ? 'bg-slate-800 border-slate-700/50 text-slate-600 cursor-not-allowed' : (${seat.status == 'RESERVED'} ? 'bg-amber-500/20 border-amber-500/40 text-amber-500/30 cursor-not-allowed' : (${seat.type == 'VIP'} ? 'border-primary/40 bg-primary/10 text-amber-200' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-primary/20' : '') : (${seat.type == 'Double'} ? 'col-span-2 w-14 border-pink-500/40 bg-pink-500/10 text-pink-200' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-pink-500/20' : '') : 'border-slate-500/30 bg-slate-700/10 text-slate-400' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-slate-700/30' : ''))))"
+                                     th:onclick="${isLoggedInCustomer && seat.type != 'Aisle'} ? 'toggleSeatSelection(this)' : null"
+                                     th:classappend="${seat.type == 'Aisle'} ? 'pointer-events-none opacity-0 border-none bg-transparent text-transparent w-7 h-7' : (${seat.status == 'BOOKED'} ? 'bg-slate-800 border-slate-700/50 text-slate-600 cursor-not-allowed' : (${seat.status == 'RESERVED'} ? 'bg-amber-500/20 border-amber-500/40 text-amber-500/30 cursor-not-allowed' : (${seat.type == 'VIP'} ? 'border-primary/40 bg-primary/10 text-amber-200' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-primary/20' : '') : (${seat.type == 'Double'} ? 'col-span-2 w-14 border-pink-500/40 bg-pink-500/10 text-pink-200' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-pink-500/20' : '') : 'border-slate-500/30 bg-slate-700/10 text-slate-400' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-slate-700/30' : '')))))"
                                      class="w-7 h-7 rounded flex items-center justify-center text-[9px] font-bold border select-none"
-                                     th:title="|Hàng ${seat.seatRow} - Ghế ${seat.seatNumber} (${seat.type}) - ${seat.status}|">
-                                    <span th:text="${seat.seatNumber}">1</span>
+                                     th:title="${seat.type == 'Aisle'} ? '' : |Hàng ${seat.seatRow} - Ghế ${seat.seatNumber} (${seat.type}) - ${seat.status}|">
+                                    <span th:text="${seat.type == 'Aisle'} ? '' : ${seat.seatNumber}">1</span>
                                 </div>
                             </div>
                             

@@ -60,6 +60,13 @@ public class CustomerBookingController {
         }
 
         List<Seat> seats = seatRepository.findAllById(seatIds);
+        for (Seat seat : seats) {
+            if ("Aisle".equalsIgnoreCase(seat.getType())) {
+                redirectAttributes.addFlashAttribute("error", "Ghế chọn không hợp lệ (lối đi).");
+                return "redirect:/movies/showtimes/" + showtimeId + "/seats";
+            }
+        }
+
         long totalPrice = 0;
         for (Seat seat : seats) {
             long seatPrice = showtime.getPrice();

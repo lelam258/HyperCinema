@@ -68,9 +68,14 @@ public class CustomerDashboardController {
     }
 
     @GetMapping("/bookings")
-    public String bookingHistory(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+    public String bookingHistory(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model) {
         User user = userDetails.getUser();
-        List<Booking> bookings = bookingRepository.findByUser_UserIdOrderByCreatedAtDesc(user.getUserId());
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Booking> bookings = bookingRepository.findByUser_UserIdOrderByCreatedAtDesc(user.getUserId(), pageable);
         
         model.addAttribute("customerName", user.getFullName());
         model.addAttribute("bookings", bookings);

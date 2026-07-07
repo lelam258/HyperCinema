@@ -56,14 +56,19 @@ public class StaffDashboardController {
     }
 
     @GetMapping("/booking")
-    public String bookingList(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+    public String bookingList(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model) {
         User user = userDetails.getUser();
         
         Integer branchId = user.getBranch() != null ? user.getBranch().getBranchId() : null;
-        List<Showtime> showtimes = List.of();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Showtime> showtimes = Page.empty(pageable);
         
         if (branchId != null) {
-            showtimes = showtimeRepository.findByHall_Branch_BranchIdAndStartTimeAfterOrderByStartTimeAsc(branchId, LocalDateTime.now());
+            showtimes = showtimeRepository.findByHall_Branch_BranchIdAndStartTimeAfterOrderByStartTimeAsc(branchId, LocalDateTime.now(), pageable);
             model.addAttribute("branchName", user.getBranch().getName());
         } else {
             model.addAttribute("branchName", "Chưa phân công chi nhánh");

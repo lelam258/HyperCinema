@@ -120,23 +120,64 @@ public class SeatServiceImpl implements SeatService {
 
         Set<String> vipRows = new HashSet<>(request.getVipRows() != null ? request.getVipRows() : List.of());
         Set<String> doubleRows = new HashSet<>(request.getDoubleRows() != null ? request.getDoubleRows() : List.of());
+        Set<String> aisleRows = new HashSet<>(request.getAisleRows() != null ? request.getAisleRows() : List.of());
+
+        Set<Integer> aisleCols = new HashSet<>();
+        if (request.getAisleColumns() != null && !request.getAisleColumns().isBlank()) {
+            String[] parts = request.getAisleColumns().split(",");
+            for (String part : parts) {
+                try {
+                    aisleCols.add(Integer.parseInt(part.trim()));
+                } catch (NumberFormatException e) {
+                    // Ignore invalid numbers
+                }
+            }
+        }
 
         int totalCapacity = 0;
         for (char r = startRow; r <= endRow; r++) {
             String rowStr = String.valueOf(r);
-            if (doubleRows.contains(rowStr)) {
-                int totalCustomers = request.getSeatsPerRow();
-                int doubleSeatsCount = totalCustomers / 2;
-                int col = 1;
-
-                for (int i = 0; i < doubleSeatsCount; i++) {
+            if (aisleRows.contains(rowStr)) {
+                for (int col = 1; col <= request.getSeatsPerRow(); col++) {
                     Seat seat = new Seat();
                     seat.setHall(hall);
                     seat.setSeatRow(rowStr);
-                    seat.setSeatNumber(col++);
-                    seat.setType("Double");
+                    seat.setSeatNumber(col);
+                    seat.setType("Aisle");
                     seatRepository.save(seat);
-                    totalCapacity += 2;
+                }
+            } else if (doubleRows.contains(rowStr)) {
+                int col = 1;
+                while (col <= request.getSeatsPerRow()) {
+                    if (aisleCols.contains(col)) {
+                        Seat seat = new Seat();
+                        seat.setHall(hall);
+                        seat.setSeatRow(rowStr);
+                        seat.setSeatNumber(col);
+                        seat.setType("Aisle");
+                        seatRepository.save(seat);
+                        col++;
+                    } else {
+                        if (col + 1 <= request.getSeatsPerRow() && !aisleCols.contains(col + 1)) {
+                            Seat seat = new Seat();
+                            seat.setHall(hall);
+                            seat.setSeatRow(rowStr);
+                            seat.setSeatNumber(col);
+                            seat.setType("Double");
+                            seatRepository.save(seat);
+                            totalCapacity += 2;
+                            col += 2;
+                        } else {
+                            Seat seat = new Seat();
+                            seat.setHall(hall);
+                            seat.setSeatRow(rowStr);
+                            seat.setSeatNumber(col);
+                            seat.setType("Standard");
+                            seatRepository.save(seat);
+                            totalCapacity += 1;
+                            col++;
+                        }
+                    }
                 }
             } else {
                 String seatType = vipRows.contains(rowStr) ? "VIP" : "Standard";
@@ -145,9 +186,13 @@ public class SeatServiceImpl implements SeatService {
                     seat.setHall(hall);
                     seat.setSeatRow(rowStr);
                     seat.setSeatNumber(col);
-                    seat.setType(seatType);
+                    if (aisleCols.contains(col)) {
+                        seat.setType("Aisle");
+                    } else {
+                        seat.setType(seatType);
+                        totalCapacity += 1;
+                    }
                     seatRepository.save(seat);
-                    totalCapacity += 1;
                 }
             }
         }
@@ -168,6 +213,20 @@ public class SeatServiceImpl implements SeatService {
             throw new SeatValidationException("seat.cannot_modify_with_showtimes");
         }
 
+        String oldType = seat.getType();
+        String newType = request.getType();
+
+        if (!newType.equalsIgnoreCase(oldType)) {
+            int oldCapacity = "Double".equalsIgnoreCase(oldType) ? 2 : ("Aisle".equalsIgnoreCase(oldType) ? 0 : 1);
+            int newCapacity = "Double".equalsIgnoreCase(newType) ? 2 : ("Aisle".equalsIgnoreCase(newType) ? 0 : 1);
+            int diff = newCapacity - oldCapacity;
+            if (diff != 0) {
+                Hall hall = seat.getHall();
+                hall.setCapacity(Math.max(0, hall.getCapacity() + diff));
+                hallRepository.save(hall);
+            }
+        }
+
         seat.setType(request.getType());
         seatRepository.save(seat);
     }
@@ -184,7 +243,7 @@ public class SeatServiceImpl implements SeatService {
         }
 
         Hall hall = seat.getHall();
-        int capacityChange = "Double".equalsIgnoreCase(seat.getType()) ? 2 : 1;
+        int capacityChange = "Double".equalsIgnoreCase(seat.getType()) ? 2 : ("Aisle".equalsIgnoreCase(seat.getType()) ? 0 : 1);
         seatRepository.delete(seat);
 
         // Giảm sức chứa thực tế
@@ -218,7 +277,7 @@ public class SeatServiceImpl implements SeatService {
         seatRepository.save(seat);
 
         // Tăng sức chứa thực tế
-        int capacityChange = "Double".equalsIgnoreCase(request.getType()) ? 2 : 1;
+        int capacityChange = "Double".equalsIgnoreCase(request.getType()) ? 2 : ("Aisle".equalsIgnoreCase(request.getType()) ? 0 : 1);
         hall.setCapacity(hall.getCapacity() + capacityChange);
         hallRepository.save(hall);
     }

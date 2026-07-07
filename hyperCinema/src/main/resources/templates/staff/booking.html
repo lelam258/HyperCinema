@@ -34,7 +34,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.04]">
-                        <tr th:each="s : ${showtimes}" class="hover:bg-white/[0.02] transition-colors">
+                        <tr th:each="s : ${showtimes.content}" class="hover:bg-white/[0.02] transition-colors">
                             <td class="px-6 py-4">
                                 <span class="block text-sm font-bold text-white" th:text="${s.movie.title}">Tên phim</span>
                                 <span class="block text-xs text-slate-500" th:text="${s.movie.duration} + ' phút'">120 phút</span>
@@ -56,13 +56,28 @@
                                 </a>
                             </td>
                         </tr>
-                        <tr th:if="${showtimes == null or #lists.isEmpty(showtimes)}">
+                        <tr th:if="${showtimes == null or #lists.isEmpty(showtimes.content)}">
                             <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-500">
                                 Không có suất chiếu nào hoạt động hôm nay cho chi nhánh của bạn.
                             </td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination Section -->
+            <div th:if="${showtimes.totalPages > 1}" class="flex items-center justify-between gap-4 px-5 py-4 border-t border-white/[0.08] bg-white/[0.02] flex-wrap">
+                <div class="text-sm text-slate-400">Trang <strong class="text-slate-200" th:text="${showtimes.number + 1}">1</strong> / <strong class="text-slate-200" th:text="${showtimes.totalPages}">1</strong> - tổng <strong class="text-slate-200" th:text="${showtimes.totalElements}">0</strong> suất chiếu</div>
+                <div class="inline-flex items-center gap-1 flex-wrap">
+                    <a th:if="${not showtimes.first}" th:href="@{/staff/booking(page=${showtimes.number - 1})}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 border border-white/10 rounded-lg text-sm text-slate-200 bg-white/[0.04] cursor-pointer transition-all hover:bg-white/10 no-underline">‹ Trước</a>
+                    <span th:if="${showtimes.first}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 text-sm text-slate-600 cursor-not-allowed">‹ Trước</span>
+                    <th:block th:each="i : ${#numbers.sequence(0, showtimes.totalPages - 1)}">
+                        <span th:if="${i == showtimes.number}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-primary to-amber-500 border border-white/20 shadow-lg shadow-primary/20" th:text="${i + 1}">1</span>
+                        <a th:if="${i != showtimes.number}" th:href="@{/staff/booking(page=${i})}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 border border-white/10 rounded-lg text-sm text-slate-200 bg-white/[0.04] cursor-pointer transition-all hover:bg-white/10 no-underline" th:text="${i + 1}">1</a>
+                    </th:block>
+                    <a th:if="${not showtimes.last}" th:href="@{/staff/booking(page=${showtimes.number + 1})}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 border border-white/10 rounded-lg text-sm text-slate-200 bg-white/[0.04] cursor-pointer transition-all hover:bg-white/10 no-underline">Sau ›</a>
+                    <span th:if="${showtimes.last}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 text-sm text-slate-600 cursor-not-allowed">Sau ›</span>
+                </div>
             </div>
         </div>
     </div>

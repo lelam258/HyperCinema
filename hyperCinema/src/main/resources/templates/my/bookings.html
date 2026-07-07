@@ -29,7 +29,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.04]">
-                        <tr th:each="b : ${bookings}" class="hover:bg-white/[0.02] transition-colors">
+                        <tr th:each="b : ${bookings.content}" class="hover:bg-white/[0.02] transition-colors">
                             <td class="px-6 py-4 text-sm font-semibold text-slate-200 tabular-nums" th:text="'#' + ${b.bookingId}">#12345</td>
                             <td class="px-6 py-4 text-sm font-bold text-white" th:text="${b.showtime.movie.title}">Tên phim</td>
                             <td class="px-6 py-4 text-sm text-slate-300">
@@ -65,13 +65,28 @@
                                 </div>
                             </td>
                         </tr>
-                        <tr th:if="${bookings == null or #lists.isEmpty(bookings)}">
+                        <tr th:if="${bookings == null or #lists.isEmpty(bookings.content)}">
                             <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-500">
                                 Bạn chưa có lịch sử đặt vé nào trong hệ thống.
                             </td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination Section -->
+            <div th:if="${bookings.totalPages > 1}" class="flex items-center justify-between gap-4 px-5 py-4 border-t border-white/[0.08] bg-white/[0.02] flex-wrap">
+                <div class="text-sm text-slate-400">Trang <strong class="text-slate-200" th:text="${bookings.number + 1}">1</strong> / <strong class="text-slate-200" th:text="${bookings.totalPages}">1</strong> - tổng <strong class="text-slate-200" th:text="${bookings.totalElements}">0</strong> đơn vé</div>
+                <div class="inline-flex items-center gap-1 flex-wrap">
+                    <a th:if="${not bookings.first}" th:href="@{/my/bookings(page=${bookings.number - 1})}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 border border-white/10 rounded-lg text-sm text-slate-200 bg-white/[0.04] cursor-pointer transition-all hover:bg-white/10 no-underline">‹ Trước</a>
+                    <span th:if="${bookings.first}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 text-sm text-slate-600 cursor-not-allowed">‹ Trước</span>
+                    <th:block th:each="i : ${#numbers.sequence(0, bookings.totalPages - 1)}">
+                        <span th:if="${i == bookings.number}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-primary to-amber-500 border border-white/20 shadow-lg shadow-primary/20" th:text="${i + 1}">1</span>
+                        <a th:if="${i != bookings.number}" th:href="@{/my/bookings(page=${i})}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 border border-white/10 rounded-lg text-sm text-slate-200 bg-white/[0.04] cursor-pointer transition-all hover:bg-white/10 no-underline" th:text="${i + 1}">1</a>
+                    </th:block>
+                    <a th:if="${not bookings.last}" th:href="@{/my/bookings(page=${bookings.number + 1})}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 border border-white/10 rounded-lg text-sm text-slate-200 bg-white/[0.04] cursor-pointer transition-all hover:bg-white/10 no-underline">Sau ›</a>
+                    <span th:if="${bookings.last}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 text-sm text-slate-600 cursor-not-allowed">Sau ›</span>
+                </div>
             </div>
         </div>
     </div>

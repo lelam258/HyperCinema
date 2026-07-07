@@ -1,6 +1,8 @@
 package com.cinema.hyperCinema.repository;
 
 import com.cinema.hyperCinema.model.Showtime;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,6 +12,8 @@ import java.time.LocalDateTime;
 public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
 
     java.util.List<Showtime> findByHall_Branch_BranchIdAndStartTimeAfterOrderByStartTimeAsc(Integer branchId, java.time.LocalDateTime now);
+
+    Page<Showtime> findByHall_Branch_BranchIdAndStartTimeAfterOrderByStartTimeAsc(Integer branchId, LocalDateTime now, Pageable pageable);
 
     /**
      * Check whether the given branch has at least one Showtime whose
