@@ -80,6 +80,7 @@ public class SecurityConfig {
                 .requestMatchers("/manager/**").hasRole("MANAGER")
                 .requestMatchers("/branch/**").hasAnyRole("BRANCH_MANAGER", "BRANCHMANAGER")
                 .requestMatchers("/staff/**").hasRole("STAFF")
+                .requestMatchers("/my/notifications/**").authenticated()
                 .requestMatchers("/my/**").hasRole("CUSTOMER")
                 .anyRequest().authenticated()
             )

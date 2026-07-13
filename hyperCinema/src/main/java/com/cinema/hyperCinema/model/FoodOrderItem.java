@@ -14,19 +14,19 @@ import lombok.Setter;
 public class FoodOrderItem {
 
     @Id
-    @Column(name = "order_id")
+    @Column(name = "food_order_id")
     private Integer orderId;
 
     @Id
-    @Column(name = "item_id")
+    @Column(name = "food_id")
     private Integer itemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", insertable = false, updatable = false)
+    @JoinColumn(name = "food_order_id", insertable = false, updatable = false)
     private FoodOrder foodOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id", insertable = false, updatable = false)
+    @JoinColumn(name = "food_id", insertable = false, updatable = false)
     private FoodItem foodItem;
 
     @Column(nullable = false)

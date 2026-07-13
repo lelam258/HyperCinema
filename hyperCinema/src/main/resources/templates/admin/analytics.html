@@ -82,6 +82,11 @@
             </div>
         </div>
 
+        <!-- Error Message -->
+        <div th:if="${errorMessage}" class="glass-card p-4 border border-red-500/30 bg-red-500/10 mb-6">
+            <p class="text-red-400 text-sm font-semibold">Lỗi: <span th:text="${errorMessage}">Error</span></p>
+        </div>
+
         <!-- ═══════════════════ TAB 1: TICKET SALES & REVENUE ═══════════════════ -->
         <div th:if="${tab == 'ticket'}" class="space-y-8 animate-fadeIn">
             <!-- KPI Cards -->
@@ -108,9 +113,9 @@
                         <svg class="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16v1M10 11h4" /></svg>
                     </div>
                     <div class="flex flex-col flex-1">
-                        <div class="flex justify-between items-start">
-                            <span class="text-2xl font-bold text-white tracking-tight"
-                                  th:text="'$' + ${#numbers.formatDecimal(report.totalRevenue / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                        <div class="flex justify-between items-start gap-2 flex-wrap">
+                            <span class="text-2xl font-bold text-white tracking-tight whitespace-nowrap"
+                                  th:text="${#numbers.formatInteger(report.totalRevenue, 0, 'POINT')} + ' đ'">0 đ</span>
                             <span th:classappend="${report.revenueGrowth >= 0} ? 'bg-success/15 border-success/30 text-success' : 'bg-danger/15 border-danger/30 text-danger'"
                                   class="text-[10px] font-bold px-1.5 py-0.5 rounded border"
                                   th:text="${report.revenueGrowth >= 0 ? '+' : ''} + ${#numbers.formatDecimal(report.revenueGrowth, 1, 1)} + '%'">+0.0%</span>
@@ -125,9 +130,9 @@
                         <svg class="w-6 h-6 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                     </div>
                     <div class="flex flex-col flex-1">
-                        <div class="flex justify-between items-start">
-                            <span class="text-2xl font-bold text-white tracking-tight"
-                                  th:text="'$' + ${#numbers.formatDecimal(report.avgPrice / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                        <div class="flex justify-between items-start gap-2 flex-wrap">
+                            <span class="text-2xl font-bold text-white tracking-tight whitespace-nowrap"
+                                  th:text="${#numbers.formatInteger(report.avgPrice, 0, 'POINT')} + ' đ'">0 đ</span>
                             <span th:classappend="${report.avgPriceGrowth >= 0} ? 'bg-success/15 border-success/30 text-success' : 'bg-danger/15 border-danger/30 text-danger'"
                                   class="text-[10px] font-bold px-1.5 py-0.5 rounded border"
                                   th:text="${report.avgPriceGrowth >= 0 ? '+' : ''} + ${#numbers.formatDecimal(report.avgPriceGrowth, 1, 1)} + '%'">+0.0%</span>
@@ -154,7 +159,7 @@
             <!-- Revenue Over Time Line Chart -->
             <div class="glass-card p-6">
                 <div class="flex items-center justify-between gap-4 mb-6">
-                    <h2 class="text-base font-semibold text-white">Revenue Over Time</h2>
+                    <h2 class="text-base font-semibold text-white">Doanh thu theo thời gian</h2>
                     <div class="flex items-center gap-2">
                         <a th:href="@{/admin/analytics/export(type='ticket', from=${from}, to=${to}, branchId=${branchId}, format='excel')}"
                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
@@ -176,22 +181,22 @@
             <!-- Breakdown Table -->
             <div class="glass-card overflow-hidden">
                 <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
-                    <h2 class="text-base font-semibold text-white">Ticket Sales Breakdown</h2>
+                    <h2 class="text-base font-semibold text-white">Chi tiết vé bán ra</h2>
                     <a th:href="@{/admin/analytics/export(type='ticket', from=${from}, to=${to}, branchId=${branchId}, format='csv')}"
                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all no-underline">
-                        Export
+                        Xuất file
                     </a>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-white/[0.08] text-slate-400">
-                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Branch</th>
-                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Date</th>
-                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Tickets Sold</th>
-                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Revenue</th>
-                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Avg. Price</th>
-                                <th class="px-6 py-3.5 text-center text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Action</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Chi nhánh</th>
+                                <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Ngày</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Vé bán ra</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Doanh thu</th>
+                                <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Giá TB</th>
+                                <th class="px-6 py-3.5 text-center text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02]">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/[0.06] text-slate-300">
@@ -200,18 +205,18 @@
                                 <td class="px-6 py-4" th:text="${row.date}">Date</td>
                                 <td class="px-6 py-4 text-right tabular-nums font-semibold" th:text="${#numbers.formatInteger(row.tickets, 0, 'COMMA')}">0</td>
                                 <td class="px-6 py-4 text-right tabular-nums text-primary"
-                                    th:text="'$' + ${#numbers.formatDecimal(row.revenue / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                                    th:text="${#numbers.formatInteger(row.revenue, 0, 'POINT')} + ' đ'">0 đ</td>
                                 <td class="px-6 py-4 text-right tabular-nums text-slate-400"
-                                    th:text="'$' + ${#numbers.formatDecimal(row.avgPrice / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                                    th:text="${#numbers.formatInteger(row.avgPrice, 0, 'POINT')} + ' đ'">0 đ</td>
                                 <td class="px-6 py-4 text-center">
                                     <button th:onclick="showDetailModal([[${row.branch}]], [[${row.date}]], [[${row.tickets}]], [[${row.revenue}]], [[${row.avgPrice}]])"
                                             class="text-xs font-bold text-primary hover:text-primary-hover hover:underline cursor-pointer bg-transparent border-none">
-                                        View Detail
+                                        Xem chi tiết
                                     </button>
                                 </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(report.breakdown)}">
-                                <td colspan="6" class="px-6 py-12 text-center text-slate-500">No ticket sales data recorded for the selected criteria.</td>
+                                <td colspan="6" class="px-6 py-12 text-center text-slate-500">Không tìm thấy dữ liệu doanh thu bán vé cho tiêu chí đã chọn.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -254,9 +259,9 @@
                         <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16v1M10 11h4" /></svg>
                     </div>
                     <div class="flex flex-col flex-1">
-                        <div class="flex justify-between items-start">
-                            <span class="text-2xl font-bold text-white tracking-tight"
-                                  th:text="'$' + ${#numbers.formatDecimal(report.totalRevenue / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                        <div class="flex justify-between items-start gap-2 flex-wrap">
+                            <span class="text-2xl font-bold text-white tracking-tight whitespace-nowrap"
+                                  th:text="${#numbers.formatInteger(report.totalRevenue, 0, 'POINT')} + ' đ'">0 đ</span>
                             <span th:classappend="${report.revenueGrowth >= 0} ? 'bg-success/15 border-success/30 text-success' : 'bg-danger/15 border-danger/30 text-danger'"
                                   class="text-[10px] font-bold px-1.5 py-0.5 rounded border"
                                   th:text="${report.revenueGrowth >= 0 ? '+' : ''} + ${#numbers.formatDecimal(report.revenueGrowth, 1, 1)} + '%'">+0.0%</span>
@@ -333,9 +338,9 @@
                                 </td>
                                 <td class="px-6 py-4 text-right tabular-nums font-semibold" th:text="${#numbers.formatInteger(p.qty, 0, 'COMMA')}">0</td>
                                 <td class="px-6 py-4 text-right tabular-nums text-slate-400"
-                                    th:text="'$' + ${#numbers.formatDecimal(p.price / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                                    th:text="${#numbers.formatInteger(p.price, 0, 'POINT')} + ' đ'">0 đ</td>
                                 <td class="px-6 py-4 text-right tabular-nums text-primary"
-                                    th:text="'$' + ${#numbers.formatDecimal(p.revenue / 25000.0, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                                    th:text="${#numbers.formatInteger(p.revenue, 0, 'POINT')} + ' đ'">0 đ</td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(report.products)}">
                                 <td colspan="5" class="px-6 py-12 text-center text-slate-500">Không tìm thấy dữ liệu doanh thu dịch vụ nào.</td>
@@ -553,12 +558,12 @@
         document.getElementById('modalDate').innerText = date;
         document.getElementById('modalTickets').innerText = Number(tickets).toLocaleString('en-US');
 
-        // Convert values to USD in Javascript for modal presentation
-        const usdRev = Number(revenue) / 25000.0;
-        const usdAvg = Number(avg) / 25000.0;
+        // Convert values to VND in Javascript for modal presentation
+        const vndRev = Number(revenue);
+        const vndAvg = Number(avg);
 
-        document.getElementById('modalRevenue').innerText = '$' + usdRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        document.getElementById('modalAvg').innerText = '$' + usdAvg.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('modalRevenue').innerText = vndRev.toLocaleString('vi-VN') + ' đ';
+        document.getElementById('modalAvg').innerText = vndAvg.toLocaleString('vi-VN') + ' đ';
 
         const modal = document.getElementById('detailModal');
         modal.classList.remove('hidden');
@@ -592,17 +597,14 @@
     const revenueValues = /*[[${report.timelineRevenue}]]*/ [];
     const ticketValues = /*[[${report.timelineTickets}]]*/ [];
 
-    // Convert VND revenue values to USD in Javascript for line chart
-    const usdRevenueValues = revenueValues.map(v => v / 25000.0);
-
     new Chart(document.getElementById('ticketSalesChart'), {
         type: 'line',
         data: {
             labels: labels,
             datasets: [
                 {
-                    label: 'Doanh thu ($)',
-                    data: usdRevenueValues,
+                    label: 'Doanh thu (đ)',
+                    data: revenueValues,
                     borderColor: '#CA8A04',
                     backgroundColor: 'rgba(202, 138, 4, 0.1)',
                     borderWidth: 2.5,
@@ -634,7 +636,7 @@
                     callbacks: {
                         label: function(context) {
                             if (context.datasetIndex === 0) {
-                                return 'Doanh thu: $' + context.raw.toFixed(2);
+                                return 'Doanh thu: ' + context.raw.toLocaleString('vi-VN') + ' đ';
                             }
                             return 'Vé đã bán: ' + context.raw;
                         }
@@ -652,7 +654,7 @@
                     ticks: {
                         color: textColor,
                         font: chartFont,
-                        callback: function(value) { return '$' + value; }
+                        callback: function(value) { return value.toLocaleString('vi-VN') + ' đ'; }
                     }
                 },
                 y1: {
