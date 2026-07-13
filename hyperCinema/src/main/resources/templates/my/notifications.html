@@ -5,7 +5,11 @@
 </head>
 <body class="min-h-screen">
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
-<nav th:replace="~{fragments/layout :: customerSidebar('notifications')}"></nav>
+<nav th:replace="${userRole == 'ADMIN'} ? ~{fragments/layout :: adminSidebar('notifications')} : 
+                 (${userRole == 'MANAGER'} ? ~{fragments/layout :: managerSidebar('notifications')} : 
+                 (${userRole == 'BRANCH_MANAGER' || userRole == 'BRANCHMANAGER'} ? ~{fragments/layout :: branchSidebar('notifications')} : 
+                 (${userRole == 'STAFF'} ? ~{fragments/layout :: staffSidebar('notifications')} : 
+                 ~{fragments/layout :: customerSidebar('notifications')})))"></nav>
 
 <!-- Main Content -->
 <main class="md:ml-64 min-h-screen pb-12">
@@ -51,7 +55,7 @@
                 <div class="flex-1 min-w-0 pr-6">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400" 
-                              th:text="${n.type != null ? n.type : 'Thông báo'}">Hệ thống</span>
+                              th:text="${n.type == 'Promotion' ? 'Khuyến mãi' : (n.type == 'Alert' ? 'Cảnh báo' : (n.type == 'System' ? 'Hệ thống' : (n.type != null ? n.type : 'Thông báo')))}">Hệ thống</span>
                         <span class="text-xs text-slate-500 tabular-nums" 
                               th:text="${#temporals.format(n.createdAt != null ? n.createdAt : n.scheduledAt, 'HH:mm dd/MM/yyyy')}">10:30 24/06/2026</span>
                     </div>
