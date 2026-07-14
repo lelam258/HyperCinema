@@ -1398,6 +1398,100 @@ a {
     padding: 0.2rem 0.5rem;
 }
 
+.hc-badge.is-success {
+    background: rgba(34, 197, 94, 0.14);
+    border-color: rgba(34, 197, 94, 0.45);
+    color: #86efac;
+}
+
+.hc-badge.is-warning {
+    background: rgba(245, 158, 11, 0.16);
+    border-color: rgba(245, 158, 11, 0.5);
+    color: #fcd34d;
+}
+
+.hc-badge.is-danger {
+    background: rgba(239, 68, 68, 0.16);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #fca5a5;
+}
+
+.hc-coverage-row.is-good {
+    background: linear-gradient(90deg, rgba(34, 197, 94, 0.08), transparent 34%);
+}
+
+.hc-coverage-row.is-average {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.1), transparent 34%);
+}
+
+.hc-coverage-row.is-low {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.12), transparent 34%);
+}
+
+.hc-coverage-row.is-low td:first-child {
+    border-left: 3px solid #ef4444;
+}
+
+.hc-coverage-row.is-average td:first-child {
+    border-left: 3px solid #f59e0b;
+}
+
+.hc-coverage-row.is-good td:first-child {
+    border-left: 3px solid #22c55e;
+}
+
+.hc-coverage-meter {
+    align-items: flex-end;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 5.6rem;
+}
+
+.hc-coverage-meter > span {
+    color: var(--hc-text);
+    font-weight: 800;
+}
+
+.hc-coverage-track {
+    background: rgba(148, 163, 184, 0.22);
+    border-radius: 999px;
+    height: 0.42rem;
+    overflow: hidden;
+    width: 5.6rem;
+}
+
+.hc-coverage-track > i {
+    background: #94a3b8;
+    border-radius: inherit;
+    display: block;
+    height: 100%;
+}
+
+.hc-coverage-meter.is-good > span {
+    color: #86efac;
+}
+
+.hc-coverage-meter.is-good .hc-coverage-track > i {
+    background: linear-gradient(90deg, #22c55e, #86efac);
+}
+
+.hc-coverage-meter.is-average > span {
+    color: #fcd34d;
+}
+
+.hc-coverage-meter.is-average .hc-coverage-track > i {
+    background: linear-gradient(90deg, #f59e0b, #fcd34d);
+}
+
+.hc-coverage-meter.is-low > span {
+    color: #fca5a5;
+}
+
+.hc-coverage-meter.is-low .hc-coverage-track > i {
+    background: linear-gradient(90deg, #ef4444, #fca5a5);
+}
+
 .hc-empty {
     color: var(--hc-muted);
     padding: 1rem;

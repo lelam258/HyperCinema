@@ -55,5 +55,96 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer>, JpaS
                                         @Param("start") LocalDateTime start,
                                         @Param("end") LocalDateTime end);
 
+    @Query("""
+            SELECT COALESCE(SUM(p.amount), 0),
+                   COALESCE(SUM(b.seatSubtotal), 0),
+                   COALESCE(SUM(b.foodSubtotal), 0),
+                   COUNT(p)
+            FROM Payment p
+            JOIN p.booking b
+            JOIN b.showtime s
+            JOIN s.hall h
+            JOIN h.branch br
+            WHERE p.status = :paymentStatus
+            AND LOWER(COALESCE(b.status, '')) <> LOWER(:excludedBookingStatus)
+            AND p.createdAt >= :start
+            AND p.createdAt < :end
+            AND (:branchId IS NULL OR br.branchId = :branchId)
+            """)
+    Object summarizeCompletedRevenue(@Param("start") LocalDateTime start,
+                                      @Param("end") LocalDateTime end,
+                                      @Param("branchId") Integer branchId,
+                                      @Param("paymentStatus") String paymentStatus,
+                                      @Param("excludedBookingStatus") String excludedBookingStatus);
+
+    @Query("""
+            SELECT COUNT(t)
+            FROM Ticket t
+            JOIN t.booking b
+            JOIN b.payment p
+            JOIN b.showtime s
+            JOIN s.hall h
+            JOIN h.branch br
+            WHERE p.status = :paymentStatus
+            AND LOWER(COALESCE(b.status, '')) <> LOWER(:excludedBookingStatus)
+            AND p.createdAt >= :start
+            AND p.createdAt < :end
+            AND (:branchId IS NULL OR br.branchId = :branchId)
+            """)
+    long countCompletedTickets(@Param("start") LocalDateTime start,
+                               @Param("end") LocalDateTime end,
+                               @Param("branchId") Integer branchId,
+                               @Param("paymentStatus") String paymentStatus,
+                               @Param("excludedBookingStatus") String excludedBookingStatus);
+
+    @Query("""
+            SELECT FUNCTION('DATE', p.createdAt),
+                   COALESCE(SUM(p.amount), 0),
+                   COUNT(p)
+            FROM Payment p
+            JOIN p.booking b
+            JOIN b.showtime s
+            JOIN s.hall h
+            JOIN h.branch br
+            WHERE p.status = :paymentStatus
+            AND LOWER(COALESCE(b.status, '')) <> LOWER(:excludedBookingStatus)
+            AND p.createdAt >= :start
+            AND p.createdAt < :end
+            AND (:branchId IS NULL OR br.branchId = :branchId)
+            GROUP BY FUNCTION('DATE', p.createdAt)
+            ORDER BY FUNCTION('DATE', p.createdAt)
+            """)
+    List<Object[]> findDailyCompletedRevenue(@Param("start") LocalDateTime start,
+                                             @Param("end") LocalDateTime end,
+                                             @Param("branchId") Integer branchId,
+                                             @Param("paymentStatus") String paymentStatus,
+                                             @Param("excludedBookingStatus") String excludedBookingStatus);
+
+    @Query("""
+            SELECT br.branchId,
+                   br.name,
+                   COALESCE(SUM(p.amount), 0),
+                   COALESCE(SUM(b.seatSubtotal), 0),
+                   COALESCE(SUM(b.foodSubtotal), 0),
+                   COUNT(p)
+            FROM Payment p
+            JOIN p.booking b
+            JOIN b.showtime s
+            JOIN s.hall h
+            JOIN h.branch br
+            WHERE p.status = :paymentStatus
+            AND LOWER(COALESCE(b.status, '')) <> LOWER(:excludedBookingStatus)
+            AND p.createdAt >= :start
+            AND p.createdAt < :end
+            AND (:branchId IS NULL OR br.branchId = :branchId)
+            GROUP BY br.branchId, br.name
+            ORDER BY COALESCE(SUM(p.amount), 0) DESC, br.name ASC
+            """)
+    List<Object[]> findBranchRevenueRanking(@Param("start") LocalDateTime start,
+                                            @Param("end") LocalDateTime end,
+                                            @Param("branchId") Integer branchId,
+                                            @Param("paymentStatus") String paymentStatus,
+                                            @Param("excludedBookingStatus") String excludedBookingStatus);
+
     long countByBooking_Showtime_ShowtimeId(Integer showtimeId);
 }
