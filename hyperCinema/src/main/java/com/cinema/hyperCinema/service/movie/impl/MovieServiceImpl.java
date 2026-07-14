@@ -215,20 +215,18 @@ public class MovieServiceImpl implements MovieService {
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new MovieNotFoundException(movieId));
 
-        if (showtimeRepository.existsByMovie_MovieId(movieId)) {
-            throw new MovieValidationException("movie.cannot_delete_with_showtimes");
+        if (showtimeRepository.existsByMovie_MovieIdAndStartTimeAfter(movieId, LocalDateTime.now())) {
+            throw new MovieValidationException("movie.cannot_end_with_future_showtimes");
         }
 
-        if (branchMovieRepository.existsByMovie_MovieId(movieId)) {
-            throw new MovieValidationException("movie.cannot_delete_with_branch_assignments");
+        String oldStatus = movie.getStatus();
+        if ("Ended".equals(oldStatus)) {
+            return;
         }
-
-        if (favoriteMovieRepository.existsByIdMovieId(movieId)) {
-            throw new MovieValidationException("movie.cannot_delete_with_favorites");
-        }
-
-        movieGenreRepository.deleteByMovieId(movieId);
-        movieRepository.delete(movie);
+        movie.setStatus("Ended");
+        movie.setUpdatedAt(LocalDateTime.now());
+        movieRepository.save(movie);
+        auditSafe(() -> auditLogger.logStatusChange(movie, oldStatus, "Ended", admin));
     }
 
     @Override
@@ -272,11 +270,13 @@ public class MovieServiceImpl implements MovieService {
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new MovieNotFoundException(movieId));
 
-        if (!branchRepository.existsById(branchId)) {
-            throw new MovieValidationException("movie.branch_not_found");
-        }
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new MovieValidationException("movie.branch_not_found"));
         if ("Ended".equals(movie.getStatus())) {
             throw new MovieValidationException("movie.cannot_assign_ended_movie");
+        }
+        if (!"Active".equalsIgnoreCase(branch.getStatus())) {
+            throw new MovieValidationException("movie.branch_inactive");
         }
 
         BranchMovieId pkId = new BranchMovieId(branchId, movieId);
@@ -286,7 +286,7 @@ public class MovieServiceImpl implements MovieService {
 
         BranchMovie bm = new BranchMovie();
         bm.setId(pkId);
-        bm.setBranch(branchRepository.getReferenceById(branchId));
+        bm.setBranch(branch);
         bm.setMovie(movie);
         bm.setAssignedAt(LocalDateTime.now());
         branchMovieRepository.save(bm);

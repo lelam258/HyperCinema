@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Đặt vé - HyperCinema')}"></head>
+<body class="min-h-screen hc-customer">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: customerSidebar('booking')}"></nav>
+
+<main class="hc-page hc-customer-booking-page">
+    <section class="hc-booking-hero">
+        <div th:if="${movie.posterUrl != null and not #strings.isEmpty(movie.posterUrl)}"
+             class="hc-booking-hero-bg"
+             th:style="|background-image: url('${movie.posterUrl}')|"></div>
+        <div class="hc-booking-hero-shade"></div>
+        <div class="hc-booking-hero-inner">
+            <div class="hc-booking-poster">
+                <img th:if="${movie.posterUrl != null and not #strings.isEmpty(movie.posterUrl)}"
+                     th:src="${movie.posterUrl}"
+                     th:alt="|Poster ${movie.title}|">
+                <span th:unless="${movie.posterUrl != null and not #strings.isEmpty(movie.posterUrl)}">
+                    <i data-lucide="clapperboard"></i>
+                </span>
+            </div>
+            <div class="hc-booking-hero-copy">
+                <div class="hc-booking-tags">
+                    <span class="is-danger">T16</span>
+                    <span>IMAX</span>
+                    <span>2D</span>
+                </div>
+                <h1 th:text="${movie.title}">Tên phim</h1>
+                <p>
+                    <span th:if="${movie.genres != null and not #lists.isEmpty(movie.genres)}"
+                          th:each="genre, iter : ${movie.genres}">
+                        <span th:text="${genre.name}">Thể loại</span><span th:if="${!iter.last}">, </span>
+                    </span>
+                    <span th:if="${movie.genres == null or #lists.isEmpty(movie.genres)}">Điện ảnh</span>
+                    <span th:if="${movie.duration != null}" th:text="| - ${movie.duration} phút|"> - 120 phút</span>
+                </p>
+                <a th:href="@{/my/dashboard}" class="hc-booking-back">
+                    <i data-lucide="chevron-left"></i>
+                    Quay lại
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <div class="hc-booking-detail-layout">
+        <div class="hc-stack">
+            <section class="hc-panel hc-booking-panel">
+                <div class="hc-panel-head">
+                    <h2><i data-lucide="calendar"></i> Chọn ngày chiếu</h2>
+                </div>
+                <div class="hc-date-strip">
+                    <a th:each="tab : ${dateTabs}"
+                       th:href="@{/booking/movies/{movieId}(movieId=${tab.movieId},date=${tab.isoDate},city=${tab.city})}"
+                       th:classappend="${tab.selected} ? ' is-selected' : ''"
+                       class="hc-date-pill">
+                        <span th:text="${tab.label}">Hom nay</span>
+                        <strong th:text="${tab.displayDate}">19/06</strong>
+                        <small th:if="${!tab.hasShowtime}">Hết lịch</small>
+                    </a>
+                </div>
+            </section>
+
+            <section class="hc-panel hc-booking-panel">
+                <div class="hc-booking-section-head">
+                    <h2><i data-lucide="map-pin"></i> Chọn rạp và suất chiếu</h2>
+                    <form th:action="@{/booking/movies/{movieId}(movieId=${movie.movieId})}" method="get">
+                        <input type="hidden" name="date" th:value="${selectedDate}">
+                        <select class="hc-select" name="city" onchange="this.form.submit()">
+                            <option value="" th:selected="${selectedCity == null}">Tất cả khu vực</option>
+                            <option th:each="city : ${cities}"
+                                    th:value="${city}"
+                                    th:text="${city}"
+                                    th:selected="${selectedCity == city}">Ho Chi Minh</option>
+                        </select>
+                    </form>
+                </div>
+
+                <div class="hc-branch-list" th:if="${hasShowtimes}">
+                    <article th:each="branch : ${branchSchedules}" class="hc-branch-card">
+                        <div class="hc-branch-head">
+                            <div>
+                                <h3 th:text="${branch.name}">CGV Landmark 81</h3>
+                                <p th:text="${branch.address}">Địa chỉ rạp</p>
+                            </div>
+                            <span th:text="${branch.city}">Thành phố</span>
+                        </div>
+                        <div class="hc-showtime-grid">
+                            <a th:each="slot : ${branch.showtimes}"
+                               th:href="@{/booking(showtimeId=${slot.showtimeId})}"
+                               class="hc-showtime-pill">
+                                <strong th:text="${#temporals.format(slot.startTime, 'HH:mm')}">10:00</strong>
+                                <span>
+                                    <span th:text="${slot.hallType}">2D</span>
+                                    <span th:if="${slot.hallName != null}" th:text="| - ${slot.hallName}|"> - Phong 01</span>
+                                </span>
+                            </a>
+                        </div>
+                    </article>
+                </div>
+
+                <div th:unless="${hasShowtimes}" class="hc-customer-empty">
+                    <i data-lucide="calendar-x"></i>
+                    <h2>Chưa có suất chiếu</h2>
+                    <p>Hãy chọn ngày khác hoặc quay lại sau khi rạp cập nhật lịch mới.</p>
+                </div>
+            </section>
+        </div>
+
+        <aside class="hc-movie-about">
+            <section class="hc-panel">
+                <h2>Nội dung trích yếu</h2>
+                <p th:text="${movie.description}">Mô tả phim</p>
+                <dl>
+                    <div>
+                        <dt>Ngôn ngữ</dt>
+                        <dd th:text="${movie.languageName != null ? movie.languageName : '--'}">Vietnamese</dd>
+                    </div>
+                    <div>
+                        <dt>Ngày phát hành</dt>
+                        <dd th:text="${movie.releaseDate != null ? #temporals.format(movie.releaseDate, 'dd/MM/yyyy') : '--'}">19/06/2026</dd>
+                    </div>
+                    <div>
+                        <dt>Trạng thái</dt>
+                        <dd th:text="${movie.status == 'NowShowing' ? 'Đang chiếu' : (movie.status == 'ComingSoon' ? 'Sắp chiếu' : (movie.status == 'Ended' ? 'Đã kết thúc' : movie.status))}">Đang chiếu</dd>
+                    </div>
+                </dl>
+            </section>
+        </aside>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

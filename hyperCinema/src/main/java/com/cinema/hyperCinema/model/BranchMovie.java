@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Branch_Movie")
+@Table(name = "branch_movie")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -39,3 +39,4 @@ public class BranchMovie {
         }
     }
 }
+

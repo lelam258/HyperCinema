@@ -1,138 +1,114 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<!--
-    Movie Detail — Tailwind CSS Rebuild.
-    5 panels: Header+Toolbar, General Info, Genres, Branches, Showtimes.
-    Giữ nguyên 100% Thymeleaf bindings, form actions, readOnly logic.
--->
-<head th:replace="~{fragments/layout :: head(|Chi tiết Phim - ${movie.title} - HyperCinema|)}">
-    <title>Chi tiết Phim - ${movie.title} - HyperCinema</title>
-</head>
-<body class="min-h-screen">
+<head th:replace="~{fragments/layout :: head(|Chi tiết Phim - ${movie.title} - HyperCinema|)}"></head>
+<body class="min-h-screen bg-cinema-bg text-white">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
 <nav th:replace="~{fragments/layout :: adminSidebar('movies')}"></nav>
 
-<main class="md:ml-64 min-h-screen">
-    <div class="max-w-5xl mx-auto px-6 py-8">
-
-        <!-- Breadcrumb -->
-        <nav class="flex items-center gap-2 text-sm text-slate-400 mb-6" aria-label="Breadcrumb">
-            <a th:href="@{/admin/movies}" class="text-slate-400 hover:text-primary transition-colors no-underline">Quản lý Phim</a>
-            <span class="text-slate-600">/</span>
-            <span class="text-slate-200" th:text="${movie.title}">Tên phim</span>
+<main class="hc-page">
+    <div class="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <nav class="mb-6 flex items-center gap-2 text-sm text-cinema-muted" aria-label="Breadcrumb">
+            <a th:href="@{/admin/movies}" class="text-cinema-muted no-underline hover:text-accent">Quản lý Phim</a>
+            <span>/</span>
+            <span class="text-white" th:text="${movie.title}">Tên phim</span>
         </nav>
 
-        <!-- Flash Messages -->
         <div th:replace="~{fragments/components :: flashes}"></div>
 
-        <!-- Panel 1: Header + Toolbar -->
-        <div class="glass-card p-6 mb-6">
-            <div class="flex flex-wrap justify-between items-start gap-4">
-                <div class="flex flex-col gap-2">
-                    <h1 class="text-2xl font-bold text-white" id="movie-title" th:text="${movie.title}">Tên phim</h1>
-                    <div class="flex items-center gap-2 text-sm text-slate-400">
+        <section class="hc-card mb-6 p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h1 class="font-serif text-3xl font-bold text-white" th:text="${movie.title}">Tên phim</h1>
+                    <div class="mt-3 flex items-center gap-2 text-sm text-cinema-muted">
                         <span>Trạng thái:</span>
                         <th:block th:replace="~{fragments/components :: statusBadge(${movie.status})}"></th:block>
                     </div>
                 </div>
-
-                <!-- Toolbar (Admin only) -->
                 <div class="flex flex-wrap items-center gap-2" th:if="${!readOnly}" role="toolbar" aria-label="Thao tác Phim">
-                    <!-- Change Status -->
-                    <form class="flex items-center gap-1.5" method="post" th:action="@{/admin/movies/{id}/status(id=${movie.movieId})}">
-                        <select name="status" th:id="|status-${movie.movieId}|"
-                                class="px-3 py-2 bg-white/[0.06] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary cursor-pointer appearance-none">
-                            <option value="ComingSoon" th:selected="${movie.status == 'ComingSoon'}">ComingSoon</option>
-                            <option value="NowShowing" th:selected="${movie.status == 'NowShowing'}">NowShowing</option>
-                            <option value="Ended" th:selected="${movie.status == 'Ended'}">Ended</option>
+                    <form class="flex items-center gap-2" method="post" th:action="@{/admin/movies/{id}/status(id=${movie.movieId})}">
+                        <select name="status" th:id="|status-${movie.movieId}|" aria-label="Trạng thái phim" class="hc-input w-auto cursor-pointer py-2">
+                            <option value="ComingSoon" th:selected="${movie.status == 'ComingSoon'}">Sắp chiếu</option>
+                            <option value="NowShowing" th:selected="${movie.status == 'NowShowing'}">Đang chiếu</option>
+                            <option value="Ended" th:selected="${movie.status == 'Ended'}">Đã kết thúc</option>
                         </select>
-                        <button type="submit" class="px-3 py-2 text-sm font-medium text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all cursor-pointer">Đổi</button>
+                        <button type="submit" class="hc-btn">Đổi</button>
                     </form>
-
-                    <!-- Assign Branch (chuyển sang trang riêng để UI tốt hơn) -->
-                    <a th:href="@{/admin/movies/{id}/branches(id=${movie.movieId})}"
-                       class="px-4 py-2 text-sm font-medium text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Quản lý Phân phối</a>
-
+                    <a th:href="@{/admin/movies/{id}/edit(id=${movie.movieId})}" class="hc-btn hc-btn-primary no-underline">Chỉnh sửa</a>
+                    <a th:href="@{/admin/movies/{id}/branches(id=${movie.movieId})}" class="hc-btn no-underline">Quản lý phân phối</a>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Panel 2: General Info -->
-        <div class="glass-card p-6 mb-6">
-            <h2 class="text-lg font-semibold text-white mb-4" id="general-heading">Thông tin chung</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                <!-- Poster -->
-                <div class="md:row-span-4">
-                    <span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Poster</span>
-                    <img th:if="${movie.posterUrl != null and !movie.posterUrl.isEmpty()}" class="max-w-[200px] w-full h-auto rounded-lg border border-white/10" th:src="${movie.posterUrl}" th:alt="|Poster phim ${movie.title}|" alt="Poster phim">
-                    <span th:unless="${movie.posterUrl != null and !movie.posterUrl.isEmpty()}" class="flex w-[200px] h-[280px] items-center justify-center text-center p-3 border border-dashed border-white/15 rounded-lg bg-white/5 text-slate-400 text-sm">Chưa có poster</span>
+        <section class="hc-card mb-6 p-6">
+            <h2 class="mb-4 font-serif text-lg text-white">Thông tin chung</h2>
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-[220px_1fr]">
+                <div>
+                    <img th:if="${movie.posterUrl != null and !movie.posterUrl.isEmpty()}" class="h-auto w-full rounded-xl border border-cinema-border bg-cinema-panel-soft object-cover" th:src="${movie.posterUrl}" th:alt="|Poster phim ${movie.title}|">
+                    <div th:unless="${movie.posterUrl != null and !movie.posterUrl.isEmpty()}" class="flex h-[300px] w-full items-center justify-center rounded-xl border border-dashed border-cinema-border bg-cinema-panel-soft text-sm text-cinema-muted">Chưa có poster</div>
                 </div>
-                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Tên phim</span><span class="text-white" th:text="${movie.title}">Tên phim</span></div>
-                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Thời lượng</span><span class="text-white" th:text="${movie.duration != null} ? |${movie.duration} phút| : '—'">120 phút</span></div>
-                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Ngày phát hành</span><span class="text-white" th:text="${movie.releaseDate != null} ? ${#temporals.format(movie.releaseDate, 'dd/MM/yyyy')} : '—'">--/--/----</span></div>
-                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Ngôn ngữ</span><span class="text-white" th:text="${movie.languageName} ?: '—'">Tiếng Việt</span></div>
-                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Trạng thái</span><th:block th:replace="~{fragments/components :: statusBadge(${movie.status})}"></th:block></div>
-                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Trailer</span>
-                    <a th:if="${movie.trailerUrl != null and !movie.trailerUrl.isEmpty()}" th:href="${movie.trailerUrl}" target="_blank" rel="noopener noreferrer" class="text-info hover:text-primary no-underline transition-colors cursor-pointer">Xem trailer</a>
-                    <span th:unless="${movie.trailerUrl != null and !movie.trailerUrl.isEmpty()}" class="text-slate-500">—</span>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div><span class="hc-label text-xs uppercase tracking-wide">Tên phim</span><span class="text-white" th:text="${movie.title}">Tên phim</span></div>
+                    <div><span class="hc-label text-xs uppercase tracking-wide">Thời lượng</span><span class="text-white" th:text="${movie.duration != null ? movie.duration + ' phút' : '-'}">120 phút</span></div>
+                    <div><span class="hc-label text-xs uppercase tracking-wide">Ngày phát hành</span><span class="text-white" th:text="${movie.releaseDate != null} ? ${#temporals.format(movie.releaseDate, 'dd/MM/yyyy')} : '-'">--/--/----</span></div>
+                    <div><span class="hc-label text-xs uppercase tracking-wide">Ngôn ngữ</span><span class="text-white" th:text="${movie.languageName} ?: '-'">Tiếng Việt</span></div>
+                    <div><span class="hc-label text-xs uppercase tracking-wide">Trailer</span><a th:if="${movie.trailerUrl != null and !movie.trailerUrl.isEmpty()}" th:href="${movie.trailerUrl}" target="_blank" rel="noopener noreferrer" class="text-info no-underline hover:text-accent">Xem trailer</a><span th:unless="${movie.trailerUrl != null and !movie.trailerUrl.isEmpty()}" class="text-cinema-muted">-</span></div>
+                    <div><span class="hc-label text-xs uppercase tracking-wide">Ngày tạo</span><span class="text-white" th:text="${movie.createdAt != null} ? ${#temporals.format(movie.createdAt, 'dd/MM/yyyy HH:mm')} : '-'">--/--/----</span></div>
+                    <div class="sm:col-span-2"><span class="hc-label text-xs uppercase tracking-wide">Mô tả</span><span class="whitespace-pre-line leading-relaxed text-white" th:text="${movie.description}">Mô tả phim</span></div>
                 </div>
-                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Ngày tạo</span><span class="text-white" th:text="${movie.createdAt != null} ? ${#temporals.format(movie.createdAt, 'dd/MM/yyyy HH:mm')} : '—'">--/--/----</span></div>
-                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Ngày cập nhật</span><span class="text-white" th:text="${movie.updatedAt != null} ? ${#temporals.format(movie.updatedAt, 'dd/MM/yyyy HH:mm')} : '—'">--/--/----</span></div>
-                <div class="md:col-span-2"><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Mô tả</span><span class="text-white whitespace-pre-line leading-relaxed" th:text="${movie.description}">Mô tả phim</span></div>
             </div>
-        </div>
+        </section>
 
-        <!-- Panel 3: Genres -->
-        <div class="glass-card p-6 mb-6">
-            <h2 class="text-lg font-semibold text-white mb-4" id="genres-heading">
-                Thể loại <span class="text-sm font-normal text-slate-400" th:text="|${movie.genres != null ? #lists.size(movie.genres) : 0} thể loại|">0 thể loại</span>
+        <section class="hc-card mb-6 p-6">
+            <h2 class="mb-4 font-serif text-lg text-white">
+                Thể loại <span class="text-sm font-normal text-cinema-muted" th:text="|${movie.genres != null ? #lists.size(movie.genres) : 0} thể loại|">0 thể loại</span>
             </h2>
-            <div th:if="${movie.genres == null or #lists.isEmpty(movie.genres)}" class="text-sm text-slate-500 py-4 text-center">Phim chưa được gắn thể loại nào.</div>
+            <div th:if="${movie.genres == null or #lists.isEmpty(movie.genres)}" class="py-6 text-center text-sm text-cinema-muted">Phim chưa được gán thể loại nào.</div>
             <div th:if="${movie.genres != null and !#lists.isEmpty(movie.genres)}" class="flex flex-wrap gap-2">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.06] border border-white/10 rounded-full text-sm text-slate-200" th:each="genre : ${movie.genres}">
+                <div class="inline-flex items-center gap-2 rounded-full border border-cinema-border bg-cinema-panel-soft px-3 py-1.5 text-sm text-white" th:each="genre : ${movie.genres}">
                     <span th:text="${genre.name}">Thể loại</span>
-                    <form th:if="${!readOnly}" method="post" th:action="@{/admin/movies/{movieId}/genres/{genreId}/remove(movieId=${movie.movieId},genreId=${genre.genreId})}" onsubmit="return confirm('Gỡ thể loại này khỏi Phim?');" class="inline">
-                        <button type="submit" class="text-slate-400 hover:text-danger transition-colors cursor-pointer text-base leading-none" th:attr="aria-label=|Gỡ thể loại ${genre.name}|" title="Gỡ thể loại">&times;</button>
+                    <form th:if="${!readOnly}" method="post" th:action="@{/admin/movies/{movieId}/genres/{genreId}/remove(movieId=${movie.movieId},genreId=${genre.genreId})}" onsubmit="return confirm('Gỡ thể loại này khỏi phim?');" class="inline">
+                        <button type="submit" class="text-cinema-muted hover:text-danger" th:attr="aria-label=|Gỡ thể loại ${genre.name}|">&times;</button>
                     </form>
-                </span>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Panel 4: Branches -->
-        <div class="glass-card p-6 mb-6 overflow-hidden">
-            <h2 class="text-lg font-semibold text-white mb-4" id="branches-heading">
-                Phân phối tới Chi nhánh <span class="text-sm font-normal text-slate-400" th:text="|${movie.branches != null ? #lists.size(movie.branches) : 0} chi nhánh|">0 chi nhánh</span>
-            </h2>
-            <div th:if="${movie.branches == null or #lists.isEmpty(movie.branches)}" class="text-sm text-slate-500 py-4 text-center">Phim chưa được phân phối tới Chi nhánh nào.</div>
-            <div th:if="${movie.branches != null and !#lists.isEmpty(movie.branches)}" class="overflow-x-auto -mx-6 px-6">
-                <table class="w-full text-sm">
-                    <thead><tr class="border-b border-white/[0.08]"><th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Tên Chi nhánh</th><th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Thành phố</th><th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Ngày phân phối</th><th th:if="${!readOnly}" class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400 whitespace-nowrap">Thao tác</th></tr></thead>
-                    <tbody class="divide-y divide-white/[0.06]">
-                        <tr th:each="branch : ${movie.branches}" class="hover:bg-white/[0.04] transition-colors">
-                            <td class="px-4 py-3 text-white" th:text="${branch.branchName}">Tên chi nhánh</td>
-                            <td class="px-4 py-3 text-slate-400" th:text="${branch.city}">Thành phố</td>
-                            <td class="px-4 py-3 text-slate-400 whitespace-nowrap" th:text="${branch.assignedAt != null} ? ${#temporals.format(branch.assignedAt, 'dd/MM/yyyy HH:mm')} : '—'">--/--/----</td>
-                            <td th:if="${!readOnly}" class="px-4 py-3 text-right">
-                                <form method="post" th:action="@{/admin/movies/{movieId}/branches/{branchId}/remove(movieId=${movie.movieId},branchId=${branch.branchId})}" onsubmit="return confirm('Gỡ phân phối Phim khỏi Chi nhánh này?');">
-                                    <button type="submit" class="px-3 py-1.5 text-xs font-medium text-danger bg-danger/10 border border-danger/25 rounded-lg hover:bg-danger/20 transition-all cursor-pointer">Gỡ phân phối</button>
-                                </form>
-                            </td>
-                        </tr>
+        <section class="hc-card mb-6 overflow-hidden">
+            <div class="border-b border-cinema-border bg-cinema-sidebar px-6 py-4">
+                <h2 class="font-serif text-lg text-white">
+                    Phân phối tới Chi nhánh <span class="text-sm font-normal text-cinema-muted" th:text="|${movie.branches != null ? #lists.size(movie.branches) : 0} chi nhánh|">0 chi nhánh</span>
+                </h2>
+            </div>
+            <div th:if="${movie.branches == null or #lists.isEmpty(movie.branches)}" class="px-6 py-10 text-center text-sm text-cinema-muted">Phim chưa được phân phối tới chi nhánh nào.</div>
+            <div th:if="${movie.branches != null and !#lists.isEmpty(movie.branches)}" class="overflow-x-auto">
+                <table class="hc-table">
+                    <thead>
+                    <tr><th>Tên Chi nhánh</th><th>Thành phố</th><th>Ngày phân phối</th><th th:if="${!readOnly}" class="text-right">Thao tác</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="branch : ${movie.branches}">
+                        <td class="text-white" th:text="${branch.branchName}">Tên chi nhánh</td>
+                        <td th:text="${branch.city}">Thành phố</td>
+                        <td class="whitespace-nowrap" th:text="${branch.assignedAt != null} ? ${#temporals.format(branch.assignedAt, 'dd/MM/yyyy HH:mm')} : '-'">--/--/----</td>
+                        <td th:if="${!readOnly}" class="text-right">
+                            <form method="post" th:action="@{/admin/movies/{movieId}/branches/{branchId}/remove(movieId=${movie.movieId},branchId=${branch.branchId})}" onsubmit="return confirm('Gỡ phân phối phim khỏi chi nhánh này?');">
+                                <button type="submit" class="hc-btn px-3 py-1.5 text-xs text-danger hover:bg-danger/10">Gỡ phân phối</button>
+                            </form>
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-        <!-- Panel 5: Showtimes -->
-        <div class="glass-card p-6 mb-6">
-            <h2 class="text-lg font-semibold text-white mb-4" id="showtimes-heading">Tóm tắt lịch chiếu</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Lịch chiếu tương lai</span><span class="text-white font-semibold" th:text="|${movie.futureShowtimeCount} suất|">0 suất</span></div>
-                <div><span class="block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Lịch chiếu quá khứ</span><span class="text-white font-semibold" th:text="|${movie.pastShowtimeCount} suất|">0 suất</span></div>
+        <section class="hc-card mb-6 p-6">
+            <h2 class="mb-4 font-serif text-lg text-white">Tóm tắt lịch chiếu</h2>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="hc-subcard p-4"><span class="hc-label text-xs uppercase tracking-wide">Lịch chiếu tương lai</span><span class="font-serif text-2xl text-accent" th:text="|${movie.futureShowtimeCount} suất|">0 suất</span></div>
+                <div class="hc-subcard p-4"><span class="hc-label text-xs uppercase tracking-wide">Lịch chiếu quá khứ</span><span class="font-serif text-2xl text-white" th:text="|${movie.pastShowtimeCount} suất|">0 suất</span></div>
             </div>
-        </div>
-
+        </section>
     </div>
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </main>

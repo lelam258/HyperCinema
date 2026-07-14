@@ -59,7 +59,7 @@ public class AdminPaymentController {
         // Fetch branches for filter dropdown (only relevant for Admin/Manager)
         List<Branch> branches = List.of();
         if ("Admin".equalsIgnoreCase(roleName) || "Manager".equalsIgnoreCase(roleName)) {
-            branches = branchRepository.findAllByOrderByNameAsc();
+            branches = branchRepository.findByStatusIgnoreCaseOrderByNameAsc("Active");
         }
 
         model.addAttribute("payments", paymentPage);

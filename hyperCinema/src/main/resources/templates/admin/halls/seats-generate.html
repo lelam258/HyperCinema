@@ -56,7 +56,7 @@
                     </div>
                 </div>
 
-                <!-- Custom VIP, Double & Aisle configuration -->
+                <!-- Custom VIP & Double configuration -->
                 <div class="space-y-4">
                     <div>
                         <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Chọn hàng làm ghế VIP (+20.000đ)</h3>
@@ -77,22 +77,6 @@
                             </label>
                         </div>
                     </div>
-
-                    <div>
-                        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Chọn hàng làm lối đi / khoảng trống (Aisle)</h3>
-                        <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 bg-white/[0.02] p-3 rounded-xl border border-white/5">
-                            <label th:each="char : ${#strings.arraySplit('A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z', ',')}" class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer hover:text-white select-none">
-                                <input type="checkbox" name="aisleRows" th:value="${char}" class="w-4 h-4 border-white/10 rounded accent-slate-500 bg-white/5">
-                                <span th:text="${char}">A</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="aisleColumns" class="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Chọn cột làm lối đi / khoảng trống (Aisle) (Danh sách số phân cách bằng dấu phẩy)</label>
-                        <input type="text" id="aisleColumns" th:field="*{aisleColumns}" placeholder="Ví dụ: 3, 8 (Lối đi sẽ được chèn tại vị trí cột này)" class="w-full px-3 py-2 bg-white/[0.06] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary">
-                        <p class="text-red-400 text-xs mt-1" th:if="${#fields.hasErrors('aisleColumns')}" th:errors="*{aisleColumns}">Lỗi</p>
-                    </div>
                 </div>
 
                 <div class="flex justify-end gap-3 border-t border-white/[0.06] pt-6">
@@ -112,20 +96,12 @@
         const rowStartSelect = document.getElementById('rowStart');
         const rowEndSelect = document.getElementById('rowEnd');
         const seatsPerRowInput = document.getElementById('seatsPerRow');
-        const aisleColumnsInput = document.getElementById('aisleColumns');
         const capacitySpan = document.getElementById('nominalCapacityVal');
 
         function updateCapacity() {
             const startChar = rowStartSelect.value;
             const endChar = rowEndSelect.value;
             const seatsPerRow = parseInt(seatsPerRowInput.value) || 0;
-
-            const aisleColsInput = aisleColumnsInput.value || "";
-            const aisleCols = new Set(
-                aisleColsInput.split(',')
-                    .map(s => parseInt(s.trim()))
-                    .filter(n => !isNaN(n))
-            );
 
             if (startChar && endChar) {
                 const startCode = startChar.charCodeAt(0);
@@ -134,35 +110,13 @@
 
                 for (let code = startCode; code <= endCode; code++) {
                     const char = String.fromCharCode(code);
-                    const aisleCb = document.querySelector(`input[name="aisleRows"][value="${char}"]`);
-                    if (aisleCb && aisleCb.checked) {
-                        // Entire row is aisle: capacity += 0
-                        continue;
-                    }
-
                     const doubleCb = document.querySelector(`input[name="doubleRows"][value="${char}"]`);
                     if (doubleCb && doubleCb.checked) {
-                        let col = 1;
-                        while (col <= seatsPerRow) {
-                            if (aisleCols.has(col)) {
-                                col++;
-                            } else {
-                                if (col + 1 <= seatsPerRow && !aisleCols.has(col + 1)) {
-                                    totalCapacity += 2;
-                                    col += 2;
-                                } else {
-                                    totalCapacity += 1;
-                                    col++;
-                                }
-                            }
-                        }
+                        // Double row: capacity is floor(seatsPerRow / 2) * 2 (standard seat is discarded)
+                        totalCapacity += Math.floor(seatsPerRow / 2) * 2;
                     } else {
-                        // Standard/VIP row
-                        for (let col = 1; col <= seatsPerRow; col++) {
-                            if (!aisleCols.has(col)) {
-                                totalCapacity += 1;
-                            }
-                        }
+                        // Standard/VIP row: capacity is seatsPerRow
+                        totalCapacity += seatsPerRow;
                     }
                 }
                 capacitySpan.textContent = totalCapacity;
@@ -174,7 +128,6 @@
         // Mutual exclusivity logic & capacity update on checkbox changes
         const vipCheckboxes = document.querySelectorAll('input[name="vipRows"]');
         const doubleCheckboxes = document.querySelectorAll('input[name="doubleRows"]');
-        const aisleCheckboxes = document.querySelectorAll('input[name="aisleRows"]');
 
         vipCheckboxes.forEach(cb => {
             cb.addEventListener('change', function() {
@@ -182,10 +135,6 @@
                     const doubleCb = document.querySelector(`input[name="doubleRows"][value="${this.value}"]`);
                     if (doubleCb) {
                         doubleCb.checked = false;
-                    }
-                    const aisleCb = document.querySelector(`input[name="aisleRows"][value="${this.value}"]`);
-                    if (aisleCb) {
-                        aisleCb.checked = false;
                     }
                 }
                 updateCapacity();
@@ -199,26 +148,6 @@
                     if (vipCb) {
                         vipCb.checked = false;
                     }
-                    const aisleCb = document.querySelector(`input[name="aisleRows"][value="${this.value}"]`);
-                    if (aisleCb) {
-                        aisleCb.checked = false;
-                    }
-                }
-                updateCapacity();
-            });
-        });
-
-        aisleCheckboxes.forEach(cb => {
-            cb.addEventListener('change', function() {
-                if (this.checked) {
-                    const vipCb = document.querySelector(`input[name="vipRows"][value="${this.value}"]`);
-                    if (vipCb) {
-                        vipCb.checked = false;
-                    }
-                    const doubleCb = document.querySelector(`input[name="doubleRows"][value="${this.value}"]`);
-                    if (doubleCb) {
-                        doubleCb.checked = false;
-                    }
                 }
                 updateCapacity();
             });
@@ -227,7 +156,6 @@
         rowStartSelect.addEventListener('change', updateCapacity);
         rowEndSelect.addEventListener('change', updateCapacity);
         seatsPerRowInput.addEventListener('input', updateCapacity);
-        aisleColumnsInput.addEventListener('input', updateCapacity);
 
         // Initial run to calculate based on default values
         updateCapacity();

@@ -32,9 +32,4 @@ public class SeatGenerateRequest {
     private List<String> vipRows = new ArrayList<>();
 
     private List<String> doubleRows = new ArrayList<>();
-
-    private List<String> aisleRows = new ArrayList<>();
-
-    private String aisleColumns = "";
 }
-

@@ -18,3 +18,4 @@ public class MovieGenreId implements Serializable {
     @Column(name = "genre_id")
     private Integer genreId;
 }
+
