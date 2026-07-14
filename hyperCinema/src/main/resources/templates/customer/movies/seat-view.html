@@ -15,15 +15,12 @@
                 <a th:href="@{/movies(status='ComingSoon')}" class="text-sm font-medium transition-colors hover:text-primary no-underline text-slate-300">Phim sắp chiếu</a>
             </nav>
             <div class="flex items-center gap-3">
-                <th:block th:if="${!isLoggedInCustomer}">
+                <th:block th:if="${loggedIn}">
+                    <a th:href="${dashboardUrl}" class="px-4 py-2 text-sm font-semibold text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline">Tài khoản</a>
+                </th:block>
+                <th:block th:unless="${loggedIn}">
                     <a th:href="@{/login}" class="px-4 py-2 text-sm font-semibold text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline">Đăng nhập</a>
                     <a th:href="@{/register}" class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all no-underline">Đăng ký</a>
-                </th:block>
-                <th:block th:if="${isLoggedInCustomer}">
-                    <a th:href="@{/my/dashboard}" class="px-4 py-2 text-sm font-semibold text-primary bg-primary/10 border border-primary/20 rounded-xl hover:bg-primary/20 transition-all no-underline">Dashboard</a>
-                    <form th:action="@{/logout}" method="post" class="inline">
-                        <button type="submit" class="px-4 py-2 text-sm font-semibold text-red-400 bg-white/[0.04] border border-white/10 rounded-xl hover:bg-red-500/10 hover:text-red-300 transition-all cursor-pointer">Đăng xuất</button>
-                    </form>
                 </th:block>
             </div>
         </div>

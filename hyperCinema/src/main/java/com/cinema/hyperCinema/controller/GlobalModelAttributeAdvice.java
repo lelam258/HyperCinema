@@ -35,4 +35,34 @@ public class GlobalModelAttributeAdvice {
         }
         return "ANONYMOUS";
     }
+
+    @ModelAttribute("loggedIn")
+    public boolean isLoggedIn(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return userDetails != null && userDetails.getUser() != null;
+    }
+
+    @ModelAttribute("isAuthenticated")
+    public boolean isAuthenticated(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return userDetails != null && userDetails.getUser() != null;
+    }
+
+    @ModelAttribute("dashboardUrl")
+    public String resolveDashboardUrl(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null || userDetails.getUser() == null) {
+            return "/login";
+        }
+        User user = userDetails.getUser();
+        if (user.getRole() == null) {
+            return "/";
+        }
+        return switch (user.getRole().getName().toUpperCase()) {
+            case "ADMIN" -> "/admin/dashboard";
+            case "MANAGER" -> "/manager/dashboard";
+            case "BRANCH_MANAGER", "BRANCHMANAGER" -> "/branch/dashboard";
+            case "STAFF" -> "/staff/dashboard";
+            case "CUSTOMER" -> "/my/dashboard";
+            default -> "/";
+        };
+    }
 }
+
