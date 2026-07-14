@@ -43,6 +43,7 @@ public class DataInitializer implements CommandLineRunner {
     private final UserMembershipRepository userMembershipRepository;
     private final MembershipPlanRepository membershipPlanRepository;
     private final NotificationRepository notificationRepository;
+    private final ReviewRepository reviewRepository;
     private final JdbcTemplate jdbcTemplate;
     private final PasswordEncoder passwordEncoder;
 
@@ -69,6 +70,7 @@ public class DataInitializer implements CommandLineRunner {
             UserMembershipRepository userMembershipRepository,
             MembershipPlanRepository membershipPlanRepository,
             NotificationRepository notificationRepository,
+            ReviewRepository reviewRepository,
             JdbcTemplate jdbcTemplate,
             PasswordEncoder passwordEncoder) {
         this.roleRepository = roleRepository;
@@ -91,6 +93,7 @@ public class DataInitializer implements CommandLineRunner {
         this.userMembershipRepository = userMembershipRepository;
         this.membershipPlanRepository = membershipPlanRepository;
         this.notificationRepository = notificationRepository;
+        this.reviewRepository = reviewRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.passwordEncoder = passwordEncoder;
     }
@@ -138,6 +141,7 @@ public class DataInitializer implements CommandLineRunner {
             }
             seedPlansAndMemberships(userRepository.findAll());
             seedInitialNotifications(admin);
+            seedReviews(movieRepository.findAll(), userRepository.findAll());
             return;
         }
 
@@ -166,6 +170,7 @@ public class DataInitializer implements CommandLineRunner {
             if (admin != null) {
                 seedInitialNotifications(admin);
             }
+            seedReviews(movies, users);
         }
 
         System.out.println("=== DataInitializer: Hoàn tất seed dữ liệu mẫu ===");
@@ -884,5 +889,48 @@ public class DataInitializer implements CommandLineRunner {
             log.setCreatedAt(LocalDateTime.now().minusHours(logData.length - i));
             auditLogRepository.save(log);
         }
+    }
+
+    private void seedReviews(List<Movie> movies, List<User> users) {
+        if (reviewRepository.count() > 0) return;
+
+        List<Review> reviews = new ArrayList<>();
+        List<User> customers = users.stream()
+                .filter(u -> u.getRole() != null && "Customer".equalsIgnoreCase(u.getRole().getName()))
+                .toList();
+
+        if (customers.isEmpty() || movies.isEmpty()) return;
+
+        for (Movie movie : movies) {
+            if ("Avengers: Doomsday".equalsIgnoreCase(movie.getTitle())) {
+                reviews.add(createReview(customers.get(0 % customers.size()), movie, 5, "Phim quá đỉnh! Robert Downey Jr đóng Doctor Doom quá xuất sắc, không bõ công chờ đợi!", 1));
+                reviews.add(createReview(customers.get(1 % customers.size()), movie, 4, "Kỹ xảo hoành tráng, cốt truyện lôi cuốn. Đoạn kết thực sự gây bất ngờ lớn.", 2));
+                reviews.add(createReview(customers.get(2 % customers.size()), movie, 3, "Hơi nhiều nhân vật nên xem hơi ngợp, nhưng tổng thể vẫn rất đáng xem ngoài rạp.", 3));
+            } else if ("Lật Mặt 8".equalsIgnoreCase(movie.getTitle())) {
+                reviews.add(createReview(customers.get(3 % customers.size()), movie, 5, "Phim của Lý Hải chưa bao giờ làm tôi thất vọng. Cực kỳ cảm động về gia đình!", 1));
+                reviews.add(createReview(customers.get(4 % customers.size()), movie, 5, "Vừa hài hước vừa lấy đi nước mắt của khán giả. Rất khuyên mọi người nên đi xem cùng gia đình.", 2));
+                reviews.add(createReview(customers.get(5 % customers.size()), movie, 4, "Cốt truyện tốt, diễn xuất của các diễn viên nhí rất tự nhiên và xúc động.", 4));
+            } else if ("Godzilla x Kong".equalsIgnoreCase(movie.getTitle())) {
+                reviews.add(createReview(customers.get(6 % customers.size()), movie, 4, "Đánh đấm cực kỳ đã mắt! Godzilla và Kong kết hợp đỉnh cao.", 2));
+                reviews.add(createReview(customers.get(7 % customers.size()), movie, 3, "Cốt truyện hơi đơn giản, chủ yếu là xem kỹ xảo và quái thú đánh nhau.", 5));
+                reviews.add(createReview(customers.get(8 % customers.size()), movie, 5, "Trải nghiệm âm thanh và hình ảnh tuyệt vời, xem phòng IMAX phê thôi rồi!", 6));
+            } else if ("Dune: Part Two".equalsIgnoreCase(movie.getTitle())) {
+                reviews.add(createReview(customers.get(9 % customers.size()), movie, 5, "Một siêu phẩm điện ảnh thực sự! Âm nhạc của Hans Zimmer quá xuất sắc.", 3));
+                reviews.add(createReview(customers.get(0 % customers.size()), movie, 5, "Tráng lệ, hoành tráng và đầy chiều sâu. Diễn xuất của Timothée Chalamet cực kỳ ấn tượng.", 5));
+                reviews.add(createReview(customers.get(1 % customers.size()), movie, 4, "Phim hơi dài nhưng không bị chán, bám rất sát nguyên tác truyện.", 7));
+            }
+        }
+        reviewRepository.saveAll(reviews);
+        System.out.println("=== DataInitializer: Seeded " + reviews.size() + " reviews ===");
+    }
+
+    private Review createReview(User user, Movie movie, Integer rating, String comment, int daysAgo) {
+        Review r = new Review();
+        r.setUser(user);
+        r.setMovie(movie);
+        r.setRating(rating);
+        r.setComment(comment);
+        r.setCreatedAt(LocalDateTime.now().minusDays(daysAgo).minusHours(random.nextInt(12)));
+        return r;
     }
 }

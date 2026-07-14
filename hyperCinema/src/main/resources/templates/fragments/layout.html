@@ -167,10 +167,10 @@
             transition-transform duration-300 -translate-x-full md:translate-x-0">
 
     <!-- Brand -->
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06]">
+    <a th:href="@{/}" class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06] hover:opacity-85 transition-opacity no-underline cursor-pointer">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
         <span class="text-lg font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight">HyperCinema</span>
-    </div>
+    </a>
 
     <!-- Navigation -->
     <div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
@@ -242,13 +242,13 @@
 <nav th:fragment="managerSidebar(active)" id="sidebar"
      class="fixed left-0 top-0 h-screen w-64 bg-[#0A0A0F]/90 backdrop-blur-2xl border-r border-white/[0.06] flex flex-col z-40
             transition-transform duration-300 -translate-x-full md:translate-x-0">
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06]">
+    <a th:href="@{/}" class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06] hover:opacity-85 transition-opacity no-underline cursor-pointer">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
         <div class="flex flex-col">
             <span class="text-lg font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight leading-tight">HyperCinema</span>
             <span class="text-[10px] font-medium text-blue-400 uppercase tracking-wider">Quản lý</span>
         </div>
-    </div>
+    </a>
     <div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         <span class="block px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Quản lý</span>
         <a th:href="@{/manager/dashboard}"
@@ -304,13 +304,13 @@
 <nav th:fragment="branchSidebar(active)" id="sidebar"
      class="fixed left-0 top-0 h-screen w-64 bg-[#0A0A0F]/90 backdrop-blur-2xl border-r border-white/[0.06] flex flex-col z-40
             transition-transform duration-300 -translate-x-full md:translate-x-0">
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06]">
+    <a th:href="@{/}" class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06] hover:opacity-85 transition-opacity no-underline cursor-pointer">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
         <div class="flex flex-col">
             <span class="text-lg font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight leading-tight">HyperCinema</span>
             <span class="text-[10px] font-medium text-amber-400 uppercase tracking-wider">Chi nhánh</span>
         </div>
-    </div>
+    </a>
     <div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         <span class="block px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Quản lý Chi nhánh</span>
         <a th:href="@{/branch/dashboard}"
@@ -366,13 +366,13 @@
 <nav th:fragment="staffSidebar(active)" id="sidebar"
      class="fixed left-0 top-0 h-screen w-64 bg-[#0A0A0F]/90 backdrop-blur-2xl border-r border-white/[0.06] flex flex-col z-40
             transition-transform duration-300 -translate-x-full md:translate-x-0">
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06]">
+    <a th:href="@{/}" class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06] hover:opacity-85 transition-opacity no-underline cursor-pointer">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
         <div class="flex flex-col">
             <span class="text-lg font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight leading-tight">HyperCinema</span>
             <span class="text-[10px] font-medium text-emerald-400 uppercase tracking-wider">Nhân viên</span>
         </div>
-    </div>
+    </a>
     <div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         <span class="block px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Nghiệp vụ</span>
         <a th:href="@{/staff/dashboard}"
@@ -422,13 +422,13 @@
 <nav th:fragment="customerSidebar(active)" id="sidebar"
      class="fixed left-0 top-0 h-screen w-64 bg-[#0A0A0F]/90 backdrop-blur-2xl border-r border-white/[0.06] flex flex-col z-40
             transition-transform duration-300 -translate-x-full md:translate-x-0">
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06]">
+    <a th:href="@{/}" class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06] hover:opacity-85 transition-opacity no-underline cursor-pointer">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
         <div class="flex flex-col">
             <span class="text-lg font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight leading-tight">HyperCinema</span>
             <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Khách hàng</span>
         </div>
-    </div>
+    </a>
     <div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         <span class="block px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Tài khoản</span>
         <a th:href="@{/my/dashboard}"
