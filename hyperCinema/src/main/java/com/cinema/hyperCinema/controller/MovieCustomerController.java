@@ -4,9 +4,11 @@ import com.cinema.hyperCinema.dto.admin.movie.request.MovieSearchCriteria;
 import com.cinema.hyperCinema.dto.admin.movie.response.MovieDetailView;
 import com.cinema.hyperCinema.dto.admin.movie.response.MovieListItem;
 import com.cinema.hyperCinema.dto.admin.seat.response.ShowtimeSeatView;
+import com.cinema.hyperCinema.model.Review;
 import com.cinema.hyperCinema.model.Showtime;
 import com.cinema.hyperCinema.repository.GenreRepository;
 import com.cinema.hyperCinema.repository.LanguageRepository;
+import com.cinema.hyperCinema.repository.ReviewRepository;
 import com.cinema.hyperCinema.repository.ShowtimeRepository;
 import com.cinema.hyperCinema.service.movie.MovieService;
 import com.cinema.hyperCinema.service.seat.SeatService;
@@ -35,6 +37,7 @@ public class MovieCustomerController {
     private final GenreRepository genreRepository;
     private final SeatService seatService;
     private final ShowtimeRepository showtimeRepository;
+    private final ReviewRepository reviewRepository;
 
     @GetMapping
     public String list(@ModelAttribute("criteria") MovieSearchCriteria criteria, Model model) {
@@ -66,6 +69,18 @@ public class MovieCustomerController {
     public String detail(@PathVariable Integer movieId, Model model) {
         MovieDetailView movie = movieService.findById(movieId);
         model.addAttribute("movie", movie);
+
+        List<Review> reviews = reviewRepository.findByMovieIdWithUser(movieId);
+        model.addAttribute("reviews", reviews);
+
+        double averageRating = 0.0;
+        if (!reviews.isEmpty()) {
+            averageRating = reviews.stream().mapToDouble(Review::getRating).average().orElse(0.0);
+            averageRating = Math.round(averageRating * 10.0) / 10.0;
+        }
+        model.addAttribute("averageRating", averageRating);
+        model.addAttribute("reviewCount", reviews.size());
+
         return "customer/movies/detail";
     }
 
