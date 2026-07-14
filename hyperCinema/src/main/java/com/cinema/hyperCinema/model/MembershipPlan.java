@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
-@Table(name = "Membership_Plan")
+@Table(name = "membership_plan")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class MembershipPlan {
@@ -35,3 +35,4 @@ public class MembershipPlan {
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL)
     private List<UserMembership> userMemberships;
 }
+

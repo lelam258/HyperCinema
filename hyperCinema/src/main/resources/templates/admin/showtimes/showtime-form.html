@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${mode == 'edit'} ? 'Chỉnh sửa suất chiếu' : 'Tạo suất chiếu')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="${showtimeContext.admin} ? ~{fragments/layout :: adminSidebar('showtimes')} : (${showtimeContext.sidebar == 'manager'} ? ~{fragments/layout :: managerSidebar('showtimes')} : ~{fragments/layout :: branchSidebar('showtimes')})"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner max-w-3xl">
+        <a th:href="${mode == 'edit'} ? @{|/admin/showtimes/${showtimeId}|} : @{/admin/showtimes}" class="mb-4 inline-flex text-sm text-cinema-muted no-underline hover:text-accent">&larr; Quay lại</a>
+
+        <div class="mb-6">
+            <h1 class="hc-page-title" th:text="${mode == 'edit'} ? 'Chỉnh sửa suất chiếu' : 'Tạo suất chiếu'">Tạo suất chiếu</h1>
+            <p class="hc-page-subtitle">Chọn phim, phòng và khung giờ chiếu.</p>
+        </div>
+
+        <section class="hc-card p-6 md:p-8">
+            <form th:object="${showtime}" th:action="${mode == 'edit'} ? @{|/admin/showtimes/${showtimeId}|} : @{/admin/showtimes}" method="post" novalidate class="space-y-5" data-showtime-form>
+                <div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+                    <strong>Không thể lưu suất chiếu:</strong>
+                    <ul class="mt-2 list-disc space-y-1 pl-5">
+                        <li th:each="err : ${#fields.globalErrors()}" th:text="${err}">global error</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <label for="movieId" class="hc-label">Phim</label>
+                    <select class="hc-input" id="movieId" th:field="*{movieId}" th:classappend="${#fields.hasErrors('movieId')} ? ' border-danger!' : ''" required data-showtime-movie>
+                        <option value="">Chọn phim</option>
+                        <option th:each="movie : ${showtimeContext.movieOptions}" th:value="${movie.movieId}" th:data-duration-minutes="${movie.duration}" th:text="|${movie.title} (${movie.status})|">Movie</option>
+                    </select>
+                    <span th:if="${#fields.hasErrors('movieId')}" th:errors="*{movieId}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <div th:if="${showtimeContext.admin}">
+                    <label for="branchId" class="hc-label">Chi nhánh</label>
+                    <select class="hc-input" id="branchId" th:field="*{branchId}" data-showtime-branch>
+                        <option value="">Tự động theo phòng</option>
+                        <option th:each="branch : ${showtimeContext.branchOptions}" th:value="${branch.branchId}" th:text="|${branch.name} - ${branch.city}|">Branch</option>
+                    </select>
+                </div>
+
+                <div th:if="${!showtimeContext.admin}" class="hc-subcard p-4">
+                    <span class="hc-label mb-1">Chi nhánh</span>
+                    <span class="text-white" th:text="${showtimeContext.lockedBranch != null ? showtimeContext.lockedBranch.name : 'Chưa được gán chi nhánh'}">Branch</span>
+                </div>
+
+                <div>
+                    <label for="hallId" class="hc-label">Phòng</label>
+                    <select class="hc-input" id="hallId" th:field="*{hallId}" th:classappend="${#fields.hasErrors('hallId')} ? ' border-danger!' : ''" required data-showtime-hall>
+                        <option value="">Chọn phòng</option>
+                        <option th:each="hall : ${showtimeContext.hallOptions}" th:value="${hall.hallId}" th:data-branch-id="${hall.branchId}" th:text="${showtimeContext.admin} ? |${hall.name} - ${hall.branchName}| : ${hall.name}">Hall</option>
+                    </select>
+                    <span th:if="${#fields.hasErrors('hallId')}" th:errors="*{hallId}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <label for="startTime" class="hc-label">Bắt đầu</label>
+                        <input class="hc-input" type="datetime-local" id="startTime" th:field="*{startTime}" th:classappend="${#fields.hasErrors('startTime')} ? ' border-danger!' : ''" required data-showtime-start>
+                        <span th:if="${#fields.hasErrors('startTime')}" th:errors="*{startTime}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
+                    <div>
+                        <label for="endTime" class="hc-label">Kết thúc</label>
+                        <input class="hc-input" type="datetime-local" id="endTime" th:field="*{endTime}" th:classappend="${#fields.hasErrors('endTime')} ? ' border-danger!' : ''" required data-showtime-end>
+                        <span th:if="${#fields.hasErrors('endTime')}" th:errors="*{endTime}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 border-t border-cinema-border pt-5">
+                    <a th:href="${mode == 'edit'} ? @{|/admin/showtimes/${showtimeId}|} : @{/admin/showtimes}" class="hc-btn no-underline">Hủy</a>
+                    <button type="submit" th:text="${mode == 'edit'} ? 'Lưu thay đổi' : 'Tạo mới'" class="hc-btn hc-btn-primary">Tạo mới</button>
+                </div>
+            </form>
+        </section>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+<script defer th:src="@{/js/features/showtime-form.js(v=1.0)}"></script>
+</body>
+</html>

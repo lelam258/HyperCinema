@@ -7,4 +7,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface FoodOrderItemRepository extends JpaRepository<FoodOrderItem, FoodOrderItemId> {
+
+    boolean existsByItemId(Integer itemId);
+
+    java.util.List<FoodOrderItem> findByOrderId(Integer orderId);
 }

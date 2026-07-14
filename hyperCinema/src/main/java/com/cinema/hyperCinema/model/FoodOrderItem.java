@@ -7,26 +7,26 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "FoodOrderItem")
+@Table(name = "food_order_item")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @IdClass(FoodOrderItemId.class)
 public class FoodOrderItem {
 
     @Id
-    @Column(name = "food_order_id")
+    @Column(name = "order_id")
     private Integer orderId;
 
     @Id
-    @Column(name = "food_id")
+    @Column(name = "item_id")
     private Integer itemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "food_order_id", insertable = false, updatable = false)
+    @JoinColumn(name = "order_id", insertable = false, updatable = false)
     private FoodOrder foodOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "food_id", insertable = false, updatable = false)
+    @JoinColumn(name = "item_id", insertable = false, updatable = false)
     private FoodItem foodItem;
 
     @Column(nullable = false)
@@ -35,3 +35,4 @@ public class FoodOrderItem {
     @Column(name = "unit_price", nullable = false)
     private Integer unitPrice;
 }
+

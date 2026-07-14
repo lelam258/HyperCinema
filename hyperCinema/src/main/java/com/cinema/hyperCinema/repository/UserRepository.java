@@ -27,13 +27,26 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     Optional<User> findByEmail(String email);
 
+    List<User> findByStatusIgnoreCase(String status);
+
+    @Query("SELECT u FROM User u "
+            + "JOIN FETCH u.role "
+            + "LEFT JOIN FETCH u.branch "
+            + "WHERE u.phone = :phone "
+            + "AND u.role.name = :roleName")
+    Optional<User> findByPhoneAndRoleName(@Param("phone") String phone,
+                                          @Param("roleName") String roleName);
+
     /**
      * Tìm User theo username kèm eager-load Role.
      *
      * <p>Dùng cho authentication flow để tránh LazyInitializationException
      * khi truy cập role.name ngoài Hibernate session.</p>
      */
-    @Query("SELECT u FROM User u JOIN FETCH u.role LEFT JOIN FETCH u.branch WHERE u.username = :username")
+    @Query("SELECT u FROM User u "
+            + "JOIN FETCH u.role "
+            + "LEFT JOIN FETCH u.branch "
+            + "WHERE u.username = :username")
     Optional<User> findByUsernameWithRole(@Param("username") String username);
 
     /**
@@ -42,8 +55,17 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * <p>Dùng cho authentication flow để tránh LazyInitializationException
      * khi truy cập role.name ngoài Hibernate session.</p>
      */
-    @Query("SELECT u FROM User u JOIN FETCH u.role LEFT JOIN FETCH u.branch WHERE u.email = :email")
+    @Query("SELECT u FROM User u "
+            + "JOIN FETCH u.role "
+            + "LEFT JOIN FETCH u.branch "
+            + "WHERE u.email = :email")
     Optional<User> findByEmailWithRole(@Param("email") String email);
+
+    @Query("SELECT u FROM User u "
+            + "JOIN FETCH u.role "
+            + "LEFT JOIN FETCH u.branch "
+            + "WHERE u.userId = :userId")
+    Optional<User> findByIdWithRoleAndBranch(@Param("userId") Integer userId);
 
     boolean existsByUsername(String username);
 
@@ -87,11 +109,13 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      */
     @Query("SELECT u FROM User u "
             + "WHERE u.role.name = 'Manager' "
+            + "AND u.status = 'Active' "
             + "AND u.branch IS NULL")
     List<User> findUnassignedManagers();
 
     @Query("SELECT u FROM User u "
             + "WHERE u.role.name = 'Staff' "
+            + "AND u.status = 'Active' "
             + "AND u.branch IS NULL")
     List<User> findUnassignedStaff();
 

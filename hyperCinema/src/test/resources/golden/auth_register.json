@@ -1,6 +1,6 @@
 {
   "view": "auth/register",
-  "title": "Đăng Ký - HyperCinema",
+  "title": "Đăng ký - HyperCinema",
   "links": [
     "/login"
   ],
@@ -16,22 +16,22 @@
         "password(password)=",
         "confirmPassword(password)=",
         "phone(text)=",
-        "submit:Đăng Ký"
+        "submit:Đăng ký"
       ]
     }
   ],
   "tables": [],
   "pagination": null,
   "text": [
-    "Đăng Ký Tài Khoản",
-    "Tạo tài khoản HyperCinema mới",
+    "Tạo tài khoản",
+    "HyperCinema",
     "Họ và tên",
     "Email",
     "Tên đăng nhập",
     "Mật khẩu",
     "Xác nhận mật khẩu",
-    "Số điện thoại (Tuỳ chọn)",
-    "Đăng Ký",
+    "Số điện thoại",
+    "Đăng ký",
     "Đã có tài khoản?",
     "Đăng nhập ngay"
   ]

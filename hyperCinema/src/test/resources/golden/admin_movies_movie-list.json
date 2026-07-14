@@ -2,9 +2,10 @@
   "view": "admin/movies/movie-list",
   "title": "Quản lý Phim - HyperCinema",
   "links": [
+    "/",
+    "/admin/analytics",
     "/admin/branches",
     "/admin/dashboard",
-    "/admin/food-items",
     "/admin/halls",
     "/admin/movies",
     "/admin/movies/101",
@@ -15,9 +16,9 @@
     "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;city=&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=title&amp;direction=ASC&amp;page=1&amp;size=10",
     "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=releaseDate&amp;direction=ASC",
     "/admin/movies?keyword=aveng&amp;status=NowShowing&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=title&amp;direction=DESC",
-    "/admin/showtimes",
-    "/admin/users",
-    "/admin/vouchers"
+    "/admin/notifications",
+    "/admin/payments",
+    "/admin/users"
   ],
   "i18nKeys": [],
   "forms": [
@@ -68,19 +69,17 @@
   ],
   "pagination": null,
   "text": [
-    "Mở menu",
-    "C",
-    "Cinema",
-    "Admin",
-    "Quản trị hệ thống",
-    "Dashboard",
-    "Quản lý Chi nhánh",
-    "Quản lý Phòng chiếu",
-    "Quản lý Suất chiếu",
-    "Quản lý Phim",
-    "Quản lý F&amp;B",
-    "Quản lý Voucher",
-    "Vai trò &amp; Người dùng",
+    "H",
+    "HyperCinema",
+    "Hệ thống",
+    "Tổng quan",
+    "Báo cáo & Thống kê",
+    "Quản lý phim",
+    "Quản lý chi nhánh",
+    "Quản lý phòng chiếu",
+    "Quản lý người dùng",
+    "Thông báo & Hỗ trợ",
+    "Quản lý Giao dịch",
     "Đăng xuất",
     "Movies",
     "Quản lý Phim",
@@ -143,8 +142,7 @@
     "1",
     "2",
     "Sau",
-    "Cinema",
-    "App",
-    "(c) 2026 HyperCinema - Hệ thống quản trị rạp chiếu phim."
+    "HyperCinema",
+    "© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim."
   ]
 }

@@ -26,7 +26,6 @@ import com.cinema.hyperCinema.dto.admin.hall.response.HallManagementContext;
 import com.cinema.hyperCinema.exception.hall.HallValidationException;
 import com.cinema.hyperCinema.security.CustomUserDetails;
 import com.cinema.hyperCinema.service.hall.HallService;
-import com.cinema.hyperCinema.service.seat.SeatService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +37,6 @@ import lombok.RequiredArgsConstructor;
 public class HallManagementController {
 
     private final HallService hallService;
-    private final SeatService seatService;
 
     @GetMapping
     public String list(@ModelAttribute("criteria") HallSearchCriteria criteria,
@@ -102,7 +100,6 @@ public class HallManagementController {
         HallDetailView hall = hallService.findById(hallId, principal.getUser());
         addContext(model, principal);
         model.addAttribute("hall", hall);
-        model.addAttribute("seats", seatService.getSeatsByHall(hallId, principal.getUser()));
 
         return "admin/halls/hall-detail";
     }
@@ -117,6 +114,18 @@ public class HallManagementController {
         request.setName(current.getName());
         request.setBranchId(current.getBranchId());
         request.setHallType(current.getHallType());
+        request.setTicketPrice(current.getTicketPrice());
+        current.getSeatTypePrices().forEach(price -> {
+            if ("STANDARD".equals(price.getSeatType())) {
+                request.setStandardPrice(price.getPrice());
+            } else if ("VIP".equals(price.getSeatType())) {
+                request.setVipPrice(price.getPrice());
+            } else if ("COUPLE".equals(price.getSeatType())) {
+                request.setCouplePrice(price.getPrice());
+            } else if ("DISABLED".equals(price.getSeatType())) {
+                request.setDisabledPrice(price.getPrice());
+            }
+        });
         request.setCapacity(current.getCapacity());
         request.setStatus(current.getStatus());
 

@@ -35,7 +35,7 @@
                  background-color: rgba(48, 209, 88, 0.15);
                  color: #30d158;
                  border: 1px solid rgba(48, 209, 88, 0.35);"
-          th:text="${status}">Active</span>
+          th:text="'Đang hoạt động'">Active</span>
 
     <span th:case="'Maintenance'"
           style="display: inline-block;
@@ -50,7 +50,7 @@
                  background-color: rgba(255, 159, 10, 0.15);
                  color: #ff9f0a;
                  border: 1px solid rgba(255, 159, 10, 0.35);"
-          th:text="${status}">Maintenance</span>
+          th:text="'Bảo trì'">Maintenance</span>
 
     <span th:case="'Inactive'"
           style="display: inline-block;
@@ -65,7 +65,7 @@
                  background-color: rgba(170, 170, 170, 0.15);
                  color: #aaaaaa;
                  border: 1px solid rgba(170, 170, 170, 0.35);"
-          th:text="${status}">Inactive</span>
+          th:text="'Ngừng hoạt động'">Inactive</span>
 
     <span th:case="*"
           style="display: inline-block;
@@ -80,7 +80,7 @@
                  background-color: rgba(170, 170, 170, 0.15);
                  color: #aaaaaa;
                  border: 1px solid rgba(170, 170, 170, 0.35);"
-          th:text="${status} ?: 'Unknown'">Unknown</span>
+          th:text="${status} ?: 'Không rõ'">Unknown</span>
 
 </th:block>
 

@@ -88,6 +88,16 @@ public class AdminUserRestController {
         }
     }
 
+    @PostMapping("/{id}/assign-role")
+    public ResponseEntity<?> assignRole(@PathVariable("id") Integer id, @RequestBody Integer roleId) {
+        try {
+            User updated = userService.assignUserRole(id, roleId);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @PostMapping("/{id}/reset-password")
     public ResponseEntity<?> resetPassword(@PathVariable("id") Integer id, @RequestBody Map<String, String> body) {
         try {

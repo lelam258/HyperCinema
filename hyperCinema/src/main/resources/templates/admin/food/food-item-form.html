@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${mode == 'edit'} ? 'Chỉnh sửa mặt hàng' : 'Thêm mặt hàng')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('food')}"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner max-w-3xl">
+        <a th:href="${mode == 'edit'} ? @{|/admin/food-items/${itemId}|} : @{/admin/food-items}" class="mb-4 inline-flex text-sm text-cinema-muted no-underline hover:text-accent">← Quay lại</a>
+
+        <div class="mb-6">
+            <h1 class="hc-page-title" th:text="${mode == 'edit'} ? 'Chỉnh sửa mặt hàng' : 'Thêm mặt hàng'">Thêm mặt hàng</h1>
+            <p class="hc-page-subtitle">Cập nhật tên, danh mục, giá bán, tồn kho và ảnh hiển thị.</p>
+        </div>
+
+        <section class="hc-card p-6 md:p-8">
+            <form th:object="${foodItem}"
+                  th:action="${mode == 'edit'} ? @{|/admin/food-items/${itemId}|} : @{/admin/food-items}"
+                  method="post" novalidate class="space-y-5">
+                <div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+                    <strong>Không thể lưu mặt hàng:</strong>
+                    <ul class="mt-2 list-disc space-y-1 pl-5">
+                        <li th:each="err : ${#fields.globalErrors()}" th:text="#{${err}}">global error</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <label for="name" class="hc-label">Tên mặt hàng</label>
+                    <input class="hc-input" type="text" id="name" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? ' border-danger!' : ''" maxlength="149" autocomplete="off" required placeholder="VD: Bắp rang bơ lớn">
+                    <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <div>
+                    <label for="categoryName" class="hc-label">Danh mục</label>
+                    <input class="hc-input" type="text" id="categoryName" th:field="*{categoryName}" th:classappend="${#fields.hasErrors('categoryName')} ? ' border-danger!' : ''" maxlength="100" autocomplete="off" required placeholder="Đồ ăn, Đồ uống, Combo">
+                    <span th:if="${#fields.hasErrors('categoryName')}" th:errors="*{categoryName}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <div>
+                    <label for="description" class="hc-label">Mô tả</label>
+                    <textarea class="hc-input min-h-28 resize-y" id="description" th:field="*{description}" th:classappend="${#fields.hasErrors('description')} ? ' border-danger!' : ''" maxlength="500" rows="3" placeholder="Mô tả ngắn cho quầy bán hàng"></textarea>
+                    <span th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="price" class="hc-label">Giá bán (VND)</label>
+                        <input class="hc-input" type="number" id="price" th:field="*{price}" th:classappend="${#fields.hasErrors('price')} ? ' border-danger!' : ''" min="1" required placeholder="50000">
+                        <span th:if="${#fields.hasErrors('price')}" th:errors="*{price}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
+                    <div>
+                        <label for="stock" class="hc-label">Tồn kho</label>
+                        <input class="hc-input" type="number" id="stock" th:field="*{stock}" th:classappend="${#fields.hasErrors('stock')} ? ' border-danger!' : ''" th:min="${mode == 'edit'} ? 0 : 1" required placeholder="100">
+                        <span class="mt-1 block text-xs text-cinema-muted" th:text="${mode == 'edit'} ? 'Cho phép giá trị từ 0' : 'Tối thiểu 1 khi tạo mới'">Tối thiểu 1</span>
+                        <span th:if="${#fields.hasErrors('stock')}" th:errors="*{stock}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="imageUrl" class="hc-label">URL hình ảnh</label>
+                    <input class="hc-input" type="url" id="imageUrl" th:field="*{imageUrl}" th:classappend="${#fields.hasErrors('imageUrl')} ? ' border-danger!' : ''" maxlength="500" placeholder="https://example.com/image.jpg">
+                    <span th:if="${#fields.hasErrors('imageUrl')}" th:errors="*{imageUrl}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <label th:if="${mode == 'edit'}" class="flex items-center gap-3 rounded-lg border border-cinema-border bg-cinema-panel-soft p-4 text-sm text-white">
+                    <input type="checkbox" id="isAvailable" th:field="*{isAvailable}" class="h-4 w-4 accent-[#E50914]">
+                    <span>Đang bày bán</span>
+                </label>
+
+                <div class="flex justify-end gap-3 border-t border-cinema-border pt-5">
+                    <a th:href="${mode == 'edit'} ? @{|/admin/food-items/${itemId}|} : @{/admin/food-items}" class="hc-btn no-underline">Hủy</a>
+                    <button type="submit" th:text="${mode == 'edit'} ? 'Lưu thay đổi' : 'Thêm mặt hàng'" class="hc-btn hc-btn-primary">Thêm mặt hàng</button>
+                </div>
+            </form>
+        </section>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

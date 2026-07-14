@@ -1,96 +1,93 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<!--
-    Branch Form — Tailwind CSS Rebuild.
-    Dùng chung cho create (POST /admin/branches) và edit (POST /admin/branches/{branchId}).
-    Giữ nguyên 100% Thymeleaf bindings.
--->
-<head th:replace="~{fragments/layout :: head(${mode == 'edit'} ? 'Chỉnh sửa Chi nhánh' : 'Tạo Chi nhánh')}">
-    <title>${mode == 'edit'} ? 'Chỉnh sửa Chi nhánh' : 'Tạo Chi nhánh</title>
-</head>
-<body class="min-h-screen">
+<head th:replace="~{fragments/layout :: head(${mode == 'edit'} ? 'Chỉnh sửa Chi nhánh' : 'Tạo Chi nhánh')}"></head>
+<body class="min-h-screen bg-cinema-bg text-white">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
 <nav th:replace="~{fragments/layout :: adminSidebar('branches')}"></nav>
 
-<main class="md:ml-64 min-h-screen">
-    <div class="max-w-3xl mx-auto px-6 py-8">
-
+<main class="hc-page">
+    <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-white tracking-tight" th:text="${mode == 'edit'} ? 'Chỉnh sửa Chi nhánh' : 'Tạo Chi nhánh'">Tạo Chi nhánh</h1>
+            <a th:href="${mode == 'edit'} ? @{|/admin/branches/${branchId}|} : @{/admin/branches}" class="mb-4 inline-flex text-sm text-cinema-muted no-underline hover:text-accent">← Quay lại</a>
+            <h1 class="hc-page-title" th:text="${mode == 'edit'} ? 'Chỉnh sửa Chi nhánh' : 'Tạo Chi nhánh'">Tạo Chi nhánh</h1>
+            <p class="hc-page-subtitle">Cập nhật thông tin vận hành, địa chỉ và giờ mở cửa.</p>
         </div>
 
-        <div class="glass-card p-6 md:p-8">
+        <section class="hc-card p-6 md:p-8">
+            <div th:if="${infoKey != null}" class="mb-4 rounded-xl border border-info/30 bg-info/10 px-4 py-3 text-sm text-info" th:text="#{__${infoKey}__}">Không có thay đổi nào được lưu.</div>
 
-            <!-- Info banner for no-op update -->
-            <div th:if="${infoKey != null}" class="flex items-center gap-2 px-4 py-3 mb-4 rounded-xl bg-info/10 border border-info/25 text-info text-sm" th:text="#{__${infoKey}__}">Không có thay đổi nào được lưu.</div>
+            <form th:object="${branch}"
+                  th:action="${mode == 'edit'} ? @{|/admin/branches/${branchId}|} : @{/admin/branches}"
+                  method="post"
+                  novalidate
+                  class="space-y-5">
 
-            <form th:object="${branch}" th:action="${mode == 'edit'} ? @{/admin/branches/{id}(id=${branchId})} : @{/admin/branches}" method="post" novalidate class="space-y-5">
-
-                <!-- Global errors -->
-                <div th:if="${#fields.hasGlobalErrors()}" class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-danger/10 border border-danger/25 text-danger text-sm" role="alert">
+                <div th:if="${#fields.hasGlobalErrors()}" class="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
                     <strong>Không thể lưu thay đổi:</strong>
-                    <ul class="list-disc pl-5 space-y-0.5"><li th:each="err : ${#fields.globalErrors()}" th:text="${err}">global error</li></ul>
+                    <ul class="mt-2 list-disc space-y-1 pl-5">
+                        <li th:each="err : ${#fields.globalErrors()}" th:text="${err}">global error</li>
+                    </ul>
                 </div>
 
-                <!-- Tên chi nhánh -->
                 <div>
-                    <label for="name" class="block text-sm font-medium text-slate-400 mb-2">Tên chi nhánh</label>
-                    <input type="text" id="name" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? ' border-danger!' : ''" maxlength="150" autocomplete="off" required
-                           class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                    <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="block text-xs text-danger mt-1"></span>
+                    <label for="name" class="hc-label">Tên chi nhánh</label>
+                    <input type="text" id="name" th:field="*{name}" maxlength="150" autocomplete="off" required
+                           th:classappend="${#fields.hasErrors('name')} ? ' border-danger!' : ''"
+                           class="hc-input">
+                    <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="mt-1 block text-xs text-danger">Lỗi tên chi nhánh</span>
                 </div>
 
-                <!-- Địa chỉ -->
                 <div>
-                    <label for="address" class="block text-sm font-medium text-slate-400 mb-2">Địa chỉ</label>
-                    <input type="text" id="address" th:field="*{address}" th:classappend="${#fields.hasErrors('address')} ? ' border-danger!' : ''" maxlength="255" autocomplete="off" required
-                           class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                    <span th:if="${#fields.hasErrors('address')}" th:errors="*{address}" class="block text-xs text-danger mt-1"></span>
+                    <label for="address" class="hc-label">Địa chỉ</label>
+                    <input type="text" id="address" th:field="*{address}" maxlength="255" autocomplete="off" required
+                           th:classappend="${#fields.hasErrors('address')} ? ' border-danger!' : ''"
+                           class="hc-input">
+                    <span th:if="${#fields.hasErrors('address')}" th:errors="*{address}" class="mt-1 block text-xs text-danger">Lỗi địa chỉ</span>
                 </div>
 
-                <!-- Thành phố -->
-                <div>
-                    <label for="city" class="block text-sm font-medium text-slate-400 mb-2">Thành phố</label>
-                    <input type="text" id="city" th:field="*{city}" th:classappend="${#fields.hasErrors('city')} ? ' border-danger!' : ''" maxlength="100" autocomplete="off" required
-                           class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                    <span th:if="${#fields.hasErrors('city')}" th:errors="*{city}" class="block text-xs text-danger mt-1"></span>
-                </div>
-
-                <!-- Số điện thoại -->
-                <div>
-                    <label for="phone" class="block text-sm font-medium text-slate-400 mb-2">Số điện thoại</label>
-                    <input type="text" id="phone" th:field="*{phone}" th:classappend="${#fields.hasErrors('phone')} ? ' border-danger!' : ''" placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx" maxlength="13" autocomplete="off" required
-                           class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                    <span th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}" class="block text-xs text-danger mt-1"></span>
-                </div>
-
-                <!-- Giờ mở cửa / đóng cửa -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label for="openingTime" class="block text-sm font-medium text-slate-400 mb-2">Giờ mở cửa</label>
-                        <input type="time" id="openingTime" th:field="*{openingTime}" th:classappend="${#fields.hasErrors('openingTime')} ? ' border-danger!' : ''" required
-                               class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                        <span th:if="${#fields.hasErrors('openingTime')}" th:errors="*{openingTime}" class="block text-xs text-danger mt-1"></span>
+                        <label for="city" class="hc-label">Thành phố</label>
+                        <input type="text" id="city" th:field="*{city}" maxlength="100" autocomplete="off" required
+                               th:classappend="${#fields.hasErrors('city')} ? ' border-danger!' : ''"
+                               class="hc-input">
+                        <span th:if="${#fields.hasErrors('city')}" th:errors="*{city}" class="mt-1 block text-xs text-danger">Lỗi thành phố</span>
                     </div>
+
                     <div>
-                        <label for="closingTime" class="block text-sm font-medium text-slate-400 mb-2">Giờ đóng cửa</label>
-                        <input type="time" id="closingTime" th:field="*{closingTime}" th:classappend="${#fields.hasErrors('closingTime')} ? ' border-danger!' : ''" required
-                               class="w-full px-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                        <span th:if="${#fields.hasErrors('closingTime')}" th:errors="*{closingTime}" class="block text-xs text-danger mt-1"></span>
+                        <label for="phone" class="hc-label">Số điện thoại</label>
+                        <input type="text" id="phone" th:field="*{phone}" placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx" maxlength="13" autocomplete="off" required
+                               th:classappend="${#fields.hasErrors('phone')} ? ' border-danger!' : ''"
+                               class="hc-input">
+                        <span th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}" class="mt-1 block text-xs text-danger">Lỗi số điện thoại</span>
                     </div>
                 </div>
 
-                <!-- Actions -->
-                <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
-                    <a th:href="@{${mode == 'edit' ? '/admin/branches/' + branchId : '/admin/branches'}}"
-                       class="px-5 py-2.5 text-sm font-medium text-slate-300 bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Hủy</a>
-                    <button type="submit" th:text="${mode == 'edit'} ? 'Lưu thay đổi' : 'Tạo mới'"
-                            class="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 cursor-pointer">Tạo mới</button>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="openingTime" class="hc-label">Giờ mở cửa</label>
+                        <input type="time" id="openingTime" th:field="*{openingTime}" required
+                               th:classappend="${#fields.hasErrors('openingTime')} ? ' border-danger!' : ''"
+                               class="hc-input">
+                        <span th:if="${#fields.hasErrors('openingTime')}" th:errors="*{openingTime}" class="mt-1 block text-xs text-danger">Lỗi giờ mở cửa</span>
+                    </div>
+
+                    <div>
+                        <label for="closingTime" class="hc-label">Giờ đóng cửa</label>
+                        <input type="time" id="closingTime" th:field="*{closingTime}" required
+                               th:classappend="${#fields.hasErrors('closingTime')} ? ' border-danger!' : ''"
+                               class="hc-input">
+                        <span th:if="${#fields.hasErrors('closingTime')}" th:errors="*{closingTime}" class="mt-1 block text-xs text-danger">Lỗi giờ đóng cửa</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 border-t border-cinema-border pt-4">
+                    <a class="hc-btn no-underline" th:href="${mode == 'edit'} ? @{|/admin/branches/${branchId}|} : @{/admin/branches}">Hủy</a>
+                    <button type="submit" class="hc-btn hc-btn-primary" th:text="${mode == 'edit'} ? 'Lưu thay đổi' : 'Tạo mới'">Tạo mới</button>
                 </div>
             </form>
-        </div>
-
+        </section>
     </div>
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </main>

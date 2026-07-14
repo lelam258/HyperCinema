@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Quản lý suất chiếu - HyperCinema')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="${showtimeContext.admin} ? ~{fragments/layout :: adminSidebar('showtimes')} : (${showtimeContext.sidebar == 'manager'} ? ~{fragments/layout :: managerSidebar('showtimes')} : ~{fragments/layout :: branchSidebar('showtimes')})"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner">
+        <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h1 class="hc-page-title">Quản lý suất chiếu</h1>
+                <p class="hc-page-subtitle" th:if="${!showtimeContext.admin and showtimeContext.lockedBranch != null}"
+                   th:text="|Chi nhánh: ${showtimeContext.lockedBranch.name} - ${showtimeContext.lockedBranch.city}|">Chi nhánh</p>
+            </div>
+            <a th:href="@{/admin/showtimes/new}" class="hc-btn hc-btn-primary no-underline">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                Tạo mới
+            </a>
+        </div>
+
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <section class="hc-card mb-6 p-5" aria-label="Bộ lọc suất chiếu">
+            <form th:action="@{/admin/showtimes}" method="get" class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-7">
+                <div>
+                    <label for="keyword" class="hc-label">Từ khóa</label>
+                    <input class="hc-input" type="text" id="keyword" name="keyword" placeholder="Phim, phòng, chi nhánh" th:value="${criteria != null ? criteria.keyword : ''}">
+                </div>
+                <div>
+                    <label for="movieId" class="hc-label">Phim</label>
+                    <select class="hc-input" id="movieId" name="movieId">
+                        <option value="" th:selected="${criteria == null or criteria.movieId == null}">Tất cả</option>
+                        <option th:each="movie : ${showtimeContext.movieOptions}" th:value="${movie.movieId}" th:text="${movie.title}" th:selected="${criteria != null and criteria.movieId == movie.movieId}">Movie</option>
+                    </select>
+                </div>
+                <div th:if="${showtimeContext.admin}">
+                    <label for="branchId" class="hc-label">Chi nhánh</label>
+                    <select class="hc-input" id="branchId" name="branchId">
+                        <option value="" th:selected="${criteria == null or criteria.branchId == null}">Tất cả</option>
+                        <option th:each="branch : ${showtimeContext.branchOptions}" th:value="${branch.branchId}" th:text="|${branch.name} - ${branch.city}|" th:selected="${criteria != null and criteria.branchId == branch.branchId}">Branch</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="hallId" class="hc-label">Phòng</label>
+                    <select class="hc-input" id="hallId" name="hallId">
+                        <option value="" th:selected="${criteria == null or criteria.hallId == null}">Tất cả</option>
+                        <option th:each="hall : ${showtimeContext.hallOptions}" th:value="${hall.hallId}" th:text="${showtimeContext.admin} ? |${hall.name} - ${hall.branchName}| : ${hall.name}" th:selected="${criteria != null and criteria.hallId == hall.hallId}">Hall</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="dateFrom" class="hc-label">Từ ngày</label>
+                    <input class="hc-input" type="date" id="dateFrom" name="dateFrom" th:value="${criteria != null ? criteria.dateFrom : ''}">
+                </div>
+                <div>
+                    <label for="dateTo" class="hc-label">Đến ngày</label>
+                    <input class="hc-input" type="date" id="dateTo" name="dateTo" th:value="${criteria != null ? criteria.dateTo : ''}">
+                </div>
+                <div class="flex gap-2">
+                    <input type="hidden" name="timeState" th:value="${criteria != null ? criteria.timeState : 'UPCOMING'}">
+                    <button type="submit" class="hc-btn hc-btn-primary flex-1">Tìm</button>
+                    <a th:href="@{/admin/showtimes}" class="hc-btn no-underline">Xóa</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="hc-card overflow-hidden" aria-label="Danh sách suất chiếu">
+            <div class="overflow-x-auto">
+                <table class="hc-table">
+                    <thead>
+                    <tr>
+                        <th>Phim</th>
+                        <th>Chi nhánh</th>
+                        <th>Phòng</th>
+                        <th class="text-right">Khoảng giá</th>
+                        <th>Bắt đầu</th>
+                        <th>Kết thúc</th>
+                        <th class="text-right">Booking</th>
+                        <th class="text-right">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${page == null or #lists.isEmpty(page.content)}">
+                        <td colspan="8" class="py-12 text-center text-cinema-muted">Không có suất chiếu phù hợp.</td>
+                    </tr>
+                    <tr th:each="item : ${page != null ? page.content : {}}" th:if="${page != null and not #lists.isEmpty(page.content)}">
+                        <td><a th:href="@{|/admin/showtimes/${item.showtimeId}|}" th:text="${item.movieTitle}" class="font-semibold text-white no-underline hover:text-accent">Movie</a></td>
+                        <td th:text="${item.branchName}">Branch</td>
+                        <td th:text="${item.hallName}">Hall</td>
+                        <td class="text-right tabular-nums" th:text="${item.priceRange} + ' đ'">80.000 - 160.000 đ</td>
+                        <td class="tabular-nums" th:text="${#temporals.format(item.startTime, 'dd/MM/yyyy HH:mm')}">time</td>
+                        <td class="tabular-nums" th:text="${#temporals.format(item.endTime, 'dd/MM/yyyy HH:mm')}">time</td>
+                        <td class="text-right tabular-nums" th:text="${item.bookingCount}">0</td>
+                        <td>
+                            <div class="flex justify-end gap-2">
+                                <a class="hc-btn px-3 py-1.5 no-underline" th:href="@{|/admin/showtimes/${item.showtimeId}|}">Xem</a>
+                                <a class="hc-btn px-3 py-1.5 no-underline" th:if="${item.canEditSchedule}" th:href="@{|/admin/showtimes/${item.showtimeId}/edit|}">Sửa</a>
+                                <form th:if="${item.canDelete}" th:action="@{|/admin/showtimes/${item.showtimeId}|}" method="post" onsubmit="return confirm('Hủy suất chiếu này?');">
+                                    <input type="hidden" name="_method" value="delete">
+                                    <button type="submit" class="hc-btn px-3 py-1.5 text-danger hover:text-red-300">Hủy</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>
