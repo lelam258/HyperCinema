@@ -461,11 +461,11 @@
                   class="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1.5 animate-pulse"
                   th:text="${unreadNotificationCount}">0</span>
         </a>
-        <a th:href="@{/my/feedback}"
-           th:classappend="${active == 'feedback'} ? ' is-active' : ''"
+        <a th:href="@{/my/reviews}"
+           th:classappend="${active == 'reviews'} ? ' is-active' : ''"
            class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            Ý kiến & Đóng góp
+            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Đánh giá của tôi
         </a>
         <a th:href="@{/}"
            th:classappend="${active == 'booking-now'} ? ' is-active' : ''"
