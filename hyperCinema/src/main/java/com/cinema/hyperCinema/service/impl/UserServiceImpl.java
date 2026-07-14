@@ -100,6 +100,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public User updateUser(Integer id, User userDetails) {
         User user = getUserById(id);
+        if (user.getRole() != null && "Customer".equalsIgnoreCase(user.getRole().getName())) {
+            throw new IllegalArgumentException("Cannot update customer accounts");
+        }
 
         if (!user.getUsername().equals(userDetails.getUsername()) && userRepository.existsByUsername(userDetails.getUsername())) {
             throw new IllegalArgumentException("Username already exists: " + userDetails.getUsername());
@@ -129,6 +132,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Integer id) {
         User user = getUserById(id);
+        if (user.getRole() != null && "Customer".equalsIgnoreCase(user.getRole().getName())) {
+            throw new IllegalArgumentException("Cannot delete customer accounts");
+        }
         userRepository.delete(user);
     }
 
@@ -155,6 +161,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public User resetUserPassword(Integer id, String newPassword) {
         User user = getUserById(id);
+        if (user.getRole() != null && "Customer".equalsIgnoreCase(user.getRole().getName())) {
+            throw new IllegalArgumentException("Cannot reset password for customer accounts");
+        }
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         return userRepository.save(user);
     }
