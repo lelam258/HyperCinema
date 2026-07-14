@@ -49,13 +49,20 @@ public class AdminAnalyticsController {
 
         // Fetch report based on tab
         Map<String, Object> report;
-        if ("fb".equalsIgnoreCase(tab)) {
-            report = analyticsService.getFoodSalesReport(from, to, branchId);
-        } else if ("occupancy".equalsIgnoreCase(tab)) {
-            report = analyticsService.getHallOccupancyReport(from, to, branchId);
-        } else {
-            tab = "ticket";
-            report = analyticsService.getTicketSalesReport(from, to, branchId);
+        try {
+            if ("fb".equalsIgnoreCase(tab)) {
+                report = analyticsService.getFoodSalesReport(from, to, branchId);
+            } else if ("occupancy".equalsIgnoreCase(tab)) {
+                report = analyticsService.getHallOccupancyReport(from, to, branchId);
+            } else {
+                tab = "ticket";
+                report = analyticsService.getTicketSalesReport(from, to, branchId);
+            }
+        } catch (Exception e) {
+            // Log the full stack trace so we can diagnose the 500 error
+            e.printStackTrace();
+            report = new java.util.HashMap<>();
+            model.addAttribute("errorMessage", e.getMessage());
         }
 
         List<Branch> branches = branchRepository.findAll();
