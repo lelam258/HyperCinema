@@ -76,12 +76,11 @@
                     <img th:if="${item.posterUrl != null and not #strings.isEmpty(item.posterUrl)}" 
                          th:src="${item.posterUrl}" 
                          th:alt="${item.title}" 
+                         onerror="this.onerror=null;this.src='/images/movie-placeholder.svg'"
                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
-                    <div th:unless="${item.posterUrl != null and not #strings.isEmpty(item.posterUrl)}" 
-                         class="w-full h-full flex flex-col items-center justify-center text-slate-600 text-xs">
-                        <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        NO IMAGE
-                    </div>
+                    <img th:unless="${item.posterUrl != null and not #strings.isEmpty(item.posterUrl)}"
+                         src="/images/movie-placeholder.svg" th:alt="|Poster phim ${item.title}|"
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
                     
                     <!-- Duration Badge -->
                     <span th:if="${item.duration != null}" 

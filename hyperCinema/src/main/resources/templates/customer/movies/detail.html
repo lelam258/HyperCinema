@@ -41,6 +41,7 @@
                     <img th:if="${movie.posterUrl != null and not #strings.isEmpty(movie.posterUrl)}" 
                          th:src="${movie.posterUrl}" 
                          th:alt="${movie.title}" 
+                         onerror="this.onerror=null;this.src='/images/movie-placeholder.svg'"
                          class="w-full h-full object-cover"/>
                     <div th:unless="${movie.posterUrl != null and not #strings.isEmpty(movie.posterUrl)}" 
                          class="w-full h-full flex flex-col items-center justify-center text-slate-600">

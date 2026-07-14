@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" role="img" aria-labelledby="title description">
+  <title id="title">HyperCinema movie poster</title>
+  <desc id="description">Poster mặc định khi ảnh phim không tải được</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#242424"/>
+      <stop offset="0.55" stop-color="#101010"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="38%" r="55%">
+      <stop offset="0" stop-color="#f59e0b" stop-opacity=".25"/>
+      <stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="900" fill="url(#background)"/>
+  <rect width="600" height="900" fill="url(#glow)"/>
+  <g transform="translate(300 375)" fill="none" stroke="#fbbf24" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="-105" y="-82" width="210" height="164" rx="22"/>
+    <path d="M-105-28h210M-53-82l32 54M18-82l32 54M88-82l17 29"/>
+    <path d="M-27 5l70 38-70 38z" fill="#fbbf24" stroke="none"/>
+  </g>
+  <text x="300" y="565" fill="#fff" font-family="Arial, sans-serif" font-size="43" font-weight="800" text-anchor="middle" letter-spacing="3">HYPER</text>
+  <text x="300" y="615" fill="#fbbf24" font-family="Arial, sans-serif" font-size="43" font-weight="800" text-anchor="middle" letter-spacing="3">CINEMA</text>
+  <text x="300" y="680" fill="#94a3b8" font-family="Arial, sans-serif" font-size="20" text-anchor="middle" letter-spacing="2">POSTER ĐANG CẬP NHẬT</text>
+</svg>
