@@ -1,458 +1,178 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<!--
-    Layout Fragments — HyperCinema UI Rebuild (Tailwind CSS v4 CDN)
-    ================================================================
-    Cung cấp các fragments tái sử dụng:
-      - head(title)              : <head> chung (Tailwind CDN, Fira Sans, @theme tokens)
-      - adminSidebar(active)     : Sidebar Admin
-      - managerSidebar(active)   : Sidebar Manager
-      - branchSidebar(active)    : Sidebar Branch Manager
-      - staffSidebar(active)     : Sidebar Staff
-      - customerSidebar(active)  : Sidebar Customer
-      - footer                   : Footer dùng chung
-      - mobileToggle             : Nút hamburger cho mobile
 
-    Cách dùng trong trang:
-        <head th:replace="~{fragments/layout :: head('Title')}">
-    <title>title</title>
-</head>
-        <nav th:replace="~{fragments/layout :: adminSidebar('dashboard')}"></nav>
-        <footer th:replace="~{fragments/layout :: footer}"></footer>
--->
-
-<!-- ═══════════════════════════════════════════════════════════
-     head(title) — Tailwind CDN + Fira Sans + @theme tokens
-     ═══════════════════════════════════════════════════════════ -->
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
     <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}">
     <title th:text="${title}">HyperCinema</title>
-    <!-- Tailwind CSS v4 CDN (dev only) -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Google Fonts: Fira Sans -->
+    <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script defer th:src="@{/js/app.js(v=1.1)}"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&display=swap">
-    <link rel="stylesheet" th:href="@{/css/theme.css}">
-    <!-- Custom Tailwind Theme -->
-    <style type="text/tailwindcss">
-        @theme {
-            --font-sans: 'Fira Sans', system-ui, -apple-system, sans-serif;
-            --color-primary: #CA8A04;
-            --color-primary-hover: #A16207;
-            --color-primary-light: rgba(202, 138, 4, 0.15);
-            --color-surface: rgba(255, 255, 255, 0.04);
-            --color-surface-hover: rgba(255, 255, 255, 0.08);
-            --color-glass: rgba(255, 255, 255, 0.05);
-            --color-glass-border: rgba(255, 255, 255, 0.08);
-            --color-success: #32D74B;
-            --color-warning: #FFD60A;
-            --color-info: #0A84FF;
-            --color-danger: #FF453A;
-        }
-        @layer base {
-            body {
-                background-color: #050505;
-                color: #F8FAFC;
-                font-family: var(--font-sans);
-                scrollbar-width: thin;
-                scrollbar-color: rgba(255,255,255,0.15) transparent;
-            }
-            ::-webkit-scrollbar { width: 6px; height: 6px; }
-            ::-webkit-scrollbar-track { background: transparent; }
-            ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
-            ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
-            ::selection { background-color: var(--color-primary); color: #fff; }
-            select option {
-                background-color: #111827;
-                color: #F8FAFC;
-            }
-            select option:checked {
-                background-color: #0A84FF;
-                color: #FFFFFF;
-            }
-            input:-webkit-autofill,
-            input:-webkit-autofill:hover,
-            input:-webkit-autofill:focus,
-            input:-webkit-autofill:active,
-            textarea:-webkit-autofill,
-            textarea:-webkit-autofill:hover,
-            textarea:-webkit-autofill:focus,
-            textarea:-webkit-autofill:active {
-                -webkit-box-shadow: 0 0 0 1000px #12110E inset !important;
-                box-shadow: 0 0 0 1000px #12110E inset !important;
-                -webkit-text-fill-color: #F8FAFC !important;
-                caret-color: #F8FAFC;
-                border-color: rgba(255, 255, 255, 0.10);
-                background-color: #12110E !important;
-                background-image: none !important;
-                color: #F8FAFC !important;
-                transition: border-color 150ms ease, box-shadow 150ms ease;
-            }
-            input:-webkit-autofill:focus,
-            textarea:-webkit-autofill:focus {
-                border-color: var(--color-primary);
-            }
-        }
-        @layer components {
-            .sidebar-link {
-                @apply flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 transition-all duration-200 cursor-pointer hover:text-slate-100 hover:bg-white/[0.06];
-            }
-            .sidebar-link.is-active {
-                @apply text-white bg-primary/15 border-l-2 border-primary;
-            }
-            .glass-card {
-                @apply bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-lg shadow-black/20;
-            }
-            .icon {
-                display: inline-block;
-                width: 1em;
-                height: 1em;
-                flex-shrink: 0;
-            }
-            .alert-icon {
-                display: inline-flex;
-                width: 1rem;
-                height: 1rem;
-                flex-shrink: 0;
-                margin-top: 0.125rem;
-            }
-            .alert-icon .icon {
-                width: 1rem;
-                height: 1rem;
-            }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                transition-duration: 0.01ms !important;
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,600&family=Poppins:wght@300;400;500;600;700;800&family=Righteous&display=swap">
+    <link rel="stylesheet" th:href="@{/css/theme.css(v=2.4)}">
 </head>
-
-<!-- adminHeader(active) — Header/navigation for Admin -->
-<header th:fragment="adminHeader(active)">
-    <nav class="admin-nav">
-        <a th:href="@{/admin/movies}"
-           th:class="|admin-nav-link${active == 'movies' ? ' is-active' : ''}|"
-           th:aria-current="${active == 'movies' ? 'page' : null}">Quản lý Phim</a>
-        <a th:href="@{/admin/branches}"
-           th:class="|admin-nav-link${active == 'branches' ? ' is-active' : ''}|"
-           th:aria-current="${active == 'branches' ? 'page' : null}">Quản lý Chi nhánh</a>
-    </nav>
-</header>
 
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════
-     mobileToggle — Nút hamburger cho mobile (dùng JS inline)
-     ═══════════════════════════════════════════════════════════ -->
 <th:block th:fragment="mobileToggle">
-    <button onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full')"
-            class="fixed top-4 left-4 z-50 md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 backdrop-blur-lg border border-white/10 text-slate-300 hover:text-white hover:bg-white/15 transition-all cursor-pointer">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <button type="button"
+            data-sidebar-toggle
+            aria-controls="sidebar"
+            aria-expanded="false"
+            class="hc-icon-button hc-floating-menu md:hidden">
+        <span class="sr-only">Mở menu</span>
+        <i data-lucide="menu"></i>
     </button>
+    <button type="button" data-sidebar-backdrop aria-label="Đóng menu" class="hc-sidebar-backdrop md:hidden"></button>
 </th:block>
 
-<!-- ═══════════════════════════════════════════════════════════
-     adminSidebar(active) — Sidebar cho Admin
-     ═══════════════════════════════════════════════════════════ -->
-<nav th:fragment="adminSidebar(active)" id="sidebar"
-     class="fixed left-0 top-0 h-screen w-64 bg-[#0A0A0F]/90 backdrop-blur-2xl border-r border-white/[0.06] flex flex-col z-40
-            transition-transform duration-300 -translate-x-full md:translate-x-0">
+<th:block th:fragment="sidebarBackdrop">
+    <button type="button" data-sidebar-backdrop aria-label="Đóng menu" class="hc-sidebar-backdrop md:hidden"></button>
+</th:block>
 
-    <!-- Brand -->
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06]">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
-        <span class="text-lg font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight">HyperCinema</span>
+<nav th:fragment="adminSidebar(active)" id="sidebar" class="hc-sidebar" data-sidebar>
+    <div class="hc-sidebar-brand">
+        <div class="hc-brand-mark">C</div>
+        <span class="hc-brand-text">Cinema<span>Admin</span></span>
     </div>
-
-    <!-- Navigation -->
-    <div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <span class="block px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Hệ thống</span>
-        <a th:href="@{/admin/dashboard}"
-           th:classappend="${active == 'dashboard'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Tổng quan
-        </a>
-        <a th:href="@{/admin/analytics}"
-           th:classappend="${active == 'analytics'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            Báo cáo & Thống kê
-        </a>
-        <a th:href="@{/admin/movies}"
-           th:classappend="${active == 'movies'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/><line x1="17" y1="17" x2="22" y2="17"/></svg>
-            Quản lý phim
-        </a>
-        <a th:href="@{/admin/branches}"
-           th:classappend="${active == 'branches'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            Quản lý chi nhánh
-        </a>
-        <a th:href="@{/admin/halls}"
-           th:classappend="${active == 'halls'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
-            Quản lý phòng chiếu
-        </a>
-        <a th:href="@{/admin/users}"
-           th:classappend="${active == 'users'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Quản lý người dùng
-        </a>
-        <a th:href="@{/admin/notifications}"
-           th:classappend="${active == 'notifications'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            Thông báo & Hỗ trợ
-        </a>
-        <a th:href="@{/admin/payments}"
-           th:classappend="${active == 'payments'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Quản lý Giao dịch
-        </a>
+    <div class="hc-sidebar-scroll">
+        <div class="hc-nav-section">Quản trị hệ thống</div>
+        <a th:href="@{/admin/dashboard}" th:classappend="${active == 'dashboard'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a th:href="@{/admin/branches}" th:classappend="${active == 'branches'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="building-2"></i>Quản lý Chi nhánh</a>
+        <a th:href="@{/admin/halls}" th:classappend="${active == 'halls'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="panel-top"></i>Quản lý Phòng chiếu</a>
+        <a th:href="@{/admin/showtimes}" th:classappend="${active == 'showtimes'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="calendar-clock"></i>Quản lý Suất chiếu</a>
+        <a th:href="@{/admin/movies}" th:classappend="${active == 'movies'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="clapperboard"></i>Quản lý Phim</a>
+        <a th:href="@{/admin/food-items}" th:classappend="${active == 'food'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="popcorn"></i>Quản lý F&amp;B</a>
+        <a th:href="@{/admin/vouchers}" th:classappend="${active == 'vouchers'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="badge-percent"></i>Quản lý Voucher</a>
+        <a th:href="@{/admin/reports/revenue}" th:classappend="${active == 'revenue-reports'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="chart-no-axes-combined"></i>Bao cao doanh thu</a>
+        <a th:href="@{/admin/users}" th:classappend="${active == 'users'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="users"></i>Vai trò &amp; Người dùng</a>
     </div>
-
-    <!-- Đăng xuất -->
-    <div class="px-3 py-4 border-t border-white/[0.06]">
+    <div class="hc-sidebar-footer">
         <form th:action="@{/logout}" method="post">
-            <button type="submit" class="sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10">
-                <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Đăng xuất
-            </button>
+            <button type="submit" class="sidebar-link is-danger"><i data-lucide="log-out"></i>Đăng xuất</button>
         </form>
     </div>
 </nav>
 
-<!-- ═══════════════════════════════════════════════════════════
-     managerSidebar(active) — Sidebar cho Manager
-     ═══════════════════════════════════════════════════════════ -->
-<nav th:fragment="managerSidebar(active)" id="sidebar"
-     class="fixed left-0 top-0 h-screen w-64 bg-[#0A0A0F]/90 backdrop-blur-2xl border-r border-white/[0.06] flex flex-col z-40
-            transition-transform duration-300 -translate-x-full md:translate-x-0">
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06]">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
-        <div class="flex flex-col">
-            <span class="text-lg font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight leading-tight">HyperCinema</span>
-            <span class="text-[10px] font-medium text-blue-400 uppercase tracking-wider">Quản lý</span>
+<nav th:fragment="managerSidebar(active)" id="sidebar" class="hc-sidebar" data-sidebar>
+    <div class="hc-sidebar-brand">
+        <div class="hc-brand-mark is-info">C</div>
+        <div>
+            <span class="hc-brand-text">Cinema<span>Manager</span></span>
+            <small>Vận hành chi nhánh</small>
         </div>
     </div>
-    <div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <span class="block px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Quản lý</span>
-        <a th:href="@{/manager/dashboard}"
-           th:classappend="${active == 'dashboard'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Tổng quan
-        </a>
-        <a th:href="@{/manager/analytics}"
-           th:classappend="${active == 'analytics'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            Báo cáo & Thống kê
-        </a>
-        <a th:href="@{/admin/halls}"
-           th:classappend="${active == 'halls'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
-            Quản lý phòng chiếu
-        </a>
-        <a th:href="@{/admin/payments}"
-           th:classappend="${active == 'payments'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Quản lý Giao dịch
-        </a>
+    <div class="hc-sidebar-scroll">
+        <div class="hc-nav-section">Quản lý</div>
+        <a th:href="@{/manager/dashboard}" th:classappend="${active == 'dashboard'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a th:href="@{/manager/bookings}" th:classappend="${active == 'bookings'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="tickets"></i>Đơn booking</a>
+        <a th:href="@{/manager/reports/revenue}" th:classappend="${active == 'revenue-reports'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="chart-no-axes-combined"></i>Bao cao doanh thu</a>
+        <a th:href="@{/admin/halls}" th:classappend="${active == 'halls'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="panel-top"></i>Quản lý Phòng chiếu</a>
+        <a th:href="@{/admin/showtimes}" th:classappend="${active == 'showtimes'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="calendar-clock"></i>Quản lý Suất chiếu</a>
     </div>
-    <div class="px-3 py-4 border-t border-white/[0.06]">
+    <div class="hc-sidebar-footer">
         <form th:action="@{/logout}" method="post">
-            <button type="submit" class="sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10">
-                <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Đăng xuất
-            </button>
+            <button type="submit" class="sidebar-link is-danger"><i data-lucide="log-out"></i>Đăng xuất</button>
         </form>
     </div>
 </nav>
 
-<!-- ═══════════════════════════════════════════════════════════
-     branchSidebar(active) — Sidebar cho Branch Manager
-     ═══════════════════════════════════════════════════════════ -->
-<nav th:fragment="branchSidebar(active)" id="sidebar"
-     class="fixed left-0 top-0 h-screen w-64 bg-[#0A0A0F]/90 backdrop-blur-2xl border-r border-white/[0.06] flex flex-col z-40
-            transition-transform duration-300 -translate-x-full md:translate-x-0">
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06]">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
-        <div class="flex flex-col">
-            <span class="text-lg font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight leading-tight">HyperCinema</span>
-            <span class="text-[10px] font-medium text-amber-400 uppercase tracking-wider">Chi nhánh</span>
+<nav th:fragment="branchSidebar(active)" id="sidebar" class="hc-sidebar" data-sidebar>
+    <div class="hc-sidebar-brand">
+        <div class="hc-brand-mark is-accent">C</div>
+        <div>
+            <span class="hc-brand-text">Cinema<span>Branch</span></span>
+            <small>Quản lý rạp</small>
         </div>
     </div>
-    <div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <span class="block px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Quản lý Chi nhánh</span>
-        <a th:href="@{/branch/dashboard}"
-           th:classappend="${active == 'dashboard'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Tổng quan
-        </a>
-        <a th:href="@{/branch/analytics}"
-           th:classappend="${active == 'analytics'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            Báo cáo & Thống kê
-        </a>
-        <a th:href="@{/admin/halls}"
-           th:classappend="${active == 'halls'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            Quản lý phòng chiếu
-        </a>
-        <a th:href="@{/admin/payments}"
-           th:classappend="${active == 'payments'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Quản lý Giao dịch
-        </a>
+    <div class="hc-sidebar-scroll">
+        <div class="hc-nav-section">Chi nhánh</div>
+        <a th:href="@{/branch/dashboard}" th:classappend="${active == 'dashboard'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a th:href="@{/admin/halls}" th:classappend="${active == 'halls'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="panel-top"></i>Quản lý Phòng chiếu</a>
+        <a th:href="@{/admin/showtimes}" th:classappend="${active == 'showtimes'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="calendar-clock"></i>Quản lý Suất chiếu</a>
     </div>
-    <div class="px-3 py-4 border-t border-white/[0.06]">
+    <div class="hc-sidebar-footer">
         <form th:action="@{/logout}" method="post">
-            <button type="submit" class="sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10">
-                <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Đăng xuất
-            </button>
+            <button type="submit" class="sidebar-link is-danger"><i data-lucide="log-out"></i>Đăng xuất</button>
         </form>
     </div>
 </nav>
 
-<!-- ═══════════════════════════════════════════════════════════
-     staffSidebar(active) — Sidebar cho Staff
-     ═══════════════════════════════════════════════════════════ -->
-<nav th:fragment="staffSidebar(active)" id="sidebar"
-     class="fixed left-0 top-0 h-screen w-64 bg-[#0A0A0F]/90 backdrop-blur-2xl border-r border-white/[0.06] flex flex-col z-40
-            transition-transform duration-300 -translate-x-full md:translate-x-0">
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06]">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
-        <div class="flex flex-col">
-            <span class="text-lg font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight leading-tight">HyperCinema</span>
-            <span class="text-[10px] font-medium text-emerald-400 uppercase tracking-wider">Nhân viên</span>
+<nav th:fragment="staffSidebar(active)" id="sidebar" class="hc-sidebar" data-sidebar>
+    <div class="hc-sidebar-brand">
+        <div class="hc-brand-mark is-success">C</div>
+        <div>
+            <span class="hc-brand-text">Cinema<span>Staff</span></span>
+            <small>Quầy vé</small>
         </div>
     </div>
-    <div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <span class="block px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Nghiệp vụ</span>
-        <a th:href="@{/staff/dashboard}"
-           th:classappend="${active == 'dashboard'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Trang chủ
-        </a>
-        <a th:href="@{/staff/booking}"
-           th:classappend="${active == 'booking'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            Bán vé
-        </a>
-        <a th:href="@{/staff/payments}"
-           th:classappend="${active == 'payments'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Lịch sử Giao dịch
-        </a>
+    <div class="hc-sidebar-scroll">
+        <div class="hc-nav-section">Nghiệp vụ</div>
+        <a th:href="@{/staff/dashboard}" th:classappend="${active == 'dashboard'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="home"></i>Trang chủ</a>
+        <a th:href="@{/staff/booking}" th:classappend="${active == 'booking'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="ticket"></i>Bán vé</a>
+        <a th:href="@{/staff/bookings}" th:classappend="${active == 'bookings'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="tickets"></i>Đơn booking</a>
     </div>
-    <div class="px-3 py-4 border-t border-white/[0.06]">
+    <div class="hc-sidebar-footer">
         <form th:action="@{/logout}" method="post">
-            <button type="submit" class="sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10">
-                <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Đăng xuất
-            </button>
+            <button type="submit" class="sidebar-link is-danger"><i data-lucide="log-out"></i>Đăng xuất</button>
         </form>
     </div>
 </nav>
 
-<!-- ═══════════════════════════════════════════════════════════
-     customerSidebar(active) — Sidebar cho Customer
-     ═══════════════════════════════════════════════════════════ -->
-<nav th:fragment="customerSidebar(active)" id="sidebar"
-     class="fixed left-0 top-0 h-screen w-64 bg-[#0A0A0F]/90 backdrop-blur-2xl border-r border-white/[0.06] flex flex-col z-40
-            transition-transform duration-300 -translate-x-full md:translate-x-0">
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06]">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
-        <div class="flex flex-col">
-            <span class="text-lg font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight leading-tight">HyperCinema</span>
-            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Khách hàng</span>
+<nav th:fragment="customerSidebar(active)" id="sidebar" class="hc-sidebar hc-customer-sidebar" data-sidebar
+     th:with="displayName=${customerName != null and not #strings.isEmpty(customerName) ? customerName : 'Khách hàng'},
+              displayTier=${membershipTier != null and not #strings.isEmpty(membershipTier) ? membershipTier : 'Thành viên'},
+              displayPoints=${rewardPoints != null ? rewardPoints : 0},
+              displayPointsNeeded=${membershipProgress != null ? membershipProgress.pointsNeeded : 0},
+              displayNextTier=${membershipProgress != null ? membershipProgress.nextTier : null},
+              displayHighestTier=${membershipProgress != null and membershipProgress.highestTier}">
+    <div class="hc-sidebar-brand">
+        <div class="hc-brand-mark is-accent">C</div>
+        <span class="hc-brand-text">Cinema<span>App</span></span>
+    </div>
+    <div class="hc-sidebar-scroll">
+        <div class="hc-nav-section">Khám phá</div>
+        <a th:href="@{/my/dashboard}" th:classappend="${active == 'home'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="home"></i>Trang chủ Phim</a>
+        <a th:href="@{/my/dashboard#phim-dang-chieu}" th:classappend="${active == 'booking'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="ticket"></i>Mua vé ngay</a>
+        <a th:href="@{/my/bookings}" th:classappend="${active == 'bookings'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="tickets"></i>Vé của tôi</a>
+        <a th:href="@{/my/tai-khoan}" th:classappend="${active == 'account'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="user"></i>Tài khoản</a>
+    </div>
+    <div class="hc-sidebar-footer hc-customer-sidebar-footer">
+        <div class="hc-vip-card">
+            <span>Thành viên VIP</span>
+            <p th:if="${membershipProgress != null and !displayHighestTier}"
+               th:text="|Còn ${displayPointsNeeded} điểm để lên ${displayNextTier}.|">Còn 800 điểm để lên hạng.</p>
+            <p th:if="${membershipProgress != null and displayHighestTier}">Bạn đang ở hạng cao nhất.</p>
+            <p th:unless="${membershipProgress != null}" th:text="|Bạn đang có ${displayPoints} điểm tích lũy.|">Bạn đang có điểm tích lũy.</p>
         </div>
-    </div>
-    <div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <span class="block px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Tài khoản</span>
-        <a th:href="@{/my/dashboard}"
-           th:classappend="${active == 'dashboard'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Tài khoản
-        </a>
-        <a th:href="@{/my/bookings}"
-           th:classappend="${active == 'bookings'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            Lịch sử đặt vé
-        </a>
-        <a th:href="@{/my/payments}"
-           th:classappend="${active == 'payments'} ? ' is-active' : ''"
-           class="sidebar-link">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Lịch sử giao dịch
-        </a>
-        <a th:href="@{/my/notifications}"
-           th:classappend="${active == 'notifications'} ? ' is-active' : ''"
-           class="sidebar-link flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                <span>Thông báo</span>
-            </div>
-            <span th:if="${unreadNotificationCount != null && unreadNotificationCount > 0}"
-                  id="unread-badge-sidebar"
-                  class="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1.5 animate-pulse"
-                  th:text="${unreadNotificationCount}">0</span>
-        </a>
-        <a th:href="@{/}"
-           th:classappend="${active == 'booking-now'} ? ' is-active' : ''"
-           class="sidebar-link text-amber-500 hover:text-amber-400">
-            <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
-            Đặt vé ngay
-        </a>
-    </div>
-
-    <div class="px-3 py-4 border-t border-white/[0.06]">
-        <form th:action="@{/logout}" method="post">
-            <button type="submit" class="sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10">
-                <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Đăng xuất
-            </button>
-        </form>
+        <div class="hc-customer-account">
+            <a th:href="@{/my/tai-khoan}" class="hc-customer-avatar" th:text="${#strings.substring(displayName, 0, 1)}">C</a>
+            <a th:href="@{/my/tai-khoan}" class="hc-customer-meta">
+                <strong th:text="${displayName}">Khách hàng</strong>
+                <span th:text="${displayTier}">Thành viên</span>
+            </a>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="hc-customer-logout" title="Đăng xuất" aria-label="Đăng xuất">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </form>
+        </div>
     </div>
 </nav>
 
-<!-- ═══════════════════════════════════════════════════════════
-     footer — Footer dùng chung
-     ═══════════════════════════════════════════════════════════ -->
-<footer th:fragment="footer" class="app-footer">
-    <div class="border-t border-white/[0.06] mt-12">
-        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between flex-wrap gap-2 text-sm text-slate-500">
-            <span class="font-semibold text-slate-300">HyperCinema</span>
-            <span>© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim.</span>
-        </div>
+<footer th:fragment="footer" class="hc-footer">
+    <div>
+        <span class="hc-footer-brand">Cinema<span>App</span></span>
+        <span>(c) 2026 HyperCinema - Hệ thống quản trị rạp chiếu phim.</span>
     </div>
+    <script defer th:src="@{/js/ui/sidebar.js(v=1.0)}"></script>
+    <script defer th:src="@{/js/ui/dropdown.js(v=1.0)}"></script>
+    <script defer th:src="@{/js/ui/dialog.js(v=1.0)}"></script>
+    <script defer th:src="@{/js/ui/toast.js(v=1.0)}"></script>
 </footer>
 
 </body>

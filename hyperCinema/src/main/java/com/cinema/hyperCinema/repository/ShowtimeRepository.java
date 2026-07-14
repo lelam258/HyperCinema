@@ -197,4 +197,48 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
             @Param("showtimeId") Integer showtimeId,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
+
+    @Query(value = """
+            SELECT s.showtime_id,
+                   m.title,
+                   br.branch_id,
+                   br.name AS branch_name,
+                   h.name AS hall_name,
+                   s.start_time,
+                   h.capacity,
+                   s.price,
+                   COALESCE(sales.paid_ticket_count, 0) AS paid_ticket_count,
+                   COALESCE(sales.actual_ticket_revenue, 0) AS actual_ticket_revenue
+            FROM showtime s
+            JOIN movie m ON m.movie_id = s.movie_id
+            JOIN hall h ON h.hall_id = s.hall_id
+            JOIN branch br ON br.branch_id = h.branch_id
+            LEFT JOIN (
+                SELECT paid.showtime_id,
+                       SUM(paid.ticket_count) AS paid_ticket_count,
+                       SUM(paid.seat_subtotal) AS actual_ticket_revenue
+                FROM (
+                    SELECT b.booking_id,
+                           b.showtime_id,
+                           COALESCE(b.seat_subtotal, 0) AS seat_subtotal,
+                           COUNT(t.ticket_id) AS ticket_count
+                    FROM booking b
+                    JOIN payment p ON p.booking_id = b.booking_id
+                    LEFT JOIN ticket t ON t.booking_id = b.booking_id
+                    WHERE p.status = :paymentStatus
+                      AND LOWER(COALESCE(b.status, '')) <> LOWER(:excludedBookingStatus)
+                    GROUP BY b.booking_id, b.showtime_id, b.seat_subtotal
+                ) paid
+                GROUP BY paid.showtime_id
+            ) sales ON sales.showtime_id = s.showtime_id
+            WHERE s.start_time >= :start
+              AND s.start_time < :end
+              AND (:branchId IS NULL OR br.branch_id = :branchId)
+            ORDER BY s.start_time DESC, br.name ASC, h.name ASC
+            """, nativeQuery = true)
+    List<Object[]> findShowtimeCoverageRows(@Param("start") LocalDateTime start,
+                                            @Param("end") LocalDateTime end,
+                                            @Param("branchId") Integer branchId,
+                                            @Param("paymentStatus") String paymentStatus,
+                                            @Param("excludedBookingStatus") String excludedBookingStatus);
 }
