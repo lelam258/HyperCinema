@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('HyperCinema - Thế giới điện ảnh')}"></head>
+<body class="min-h-screen overflow-x-hidden bg-[#050505] text-white">
+<header class="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-[#070707]/85 backdrop-blur-xl">
+    <div class="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        <a th:href="@{/}" class="flex items-center gap-3 no-underline">
+            <span class="grid h-10 w-10 place-items-center rounded-full bg-amber-500 text-lg font-black text-black shadow-[0_0_28px_rgba(245,158,11,.28)]">H</span>
+            <span class="text-xl font-black tracking-tight text-white">HYPER<span class="text-amber-400">CINEMA</span></span>
+        </a>
+        <nav class="hidden items-center gap-8 text-sm font-semibold text-slate-300 md:flex">
+            <a href="#dang-chieu" class="transition hover:text-amber-400">Phim đang chiếu</a>
+            <a href="#sap-chieu" class="transition hover:text-amber-400">Phim sắp chiếu</a>
+            <a th:href="@{/movies}" class="transition hover:text-amber-400">Tất cả phim</a>
+        </nav>
+        <div class="flex items-center gap-2">
+            <a th:if="${loggedIn}" th:href="${dashboardUrl}"
+               class="rounded-full border border-white/15 px-4 py-2 text-sm font-bold text-white transition hover:border-amber-400 hover:text-amber-400">Tài khoản</a>
+            <a th:unless="${loggedIn}" th:href="@{/login}"
+               class="rounded-full border border-white/15 px-4 py-2 text-sm font-bold text-white transition hover:border-amber-400 hover:text-amber-400">Đăng nhập</a>
+            <a th:unless="${loggedIn}" th:href="@{/register}"
+               class="hidden rounded-full bg-amber-400 px-4 py-2 text-sm font-black text-black transition hover:bg-amber-300 sm:block">Đăng ký</a>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="relative min-h-[720px] pt-18">
+        <div class="absolute inset-0 bg-[#101010]">
+            <img th:if="${featuredMovie != null and featuredMovie.posterUrl != null}" th:src="${featuredMovie.posterUrl}"
+                 th:alt="${featuredMovie.title}" class="h-full w-full object-cover opacity-45 blur-[2px] scale-105">
+            <div class="absolute inset-0 bg-[linear-gradient(90deg,#050505_4%,rgba(5,5,5,.9)_38%,rgba(5,5,5,.2)_75%),linear-gradient(0deg,#050505_0%,transparent_45%)]"></div>
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_75%_30%,rgba(245,158,11,.13),transparent_32%)]"></div>
+        </div>
+        <div class="relative mx-auto flex min-h-[650px] max-w-7xl items-center px-4 py-20 sm:px-6">
+            <div class="max-w-2xl">
+                <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[.18em] text-amber-300">
+                    <span class="h-2 w-2 animate-pulse rounded-full bg-amber-400"></span> Trải nghiệm điện ảnh đỉnh cao
+                </div>
+                <h1 th:text="${featuredMovie != null ? featuredMovie.title : 'Cả thế giới điện ảnh trong tầm tay'}"
+                    class="text-5xl font-black leading-[1.05] tracking-[-.04em] text-white sm:text-7xl">Phim nổi bật</h1>
+                <p class="mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg">Khám phá những bộ phim mới nhất, xem thông tin phim và sẵn sàng cho suất chiếu tiếp theo tại HyperCinema.</p>
+                <div class="mt-8 flex flex-wrap gap-3">
+                    <a th:if="${featuredMovie != null}" th:href="@{|/movies/${featuredMovie.movieId}|}"
+                       class="inline-flex items-center gap-2 rounded-full bg-amber-400 px-6 py-3.5 text-sm font-black text-black shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-amber-300">
+                        <span class="text-base">▶</span> Xem chi tiết
+                    </a>
+                    <a href="#dang-chieu" class="rounded-full border border-white/15 bg-white/[0.06] px-6 py-3.5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/10">Khám phá phim</a>
+                </div>
+                <form th:action="@{/}" method="get" class="mt-12 flex max-w-xl rounded-2xl border border-white/10 bg-black/45 p-2 backdrop-blur-xl">
+                    <input name="keyword" th:value="${keyword}" placeholder="Tìm tên phim bạn muốn xem..."
+                           class="min-w-0 flex-1 bg-transparent px-4 text-sm text-white outline-none placeholder:text-slate-500">
+                    <button class="rounded-xl bg-white px-5 py-3 text-sm font-black text-black transition hover:bg-amber-300">Tìm phim</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <section id="dang-chieu" class="relative mx-auto max-w-7xl px-4 py-16 sm:px-6">
+        <div class="mb-8 flex items-end justify-between gap-4">
+            <div><p class="mb-2 text-xs font-black uppercase tracking-[.22em] text-amber-400">Trên màn ảnh</p><h2 class="text-3xl font-black tracking-tight sm:text-4xl">Phim đang chiếu</h2></div>
+            <a th:href="@{/movies(status='NowShowing')}" class="text-sm font-bold text-slate-400 transition hover:text-amber-400">Xem tất cả →</a>
+        </div>
+        <div th:if="${#lists.isEmpty(nowShowing)}" class="rounded-3xl border border-dashed border-white/10 py-16 text-center text-slate-500">Chưa có phim đang chiếu phù hợp.</div>
+        <div th:unless="${#lists.isEmpty(nowShowing)}" class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <a th:each="movie : ${nowShowing}" th:href="@{|/movies/${movie.movieId}|}" class="group block no-underline">
+                <div class="relative aspect-[2/3] overflow-hidden rounded-2xl bg-[#151515] ring-1 ring-white/10 transition duration-300 group-hover:-translate-y-2 group-hover:ring-amber-400/60">
+                    <img th:if="${movie.posterUrl != null and !#strings.isEmpty(movie.posterUrl)}" th:src="${movie.posterUrl}" th:alt="${movie.title}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                    <div th:unless="${movie.posterUrl != null and !#strings.isEmpty(movie.posterUrl)}" class="grid h-full place-items-center text-4xl text-white/15">🎬</div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
+                    <span th:if="${movie.duration != null}" th:text="|${movie.duration} phút|" class="absolute bottom-3 right-3 rounded-lg bg-black/70 px-2 py-1 text-[10px] font-bold text-white"></span>
+                    <span class="absolute left-3 top-3 rounded-full bg-amber-400 px-2.5 py-1 text-[10px] font-black uppercase text-black">Hot</span>
+                </div>
+                <h3 th:text="${movie.title}" class="mt-4 line-clamp-1 text-base font-bold text-white transition group-hover:text-amber-400"></h3>
+                <p th:text="${#lists.isEmpty(movie.genreNames) ? movie.languageName : #strings.listJoin(movie.genreNames, ' • ')}" class="mt-1 line-clamp-1 text-xs text-slate-500"></p>
+            </a>
+        </div>
+    </section>
+
+    <section id="sap-chieu" class="border-y border-white/[0.06] bg-white/[0.025]">
+        <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+            <div class="mb-8 flex items-end justify-between gap-4">
+                <div><p class="mb-2 text-xs font-black uppercase tracking-[.22em] text-amber-400">Sắp ra mắt</p><h2 class="text-3xl font-black tracking-tight sm:text-4xl">Phim sắp chiếu</h2></div>
+                <a th:href="@{/movies(status='ComingSoon')}" class="text-sm font-bold text-slate-400 transition hover:text-amber-400">Xem tất cả →</a>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                <a th:each="movie : ${comingSoon}" th:href="@{|/movies/${movie.movieId}|}" class="group flex items-center gap-4 rounded-2xl border border-white/[0.07] bg-black/30 p-3 transition hover:border-amber-400/40">
+                    <div class="h-24 w-16 shrink-0 overflow-hidden rounded-xl bg-white/5"><img th:if="${movie.posterUrl != null}" th:src="${movie.posterUrl}" class="h-full w-full object-cover transition group-hover:scale-105" th:alt="${movie.title}"></div>
+                    <div class="min-w-0"><h3 th:text="${movie.title}" class="line-clamp-2 text-sm font-bold text-white group-hover:text-amber-400"></h3><p th:if="${movie.releaseDate != null}" th:text="${#temporals.format(movie.releaseDate, 'dd/MM/yyyy')}" class="mt-2 text-xs text-slate-500"></p></div>
+                </a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-10 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+    <span class="font-black text-white">HYPER<span class="text-amber-400">CINEMA</span></span>
+    <span>© 2026 HyperCinema. Nơi cảm xúc chạm tới màn ảnh.</span>
+</footer>
+</body>
+</html>
