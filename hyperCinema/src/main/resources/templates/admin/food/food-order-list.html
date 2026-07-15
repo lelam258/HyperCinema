@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Đơn F&B - HyperCinema')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('food')}"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner">
+        <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h1 class="hc-page-title">Đơn F&B</h1>
+                <p class="hc-page-subtitle">Theo dõi và xử lý đơn đồ ăn, đồ uống tại quầy.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <a th:href="@{/admin/food-items}" class="hc-btn no-underline">Mặt hàng</a>
+                <a th:href="@{/admin/food-orders/new}" class="hc-btn hc-btn-primary no-underline">Tạo đơn mới</a>
+            </div>
+        </div>
+
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <section class="hc-card overflow-hidden" aria-label="Danh sách đơn F&B">
+            <div class="overflow-x-auto">
+                <table class="hc-table">
+                    <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Mã đặt vé</th>
+                        <th>Trạng thái</th>
+                        <th class="text-right">Tổng tiền</th>
+                        <th>Ngày tạo</th>
+                        <th class="text-right">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${orders == null or #lists.isEmpty(orders)}">
+                        <td colspan="6" class="py-12 text-center text-cinema-muted">Chưa có đơn F&B nào.</td>
+                    </tr>
+                    <tr th:each="order : ${orders}" th:classappend="${order.status == 'CANCELLED'} ? ' opacity-60' : ''">
+                        <td><a th:href="@{|/admin/food-orders/${order.orderId}|}" th:text="${'#' + order.orderId}" class="font-mono font-semibold text-white no-underline hover:text-accent">#1</a></td>
+                        <td th:text="${order.booking != null ? order.booking.bookingId : 'N/A'}">123</td>
+                        <td>
+                            <span th:switch="${order.status}">
+                                <span th:case="'PENDING'" class="hc-badge border-warning/50 bg-warning/10 text-warning">Chờ xử lý</span>
+                                <span th:case="'CONFIRMED'" class="hc-badge border-success/50 bg-success/10 text-success">Đã xác nhận</span>
+                                <span th:case="'CANCELLED'" class="hc-badge border-danger/50 bg-danger/10 text-danger">Đã hủy</span>
+                                <span th:case="*" class="hc-badge border-cinema-border text-cinema-muted" th:text="${order.status}">?</span>
+                            </span>
+                        </td>
+                        <td class="text-right tabular-nums" th:text="${#numbers.formatInteger(order.totalAmount, 0, 'POINT') + ' đ'}">100.000 đ</td>
+                        <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : ''}">01/01/2025</td>
+                        <td class="text-right"><a th:href="@{|/admin/food-orders/${order.orderId}|}" class="hc-btn px-3 py-1.5 no-underline">Xem</a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Seat_Reservation")
+@Table(name = "seat_reservation")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class SeatReservation {
@@ -33,3 +33,4 @@ public class SeatReservation {
     @Column(name = "expired_at", nullable = false)
     private LocalDateTime expiredAt;
 }
+

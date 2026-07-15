@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Payment")
+@Table(name = "payment")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Payment {
@@ -35,8 +35,12 @@ public class Payment {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
 }
+

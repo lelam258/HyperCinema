@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(|Chi tiết suất chiếu - ${showtime.movieTitle} - HyperCinema|)}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="${showtimeContext.admin} ? ~{fragments/layout :: adminSidebar('showtimes')} : (${showtimeContext.sidebar == 'manager'} ? ~{fragments/layout :: managerSidebar('showtimes')} : ~{fragments/layout :: branchSidebar('showtimes')})"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner max-w-5xl">
+        <nav class="mb-6 flex items-center gap-2 text-sm text-cinema-muted" aria-label="Breadcrumb">
+            <a th:href="@{/admin/showtimes}" class="text-cinema-muted no-underline hover:text-accent">Quản lý suất chiếu</a>
+            <span>/</span>
+            <span class="text-white" th:text="${showtime.movieTitle}">Movie</span>
+        </nav>
+
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <section class="hc-card mb-6 p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h1 class="hc-page-title" th:text="${showtime.movieTitle}">Movie</h1>
+                    <p class="hc-page-subtitle" th:text="|${showtime.branchName} - ${showtime.hallName}|">Branch - Hall</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <a th:if="${showtime.canEditSchedule}" th:href="@{|/admin/showtimes/${showtime.showtimeId}/edit|}" class="hc-btn hc-btn-primary no-underline">Chỉnh sửa</a>
+                    <form th:if="${showtime.canDelete}" th:action="@{|/admin/showtimes/${showtime.showtimeId}|}" method="post" onsubmit="return confirm('Xóa suất chiếu này?');">
+                        <input type="hidden" name="_method" value="delete">
+                        <button type="submit" class="hc-btn text-danger hover:text-red-300">Xóa</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section th:if="${!showtime.canEditSchedule}" class="hc-card mb-6 border border-warning/30 p-5">
+            <h2 class="mb-2 text-base font-semibold text-white">Lịch chiếu đang bị khóa thao tác</h2>
+            <p class="text-sm text-cinema-muted">Suất chiếu đã quá thời gian bắt đầu hoặc đã có booking, vé, đặt ghế, thanh toán. Hệ thống chỉ cho sửa/xóa khi không làm mất lịch sử giao dịch.</p>
+        </section>
+
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <section class="hc-card p-6" aria-label="Thông tin suất chiếu">
+                <h2 class="mb-4 text-lg font-semibold text-white">Thông tin lịch</h2>
+                <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div><dt class="hc-label mb-1">Mã suất</dt><dd class="text-white tabular-nums" th:text="${showtime.showtimeId}">1</dd></div>
+                    <div><dt class="hc-label mb-1">Phim</dt><dd class="text-white" th:text="${showtime.movieTitle}">Movie</dd></div>
+                    <div><dt class="hc-label mb-1">Bắt đầu</dt><dd class="text-white tabular-nums" th:text="${#temporals.format(showtime.startTime, 'dd/MM/yyyy HH:mm')}">time</dd></div>
+                    <div><dt class="hc-label mb-1">Kết thúc</dt><dd class="text-white tabular-nums" th:text="${#temporals.format(showtime.endTime, 'dd/MM/yyyy HH:mm')}">time</dd></div>
+                    <div><dt class="hc-label mb-1">Bảng giá</dt><dd class="text-white">Theo loại ghế</dd></div>
+                    <div><dt class="hc-label mb-1">Trạng thái thời gian</dt><dd class="text-white" th:text="${showtime.past} ? 'Đã chiếu' : 'Sắp chiếu'">Sắp chiếu</dd></div>
+                </dl>
+            </section>
+
+            <section class="hc-card p-6" aria-label="Phòng và ràng buộc">
+                <h2 class="mb-4 text-lg font-semibold text-white">Phòng và ràng buộc</h2>
+                <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div><dt class="hc-label mb-1">Chi nhánh</dt><dd class="text-white" th:text="${showtime.branchName}">Branch</dd></div>
+                    <div><dt class="hc-label mb-1">Thành phố</dt><dd class="text-white" th:text="${showtime.city}">City</dd></div>
+                    <div><dt class="hc-label mb-1">Phòng</dt><dd class="text-white" th:text="${showtime.hallName}">Hall</dd></div>
+                    <div><dt class="hc-label mb-1">Booking</dt><dd class="text-white tabular-nums" th:text="${showtime.bookingCount}">0</dd></div>
+                    <div><dt class="hc-label mb-1">Vé</dt><dd class="text-white tabular-nums" th:text="${showtime.ticketCount}">0</dd></div>
+                    <div><dt class="hc-label mb-1">Đặt ghế</dt><dd class="text-white tabular-nums" th:text="${showtime.reservationCount}">0</dd></div>
+                    <div><dt class="hc-label mb-1">Thanh toán</dt><dd class="text-white tabular-nums" th:text="${showtime.paymentCount}">0</dd></div>
+                </dl>
+            </section>
+        </div>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

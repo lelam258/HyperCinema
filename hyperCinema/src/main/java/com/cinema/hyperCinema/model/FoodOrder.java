@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "FoodOrder")
+@Table(name = "food_order")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class FoodOrder {
@@ -42,3 +42,4 @@ public class FoodOrder {
         if (status == null) status = "PENDING";
     }
 }
+

@@ -2,13 +2,13 @@ package com.cinema.hyperCinema.config;
 
 import com.cinema.hyperCinema.model.*;
 import com.cinema.hyperCinema.repository.*;
-import com.cinema.hyperCinema.util.SeatPricing;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -22,6 +22,10 @@ import java.util.Random;
  */
 @Component
 public class DataInitializer implements CommandLineRunner {
+
+    private static final int REPORT_BOOKING_SEED_TARGET = 1_000;
+    private static final int REPORT_COVERAGE_SEED_DAYS = 7;
+    private static final int REPORT_COVERAGE_MAX_BOOKING_SEATS = 6;
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
@@ -37,13 +41,14 @@ public class DataInitializer implements CommandLineRunner {
     private final TicketRepository ticketRepository;
     private final PaymentRepository paymentRepository;
     private final FoodItemRepository foodItemRepository;
-    private final AuditLogRepository auditLogRepository;
     private final FoodOrderRepository foodOrderRepository;
     private final FoodOrderItemRepository foodOrderItemRepository;
-    private final UserMembershipRepository userMembershipRepository;
+    private final AuditLogRepository auditLogRepository;
     private final MembershipPlanRepository membershipPlanRepository;
     private final NotificationRepository notificationRepository;
     private final ReviewRepository reviewRepository;
+    private final UserMembershipRepository userMembershipRepository;
+    private final LoyaltyPointRepository loyaltyPointRepository;
     private final JdbcTemplate jdbcTemplate;
     private final PasswordEncoder passwordEncoder;
 
@@ -64,13 +69,14 @@ public class DataInitializer implements CommandLineRunner {
             TicketRepository ticketRepository,
             PaymentRepository paymentRepository,
             FoodItemRepository foodItemRepository,
-            AuditLogRepository auditLogRepository,
             FoodOrderRepository foodOrderRepository,
             FoodOrderItemRepository foodOrderItemRepository,
-            UserMembershipRepository userMembershipRepository,
+            AuditLogRepository auditLogRepository,
             MembershipPlanRepository membershipPlanRepository,
             NotificationRepository notificationRepository,
             ReviewRepository reviewRepository,
+            UserMembershipRepository userMembershipRepository,
+            LoyaltyPointRepository loyaltyPointRepository,
             JdbcTemplate jdbcTemplate,
             PasswordEncoder passwordEncoder) {
         this.roleRepository = roleRepository;
@@ -87,13 +93,14 @@ public class DataInitializer implements CommandLineRunner {
         this.ticketRepository = ticketRepository;
         this.paymentRepository = paymentRepository;
         this.foodItemRepository = foodItemRepository;
-        this.auditLogRepository = auditLogRepository;
         this.foodOrderRepository = foodOrderRepository;
         this.foodOrderItemRepository = foodOrderItemRepository;
-        this.userMembershipRepository = userMembershipRepository;
+        this.auditLogRepository = auditLogRepository;
         this.membershipPlanRepository = membershipPlanRepository;
         this.notificationRepository = notificationRepository;
         this.reviewRepository = reviewRepository;
+        this.userMembershipRepository = userMembershipRepository;
+        this.loyaltyPointRepository = loyaltyPointRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.passwordEncoder = passwordEncoder;
     }
@@ -101,50 +108,6 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        boolean resetDb = false;
-        if (resetDb) {
-            System.out.println("=== Resetting database to clear foreign key mismatches ===");
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
-            String[] tables = {
-                "Audit_Log", "Booking", "Branch_Movie", "FoodOrder", "FoodOrderItem",
-                "Hall", "Loyalty_Point", "Movie", "Movie_Genre", "Notification",
-                "Payment", "Promotion", "Promotion_Usage", "Review", "Role",
-                "Seat", "Seat_Reservation", "Showtime", "Ticket", "User", "User_Membership",
-                "Branch", "Language", "Membership_Plan", "FoodItem"
-            };
-            for (String table : tables) {
-                try {
-                    jdbcTemplate.execute("DROP TABLE IF EXISTS `" + table + "`");
-                } catch (Exception e) {
-                    System.out.println("Failed to drop " + table + ": " + e.getMessage());
-                }
-            }
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
-            System.out.println("=== Database reset complete. Please restart the application. ===");
-            System.exit(0);
-        }
-
-        if (userRepository.findByUsername("admin").isPresent()) {
-            User admin = userRepository.findByUsername("admin").get();
-            if (bookingRepository.count() == 0) {
-                System.out.println("=== DataInitializer: admin present, but bookings missing. Seeding showtimes & bookings ===");
-                List<User> users = userRepository.findAll();
-                List<Branch> branches = branchRepository.findAll();
-                List<Hall> halls = hallRepository.findAll();
-                List<Seat> allSeats = seatRepository.findAll();
-                List<Genre> genres = genreRepository.findAll();
-                List<Language> languages = seedLanguages();
-                List<Movie> movies = seedMovies(genres, languages);
-                List<Showtime> showtimes = seedShowtimes(movies, halls);
-                seedBookingsPaymentsAndFood(users, showtimes, allSeats);
-                System.out.println("=== DataInitializer: Finished seeding showtimes & bookings ===");
-            }
-            seedPlansAndMemberships(userRepository.findAll());
-            seedInitialNotifications(admin);
-            seedReviews(movieRepository.findAll(), userRepository.findAll());
-            return;
-        }
-
         if (roleRepository.count() == 0) {
             System.out.println("=== DataInitializer: Bắt đầu seed dữ liệu mẫu ===");
 
@@ -158,139 +121,30 @@ public class DataInitializer implements CommandLineRunner {
             seedFoodItems();
             ensureAuditLogTable();
             seedAuditLogs(users);
-
-            List<Language> languages = seedLanguages();
-            List<Movie> movies = seedMovies(genres, languages);
-            List<Showtime> showtimes = seedShowtimes(movies, halls);
-            seedBookingsPaymentsAndFood(users, showtimes, allSeats);
-
-            // Seed plans, memberships and notifications
-            seedPlansAndMemberships(users);
-            User admin = users.stream().filter(u -> "admin".equalsIgnoreCase(u.getUsername())).findFirst().orElse(null);
-            if (admin != null) {
-                seedInitialNotifications(admin);
-            }
-            seedReviews(movies, users);
         }
+
+        List<Language> languages = ensureLanguages();
+        List<Genre> currentGenres = ensureGenres();
+        List<Movie> movies = ensureMovies(languages);
+        ensureMovieGenres(movies, currentGenres);
+        ensureShowtimes(movies, hallRepository.findAll());
+        ensureSeedBranchAssignments();
+        ensureSeedCustomers();
+        ensureMembershipData();
+        ensureBookingsAndPayments();
+        userRepository.findByUsername("admin").ifPresent(this::seedInitialNotifications);
+        seedReviews(movieRepository.findAll(), userRepository.findAll());
 
         System.out.println("=== DataInitializer: Hoàn tất seed dữ liệu mẫu ===");
-    }
-
-    private void seedPlansAndMemberships(List<User> users) {
-        if (membershipPlanRepository.count() > 0) return;
-
-        MembershipPlan vip = new MembershipPlan();
-        vip.setName("VIP Plan");
-        vip.setDiscountPercent(java.math.BigDecimal.valueOf(10.0));
-        vip.setPrice(150000);
-        vip.setDurationDays(30);
-        vip = membershipPlanRepository.save(vip);
-
-        MembershipPlan gold = new MembershipPlan();
-        gold.setName("Gold Plan");
-        gold.setDiscountPercent(java.math.BigDecimal.valueOf(20.0));
-        gold.setPrice(300000);
-        gold.setDurationDays(90);
-        gold = membershipPlanRepository.save(gold);
-
-        // Assign to customer1 (Nguyễn Minh Tuấn) and customer2 (Trần Thu Hà)
-        User customer1 = users.stream().filter(u -> "customer1".equalsIgnoreCase(u.getUsername())).findFirst().orElse(null);
-        User customer2 = users.stream().filter(u -> "customer2".equalsIgnoreCase(u.getUsername())).findFirst().orElse(null);
-
-        if (customer1 != null) {
-            UserMembership um1 = new UserMembership();
-            um1.setUser(customer1);
-            um1.setPlan(vip);
-            um1.setStartDate(LocalDate.now().minusDays(5));
-            um1.setEndDate(LocalDate.now().plusDays(25));
-            um1.setStatus("Active");
-            userMembershipRepository.save(um1);
-        }
-
-        if (customer2 != null) {
-            UserMembership um2 = new UserMembership();
-            um2.setUser(customer2);
-            um2.setPlan(gold);
-            um2.setStartDate(LocalDate.now().minusDays(10));
-            um2.setEndDate(LocalDate.now().plusDays(80));
-            um2.setStatus("Active");
-            userMembershipRepository.save(um2);
-        }
-    }
-
-    private void seedInitialNotifications(User admin) {
-        // If notifications are already seeded, look for existing English mock ones and update them to Vietnamese
-        List<Notification> existing = notificationRepository.findAll();
-        for (Notification n : existing) {
-            if ("System Maintenance Scheduled".equalsIgnoreCase(n.getTitle())) {
-                n.setTitle("Lịch bảo trì hệ thống");
-                n.setMessage("Chúng tôi sẽ tiến hành bảo trì hệ thống vào ngày 26 tháng 5 năm 2026 từ 2:00 sáng đến 4:00 sáng (UTC). Các dịch vụ có thể tạm thời không khả dụng.");
-                notificationRepository.save(n);
-            } else if ("New Feature Available".equalsIgnoreCase(n.getTitle())) {
-                n.setTitle("Tính năng mới khả dụng");
-                n.setMessage("Hãy trải nghiệm tính năng phân tích thống kê mới của chúng tôi! Theo dõi và tối ưu hóa hiệu suất dữ liệu dễ dàng hơn bao giờ hết.");
-                notificationRepository.save(n);
-            } else if ("Security Alert".equalsIgnoreCase(n.getTitle())) {
-                n.setTitle("Cảnh báo bảo mật");
-                n.setMessage("Chúng tôi phát hiện đăng nhập từ một thiết bị mới. Nếu không phải bạn, vui lòng đổi mật khẩu và bảo mật tài khoản ngay lập tức.");
-                notificationRepository.save(n);
-            } else if ("Account Verification Required".equalsIgnoreCase(n.getTitle())) {
-                n.setTitle("Yêu cầu xác minh tài khoản");
-                n.setMessage("Vui lòng xác minh địa chỉ email của bạn để tiếp tục sử dụng tất cả các tính năng của tài khoản.");
-                notificationRepository.save(n);
-            }
-        }
-
-        if (notificationRepository.count() > 0) return;
-
-        // Seed 4 mock notifications matching the wireframes/mockups
-        Notification n1 = new Notification();
-        n1.setUser(admin);
-        n1.setTitle("Lịch bảo trì hệ thống");
-        n1.setMessage("Chúng tôi sẽ tiến hành bảo trì hệ thống vào ngày 26 tháng 5 năm 2026 từ 2:00 sáng đến 4:00 sáng (UTC). Các dịch vụ có thể tạm thời không khả dụng.");
-        n1.setType("System");
-        n1.setRead(true);
-        n1.setCreatedAt(LocalDateTime.now().minusHours(9));
-        notificationRepository.save(n1);
-
-        Notification n2 = new Notification();
-        n2.setUser(admin);
-        n2.setTitle("Tính năng mới khả dụng");
-        n2.setMessage("Hãy trải nghiệm tính năng phân tích thống kê mới của chúng tôi! Theo dõi và tối ưu hóa hiệu suất dữ liệu dễ dàng hơn bao giờ hết.");
-        n2.setType("Promotion");
-        n2.setRead(false);
-        n2.setCreatedAt(LocalDateTime.now().minusDays(1));
-        notificationRepository.save(n2);
-
-        Notification n3 = new Notification();
-        n3.setUser(admin);
-        n3.setTitle("Cảnh báo bảo mật");
-        n3.setMessage("Chúng tôi phát hiện đăng nhập từ một thiết bị mới. Nếu không phải bạn, vui lòng đổi mật khẩu và bảo mật tài khoản ngay lập tức.");
-        n3.setType("Alert");
-        n3.setRead(true);
-        n3.setCreatedAt(LocalDateTime.now().minusDays(1));
-        notificationRepository.save(n3);
-
-        Notification n4 = new Notification();
-        n4.setUser(admin);
-        n4.setTitle("Yêu cầu xác minh tài khoản");
-        n4.setMessage("Vui lòng xác minh địa chỉ email của bạn để tiếp tục sử dụng tất cả các tính năng của tài khoản.");
-        n4.setType("System");
-        n4.setRead(true);
-        n4.setCreatedAt(LocalDateTime.now().minusDays(5));
-        notificationRepository.save(n4);
     }
 
     // ───────────────────── ROLES ─────────────────────
     private List<Role> seedRoles() {
         List<Role> roles = new ArrayList<>();
         for (String name : new String[]{"Admin", "Manager", "BranchManager", "Staff", "Customer"}) {
-            Role r = roleRepository.findByName(name).orElseGet(() -> {
-                Role newRole = new Role();
-                newRole.setName(name);
-                return roleRepository.save(newRole);
-            });
-            roles.add(r);
+            Role r = new Role();
+            r.setName(name);
+            roles.add(roleRepository.save(r));
         }
         return roles;
     }
@@ -531,6 +385,167 @@ public class DataInitializer implements CommandLineRunner {
         userRepository.save(users.get(10));
     }
 
+    private void ensureSeedBranchAssignments() {
+        List<Branch> branches = branchRepository.findAll().stream()
+                .sorted((left, right) -> left.getBranchId().compareTo(right.getBranchId()))
+                .toList();
+        if (branches.size() < 3) {
+            return;
+        }
+
+        Role managerRole = roleRepository.findAll().stream()
+                .filter(role -> "Manager".equalsIgnoreCase(role.getName()))
+                .findFirst()
+                .orElse(null);
+        Role staffRole = roleRepository.findAll().stream()
+                .filter(role -> "Staff".equalsIgnoreCase(role.getName()))
+                .findFirst()
+                .orElse(null);
+        if (managerRole == null || staffRole == null) {
+            return;
+        }
+
+        String encodedPw = passwordEncoder.encode("123456");
+        User managerHcm = ensureSeedUser("Quan ly HCM", "manager1@hypercinema.vn", "manager1",
+                encodedPw, "0901000002", managerRole);
+        User managerHn = ensureSeedUser("Quan ly Ha Noi", "manager2@hypercinema.vn", "manager2",
+                encodedPw, "0901000003", managerRole);
+        User managerDn = ensureSeedUser("Quan ly Da Nang", "manager3@hypercinema.vn", "manager3",
+                encodedPw, "0901000007", managerRole);
+
+        assignSeedManager(managerHcm, branches.get(0));
+        assignSeedManager(managerHn, branches.get(1));
+        assignSeedManager(managerDn, branches.get(2));
+
+        assignSeedStaff(ensureSeedUser("Nhan vien 1", "staff1@hypercinema.vn", "staff1",
+                encodedPw, "0902000001", staffRole), branches.get(0), managerHcm);
+        assignSeedStaff(ensureSeedUser("Nhan vien 2", "staff2@hypercinema.vn", "staff2",
+                encodedPw, "0902000002", staffRole), branches.get(0), managerHcm);
+        assignSeedStaff(ensureSeedUser("Nhan vien 3", "staff3@hypercinema.vn", "staff3",
+                encodedPw, "0902000003", staffRole), branches.get(1), managerHn);
+        assignSeedStaff(ensureSeedUser("Nhan vien 4", "staff4@hypercinema.vn", "staff4",
+                encodedPw, "0902000004", staffRole), branches.get(1), managerHn);
+        assignSeedStaff(ensureSeedUser("Nhan vien 5", "staff5@hypercinema.vn", "staff5",
+                encodedPw, "0902000005", staffRole), branches.get(2), managerDn);
+    }
+
+    private User ensureSeedUser(String fullName,
+                                String email,
+                                String username,
+                                String encodedPw,
+                                String phone,
+                                Role role) {
+        return userRepository.findByUsername(username)
+                .orElseGet(() -> createUser(fullName, email, username, encodedPw, phone, role));
+    }
+
+    private void assignSeedManager(User manager, Branch branch) {
+        manager.setBranch(branch);
+        manager.setManager(null);
+        manager.setStatus("Active");
+        userRepository.save(manager);
+    }
+
+    private void assignSeedStaff(User staff, Branch branch, User manager) {
+        staff.setBranch(branch);
+        staff.setManager(manager);
+        staff.setStatus("Active");
+        userRepository.save(staff);
+    }
+
+    private void ensureSeedCustomers() {
+        Role customerRole = roleRepository.findAll().stream()
+                .filter(role -> "Customer".equalsIgnoreCase(role.getName()))
+                .findFirst()
+                .orElse(null);
+        if (customerRole == null) {
+            return;
+        }
+
+        String encodedPw = passwordEncoder.encode("123456");
+        String[] customerNames = {
+                "Nguyen Minh Tuan", "Tran Thu Ha", "Le Hoang Nam", "Pham Thanh Tam", "Vu Thi Mai",
+                "Do Quoc Bao", "Bui Thi Lan", "Ngo Van Duc", "Ho Thi Ngoc", "Duong Minh Khoi"
+        };
+        for (int i = 0; i < customerNames.length; i++) {
+            User customer = ensureSeedUser(customerNames[i],
+                    "customer" + (i + 1) + "@gmail.com",
+                    "customer" + (i + 1),
+                    encodedPw,
+                    "093000000" + i,
+                    customerRole);
+            customer.setStatus("Active");
+            customer.setEmailVerified(true);
+            userRepository.save(customer);
+        }
+    }
+
+    private void ensureMembershipData() {
+        MembershipPlan silver = ensureMembershipPlan("Silver", "5.00", 99000, 30);
+        MembershipPlan gold = ensureMembershipPlan("Gold", "10.00", 199000, 60);
+        MembershipPlan platinum = ensureMembershipPlan("Platinum", "15.00", 399000, 90);
+
+        ensureCustomerMembership("customer1", gold, LocalDate.now().minusDays(10), LocalDate.now().plusDays(50), 1200);
+        ensureCustomerMembership("customer2", silver, LocalDate.now().minusDays(5), LocalDate.now().plusDays(25), 650);
+        ensureCustomerMembership("customer3", platinum, LocalDate.now().minusDays(20), LocalDate.now().plusDays(70), 2600);
+        ensureCustomerPointsOnly("customer4", 320);
+    }
+
+    private MembershipPlan ensureMembershipPlan(String name, String discountPercent, Integer price, Integer durationDays) {
+        return membershipPlanRepository.findAll().stream()
+                .filter(plan -> plan.getName() != null && plan.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElseGet(() -> {
+                    MembershipPlan plan = new MembershipPlan();
+                    plan.setName(name);
+                    plan.setDiscountPercent(new BigDecimal(discountPercent));
+                    plan.setPrice(price);
+                    plan.setDurationDays(durationDays);
+                    return membershipPlanRepository.save(plan);
+                });
+    }
+
+    private void ensureCustomerMembership(String username,
+                                          MembershipPlan plan,
+                                          LocalDate startDate,
+                                          LocalDate endDate,
+                                          int points) {
+        userRepository.findByUsername(username).ifPresent(user -> {
+            boolean hasActiveMembership = userMembershipRepository
+                    .findActiveByUserIdWithPlan(user.getUserId(), "ACTIVE", LocalDate.now())
+                    .stream()
+                    .anyMatch(existing -> existing.getPlan() != null
+                            && existing.getPlan().getName() != null
+                            && existing.getPlan().getName().equalsIgnoreCase(plan.getName()));
+            if (!hasActiveMembership) {
+                UserMembership membership = new UserMembership();
+                membership.setUser(user);
+                membership.setPlan(plan);
+                membership.setStartDate(startDate);
+                membership.setEndDate(endDate);
+                membership.setStatus("ACTIVE");
+                userMembershipRepository.save(membership);
+            }
+            ensureCustomerPoints(user, points);
+        });
+    }
+
+    private void ensureCustomerPointsOnly(String username, int points) {
+        userRepository.findByUsername(username).ifPresent(user -> ensureCustomerPoints(user, points));
+    }
+
+    private void ensureCustomerPoints(User user, int points) {
+        Long currentPoints = loyaltyPointRepository.sumPointsByUserId(user.getUserId());
+        if (currentPoints != null && currentPoints > 0) {
+            return;
+        }
+        LoyaltyPoint loyaltyPoint = new LoyaltyPoint();
+        loyaltyPoint.setUser(user);
+        loyaltyPoint.setPoints(points);
+        loyaltyPoint.setType("EARNED");
+        loyaltyPointRepository.save(loyaltyPoint);
+    }
+
     // ───────────────────── HALLS ─────────────────────
     private List<Hall> seedHalls(List<Branch> branches) {
         List<Hall> halls = new ArrayList<>();
@@ -541,19 +556,34 @@ public class DataInitializer implements CommandLineRunner {
                 h.setBranch(branch);
                 h.setName(name);
                 h.setCapacity(50);
-                String hallType = "2D";
-                if (name.contains("3D")) {
-                    hallType = "3D";
-                } else if (name.contains("IMAX")) {
-                    hallType = "IMAX";
-                }
-                h.setHallType(hallType);
                 h.setHallType(name.contains("IMAX") ? "IMAX" : (name.contains("3D") ? "3D" : "2D"));
+                h.setTicketPrice(defaultTicketPriceForHall(name));
                 h.setStatus("Active");
-                halls.add(hallRepository.save(h));
+                Hall saved = hallRepository.save(h);
+                ensureSeatTypePrices(saved);
+                halls.add(saved);
             }
         }
         return halls;
+    }
+
+    private void ensureSeatTypePrices(Hall hall) {
+        Integer existing = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM hall_seat_type_price WHERE hall_id = ?",
+                Integer.class,
+                hall.getHallId());
+        if (existing != null && existing > 0) {
+            return;
+        }
+        int base = ticketPriceFor(hall);
+        jdbcTemplate.update("INSERT INTO hall_seat_type_price (hall_id, seat_type, price, active) VALUES (?, ?, ?, 1)",
+                hall.getHallId(), "STANDARD", base);
+        jdbcTemplate.update("INSERT INTO hall_seat_type_price (hall_id, seat_type, price, active) VALUES (?, ?, ?, 1)",
+                hall.getHallId(), "VIP", base + 20_000);
+        jdbcTemplate.update("INSERT INTO hall_seat_type_price (hall_id, seat_type, price, active) VALUES (?, ?, ?, 1)",
+                hall.getHallId(), "COUPLE", base * 2);
+        jdbcTemplate.update("INSERT INTO hall_seat_type_price (hall_id, seat_type, price, active) VALUES (?, ?, ?, 1)",
+                hall.getHallId(), "DISABLED", 0);
     }
 
     // ───────────────────── SEATS ─────────────────────
@@ -567,7 +597,7 @@ public class DataInitializer implements CommandLineRunner {
                     s.setHall(hall);
                     s.setSeatRow(row);
                     s.setSeatNumber(num);
-                    s.setType((row.equals("C") || row.equals("D")) ? "VIP" : "Standard");
+                    s.setType((row.equals("C") || row.equals("D")) ? "VIP" : "STANDARD");
                     allSeats.add(seatRepository.save(s));
                 }
             }
@@ -610,7 +640,7 @@ public class DataInitializer implements CommandLineRunner {
                     showtime.setHall(hall);
                     showtime.setStartTime(startTime);
                     showtime.setEndTime(startTime.plusMinutes(movie.getDuration() != null ? movie.getDuration() : 120));
-                    showtime.setPrice(0);
+                    showtime.setPrice(ticketPriceFor(hall));
                     showtimeRepository.save(showtime);
                 }
             }
@@ -620,16 +650,16 @@ public class DataInitializer implements CommandLineRunner {
     // ───────────────────── FOOD ITEMS ─────────────────────
     private void seedFoodItems() {
         Object[][] foodData = {
-                {"Bắp rang bơ (L)", 45000, "Food"},
-                {"Bắp rang phô mai (L)", 55000, "Food"},
-                {"Coca-Cola (L)", 30000, "Beverage"},
-                {"Pepsi (L)", 30000, "Beverage"},
-                {"Nước suối", 15000, "Beverage"},
+                {"Bắp rang bơ (L)", 45000, "Bắp rang"},
+                {"Bắp rang phô mai (L)", 55000, "Bắp rang"},
+                {"Coca-Cola (L)", 30000, "Nước uống"},
+                {"Pepsi (L)", 30000, "Nước uống"},
+                {"Nước suối", 15000, "Nước uống"},
                 {"Combo Couple", 120000, "Combo"},
                 {"Combo Gia đình", 180000, "Combo"},
-                {"Hotdog", 35000, "Food"},
-                {"Nachos phô mai", 40000, "Food"},
-                {"Kem ốc quế", 25000, "Food"},
+                {"Hotdog", 35000, "Snack"},
+                {"Nachos phô mai", 40000, "Snack"},
+                {"Kem ốc quế", 25000, "Snack"},
         };
         for (Object[] data : foodData) {
             FoodItem fi = new FoodItem();
@@ -643,209 +673,287 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
-    // ───────────────────── LANGUAGES & MOVIES ─────────────────────
-
-    private List<Movie> seedMovies(List<Genre> genres, List<Language> languages) {
-        List<Movie> movies;
-        if (movieRepository.count() == 0) {
-            movies = new ArrayList<>();
-            Language en = languages.stream().filter(l -> l.getName().equals("English")).findFirst().orElse(languages.get(0));
-            Language vi = languages.stream().filter(l -> l.getName().equals("Vietnamese")).findFirst().orElse(languages.get(0));
-
-            movies.add(createMovie("Avengers: Doomsday", 180, "The Avengers assemble to face Doctor Doom.", LocalDate.of(2026, 5, 1), "NowShowing", en.getLanguageId()));
-            movies.add(createMovie("Lật Mặt 8", 120, "Hành trình gia đình đầy tiếng cười và nước mắt.", LocalDate.of(2026, 4, 15), "NowShowing", vi.getLanguageId()));
-            movies.add(createMovie("Godzilla x Kong", 115, "The legendary titans unite to face a colossal threat.", LocalDate.of(2026, 4, 1), "NowShowing", en.getLanguageId()));
-            movies.add(createMovie("Dune: Part Two", 166, "Paul Atreides unites with the Fremen to seek revenge.", LocalDate.of(2026, 3, 15), "NowShowing", en.getLanguageId()));
-        } else {
-            movies = movieRepository.findAll();
-        }
-        return movies;
-    }
-
-    private Movie createMovie(String title, int duration, String description, LocalDate releaseDate, String status, Integer languageId) {
-        Movie m = new Movie();
-        m.setTitle(title);
-        m.setDuration(duration);
-        m.setDescription(description);
-        m.setReleaseDate(releaseDate);
-        m.setStatus(status);
-        m.setLanguageId(languageId);
-        m.setPosterUrl("/images/movies/" + title.toLowerCase().replaceAll("[^a-z0-9]", "_") + ".jpg");
-        m.setTrailerUrl("https://youtube.com");
-        return movieRepository.save(m);
-    }
-
-    // ───────────────────── SHOWTIMES ─────────────────────
-    private List<Showtime> seedShowtimes(List<Movie> movies, List<Hall> halls) {
-        List<Showtime> showtimes = new ArrayList<>();
-        if (showtimeRepository.count() == 0) {
-            LocalDate today = LocalDate.now();
-            int[] hours = {9, 12, 15, 18, 21};
-
-            for (int day = -35; day <= 3; day++) {
-                LocalDate date = today.plusDays(day);
-
-                for (int hIdx = 0; hIdx < halls.size(); hIdx++) {
-                    Hall hall = halls.get(hIdx);
-                    for (int s = 0; s < 2; s++) {
-                        Movie movie = movies.get((hIdx + s + Math.abs(day)) % movies.size());
-                        int hour = hours[(hIdx + s) % hours.length];
-
-                        LocalDateTime start = LocalDateTime.of(date, LocalTime.of(hour, 0));
-                        LocalDateTime end = start.plusMinutes(movie.getDuration());
-
-                        Showtime st = new Showtime();
-                        st.setMovie(movie);
-                        st.setHall(hall);
-                        st.setStartTime(start);
-                        st.setEndTime(end);
-                        st.setPrice(80000 + random.nextInt(8) * 10000); // 80k - 150k
-                        showtimes.add(showtimeRepository.save(st));
-                    }
-                }
-            }
-        } else {
-            showtimes = showtimeRepository.findAll();
-        }
-        return showtimes;
-    }
-
-    // ───────────────────── BOOKINGS, PAYMENTS & FOOD ORDERS ─────────────────────
-    private void seedBookingsPaymentsAndFood(List<User> users, List<Showtime> showtimes, List<Seat> seats) {
-        if (bookingRepository.count() > 0) return;
-
-        List<User> customers = users.stream()
-                .filter(u -> u.getRole().getName().equalsIgnoreCase("Customer"))
+    // ───────────────────── BOOKINGS + PAYMENTS ─────────────────────
+    private void ensureBookingsAndPayments() {
+        long existingBookings = bookingRepository.count();
+        List<User> customers = userRepository.findAll().stream()
+                .filter(user -> user.getRole() != null && "Customer".equalsIgnoreCase(user.getRole().getName()))
                 .toList();
-        if (customers.isEmpty()) {
-            customers = users;
-        }
-
+        List<Showtime> showtimes = showtimeRepository.findAll();
         List<FoodItem> foodItems = foodItemRepository.findAll();
 
-        java.util.Map<Integer, List<Seat>> hallSeatsMap = new java.util.HashMap<>();
-        for (Seat seat : seats) {
-            hallSeatsMap.computeIfAbsent(seat.getHall().getHallId(), k -> new ArrayList<>()).add(seat);
+        if (customers.isEmpty() || showtimes.isEmpty()) {
+            return;
         }
 
-        String[] paymentMethods = {"VNPay", "VietQR", "Credit Card", "Cash"};
-        LocalDateTime now = LocalDateTime.now();
+        String[] bookingStatuses = {
+                "Confirmed", "Completed", "Pending", "Pending", "Cancelled", "Confirmed",
+                "Pending", "Completed", "Confirmed", "Pending", "Cancelled", "Completed"
+        };
+        String[] paymentStatuses = {
+                "Completed", "Completed", "Pending", "Pending", "Failed", "Completed",
+                "Pending", "Completed", "Completed", "Pending", "Failed", "Completed"
+        };
+        String[] paymentMethods = {"VNPay", "VietQR", "VNPay", "VietQR", "VNPay", "Cash"};
 
-        System.out.println("=== Seeding bookings, payments and food orders ===");
-        int bookingCount = 0;
-        for (Showtime st : showtimes) {
-            if (st.getStartTime().isAfter(now)) {
+        int created = 0;
+        int targetToCreate = (int) (REPORT_BOOKING_SEED_TARGET - existingBookings);
+        for (int i = 0; created < targetToCreate; i++) {
+            Showtime showtime = showtimes.get(i % showtimes.size());
+            List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(showtime.getHall().getHallId());
+            if (seats.isEmpty()) {
                 continue;
             }
 
-            if (random.nextDouble() > 0.8) {
+            String bookingStatus = bookingStatuses[created % bookingStatuses.length];
+            String paymentStatus = paymentStatuses[created % paymentStatuses.length];
+            User customer = customers.get(created % customers.size());
+            int seatOffset = (created * 3) % Math.max(seats.size(), 1);
+            int ticketCount = 1 + random.nextInt(3);
+            List<Seat> bookingSeats = new ArrayList<>();
+            for (int t = 0; t < ticketCount && t < seats.size(); t++) {
+                bookingSeats.add(seats.get((seatOffset + t) % seats.size()));
+            }
+
+            int foodTotal = seedFoodTotal(foodItems, created);
+            LocalDateTime createdAt = seedReportTimestamp(existingBookings + created);
+            Booking booking = createSeedBooking(customer, showtime, bookingSeats, foodTotal, bookingStatus, createdAt);
+            createSeedFoodOrder(booking, foodItems, created, foodTotal, createdAt);
+            createSeedPayment(booking, paymentMethods[created % paymentMethods.length], paymentStatus, created, createdAt);
+            created++;
+        }
+
+        ensureShowtimeCoverageBookings(customers, showtimes, foodItems);
+    }
+
+    private void ensureShowtimeCoverageBookings(List<User> customers,
+                                                List<Showtime> showtimes,
+                                                List<FoodItem> foodItems) {
+        if (customers.isEmpty() || showtimes.isEmpty()) {
+            return;
+        }
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime reportStart = today.atStartOfDay();
+        LocalDateTime reportEnd = today.plusDays(REPORT_COVERAGE_SEED_DAYS).plusDays(1).atStartOfDay();
+        List<Showtime> reportShowtimes = showtimes.stream()
+                .filter(showtime -> showtime.getStartTime() != null)
+                .filter(showtime -> !showtime.getStartTime().isBefore(reportStart))
+                .filter(showtime -> showtime.getStartTime().isBefore(reportEnd))
+                .sorted((left, right) -> left.getStartTime().compareTo(right.getStartTime()))
+                .toList();
+
+        int seedIndex = 0;
+        java.util.Map<String, Integer> lowCoverageSlots = new java.util.HashMap<>();
+        for (Showtime showtime : reportShowtimes) {
+            List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(showtime.getHall().getHallId());
+            if (seats.isEmpty()) {
                 continue;
             }
 
-            List<Seat> hallSeats = hallSeatsMap.get(st.getHall().getHallId());
-            if (hallSeats == null || hallSeats.isEmpty()) {
+            int capacity = showtime.getHall() != null && showtime.getHall().getCapacity() != null
+                    ? showtime.getHall().getCapacity()
+                    : seats.size();
+            String lowCoverageKey = showtime.getHall().getBranch().getBranchId() + "|"
+                    + showtime.getStartTime().toLocalDate();
+            int lowCoverageCount = lowCoverageSlots.getOrDefault(lowCoverageKey, 0);
+            boolean lowCoverageSample = lowCoverageCount < 2;
+            if (lowCoverageSample) {
+                lowCoverageSlots.put(lowCoverageKey, lowCoverageCount + 1);
+            }
+
+            int targetPaidTickets = targetCoverageTicketCount(showtime, capacity, lowCoverageSample);
+            long currentPaidTickets = countCompletedTicketsForShowtime(showtime.getShowtimeId());
+            int missingTickets = targetPaidTickets - (int) currentPaidTickets;
+            if (missingTickets <= 0) {
+                seedIndex++;
                 continue;
             }
 
-            double occupancy = 0.2 + random.nextDouble() * 0.7;
-            int seatsToBookCount = (int) (hallSeats.size() * occupancy);
-
-            List<Seat> shuffledSeats = new ArrayList<>(hallSeats);
-            java.util.Collections.shuffle(shuffledSeats, random);
-
-            int seatPointer = 0;
-            while (seatPointer < seatsToBookCount && seatPointer < shuffledSeats.size()) {
-                int numSeats = 1 + random.nextInt(3);
-                if (seatPointer + numSeats > seatsToBookCount) {
-                    numSeats = seatsToBookCount - seatPointer;
-                }
-                if (numSeats <= 0) break;
-
-                User customer = customers.get(random.nextInt(customers.size()));
-
-                boolean isCompleted = random.nextDouble() < 0.85;
-                String status = isCompleted ? "Completed" : "Cancelled";
-
-                long ticketPriceTotal = (long) st.getPrice() * numSeats;
-
-                Booking booking = new Booking();
-                booking.setUser(customer);
-                booking.setShowtime(st);
-                booking.setTotalPrice(ticketPriceTotal);
-                booking.setStatus(status);
-                booking.setCreatedAt(st.getStartTime().minusHours(1 + random.nextInt(48)));
-                booking = bookingRepository.save(booking);
-
-                for (int t = 0; t < numSeats; t++) {
-                    Seat seat = shuffledSeats.get(seatPointer + t);
-                    Ticket ticket = new Ticket();
-                    ticket.setBooking(booking);
-                    ticket.setSeat(seat);
-                    ticket.setQrCode("QR-" + booking.getBookingId() + "-" + seat.getSeatRow() + seat.getSeatNumber());
-                    ticket.setStatus(isCompleted ? "Active" : "Cancelled");
-                    ticketRepository.save(ticket);
+            int seatOffset = Math.floorMod(showtime.getShowtimeId() * 7, seats.size());
+            while (missingTickets > 0) {
+                int ticketCount = Math.min(REPORT_COVERAGE_MAX_BOOKING_SEATS, missingTickets);
+                List<Seat> bookingSeats = new ArrayList<>();
+                for (int t = 0; t < ticketCount; t++) {
+                    bookingSeats.add(seats.get((seatOffset + targetPaidTickets - missingTickets + t) % seats.size()));
                 }
 
-                seatPointer += numSeats;
+                User customer = customers.get(seedIndex % customers.size());
+                int foodTotal = seedFoodTotal(foodItems, seedIndex);
+                LocalDateTime createdAt = showtime.getStartTime().minusDays(1).withHour(18).withMinute(seedIndex % 45);
+                Booking booking = createSeedBooking(customer, showtime, bookingSeats, foodTotal, "Completed", createdAt);
+                createSeedFoodOrder(booking, foodItems, seedIndex, foodTotal, createdAt);
+                createSeedPayment(booking, seedIndex % 2 == 0 ? "VNPay" : "VietQR", "Completed", seedIndex, createdAt);
 
-                if (isCompleted) {
-                    Payment payment = new Payment();
-                    payment.setBooking(booking);
-                    payment.setAmount(ticketPriceTotal);
-                    payment.setMethod(paymentMethods[random.nextInt(paymentMethods.length)]);
-                    payment.setStatus("Completed");
-                    payment.setCreatedAt(booking.getCreatedAt().plusMinutes(random.nextInt(15)));
-                    paymentRepository.save(payment);
-
-                    if (random.nextBoolean() && !foodItems.isEmpty()) {
-                        FoodOrder foodOrder = new FoodOrder();
-                        foodOrder.setBooking(booking);
-                        foodOrder.setStatus("Completed");
-                        foodOrder.setCreatedAt(booking.getCreatedAt());
-
-                        List<FoodOrderItem> orderItems = new ArrayList<>();
-                        int numItems = 1 + random.nextInt(3);
-                        long foodTotal = 0;
-
-                        List<FoodItem> shuffledFood = new ArrayList<>(foodItems);
-                        java.util.Collections.shuffle(shuffledFood, random);
-
-                        for (int f = 0; f < numItems && f < shuffledFood.size(); f++) {
-                            FoodItem item = shuffledFood.get(f);
-                            int qty = 1 + random.nextInt(2);
-
-                            FoodOrderItem orderItem = new FoodOrderItem();
-                            orderItem.setFoodOrder(foodOrder);
-                            orderItem.setFoodItem(item);
-                            orderItem.setItemId(item.getItemId());
-                            orderItem.setQuantity(qty);
-                            orderItem.setUnitPrice(item.getPrice());
-                            orderItems.add(orderItem);
-
-                            foodTotal += (long) item.getPrice() * qty;
-                        }
-
-                        foodOrder.setTotalAmount((int) foodTotal);
-                        foodOrder.setItems(new ArrayList<>());
-                        final FoodOrder savedFoodOrder = foodOrderRepository.save(foodOrder);
-
-                        for (FoodOrderItem item : orderItems) {
-                            item.setOrderId(savedFoodOrder.getOrderId());
-                            savedFoodOrder.getItems().add(item);
-                        }
-                    }
-                }
-
-                bookingCount++;
+                missingTickets -= ticketCount;
+                seedIndex++;
             }
         }
-        System.out.println("=== Seeded " + bookingCount + " bookings. ===");
+    }
+
+    private int targetCoverageTicketCount(Showtime showtime, int capacity, boolean lowCoverageSample) {
+        if (capacity <= 0 || showtime == null || showtime.getHall() == null) {
+            return 0;
+        }
+        double coverage = lowCoverageSample
+                ? (Math.floorMod(showtime.getShowtimeId(), 2) == 0 ? 0.22 : 0.38)
+                : 0.80 + (Math.floorMod(showtime.getShowtimeId(), 6) * 0.02);
+        return Math.min(capacity, Math.max(1, (int) Math.round(capacity * coverage)));
+    }
+
+    private long countCompletedTicketsForShowtime(Integer showtimeId) {
+        if (showtimeId == null) {
+            return 0L;
+        }
+        Integer count = jdbcTemplate.queryForObject("""
+                SELECT COUNT(t.ticket_id)
+                FROM ticket t
+                JOIN booking b ON b.booking_id = t.booking_id
+                JOIN payment p ON p.booking_id = b.booking_id
+                WHERE b.showtime_id = ?
+                  AND b.status <> 'Cancelled'
+                  AND p.status = 'Completed'
+                """, Integer.class, showtimeId);
+        return count != null ? count : 0L;
+    }
+
+    private Booking createSeedBooking(User customer,
+                                      Showtime showtime,
+                                      List<Seat> seats,
+                                      int foodTotal,
+                                      String status,
+                                      LocalDateTime createdAt) {
+        long seatTotal = seats.stream()
+                .mapToLong(seat -> priceForSeedSeat(showtime, seat))
+                .sum();
+        long finalTotal = seatTotal + foodTotal;
+
+        Booking booking = new Booking();
+        booking.setUser(customer);
+        booking.setShowtime(showtime);
+        booking.setSeatSubtotal(seatTotal);
+        booking.setFoodSubtotal((long) foodTotal);
+        booking.setOrderSubtotal(finalTotal);
+        booking.setTotalPrice(finalTotal);
+        booking.setStatus(status);
+        booking = bookingRepository.save(booking);
+        booking.setCreatedAt(createdAt);
+
+        for (int i = 0; i < seats.size(); i++) {
+            Ticket ticket = new Ticket();
+            ticket.setBooking(booking);
+            ticket.setSeat(seats.get(i));
+            ticket.setQrCode("SEED-" + booking.getBookingId() + "-" + (i + 1));
+            ticket.setStatus("Cancelled".equals(status) ? "Cancelled" : "Active");
+            ticketRepository.save(ticket);
+        }
+
+        return booking;
+    }
+
+    private long priceForSeedSeat(Showtime showtime, Seat seat) {
+        if (showtime == null || seat == null) {
+            return 0L;
+        }
+        int base = showtime.getPrice() != null && showtime.getPrice() > 0
+                ? showtime.getPrice()
+                : ticketPriceFor(showtime.getHall());
+        return switch (seat.getType() != null ? seat.getType().toUpperCase() : "STANDARD") {
+            case "VIP" -> base + 20_000L;
+            case "COUPLE" -> base * 2L;
+            case "DISABLED" -> 0L;
+            default -> base;
+        };
+    }
+
+    private static int defaultTicketPriceForHall(String hallName) {
+        if (hallName != null && hallName.contains("IMAX")) {
+            return 120000;
+        }
+        if (hallName != null && hallName.contains("3D")) {
+            return 100000;
+        }
+        return 80000;
+    }
+
+    private static int ticketPriceFor(Hall hall) {
+        return hall != null && hall.getTicketPrice() != null && hall.getTicketPrice() > 0
+                ? hall.getTicketPrice()
+                : 80000;
+    }
+
+    private void createSeedPayment(Booking booking, String method, String status, int index, LocalDateTime createdAt) {
+        Payment payment = new Payment();
+        payment.setBooking(booking);
+        payment.setAmount(booking.getTotalPrice());
+        payment.setMethod(method);
+        payment.setStatus(status);
+
+        if ("Pending".equals(status)) {
+            boolean expiredSample = index % 4 == 3;
+            payment.setExpiresAt(LocalDateTime.now().plusMinutes(expiredSample ? -5 : 15));
+        }
+
+        payment = paymentRepository.save(payment);
+        payment.setCreatedAt(createdAt);
+    }
+
+    private void createSeedFoodOrder(Booking booking,
+                                     List<FoodItem> foodItems,
+                                     int index,
+                                     int foodTotal,
+                                     LocalDateTime createdAt) {
+        if (foodItems.isEmpty() || foodTotal <= 0) {
+            return;
+        }
+
+        FoodItem item = foodItems.get(index % foodItems.size());
+        FoodOrder order = new FoodOrder();
+        order.setBooking(booking);
+        order.setStatus(switch (booking.getStatus()) {
+            case "Confirmed", "Completed" -> "CONFIRMED";
+            case "Cancelled" -> "CANCELLED";
+            default -> "PENDING";
+        });
+        order.setTotalAmount(foodTotal);
+        order.setCreatedAt(createdAt);
+        order = foodOrderRepository.save(order);
+
+        FoodOrderItem orderItem = new FoodOrderItem();
+        orderItem.setOrderId(order.getOrderId());
+        orderItem.setItemId(item.getItemId());
+        orderItem.setFoodOrder(order);
+        orderItem.setFoodItem(item);
+        orderItem.setQuantity(Math.max(1, foodTotal / item.getPrice()));
+        orderItem.setUnitPrice(item.getPrice());
+        foodOrderItemRepository.save(orderItem);
+    }
+
+    private int seedFoodTotal(List<FoodItem> foodItems, int index) {
+        if (foodItems.isEmpty() || index % 4 == 1) {
+            return 0;
+        }
+        FoodItem item = foodItems.get(index % foodItems.size());
+        int quantity = 1 + (index % 3);
+        return item.getPrice() * quantity;
+    }
+
+    private LocalDateTime seedReportTimestamp(long index) {
+        LocalDate date = LocalDate.now().minusDays(index % 180);
+        int hour = switch ((int) (index % 4)) {
+            case 0 -> 10;
+            case 1 -> 14;
+            case 2 -> 18;
+            default -> 21;
+        };
+        int minute = (int) ((index * 7) % 45);
+        return LocalDateTime.of(date, LocalTime.of(hour, minute));
     }
 
     // ───────────────────── AUDIT LOGS ─────────────────────
     private void ensureAuditLogTable() {
         jdbcTemplate.execute("""
-                CREATE TABLE IF NOT EXISTS `Audit_Log` (
+                CREATE TABLE IF NOT EXISTS `audit_log` (
                     `log_id` INT AUTO_INCREMENT PRIMARY KEY,
                     `user_id` INT NOT NULL,
                     `entity_type` VARCHAR(100) NOT NULL,
@@ -891,6 +999,67 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    private void seedInitialNotifications(User admin) {
+        List<Notification> existing = notificationRepository.findAll();
+        for (Notification notification : existing) {
+            if ("System Maintenance Scheduled".equalsIgnoreCase(notification.getTitle())) {
+                notification.setTitle("Lich bao tri he thong");
+                notification.setMessage("He thong se bao tri tu 02:00 den 04:00. Dich vu co the tam thoi gian doan.");
+                notificationRepository.save(notification);
+            } else if ("New Feature Available".equalsIgnoreCase(notification.getTitle())) {
+                notification.setTitle("Tinh nang moi kha dung");
+                notification.setMessage("Tinh nang thong ke moi da san sang de su dung.");
+                notificationRepository.save(notification);
+            } else if ("Security Alert".equalsIgnoreCase(notification.getTitle())) {
+                notification.setTitle("Canh bao bao mat");
+                notification.setMessage("Phat hien dang nhap tu thiet bi moi. Vui long kiem tra lai tai khoan.");
+                notificationRepository.save(notification);
+            } else if ("Account Verification Required".equalsIgnoreCase(notification.getTitle())) {
+                notification.setTitle("Yeu cau xac minh tai khoan");
+                notification.setMessage("Vui long xac minh email de tiep tuc su dung day du tinh nang.");
+                notificationRepository.save(notification);
+            }
+        }
+
+        if (notificationRepository.count() > 0) return;
+
+        Notification maintenance = new Notification();
+        maintenance.setUser(admin);
+        maintenance.setTitle("Lich bao tri he thong");
+        maintenance.setMessage("He thong se bao tri tu 02:00 den 04:00. Dich vu co the tam thoi gian doan.");
+        maintenance.setType("System");
+        maintenance.setRead(true);
+        maintenance.setCreatedAt(LocalDateTime.now().minusHours(9));
+        notificationRepository.save(maintenance);
+
+        Notification feature = new Notification();
+        feature.setUser(admin);
+        feature.setTitle("Tinh nang moi kha dung");
+        feature.setMessage("Tinh nang thong ke moi da san sang de su dung.");
+        feature.setType("Promotion");
+        feature.setRead(false);
+        feature.setCreatedAt(LocalDateTime.now().minusDays(1));
+        notificationRepository.save(feature);
+
+        Notification security = new Notification();
+        security.setUser(admin);
+        security.setTitle("Canh bao bao mat");
+        security.setMessage("Phat hien dang nhap tu thiet bi moi. Vui long kiem tra lai tai khoan.");
+        security.setType("Alert");
+        security.setRead(true);
+        security.setCreatedAt(LocalDateTime.now().minusDays(1));
+        notificationRepository.save(security);
+
+        Notification verification = new Notification();
+        verification.setUser(admin);
+        verification.setTitle("Yeu cau xac minh tai khoan");
+        verification.setMessage("Vui long xac minh email de tiep tuc su dung day du tinh nang.");
+        verification.setType("System");
+        verification.setRead(true);
+        verification.setCreatedAt(LocalDateTime.now().minusDays(5));
+        notificationRepository.save(verification);
+    }
+
     private void seedReviews(List<Movie> movies, List<User> users) {
         if (reviewRepository.count() > 0) return;
 
@@ -902,35 +1071,36 @@ public class DataInitializer implements CommandLineRunner {
         if (customers.isEmpty() || movies.isEmpty()) return;
 
         for (Movie movie : movies) {
-            if ("Avengers: Doomsday".equalsIgnoreCase(movie.getTitle())) {
-                reviews.add(createReview(customers.get(0 % customers.size()), movie, 5, "Phim quá đỉnh! Robert Downey Jr đóng Doctor Doom quá xuất sắc, không bõ công chờ đợi!", 1));
-                reviews.add(createReview(customers.get(1 % customers.size()), movie, 4, "Kỹ xảo hoành tráng, cốt truyện lôi cuốn. Đoạn kết thực sự gây bất ngờ lớn.", 2));
-                reviews.add(createReview(customers.get(2 % customers.size()), movie, 3, "Hơi nhiều nhân vật nên xem hơi ngợp, nhưng tổng thể vẫn rất đáng xem ngoài rạp.", 3));
-            } else if ("Lật Mặt 8".equalsIgnoreCase(movie.getTitle())) {
-                reviews.add(createReview(customers.get(3 % customers.size()), movie, 5, "Phim của Lý Hải chưa bao giờ làm tôi thất vọng. Cực kỳ cảm động về gia đình!", 1));
-                reviews.add(createReview(customers.get(4 % customers.size()), movie, 5, "Vừa hài hước vừa lấy đi nước mắt của khán giả. Rất khuyên mọi người nên đi xem cùng gia đình.", 2));
-                reviews.add(createReview(customers.get(5 % customers.size()), movie, 4, "Cốt truyện tốt, diễn xuất của các diễn viên nhí rất tự nhiên và xúc động.", 4));
-            } else if ("Godzilla x Kong".equalsIgnoreCase(movie.getTitle())) {
-                reviews.add(createReview(customers.get(6 % customers.size()), movie, 4, "Đánh đấm cực kỳ đã mắt! Godzilla và Kong kết hợp đỉnh cao.", 2));
-                reviews.add(createReview(customers.get(7 % customers.size()), movie, 3, "Cốt truyện hơi đơn giản, chủ yếu là xem kỹ xảo và quái thú đánh nhau.", 5));
-                reviews.add(createReview(customers.get(8 % customers.size()), movie, 5, "Trải nghiệm âm thanh và hình ảnh tuyệt vời, xem phòng IMAX phê thôi rồi!", 6));
-            } else if ("Dune: Part Two".equalsIgnoreCase(movie.getTitle())) {
-                reviews.add(createReview(customers.get(9 % customers.size()), movie, 5, "Một siêu phẩm điện ảnh thực sự! Âm nhạc của Hans Zimmer quá xuất sắc.", 3));
-                reviews.add(createReview(customers.get(0 % customers.size()), movie, 5, "Tráng lệ, hoành tráng và đầy chiều sâu. Diễn xuất của Timothée Chalamet cực kỳ ấn tượng.", 5));
-                reviews.add(createReview(customers.get(1 % customers.size()), movie, 4, "Phim hơi dài nhưng không bị chán, bám rất sát nguyên tác truyện.", 7));
+            String title = movie.getTitle();
+            if ("Avengers: Doomsday".equalsIgnoreCase(title)) {
+                reviews.add(createReview(customers.get(0 % customers.size()), movie, 5, "Phim rat dang xem, ky xao an tuong.", 1));
+                reviews.add(createReview(customers.get(1 % customers.size()), movie, 4, "Cot truyen loi cuon va ket thuc bat ngo.", 2));
+            } else if ("Lat Mat 8".equalsIgnoreCase(title) || "Lật Mặt 8".equalsIgnoreCase(title)) {
+                reviews.add(createReview(customers.get(2 % customers.size()), movie, 5, "Phim gia dinh cam dong va giai tri.", 1));
+                reviews.add(createReview(customers.get(3 % customers.size()), movie, 4, "Dien xuat tu nhien, rat phu hop xem cung gia dinh.", 4));
+            } else if ("Godzilla x Kong".equalsIgnoreCase(title)
+                    || "Godzilla x Kong: The New Empire".equalsIgnoreCase(title)) {
+                reviews.add(createReview(customers.get(4 % customers.size()), movie, 4, "Hanh dong da mat, am thanh tot.", 2));
+                reviews.add(createReview(customers.get(5 % customers.size()), movie, 5, "Trai nghiem rap rat cuon.", 6));
+            } else if ("Dune: Part Two".equalsIgnoreCase(title)) {
+                reviews.add(createReview(customers.get(6 % customers.size()), movie, 5, "Hinh anh dep va am nhac xuat sac.", 3));
+                reviews.add(createReview(customers.get(7 % customers.size()), movie, 4, "Phim dai nhung van giu duoc mach cam xuc.", 7));
             }
         }
-        reviewRepository.saveAll(reviews);
-        System.out.println("=== DataInitializer: Seeded " + reviews.size() + " reviews ===");
+
+        if (!reviews.isEmpty()) {
+            reviewRepository.saveAll(reviews);
+            System.out.println("=== DataInitializer: Seeded " + reviews.size() + " reviews ===");
+        }
     }
 
     private Review createReview(User user, Movie movie, Integer rating, String comment, int daysAgo) {
-        Review r = new Review();
-        r.setUser(user);
-        r.setMovie(movie);
-        r.setRating(rating);
-        r.setComment(comment);
-        r.setCreatedAt(LocalDateTime.now().minusDays(daysAgo).minusHours(random.nextInt(12)));
-        return r;
+        Review review = new Review();
+        review.setUser(user);
+        review.setMovie(movie);
+        review.setRating(rating);
+        review.setComment(comment);
+        review.setCreatedAt(LocalDateTime.now().minusDays(daysAgo).minusHours(random.nextInt(12)));
+        return review;
     }
 }
