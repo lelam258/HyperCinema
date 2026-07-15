@@ -1,53 +1,52 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Trang quản trị - HyperCinema')}">
-    <title>Trang quản trị - HyperCinema</title>
-</head>
-<body class="min-h-screen">
+<head th:replace="~{fragments/layout :: head('Trang quản trị - HyperCinema')}"></head>
+<body>
+    <div class="hc-shell">
+        <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+        <nav th:replace="~{fragments/layout :: adminSidebar('home')}"></nav>
 
-<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
-<nav th:replace="~{fragments/layout :: adminSidebar('home')}"></nav>
-
-<main class="md:ml-64 min-h-screen">
-    <div class="max-w-7xl mx-auto px-6 py-8">
-
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Trang quản trị</h1>
-            <p class="text-sm text-slate-400">Chọn một mục bên dưới để bắt đầu quản lý.</p>
-        </div>
-
-        <nav class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-label="Mục quản trị">
-            <a class="glass-card p-6 flex flex-col gap-2 cursor-pointer no-underline transition-all duration-300 hover:border-primary/50 hover:bg-white/[0.06] group" th:href="@{/admin/branches}">
-                <div class="w-10 h-10 rounded-xl bg-success/15 flex items-center justify-center mb-1 group-hover:bg-success/25 transition-colors">
-                    <svg class="w-5 h-5 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <main class="hc-page">
+            <section class="hc-page-head">
+                <div>
+                    <p class="hc-kicker">Admin</p>
+                    <h1>Trang quản trị</h1>
+                    <p>Chọn khu vực quản lý để tiếp tục công việc.</p>
                 </div>
-                <span class="text-base font-semibold text-white">Quản lý Chi nhánh</span>
-                <span class="text-sm text-slate-400 leading-relaxed">Tạo, tìm kiếm, cập nhật và phân công nhân sự cho các chi nhánh rạp chiếu.</span>
-                <span class="mt-auto text-sm font-semibold text-primary pt-2">Mở →</span>
-            </a>
+                <a class="hc-button hc-button-primary" th:href="@{/admin/dashboard}">
+                    <i data-lucide="layout-dashboard"></i>
+                    Dashboard
+                </a>
+            </section>
 
-            <a class="glass-card p-6 flex flex-col gap-2 cursor-pointer no-underline transition-all duration-300 hover:border-primary/50 hover:bg-white/[0.06] group" th:href="@{/admin/movies}">
-                <div class="w-10 h-10 rounded-xl bg-info/15 flex items-center justify-center mb-1 group-hover:bg-info/25 transition-colors">
-                    <svg class="w-5 h-5 text-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
-                </div>
-                <span class="text-base font-semibold text-white">Quản lý Phim</span>
-                <span class="text-sm text-slate-400 leading-relaxed">Tạo, tìm kiếm, cập nhật, đổi trạng thái phát hành, gắn thể loại và phân phối phim tới các chi nhánh.</span>
-                <span class="mt-auto text-sm font-semibold text-primary pt-2">Mở →</span>
-            </a>
-
-            <a class="glass-card p-6 flex flex-col gap-2 cursor-pointer no-underline transition-all duration-300 hover:border-primary/50 hover:bg-white/[0.06] group" th:href="@{/admin/users}">
-                <div class="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center mb-1 group-hover:bg-primary/25 transition-colors">
-                    <svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                </div>
-                <span class="text-base font-semibold text-white">Quản lý Người dùng</span>
-                <span class="text-sm text-slate-400 leading-relaxed">Quản lý tài khoản, phân quyền, kích hoạt/vô hiệu hóa người dùng trong hệ thống.</span>
-                <span class="mt-auto text-sm font-semibold text-primary pt-2">Mở →</span>
-            </a>
-        </nav>
-
+            <section class="hc-action-grid" aria-label="Muc quan tri">
+                <a class="hc-action-card" th:href="@{/admin/branches}">
+                    <i data-lucide="building-2"></i>
+                    <span>Chi nhánh</span>
+                </a>
+                <a class="hc-action-card" th:href="@{/admin/movies}">
+                    <i data-lucide="clapperboard"></i>
+                    <span>Phim</span>
+                </a>
+                <a class="hc-action-card" th:href="@{/admin/users}">
+                    <i data-lucide="users"></i>
+                    <span>Người dùng</span>
+                </a>
+                <a class="hc-action-card" th:href="@{/admin/vouchers}">
+                    <i data-lucide="badge-percent"></i>
+                    <span>Voucher</span>
+                </a>
+                <a class="hc-action-card" th:href="@{/admin/food-items}">
+                    <i data-lucide="popcorn"></i>
+                    <span>F&amp;B</span>
+                </a>
+                <a class="hc-action-card" th:href="@{/admin/logs}">
+                    <i data-lucide="activity"></i>
+                    <span>Nhật ký</span>
+                </a>
+            </section>
+        </main>
     </div>
     <footer th:replace="~{fragments/layout :: footer}"></footer>
-</main>
-
 </body>
 </html>

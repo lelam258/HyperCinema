@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "Language")
+@Table(name = "language")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,3 +22,4 @@ public class Language {
     @Column(nullable = false, unique = true, length = 50)
     private String name;
 }
+

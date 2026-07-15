@@ -20,3 +20,4 @@ public class FavoriteMovieId implements Serializable {
     @Column(name = "movie_id")
     private Integer movieId;
 }
+

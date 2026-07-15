@@ -23,6 +23,8 @@ public class CustomerDashboardView {
 
     private long rewardPoints;
 
+    private CustomerMembershipProgressView membershipProgress;
+
     private List<WorkspaceActionView> actions;
 
     private String lastUpdated;

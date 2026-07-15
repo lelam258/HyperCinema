@@ -1,5 +1,6 @@
 package com.cinema.hyperCinema.dto.admin.hall.response;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,6 +27,10 @@ public class HallDetailView {
     private String address;
 
     private String hallType;
+
+    private Integer ticketPrice;
+
+    private List<SeatTypePriceView> seatTypePrices;
 
     private Integer capacity;
 

@@ -128,6 +128,11 @@ public class BranchController {
 
         model.addAttribute("branch", branch);
         model.addAttribute("readOnly", readOnly);
+        if (isAdmin) {
+            model.addAttribute("staffCandidates", branchService.listUnassignedStaff());
+            model.addAttribute("managerCandidates", branch.getManagers());
+            model.addAttribute("assignStaffRequest", new AssignStaffRequest());
+        }
 
         return "admin/branches/branch-detail";
     }
@@ -301,7 +306,7 @@ public class BranchController {
 
         model.addAttribute("branch", branch);
         model.addAttribute("staffCandidates", branchService.listUnassignedStaff());
-        model.addAttribute("managerCandidates", branchService.listManagersForBranch(branchId));
+        model.addAttribute("managerCandidates", branch.getManagers());
         model.addAttribute("assignStaffRequest", new AssignStaffRequest());
 
         return "admin/branches/assign-staff";

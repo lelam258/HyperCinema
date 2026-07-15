@@ -177,4 +177,17 @@
 		</plugins>
 	</build>
 
+	<profiles>
+		<profile>
+			<id>sqlserver</id>
+			<dependencies>
+				<dependency>
+					<groupId>com.microsoft.sqlserver</groupId>
+					<artifactId>mssql-jdbc</artifactId>
+					<scope>runtime</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
+
 </project>

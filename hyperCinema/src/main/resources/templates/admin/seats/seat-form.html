@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${mode == 'edit'} ? 'Chỉnh sửa ghế' : 'Tạo ghế')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="${seatContext.admin} ? ~{fragments/layout :: adminSidebar('halls')} : (${seatContext.sidebar == 'manager'} ? ~{fragments/layout :: managerSidebar('halls')} : ~{fragments/layout :: branchSidebar('halls')})"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner max-w-3xl">
+        <a th:href="@{|/admin/halls/${seatContext.hallId}/seats|}" class="mb-4 inline-flex text-sm text-cinema-muted no-underline hover:text-accent">← Quay lại sơ đồ ghế</a>
+
+        <div class="mb-6">
+            <h1 class="hc-page-title" th:text="${mode == 'edit'} ? 'Chỉnh sửa ghế' : 'Tạo ghế'">Tạo ghế</h1>
+            <p class="hc-page-subtitle" th:text="|Phòng: ${seatContext.hallName} - ${seatContext.branchName}|">Phòng</p>
+        </div>
+
+        <section class="hc-card p-6 md:p-8">
+            <form th:object="${seat}"
+                  th:action="${mode == 'edit'} ? @{|/admin/halls/${seatContext.hallId}/seats/${seatId}|} : @{|/admin/halls/${seatContext.hallId}/seats|}"
+                  method="post" novalidate class="space-y-5">
+                <div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+                    <strong>Không thể lưu ghế:</strong>
+                    <ul class="mt-2 list-disc space-y-1 pl-5">
+                        <li th:each="err : ${#fields.globalErrors()}" th:text="${err}">global error</li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <label for="seatRow" class="hc-label">Hàng ghế</label>
+                        <input class="hc-input" type="text" id="seatRow" th:field="*{seatRow}"
+                               th:classappend="${#fields.hasErrors('seatRow')} ? ' border-danger!' : ''"
+                               maxlength="5" autocomplete="off" required placeholder="VD: A, B, C">
+                        <span th:if="${#fields.hasErrors('seatRow')}" th:errors="*{seatRow}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
+                    <div>
+                        <label for="seatNumber" class="hc-label">Số ghế</label>
+                        <input class="hc-input" type="number" id="seatNumber" th:field="*{seatNumber}"
+                               th:classappend="${#fields.hasErrors('seatNumber')} ? ' border-danger!' : ''"
+                               min="1" required placeholder="VD: 1, 2, 3">
+                        <span th:if="${#fields.hasErrors('seatNumber')}" th:errors="*{seatNumber}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="type" class="hc-label">Loại ghế</label>
+                    <select class="hc-input" id="type" th:field="*{type}" th:classappend="${#fields.hasErrors('type')} ? ' border-danger!' : ''" required>
+                        <option value="">Chọn loại ghế</option>
+                        <option value="STANDARD">Thường</option>
+                        <option value="VIP">VIP</option>
+                        <option value="COUPLE">Đôi (Couple)</option>
+                        <option value="DISABLED">Dành cho người khuyết tật</option>
+                    </select>
+                    <span th:if="${#fields.hasErrors('type')}" th:errors="*{type}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <div>
+                    <label for="maintenanceStatus" class="hc-label">Trạng thái bảo trì</label>
+                    <select class="hc-input" id="maintenanceStatus" th:field="*{maintenanceStatus}" th:classappend="${#fields.hasErrors('maintenanceStatus')} ? ' border-danger!' : ''">
+                        <option value="AVAILABLE">Sẵn sàng</option>
+                        <option value="UNDER_MAINTENANCE">Đang bảo trì</option>
+                    </select>
+                    <span th:if="${#fields.hasErrors('maintenanceStatus')}" th:errors="*{maintenanceStatus}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <div class="flex justify-end gap-3 border-t border-cinema-border pt-5">
+                    <a th:href="@{|/admin/halls/${seatContext.hallId}/seats|}" class="hc-btn no-underline">Hủy</a>
+                    <button type="submit" th:text="${mode == 'edit'} ? 'Lưu thay đổi' : 'Tạo mới'" class="hc-btn hc-btn-primary">Tạo mới</button>
+                </div>
+            </form>
+        </section>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

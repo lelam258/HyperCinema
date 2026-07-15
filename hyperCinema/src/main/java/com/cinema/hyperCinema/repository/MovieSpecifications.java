@@ -39,6 +39,8 @@ public final class MovieSpecifications {
             String normalizedStatus = trimToNull(status);
             if (normalizedStatus != null && ALLOWED_STATUSES.contains(normalizedStatus)) {
                 predicates.add(cb.equal(root.get("status"), normalizedStatus));
+            } else {
+                predicates.add(cb.notEqual(root.get("status"), "Ended"));
             }
 
             if (languageId != null && languageId > 0) {

@@ -72,6 +72,7 @@
                         <th>Phòng</th>
                         <th>Chi nhánh</th>
                         <th>Loại</th>
+                        <th class="text-right">Khoảng giá</th>
                         <th>Trạng thái</th>
                         <th>Thành phố</th>
                         <th class="text-right">Sức chứa</th>
@@ -82,12 +83,13 @@
                     </thead>
                     <tbody>
                     <tr th:if="${page == null or #lists.isEmpty(page.content)}">
-                        <td colspan="9" class="py-12 text-center text-cinema-muted">Không có phòng chiếu nào phù hợp.</td>
+                        <td colspan="10" class="py-12 text-center text-cinema-muted">Không có phòng chiếu nào phù hợp.</td>
                     </tr>
                     <tr th:each="item : ${page != null ? page.content : {}}" th:if="${page != null and not #lists.isEmpty(page.content)}">
                         <td><a th:href="@{|/admin/halls/${item.hallId}|}" th:text="${item.name}" class="font-semibold text-white no-underline hover:text-accent">Hall</a></td>
                         <td th:text="${item.branchName}">Branch</td>
                         <td th:text="${item.hallType}">2D</td>
+                        <td class="text-right tabular-nums" th:text="${item.priceRange} + ' đ'">80.000 - 160.000 đ</td>
                         <td><span th:replace="~{fragments/components :: statusBadge(${item.status})}"></span></td>
                         <td th:text="${item.city}">City</td>
                         <td class="text-right tabular-nums" th:text="${item.capacity}">0</td>
@@ -97,9 +99,9 @@
                             <div class="flex justify-end gap-2">
                                 <a class="hc-btn px-3 py-1.5 no-underline" th:href="@{|/admin/halls/${item.hallId}|}">Xem</a>
                                 <a class="hc-btn px-3 py-1.5 no-underline" th:href="@{|/admin/halls/${item.hallId}/edit|}">Sửa</a>
-                                <form th:if="${item.canDelete}" th:action="@{|/admin/halls/${item.hallId}|}" method="post" onsubmit="return confirm('Xóa phòng chiếu này?');">
+                                <form th:if="${item.canDelete}" th:action="@{|/admin/halls/${item.hallId}|}" method="post" onsubmit="return confirm('Ngừng hoạt động phòng chiếu này?');">
                                     <input type="hidden" name="_method" value="delete">
-                                    <button type="submit" class="hc-btn px-3 py-1.5 text-danger hover:text-red-300">Xóa</button>
+                                    <button type="submit" class="hc-btn px-3 py-1.5 text-danger hover:text-red-300">Ngừng</button>
                                 </form>
                             </div>
                         </td>

@@ -1,9 +1,11 @@
 package com.cinema.hyperCinema.repository;
 
 import com.cinema.hyperCinema.model.Branch;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -21,5 +23,15 @@ public interface BranchRepository
 
     List<Branch> findAllByOrderByNameAsc();
 
+    List<Branch> findByStatusIgnoreCaseOrderByNameAsc(String status);
+
     List<Branch> findByStatusIgnoreCase(String status, Sort sort);
+
+    @Query("SELECT b FROM Branch b "
+            + "WHERE b.status = 'Active' "
+            + "AND NOT EXISTS ("
+            + "SELECT 1 FROM BranchMovie bm "
+            + "WHERE bm.branch = b AND bm.movie.movieId = :movieId"
+            + ") ORDER BY b.name ASC")
+    List<Branch> findBranchesNotAssignedToMovie(@Param("movieId") Integer movieId);
 }

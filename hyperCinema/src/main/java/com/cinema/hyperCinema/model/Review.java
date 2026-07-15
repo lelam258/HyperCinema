@@ -7,11 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-@Table(name = "Review")
+@Table(name = "review")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Review {
@@ -32,18 +30,9 @@ public class Review {
     @Column
     private Integer rating;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
+    @Column
     private String comment;
-
-    @Column(name = "likes_count", nullable = false)
-    private Integer likesCount = 0;
-
-    @Column(name = "dislikes_count", nullable = false)
-    private Integer dislikesCount = 0;
-
-    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @OrderBy("createdAt ASC")
-    private List<ReviewReply> replies = new ArrayList<>();
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -51,7 +40,6 @@ public class Review {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (likesCount == null) likesCount = 0;
-        if (dislikesCount == null) dislikesCount = 0;
     }
 }
+
