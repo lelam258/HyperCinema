@@ -32,13 +32,19 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
 
     private final LoyaltyPointRepository loyaltyPointRepository;
     private final UserMembershipRepository userMembershipRepository;
+    private final ManagerDashboardService managerDashboardService;
+    private final BranchManagerDashboardService branchManagerDashboardService;
     private final UiDisplayMapper displayMapper;
 
     public WorkspaceUiDataServiceImpl(LoyaltyPointRepository loyaltyPointRepository,
                                       UserMembershipRepository userMembershipRepository,
+                                      ManagerDashboardService managerDashboardService,
+                                      BranchManagerDashboardService branchManagerDashboardService,
                                       UiDisplayMapper displayMapper) {
         this.loyaltyPointRepository = loyaltyPointRepository;
         this.userMembershipRepository = userMembershipRepository;
+        this.managerDashboardService = managerDashboardService;
+        this.branchManagerDashboardService = branchManagerDashboardService;
         this.displayMapper = displayMapper;
     }
     @Override
@@ -64,6 +70,75 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
                 .build();
     }
 
+    @Override
+    public WorkspaceDashboardView getManagerDashboard() {
+        return WorkspaceDashboardView.builder()
+                .role("manager")
+                .actorName("Manager")
+                .branchName("Toan he thong")
+                .metrics(Arrays.asList(
+                        metric("revenue", "Doanh thu", managerDashboardService.sumChainRevenueThisMonth(),
+                                "Thang nay", "wallet", true),
+                        metric("tickets", "Ve da ban", managerDashboardService.countChainTicketsThisMonth(),
+                                "Thang nay", "ticket", false),
+                        metric("branches", "Chi nhanh", managerDashboardService.countActiveBranches(),
+                                "Dang hoat dong", "building-2", false),
+                        metric("movies", "Phim", managerDashboardService.countNowShowingMovies(),
+                                "Dang chieu", "film", false)))
+                .revenueSeries(series(managerDashboardService.getRevenueLastDays(7), true))
+                .leaderboard(leaderboard(managerDashboardService.getBranchLeaderboardThisMonth()))
+                .topMovies(topMovies(managerDashboardService.getTopMoviesThisMonth(5)))
+                .actions(managerActions())
+                .lastUpdated(displayMapper.dateTime(LocalDateTime.now()))
+                .build();
+    }
+
+    @Override
+    public WorkspaceDashboardView getBranchDashboard(User actor) {
+        Branch branch = actor == null ? null : actor.getBranch();
+        if (branch == null || branch.getBranchId() == null) {
+            return emptyBranchDashboard(actor);
+        }
+        Integer branchId = branch.getBranchId();
+        return WorkspaceDashboardView.builder()
+                .role("branch")
+                .actorName(actor.getFullName())
+                .branchId(branchId)
+                .branchName(branch.getName())
+                .metrics(Arrays.asList(
+                        metric("revenue", "Doanh thu", branchManagerDashboardService.sumBranchRevenueThisMonth(branchId),
+                                "Thang nay", "wallet", true),
+                        metric("tickets", "Ve da ban", branchManagerDashboardService.countBranchTicketsThisMonth(branchId),
+                                "Thang nay", "ticket", false),
+                        metric("todayBookings", "Dat ve hom nay", branchManagerDashboardService.countBranchBookingsToday(branchId),
+                                "Trong ngay", "calendar-check", false)))
+                .revenueSeries(series(branchManagerDashboardService.getBranchRevenueLastDays(branchId, 7), true))
+                .leaderboard(Collections.emptyList())
+                .topMovies(topMovies(branchManagerDashboardService.getBranchTopMovies(branchId, 5)))
+                .actions(branchActions(branchId))
+                .lastUpdated(displayMapper.dateTime(LocalDateTime.now()))
+                .build();
+    }
+
+    @Override
+    public WorkspaceDashboardView getStaffDashboard(User actor) {
+        Branch branch = actor == null ? null : actor.getBranch();
+        Integer branchId = branch == null ? null : branch.getBranchId();
+        boolean assigned = branchId != null;
+        return WorkspaceDashboardView.builder()
+                .role("staff")
+                .actorName(actor != null ? actor.getFullName() : "Staff")
+                .branchId(branchId)
+                .branchName(assigned ? branch.getName() : "Chua phan cong chi nhanh")
+                .metrics(Collections.emptyList())
+                .revenueSeries(Collections.emptyList())
+                .leaderboard(Collections.emptyList())
+                .topMovies(Collections.emptyList())
+                .actions(staffActions(assigned))
+                .lastUpdated(displayMapper.dateTime(LocalDateTime.now()))
+                .build();
+    }
+
     private WorkspaceDashboardView emptyBranchDashboard(User actor) {
         return WorkspaceDashboardView.builder()
                 .role("branch")
@@ -82,6 +157,13 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
         return Arrays.asList(
                 action("Phong chieu", "/admin/halls", "panel-top", assigned, "Chua co chi nhanh"),
                 action("So do ghe", "/admin/seats", "armchair", assigned, "Chua co chi nhanh"));
+    }
+
+    private List<WorkspaceActionView> managerActions() {
+        return Arrays.asList(
+                action("Chi nhanh", "/admin/branches", "building", true, null),
+                action("Phim", "/admin/movies", "film", true, null),
+                action("Lich chieu", "/admin/showtimes", "calendar-days", true, null));
     }
 
     private List<WorkspaceActionView> staffActions(boolean assigned) {
@@ -104,5 +186,79 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
                 .enabled(enabled)
                 .disabledReason(enabled ? null : disabledReason)
                 .build();
+    }
+
+    private MetricCardView metric(String key, String label, long value, String helperText, String icon, boolean currency) {
+        return MetricCardView.builder()
+                .key(key)
+                .label(label)
+                .value(value)
+                .displayValue(currency ? displayMapper.currency(value) : displayMapper.integer(value))
+                .helperText(helperText)
+                .icon(icon)
+                .build();
+    }
+
+    private List<SeriesPointView> series(java.util.Map<String, Long> values, boolean currency) {
+        if (values == null || values.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return values.entrySet().stream()
+                .map(entry -> SeriesPointView.builder()
+                        .label(entry.getKey())
+                        .value(entry.getValue() == null ? 0L : entry.getValue())
+                        .displayValue(currency
+                                ? displayMapper.currency(entry.getValue())
+                                : displayMapper.integer(entry.getValue()))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private List<LeaderboardRowView> leaderboard(List<Object[]> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return rows.stream()
+                .map(row -> LeaderboardRowView.builder()
+                        .label(asString(row, 0, "Unknown branch"))
+                        .value(asLong(row, 1))
+                        .displayValue(displayMapper.currency(asLong(row, 1)))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private List<TopMovieView> topMovies(List<Object[]> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return rows.stream()
+                .map(row -> TopMovieView.builder()
+                        .title(asString(row, 0, "Unknown movie"))
+                        .genre("Bookings")
+                        .bookingCount(asLong(row, 1))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private String asString(Object[] row, int index, String fallback) {
+        if (row == null || row.length <= index || row[index] == null) {
+            return fallback;
+        }
+        return String.valueOf(row[index]);
+    }
+
+    private long asLong(Object[] row, int index) {
+        if (row == null || row.length <= index || row[index] == null) {
+            return 0L;
+        }
+        Object value = row[index];
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return 0L;
+        }
     }
 }
