@@ -24,9 +24,9 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <a th:if="${showtime.canEditSchedule}" th:href="@{|/admin/showtimes/${showtime.showtimeId}/edit|}" class="hc-btn hc-btn-primary no-underline">Chỉnh sửa</a>
-                    <form th:if="${showtime.canDelete}" th:action="@{|/admin/showtimes/${showtime.showtimeId}|}" method="post" onsubmit="return confirm('Xóa suất chiếu này?');">
+                    <form th:if="${showtime.canDelete}" th:action="@{|/admin/showtimes/${showtime.showtimeId}|}" method="post" onsubmit="return confirm('Hủy suất chiếu này?');">
                         <input type="hidden" name="_method" value="delete">
-                        <button type="submit" class="hc-btn text-danger hover:text-red-300">Xóa</button>
+                        <button type="submit" class="hc-btn text-danger hover:text-red-300">Hủy</button>
                     </form>
                 </div>
             </div>

@@ -41,3 +41,4 @@ public class Hall {
     @OneToMany(mappedBy = "hall", cascade = CascadeType.ALL)
     private List<Seat> seats;
 }
+
