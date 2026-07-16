@@ -40,7 +40,6 @@ public class ShowtimeListItem {
     private String priceRange;
 
     private List<SeatTypePriceView> seatTypePrices;
-
     private long bookingCount;
 
     private long ticketCount;

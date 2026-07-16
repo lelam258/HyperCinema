@@ -118,7 +118,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         showtime.setHall(hall);
         showtime.setStartTime(request.getStartTime());
         showtime.setEndTime(request.getEndTime());
-        showtime.setPrice(ticketPriceFor(hall));
+        showtime.setPrice(request.getPrice() != null ? request.getPrice() : ticketPriceFor(hall));
         showtime.setStatus(SHOWTIME_ACTIVE);
         return toDetailView(showtimeRepository.save(showtime));
     }
@@ -142,7 +142,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         showtime.setHall(hall);
         showtime.setStartTime(request.getStartTime());
         showtime.setEndTime(request.getEndTime());
-        showtime.setPrice(ticketPriceFor(hall));
+        showtime.setPrice(request.getPrice() != null ? request.getPrice() : ticketPriceFor(hall));
         showtime.setStatus(SHOWTIME_ACTIVE);
         return toDetailView(showtimeRepository.save(showtime));
     }
@@ -405,7 +405,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .hallName(hall == null ? "" : hall.getName())
                 .startTime(showtime.getStartTime())
                 .endTime(showtime.getEndTime())
-                .price(ticketPriceFor(hall))
+                .price(showtime.getPrice() != null ? showtime.getPrice() : ticketPriceFor(hall))
                 .priceRange(priceRange(seatTypePrices))
                 .seatTypePrices(seatTypePrices)
                 .bookingCount(bookingCount)
@@ -481,7 +481,6 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         Integer max = positivePrices.get(positivePrices.size() - 1);
         return min.equals(max) ? String.valueOf(min) : min + " - " + max;
     }
-
     private static String normalizeOptional(String value) {
         return value == null ? null : value.trim();
     }

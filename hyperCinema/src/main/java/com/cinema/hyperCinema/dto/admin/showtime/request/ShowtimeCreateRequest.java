@@ -31,5 +31,5 @@ public class ShowtimeCreateRequest {
     @NotNull(message = "End time is required")
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime endTime;
-
+    private Integer price;
 }

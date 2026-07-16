@@ -74,6 +74,9 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             + "GROUP BY m.title ORDER BY cnt DESC")
     List<Object[]> findTopMoviesByBranchId(@Param("branchId") Integer branchId,
                                            Pageable pageable);
+    default List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Integer userId) {
+        return findByUser_UserIdOrderByCreatedAtDesc(userId, Pageable.unpaged());
+    }
 
     long countByUser_UserId(Integer userId);
 
@@ -164,7 +167,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             WHERE b.bookingId = :bookingId
             """)
     Optional<Booking> findManagementDetailById(@Param("bookingId") Integer bookingId);
-
     @Query("SELECT COUNT(b) > 0 FROM Booking b " +
            "WHERE b.user.userId = :userId " +
            "AND b.showtime.movie.movieId = :movieId " +
