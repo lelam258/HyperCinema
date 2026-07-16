@@ -1,6 +1,7 @@
 package com.cinema.hyperCinema.dto.admin.hall.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -24,6 +25,18 @@ public class HallUpdateRequest {
     @NotBlank(message = "Loai phong khong duoc de trong")
     @Size(max = 50, message = "Loai phong khong duoc vuot qua 50 ky tu")
     private String hallType;
+
+    @NotNull(message = "Gia ve khong duoc de trong")
+    @Min(value = 1, message = "Gia ve phai lon hon 0")
+    private Integer ticketPrice;
+
+    private Integer standardPrice;
+
+    private Integer vipPrice;
+
+    private Integer couplePrice;
+
+    private Integer disabledPrice = 0;
 
     @NotNull(message = "Suc chua khong duoc de trong")
     @Positive(message = "Suc chua phai lon hon 0")

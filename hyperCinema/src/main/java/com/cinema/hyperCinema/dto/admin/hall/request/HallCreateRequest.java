@@ -26,6 +26,18 @@ public class HallCreateRequest {
     @Size(max = 50, message = "Loai phong khong duoc vuot qua 50 ky tu")
     private String hallType;
 
+    @NotNull(message = "Gia ve khong duoc de trong")
+    @Min(value = 1, message = "Gia ve phai lon hon 0")
+    private Integer ticketPrice;
+
+    private Integer standardPrice;
+
+    private Integer vipPrice;
+
+    private Integer couplePrice;
+
+    private Integer disabledPrice = 0;
+
     private Integer capacity;
 
     @NotNull(message = "So hang khong duoc de trong")

@@ -2,13 +2,13 @@ package com.cinema.hyperCinema.config;
 
 import com.cinema.hyperCinema.model.*;
 import com.cinema.hyperCinema.repository.*;
-import com.cinema.hyperCinema.util.SeatPricing;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -22,6 +22,10 @@ import java.util.Random;
  */
 @Component
 public class DataInitializer implements CommandLineRunner {
+
+    private static final int REPORT_BOOKING_SEED_TARGET = 1_000;
+    private static final int REPORT_COVERAGE_SEED_DAYS = 7;
+    private static final int REPORT_COVERAGE_MAX_BOOKING_SEATS = 6;
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
@@ -37,7 +41,12 @@ public class DataInitializer implements CommandLineRunner {
     private final TicketRepository ticketRepository;
     private final PaymentRepository paymentRepository;
     private final FoodItemRepository foodItemRepository;
+    private final FoodOrderRepository foodOrderRepository;
+    private final FoodOrderItemRepository foodOrderItemRepository;
     private final AuditLogRepository auditLogRepository;
+    private final MembershipPlanRepository membershipPlanRepository;
+    private final UserMembershipRepository userMembershipRepository;
+    private final LoyaltyPointRepository loyaltyPointRepository;
     private final JdbcTemplate jdbcTemplate;
     private final PasswordEncoder passwordEncoder;
 
@@ -58,7 +67,12 @@ public class DataInitializer implements CommandLineRunner {
             TicketRepository ticketRepository,
             PaymentRepository paymentRepository,
             FoodItemRepository foodItemRepository,
+            FoodOrderRepository foodOrderRepository,
+            FoodOrderItemRepository foodOrderItemRepository,
             AuditLogRepository auditLogRepository,
+            MembershipPlanRepository membershipPlanRepository,
+            UserMembershipRepository userMembershipRepository,
+            LoyaltyPointRepository loyaltyPointRepository,
             JdbcTemplate jdbcTemplate,
             PasswordEncoder passwordEncoder) {
         this.roleRepository = roleRepository;
@@ -75,7 +89,12 @@ public class DataInitializer implements CommandLineRunner {
         this.ticketRepository = ticketRepository;
         this.paymentRepository = paymentRepository;
         this.foodItemRepository = foodItemRepository;
+        this.foodOrderRepository = foodOrderRepository;
+        this.foodOrderItemRepository = foodOrderItemRepository;
         this.auditLogRepository = auditLogRepository;
+        this.membershipPlanRepository = membershipPlanRepository;
+        this.userMembershipRepository = userMembershipRepository;
+        this.loyaltyPointRepository = loyaltyPointRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.passwordEncoder = passwordEncoder;
     }
@@ -103,6 +122,10 @@ public class DataInitializer implements CommandLineRunner {
         List<Movie> movies = ensureMovies(languages);
         ensureMovieGenres(movies, currentGenres);
         ensureShowtimes(movies, hallRepository.findAll());
+        ensureSeedBranchAssignments();
+        ensureSeedCustomers();
+        ensureMembershipData();
+        ensureBookingsAndPayments();
 
         System.out.println("=== DataInitializer: Hoàn tất seed dữ liệu mẫu ===");
     }
@@ -354,6 +377,167 @@ public class DataInitializer implements CommandLineRunner {
         userRepository.save(users.get(10));
     }
 
+    private void ensureSeedBranchAssignments() {
+        List<Branch> branches = branchRepository.findAll().stream()
+                .sorted((left, right) -> left.getBranchId().compareTo(right.getBranchId()))
+                .toList();
+        if (branches.size() < 3) {
+            return;
+        }
+
+        Role managerRole = roleRepository.findAll().stream()
+                .filter(role -> "Manager".equalsIgnoreCase(role.getName()))
+                .findFirst()
+                .orElse(null);
+        Role staffRole = roleRepository.findAll().stream()
+                .filter(role -> "Staff".equalsIgnoreCase(role.getName()))
+                .findFirst()
+                .orElse(null);
+        if (managerRole == null || staffRole == null) {
+            return;
+        }
+
+        String encodedPw = passwordEncoder.encode("123456");
+        User managerHcm = ensureSeedUser("Quan ly HCM", "manager1@hypercinema.vn", "manager1",
+                encodedPw, "0901000002", managerRole);
+        User managerHn = ensureSeedUser("Quan ly Ha Noi", "manager2@hypercinema.vn", "manager2",
+                encodedPw, "0901000003", managerRole);
+        User managerDn = ensureSeedUser("Quan ly Da Nang", "manager3@hypercinema.vn", "manager3",
+                encodedPw, "0901000007", managerRole);
+
+        assignSeedManager(managerHcm, branches.get(0));
+        assignSeedManager(managerHn, branches.get(1));
+        assignSeedManager(managerDn, branches.get(2));
+
+        assignSeedStaff(ensureSeedUser("Nhan vien 1", "staff1@hypercinema.vn", "staff1",
+                encodedPw, "0902000001", staffRole), branches.get(0), managerHcm);
+        assignSeedStaff(ensureSeedUser("Nhan vien 2", "staff2@hypercinema.vn", "staff2",
+                encodedPw, "0902000002", staffRole), branches.get(0), managerHcm);
+        assignSeedStaff(ensureSeedUser("Nhan vien 3", "staff3@hypercinema.vn", "staff3",
+                encodedPw, "0902000003", staffRole), branches.get(1), managerHn);
+        assignSeedStaff(ensureSeedUser("Nhan vien 4", "staff4@hypercinema.vn", "staff4",
+                encodedPw, "0902000004", staffRole), branches.get(1), managerHn);
+        assignSeedStaff(ensureSeedUser("Nhan vien 5", "staff5@hypercinema.vn", "staff5",
+                encodedPw, "0902000005", staffRole), branches.get(2), managerDn);
+    }
+
+    private User ensureSeedUser(String fullName,
+                                String email,
+                                String username,
+                                String encodedPw,
+                                String phone,
+                                Role role) {
+        return userRepository.findByUsername(username)
+                .orElseGet(() -> createUser(fullName, email, username, encodedPw, phone, role));
+    }
+
+    private void assignSeedManager(User manager, Branch branch) {
+        manager.setBranch(branch);
+        manager.setManager(null);
+        manager.setStatus("Active");
+        userRepository.save(manager);
+    }
+
+    private void assignSeedStaff(User staff, Branch branch, User manager) {
+        staff.setBranch(branch);
+        staff.setManager(manager);
+        staff.setStatus("Active");
+        userRepository.save(staff);
+    }
+
+    private void ensureSeedCustomers() {
+        Role customerRole = roleRepository.findAll().stream()
+                .filter(role -> "Customer".equalsIgnoreCase(role.getName()))
+                .findFirst()
+                .orElse(null);
+        if (customerRole == null) {
+            return;
+        }
+
+        String encodedPw = passwordEncoder.encode("123456");
+        String[] customerNames = {
+                "Nguyen Minh Tuan", "Tran Thu Ha", "Le Hoang Nam", "Pham Thanh Tam", "Vu Thi Mai",
+                "Do Quoc Bao", "Bui Thi Lan", "Ngo Van Duc", "Ho Thi Ngoc", "Duong Minh Khoi"
+        };
+        for (int i = 0; i < customerNames.length; i++) {
+            User customer = ensureSeedUser(customerNames[i],
+                    "customer" + (i + 1) + "@gmail.com",
+                    "customer" + (i + 1),
+                    encodedPw,
+                    "093000000" + i,
+                    customerRole);
+            customer.setStatus("Active");
+            customer.setEmailVerified(true);
+            userRepository.save(customer);
+        }
+    }
+
+    private void ensureMembershipData() {
+        MembershipPlan silver = ensureMembershipPlan("Silver", "5.00", 99000, 30);
+        MembershipPlan gold = ensureMembershipPlan("Gold", "10.00", 199000, 60);
+        MembershipPlan platinum = ensureMembershipPlan("Platinum", "15.00", 399000, 90);
+
+        ensureCustomerMembership("customer1", gold, LocalDate.now().minusDays(10), LocalDate.now().plusDays(50), 1200);
+        ensureCustomerMembership("customer2", silver, LocalDate.now().minusDays(5), LocalDate.now().plusDays(25), 650);
+        ensureCustomerMembership("customer3", platinum, LocalDate.now().minusDays(20), LocalDate.now().plusDays(70), 2600);
+        ensureCustomerPointsOnly("customer4", 320);
+    }
+
+    private MembershipPlan ensureMembershipPlan(String name, String discountPercent, Integer price, Integer durationDays) {
+        return membershipPlanRepository.findAll().stream()
+                .filter(plan -> plan.getName() != null && plan.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElseGet(() -> {
+                    MembershipPlan plan = new MembershipPlan();
+                    plan.setName(name);
+                    plan.setDiscountPercent(new BigDecimal(discountPercent));
+                    plan.setPrice(price);
+                    plan.setDurationDays(durationDays);
+                    return membershipPlanRepository.save(plan);
+                });
+    }
+
+    private void ensureCustomerMembership(String username,
+                                          MembershipPlan plan,
+                                          LocalDate startDate,
+                                          LocalDate endDate,
+                                          int points) {
+        userRepository.findByUsername(username).ifPresent(user -> {
+            boolean hasActiveMembership = userMembershipRepository
+                    .findActiveByUserIdWithPlan(user.getUserId(), "ACTIVE", LocalDate.now())
+                    .stream()
+                    .anyMatch(existing -> existing.getPlan() != null
+                            && existing.getPlan().getName() != null
+                            && existing.getPlan().getName().equalsIgnoreCase(plan.getName()));
+            if (!hasActiveMembership) {
+                UserMembership membership = new UserMembership();
+                membership.setUser(user);
+                membership.setPlan(plan);
+                membership.setStartDate(startDate);
+                membership.setEndDate(endDate);
+                membership.setStatus("ACTIVE");
+                userMembershipRepository.save(membership);
+            }
+            ensureCustomerPoints(user, points);
+        });
+    }
+
+    private void ensureCustomerPointsOnly(String username, int points) {
+        userRepository.findByUsername(username).ifPresent(user -> ensureCustomerPoints(user, points));
+    }
+
+    private void ensureCustomerPoints(User user, int points) {
+        Long currentPoints = loyaltyPointRepository.sumPointsByUserId(user.getUserId());
+        if (currentPoints != null && currentPoints > 0) {
+            return;
+        }
+        LoyaltyPoint loyaltyPoint = new LoyaltyPoint();
+        loyaltyPoint.setUser(user);
+        loyaltyPoint.setPoints(points);
+        loyaltyPoint.setType("EARNED");
+        loyaltyPointRepository.save(loyaltyPoint);
+    }
+
     // ───────────────────── HALLS ─────────────────────
     private List<Hall> seedHalls(List<Branch> branches) {
         List<Hall> halls = new ArrayList<>();
@@ -365,11 +549,33 @@ public class DataInitializer implements CommandLineRunner {
                 h.setName(name);
                 h.setCapacity(50);
                 h.setHallType(name.contains("IMAX") ? "IMAX" : (name.contains("3D") ? "3D" : "2D"));
+                h.setTicketPrice(defaultTicketPriceForHall(name));
                 h.setStatus("Active");
-                halls.add(hallRepository.save(h));
+                Hall saved = hallRepository.save(h);
+                ensureSeatTypePrices(saved);
+                halls.add(saved);
             }
         }
         return halls;
+    }
+
+    private void ensureSeatTypePrices(Hall hall) {
+        Integer existing = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM hall_seat_type_price WHERE hall_id = ?",
+                Integer.class,
+                hall.getHallId());
+        if (existing != null && existing > 0) {
+            return;
+        }
+        int base = ticketPriceFor(hall);
+        jdbcTemplate.update("INSERT INTO hall_seat_type_price (hall_id, seat_type, price, active) VALUES (?, ?, ?, 1)",
+                hall.getHallId(), "STANDARD", base);
+        jdbcTemplate.update("INSERT INTO hall_seat_type_price (hall_id, seat_type, price, active) VALUES (?, ?, ?, 1)",
+                hall.getHallId(), "VIP", base + 20_000);
+        jdbcTemplate.update("INSERT INTO hall_seat_type_price (hall_id, seat_type, price, active) VALUES (?, ?, ?, 1)",
+                hall.getHallId(), "COUPLE", base * 2);
+        jdbcTemplate.update("INSERT INTO hall_seat_type_price (hall_id, seat_type, price, active) VALUES (?, ?, ?, 1)",
+                hall.getHallId(), "DISABLED", 0);
     }
 
     // ───────────────────── SEATS ─────────────────────
@@ -383,7 +589,7 @@ public class DataInitializer implements CommandLineRunner {
                     s.setHall(hall);
                     s.setSeatRow(row);
                     s.setSeatNumber(num);
-                    s.setType((row.equals("C") || row.equals("D")) ? "VIP" : "Standard");
+                    s.setType((row.equals("C") || row.equals("D")) ? "VIP" : "STANDARD");
                     allSeats.add(seatRepository.save(s));
                 }
             }
@@ -426,7 +632,7 @@ public class DataInitializer implements CommandLineRunner {
                     showtime.setHall(hall);
                     showtime.setStartTime(startTime);
                     showtime.setEndTime(startTime.plusMinutes(movie.getDuration() != null ? movie.getDuration() : 120));
-                    showtime.setPrice(0);
+                    showtime.setPrice(ticketPriceFor(hall));
                     showtimeRepository.save(showtime);
                 }
             }
@@ -460,52 +666,280 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     // ───────────────────── BOOKINGS + PAYMENTS ─────────────────────
-    private void seedBookingsAndPayments(List<User> users, List<Showtime> showtimes, List<Seat> allSeats) {
-        List<User> customers = users.subList(11, Math.min(21, users.size()));
-        String[] statuses = {"Confirmed", "Confirmed", "Confirmed", "Completed", "Completed", "Cancelled"};
-        String[] methods = {"VNPay", "VietQR", "Cash", "VNPay", "VietQR"};
+    private void ensureBookingsAndPayments() {
+        long existingBookings = bookingRepository.count();
+        List<User> customers = userRepository.findAll().stream()
+                .filter(user -> user.getRole() != null && "Customer".equalsIgnoreCase(user.getRole().getName()))
+                .toList();
+        List<Showtime> showtimes = showtimeRepository.findAll();
+        List<FoodItem> foodItems = foodItemRepository.findAll();
 
-        int seatIdx = 0;
-        for (int i = 0; i < 50 && i < showtimes.size(); i++) {
-            Showtime st = showtimes.get(i % showtimes.size());
-            User customer = customers.get(i % customers.size());
-            String bookingStatus = statuses[i % statuses.length];
+        if (customers.isEmpty() || showtimes.isEmpty()) {
+            return;
+        }
 
+        String[] bookingStatuses = {
+                "Confirmed", "Completed", "Pending", "Pending", "Cancelled", "Confirmed",
+                "Pending", "Completed", "Confirmed", "Pending", "Cancelled", "Completed"
+        };
+        String[] paymentStatuses = {
+                "Completed", "Completed", "Pending", "Pending", "Failed", "Completed",
+                "Pending", "Completed", "Completed", "Pending", "Failed", "Completed"
+        };
+        String[] paymentMethods = {"VNPay", "VietQR", "VNPay", "VietQR", "VNPay", "Cash"};
+
+        int created = 0;
+        int targetToCreate = (int) (REPORT_BOOKING_SEED_TARGET - existingBookings);
+        for (int i = 0; created < targetToCreate; i++) {
+            Showtime showtime = showtimes.get(i % showtimes.size());
+            List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(showtime.getHall().getHallId());
+            if (seats.isEmpty()) {
+                continue;
+            }
+
+            String bookingStatus = bookingStatuses[created % bookingStatuses.length];
+            String paymentStatus = paymentStatuses[created % paymentStatuses.length];
+            User customer = customers.get(created % customers.size());
+            int seatOffset = (created * 3) % Math.max(seats.size(), 1);
             int ticketCount = 1 + random.nextInt(3);
-            List<Seat> bookingSeats = new ArrayList<>(ticketCount);
-            for (int t = 0; t < ticketCount && seatIdx + t < allSeats.size(); t++) {
-                bookingSeats.add(allSeats.get((seatIdx + t) % allSeats.size()));
-            }
-            long totalPrice = bookingSeats.stream()
-                    .mapToLong(seat -> SeatPricing.priceFor(seat.getType()))
-                    .sum();
-
-            Booking booking = new Booking();
-            booking.setUser(customer);
-            booking.setShowtime(st);
-            booking.setTotalPrice(totalPrice);
-            booking.setStatus(bookingStatus);
-            booking = bookingRepository.save(booking);
-
-            for (int t = 0; t < bookingSeats.size() && seatIdx < allSeats.size(); t++) {
-                Ticket ticket = new Ticket();
-                ticket.setBooking(booking);
-                ticket.setSeat(bookingSeats.get(t));
-                ticket.setQrCode("QR-" + booking.getBookingId() + "-" + t);
-                ticket.setStatus("Cancelled".equals(bookingStatus) ? "Cancelled" : "Active");
-                ticketRepository.save(ticket);
-                seatIdx++;
+            List<Seat> bookingSeats = new ArrayList<>();
+            for (int t = 0; t < ticketCount && t < seats.size(); t++) {
+                bookingSeats.add(seats.get((seatOffset + t) % seats.size()));
             }
 
-            if (!"Cancelled".equals(bookingStatus)) {
-                Payment payment = new Payment();
-                payment.setBooking(booking);
-                payment.setAmount(totalPrice);
-                payment.setMethod(methods[i % methods.length]);
-                payment.setStatus("Completed");
-                paymentRepository.save(payment);
+            int foodTotal = seedFoodTotal(foodItems, created);
+            LocalDateTime createdAt = seedReportTimestamp(existingBookings + created);
+            Booking booking = createSeedBooking(customer, showtime, bookingSeats, foodTotal, bookingStatus, createdAt);
+            createSeedFoodOrder(booking, foodItems, created, foodTotal, createdAt);
+            createSeedPayment(booking, paymentMethods[created % paymentMethods.length], paymentStatus, created, createdAt);
+            created++;
+        }
+
+        ensureShowtimeCoverageBookings(customers, showtimes, foodItems);
+    }
+
+    private void ensureShowtimeCoverageBookings(List<User> customers,
+                                                List<Showtime> showtimes,
+                                                List<FoodItem> foodItems) {
+        if (customers.isEmpty() || showtimes.isEmpty()) {
+            return;
+        }
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime reportStart = today.atStartOfDay();
+        LocalDateTime reportEnd = today.plusDays(REPORT_COVERAGE_SEED_DAYS).plusDays(1).atStartOfDay();
+        List<Showtime> reportShowtimes = showtimes.stream()
+                .filter(showtime -> showtime.getStartTime() != null)
+                .filter(showtime -> !showtime.getStartTime().isBefore(reportStart))
+                .filter(showtime -> showtime.getStartTime().isBefore(reportEnd))
+                .sorted((left, right) -> left.getStartTime().compareTo(right.getStartTime()))
+                .toList();
+
+        int seedIndex = 0;
+        java.util.Map<String, Integer> lowCoverageSlots = new java.util.HashMap<>();
+        for (Showtime showtime : reportShowtimes) {
+            List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(showtime.getHall().getHallId());
+            if (seats.isEmpty()) {
+                continue;
+            }
+
+            int capacity = showtime.getHall() != null && showtime.getHall().getCapacity() != null
+                    ? showtime.getHall().getCapacity()
+                    : seats.size();
+            String lowCoverageKey = showtime.getHall().getBranch().getBranchId() + "|"
+                    + showtime.getStartTime().toLocalDate();
+            int lowCoverageCount = lowCoverageSlots.getOrDefault(lowCoverageKey, 0);
+            boolean lowCoverageSample = lowCoverageCount < 2;
+            if (lowCoverageSample) {
+                lowCoverageSlots.put(lowCoverageKey, lowCoverageCount + 1);
+            }
+
+            int targetPaidTickets = targetCoverageTicketCount(showtime, capacity, lowCoverageSample);
+            long currentPaidTickets = countCompletedTicketsForShowtime(showtime.getShowtimeId());
+            int missingTickets = targetPaidTickets - (int) currentPaidTickets;
+            if (missingTickets <= 0) {
+                seedIndex++;
+                continue;
+            }
+
+            int seatOffset = Math.floorMod(showtime.getShowtimeId() * 7, seats.size());
+            while (missingTickets > 0) {
+                int ticketCount = Math.min(REPORT_COVERAGE_MAX_BOOKING_SEATS, missingTickets);
+                List<Seat> bookingSeats = new ArrayList<>();
+                for (int t = 0; t < ticketCount; t++) {
+                    bookingSeats.add(seats.get((seatOffset + targetPaidTickets - missingTickets + t) % seats.size()));
+                }
+
+                User customer = customers.get(seedIndex % customers.size());
+                int foodTotal = seedFoodTotal(foodItems, seedIndex);
+                LocalDateTime createdAt = showtime.getStartTime().minusDays(1).withHour(18).withMinute(seedIndex % 45);
+                Booking booking = createSeedBooking(customer, showtime, bookingSeats, foodTotal, "Completed", createdAt);
+                createSeedFoodOrder(booking, foodItems, seedIndex, foodTotal, createdAt);
+                createSeedPayment(booking, seedIndex % 2 == 0 ? "VNPay" : "VietQR", "Completed", seedIndex, createdAt);
+
+                missingTickets -= ticketCount;
+                seedIndex++;
             }
         }
+    }
+
+    private int targetCoverageTicketCount(Showtime showtime, int capacity, boolean lowCoverageSample) {
+        if (capacity <= 0 || showtime == null || showtime.getHall() == null) {
+            return 0;
+        }
+        double coverage = lowCoverageSample
+                ? (Math.floorMod(showtime.getShowtimeId(), 2) == 0 ? 0.22 : 0.38)
+                : 0.80 + (Math.floorMod(showtime.getShowtimeId(), 6) * 0.02);
+        return Math.min(capacity, Math.max(1, (int) Math.round(capacity * coverage)));
+    }
+
+    private long countCompletedTicketsForShowtime(Integer showtimeId) {
+        if (showtimeId == null) {
+            return 0L;
+        }
+        Integer count = jdbcTemplate.queryForObject("""
+                SELECT COUNT(t.ticket_id)
+                FROM ticket t
+                JOIN booking b ON b.booking_id = t.booking_id
+                JOIN payment p ON p.booking_id = b.booking_id
+                WHERE b.showtime_id = ?
+                  AND b.status <> 'Cancelled'
+                  AND p.status = 'Completed'
+                """, Integer.class, showtimeId);
+        return count != null ? count : 0L;
+    }
+
+    private Booking createSeedBooking(User customer,
+                                      Showtime showtime,
+                                      List<Seat> seats,
+                                      int foodTotal,
+                                      String status,
+                                      LocalDateTime createdAt) {
+        long seatTotal = seats.stream()
+                .mapToLong(seat -> priceForSeedSeat(showtime, seat))
+                .sum();
+        long finalTotal = seatTotal + foodTotal;
+
+        Booking booking = new Booking();
+        booking.setUser(customer);
+        booking.setShowtime(showtime);
+        booking.setSeatSubtotal(seatTotal);
+        booking.setFoodSubtotal((long) foodTotal);
+        booking.setOrderSubtotal(finalTotal);
+        booking.setTotalPrice(finalTotal);
+        booking.setStatus(status);
+        booking = bookingRepository.save(booking);
+        booking.setCreatedAt(createdAt);
+
+        for (int i = 0; i < seats.size(); i++) {
+            Ticket ticket = new Ticket();
+            ticket.setBooking(booking);
+            ticket.setSeat(seats.get(i));
+            ticket.setQrCode("SEED-" + booking.getBookingId() + "-" + (i + 1));
+            ticket.setStatus("Cancelled".equals(status) ? "Cancelled" : "Active");
+            ticketRepository.save(ticket);
+        }
+
+        return booking;
+    }
+
+    private long priceForSeedSeat(Showtime showtime, Seat seat) {
+        if (showtime == null || seat == null) {
+            return 0L;
+        }
+        int base = showtime.getPrice() != null && showtime.getPrice() > 0
+                ? showtime.getPrice()
+                : ticketPriceFor(showtime.getHall());
+        return switch (seat.getType() != null ? seat.getType().toUpperCase() : "STANDARD") {
+            case "VIP" -> base + 20_000L;
+            case "COUPLE" -> base * 2L;
+            case "DISABLED" -> 0L;
+            default -> base;
+        };
+    }
+
+    private static int defaultTicketPriceForHall(String hallName) {
+        if (hallName != null && hallName.contains("IMAX")) {
+            return 120000;
+        }
+        if (hallName != null && hallName.contains("3D")) {
+            return 100000;
+        }
+        return 80000;
+    }
+
+    private static int ticketPriceFor(Hall hall) {
+        return hall != null && hall.getTicketPrice() != null && hall.getTicketPrice() > 0
+                ? hall.getTicketPrice()
+                : 80000;
+    }
+
+    private void createSeedPayment(Booking booking, String method, String status, int index, LocalDateTime createdAt) {
+        Payment payment = new Payment();
+        payment.setBooking(booking);
+        payment.setAmount(booking.getTotalPrice());
+        payment.setMethod(method);
+        payment.setStatus(status);
+
+        if ("Pending".equals(status)) {
+            boolean expiredSample = index % 4 == 3;
+            payment.setExpiresAt(LocalDateTime.now().plusMinutes(expiredSample ? -5 : 15));
+        }
+
+        payment = paymentRepository.save(payment);
+        payment.setCreatedAt(createdAt);
+    }
+
+    private void createSeedFoodOrder(Booking booking,
+                                     List<FoodItem> foodItems,
+                                     int index,
+                                     int foodTotal,
+                                     LocalDateTime createdAt) {
+        if (foodItems.isEmpty() || foodTotal <= 0) {
+            return;
+        }
+
+        FoodItem item = foodItems.get(index % foodItems.size());
+        FoodOrder order = new FoodOrder();
+        order.setBooking(booking);
+        order.setStatus(switch (booking.getStatus()) {
+            case "Confirmed", "Completed" -> "CONFIRMED";
+            case "Cancelled" -> "CANCELLED";
+            default -> "PENDING";
+        });
+        order.setTotalAmount(foodTotal);
+        order.setCreatedAt(createdAt);
+        order = foodOrderRepository.save(order);
+
+        FoodOrderItem orderItem = new FoodOrderItem();
+        orderItem.setOrderId(order.getOrderId());
+        orderItem.setItemId(item.getItemId());
+        orderItem.setFoodOrder(order);
+        orderItem.setFoodItem(item);
+        orderItem.setQuantity(Math.max(1, foodTotal / item.getPrice()));
+        orderItem.setUnitPrice(item.getPrice());
+        foodOrderItemRepository.save(orderItem);
+    }
+
+    private int seedFoodTotal(List<FoodItem> foodItems, int index) {
+        if (foodItems.isEmpty() || index % 4 == 1) {
+            return 0;
+        }
+        FoodItem item = foodItems.get(index % foodItems.size());
+        int quantity = 1 + (index % 3);
+        return item.getPrice() * quantity;
+    }
+
+    private LocalDateTime seedReportTimestamp(long index) {
+        LocalDate date = LocalDate.now().minusDays(index % 180);
+        int hour = switch ((int) (index % 4)) {
+            case 0 -> 10;
+            case 1 -> 14;
+            case 2 -> 18;
+            default -> 21;
+        };
+        int minute = (int) ((index * 7) % 45);
+        return LocalDateTime.of(date, LocalTime.of(hour, minute));
     }
 
     // ───────────────────── AUDIT LOGS ─────────────────────

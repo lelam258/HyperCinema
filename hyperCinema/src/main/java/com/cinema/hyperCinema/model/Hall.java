@@ -32,10 +32,12 @@ public class Hall {
     @Column(name = "hall_type", nullable = false, length = 50)
     private String hallType;
 
+    @Column(name = "ticket_price", nullable = false)
+    private Integer ticketPrice;
+
     @Column(nullable = false, length = 50)
     private String status;
 
     @OneToMany(mappedBy = "hall", cascade = CascadeType.ALL)
     private List<Seat> seats;
 }
-
