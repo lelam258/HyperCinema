@@ -212,7 +212,7 @@ public class VoucherController {
         }
         return "redirect:/admin/vouchers/" + voucherId;
     }
-
+//Frontend gọi bằng JS/fetch theo chuẩn REST
     @DeleteMapping("/{voucherId}")
     @PreAuthorize("@voucherAccessGuard.canManage(authentication, #voucherId)")
     public String delete(@PathVariable Integer voucherId,

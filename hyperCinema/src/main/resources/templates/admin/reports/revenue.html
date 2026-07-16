@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Báo cáo doanh thu - HyperCinema')}"></head>
+<body>
+<div class="hc-shell">
+    <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+    <nav th:replace="~{fragments/layout :: adminSidebar('revenue-reports')}"></nav>
+
+    <main class="hc-page">
+        <section class="hc-page-head">
+            <div>
+                <p class="hc-kicker">Admin reports</p>
+                <h1>Báo cáo doanh thu</h1>
+                <p>Theo dõi doanh thu toàn hệ thống và xếp hạng chi nhánh.</p>
+            </div>
+            <div class="hc-actions">
+                <span class="hc-muted">Cập nhật: <strong th:text="${report.lastUpdated}">--:--</strong></span>
+            </div>
+        </section>
+
+        <section class="hc-panel">
+            <form th:action="@{/admin/reports/revenue}" method="get" class="grid grid-cols-1 items-end gap-4 md:grid-cols-5">
+                <div>
+                    <label for="preset" class="hc-label">Kỳ báo cáo</label>
+                    <select id="preset" name="preset" class="hc-input">
+                        <option value="today" th:selected="${report.preset == 'today'}">Hôm nay</option>
+                        <option value="week" th:selected="${report.preset == 'week'}">7 ngày gần nhất</option>
+                        <option value="month" th:selected="${report.preset == 'month'}">Tháng nay</option>
+                        <option value="custom" th:selected="${report.preset == 'custom'}">Tùy chọn</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="from" class="hc-label">Từ ngày</label>
+                    <input id="from" name="from" type="date" class="hc-input" th:value="${report.dateFrom}">
+                </div>
+                <div>
+                    <label for="to" class="hc-label">Đến ngày</label>
+                    <input id="to" name="to" type="date" class="hc-input" th:value="${report.dateTo}">
+                </div>
+                <div>
+                    <label for="branchId" class="hc-label">Chi nhánh</label>
+                    <select id="branchId" name="branchId" class="hc-input">
+                        <option value="" th:selected="${report.branchId == null}">Tất cả chi nhánh</option>
+                        <option th:each="branch : ${branches}"
+                                th:value="${branch.branchId}"
+                                th:text="${branch.name}"
+                                th:selected="${report.branchId != null and report.branchId == branch.branchId}">Branch</option>
+                    </select>
+                </div>
+                <button type="submit" class="hc-button hc-button-primary">
+                    <i data-lucide="filter"></i>
+                    Lọc báo cáo
+                </button>
+            </form>
+            <p th:if="${report.message != null}" class="mt-3 text-sm text-amber-300" th:text="${report.message}">Message</p>
+        </section>
+
+        <section class="hc-metric-grid">
+            <article class="hc-metric-card">
+                <div>
+                    <span>Tổng doanh thu</span>
+                    <strong th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT')}">0</strong>
+                </div>
+                <i data-lucide="badge-dollar-sign"></i>
+                <small>VND đã thanh toán</small>
+            </article>
+            <article class="hc-metric-card">
+                <div>
+                    <span>Vé</span>
+                    <strong th:text="${#numbers.formatDecimal(report.ticketRevenue, 0, 'COMMA', 0, 'POINT')}">0</strong>
+                </div>
+                <i data-lucide="ticket"></i>
+                <small><span th:text="${report.ticketCount}">0</span> vé đã bán</small>
+            </article>
+            <article class="hc-metric-card">
+                <div>
+                    <span>F&amp;B</span>
+                    <strong th:text="${#numbers.formatDecimal(report.foodRevenue, 0, 'COMMA', 0, 'POINT')}">0</strong>
+                </div>
+                <i data-lucide="popcorn"></i>
+                <small>Doanh thu dịch vụ</small>
+            </article>
+            <article class="hc-metric-card">
+                <div>
+                    <span>Giá trị TB</span>
+                    <strong th:text="${#numbers.formatDecimal(report.averageOrderValue, 0, 'COMMA', 0, 'POINT')}">0</strong>
+                </div>
+                <i data-lucide="calculator"></i>
+                <small><span th:text="${report.paidBookingCount}">0</span> booking đã thanh toán</small>
+            </article>
+        </section>
+
+        <section class="hc-metric-grid" th:if="${report.coverageSummary != null}">
+            <article class="hc-metric-card">
+                <div>
+                    <span>Độ phủ ghế</span>
+                    <strong th:text="${#numbers.formatDecimal(report.coverageSummary.averageSeatCoveragePercent, 1, 1)} + '%'">0%</strong>
+                </div>
+                <i data-lucide="armchair"></i>
+                <small th:text="|${report.coverageSummary.paidTicketCount}/${report.coverageSummary.totalCapacity} ghế|">0/0 ghế</small>
+            </article>
+            <article class="hc-metric-card">
+                <div>
+                    <span>Phủ doanh thu</span>
+                    <strong th:text="${#numbers.formatDecimal(report.coverageSummary.averageRevenueCoveragePercent, 1, 1)} + '%'">0%</strong>
+                </div>
+                <i data-lucide="gauge"></i>
+                <small>So với mức kín phòng</small>
+            </article>
+            <article class="hc-metric-card">
+                <div>
+                    <span>Tối đa tiềm năng</span>
+                    <strong th:text="${#numbers.formatDecimal(report.coverageSummary.potentialTicketRevenue, 0, 'COMMA', 0, 'POINT')}">0</strong>
+                </div>
+                <i data-lucide="circle-dollar-sign"></i>
+                <small>VND nếu phủ kín</small>
+            </article>
+            <article class="hc-metric-card">
+                <div>
+                    <span>Khoảng hụt</span>
+                    <strong th:text="${#numbers.formatDecimal(report.coverageSummary.revenueGap, 0, 'COMMA', 0, 'POINT')}">0</strong>
+                </div>
+                <i data-lucide="trending-down"></i>
+                <small><span th:text="${report.coverageSummary.lowCoverageShowtimeCount}">0</span> suất cần xem lại</small>
+            </article>
+        </section>
+
+        <section class="hc-panel" th:if="${report.branchId == null}">
+            <div class="hc-panel-head">
+                <div>
+                    <p class="hc-kicker">Độ phủ</p>
+                    <h2>So sánh chi nhánh</h2>
+                </div>
+                <i data-lucide="bar-chart-3"></i>
+            </div>
+            <div class="hc-table-wrap">
+                <table class="hc-table">
+                    <thead>
+                    <tr>
+                        <th>Chi nhánh</th>
+                        <th class="text-end">Suất</th>
+                        <th class="text-end">Ghế đã bán</th>
+                        <th class="text-end">Phủ doanh thu</th>
+                        <th class="text-end">Khoảng hụt</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(report.branchCoverage)}">
+                        <td colspan="5" class="hc-empty">Chưa có dữ liệu độ phủ trong kỳ này.</td>
+                    </tr>
+                    <tr th:each="row : ${report.branchCoverage}">
+                        <td>
+                            <strong th:text="${row.branchName}">Branch</strong>
+                            <span class="hc-muted d-block" th:text="|${#numbers.formatDecimal(row.averageSeatCoveragePercent, 1, 1)}% ghế|">0% ghế</span>
+                        </td>
+                        <td class="text-end" th:text="${row.showtimeCount}">0</td>
+                        <td class="text-end" th:text="|${row.paidTicketCount}/${row.totalCapacity}|">0/0</td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(row.averageRevenueCoveragePercent, 1, 1)} + '%'">0%</td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(row.revenueGap, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="hc-grid-two">
+            <article class="hc-panel">
+                <div class="hc-panel-head">
+                    <div>
+                        <p class="hc-kicker">Xu hướng</p>
+                        <h2>Doanh thu theo ngày</h2>
+                    </div>
+                    <i data-lucide="line-chart"></i>
+                </div>
+                <div class="hc-table-wrap">
+                    <table class="hc-table">
+                        <thead>
+                        <tr>
+                            <th>Ngày</th>
+                            <th class="text-end">Booking</th>
+                            <th class="text-end">Doanh thu</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(report.trend)}">
+                            <td colspan="3" class="hc-empty">Chưa có doanh thu đã thanh toán trong kỳ này.</td>
+                        </tr>
+                        <tr th:each="point : ${report.trend}">
+                            <td th:text="${point.label}">01/01</td>
+                            <td class="text-end" th:text="${point.paidBookingCount}">0</td>
+                            <td class="text-end" th:text="${#numbers.formatDecimal(point.revenue, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="hc-panel">
+                <div class="hc-panel-head">
+                    <div>
+                        <p class="hc-kicker">Xếp hạng</p>
+                        <h2>Doanh thu chi nhánh</h2>
+                    </div>
+                    <i data-lucide="trophy"></i>
+                </div>
+                <div class="hc-table-wrap">
+                    <table class="hc-table">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Chi nhánh</th>
+                            <th class="text-end">Doanh thu</th>
+                            <th class="text-end">Tỷ trọng</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(report.branchRanking)}">
+                            <td colspan="4" class="hc-empty">Chưa có dữ liệu xếp hạng trong kỳ này.</td>
+                        </tr>
+                        <tr th:each="row : ${report.branchRanking}">
+                            <td th:text="${row.rank}">1</td>
+                            <td>
+                                <strong th:text="${row.branchName}">Branch</strong>
+                                <span class="hc-muted d-block" th:text="|${row.paidBookingCount} booking / ${row.ticketCount} vé|">0 booking</span>
+                            </td>
+                            <td class="text-end" th:text="${#numbers.formatDecimal(row.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</td>
+                            <td class="text-end" th:text="${#numbers.formatDecimal(row.contributionPercent, 1, 1)} + '%'">0%</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+
+        <section class="hc-panel">
+            <div class="hc-panel-head">
+                <div>
+                    <p class="hc-kicker">Suất chiếu</p>
+                    <h2>Độ phủ và doanh thu tiềm năng</h2>
+                </div>
+                <i data-lucide="scan-eye"></i>
+            </div>
+            <div class="hc-table-wrap">
+                <table class="hc-table">
+                    <thead>
+                    <tr>
+                        <th>Suất chiếu</th>
+                        <th>Chi nhánh</th>
+                        <th class="text-end">Ghế</th>
+                        <th class="text-end">Độ phủ</th>
+                        <th class="text-end">Thực tế</th>
+                        <th class="text-end">Tối đa</th>
+                        <th class="text-end">Hụt</th>
+                        <th>Đánh giá</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(report.showtimeCoverage)}">
+                        <td colspan="8" class="hc-empty">Chưa có suất chiếu trong kỳ này.</td>
+                    </tr>
+                    <tr th:each="row : ${report.showtimeCoverage}"
+                        class="hc-coverage-row"
+                        th:classappend="${row.evaluation.name() == 'GOOD'} ? ' is-good' : (${row.evaluation.name() == 'AVERAGE'} ? ' is-average' : (${row.evaluation.name() == 'LOW' or row.evaluation.name() == 'NO_SALES'} ? ' is-low' : ' is-empty'))">
+                        <td>
+                            <strong th:text="${row.movieTitle}">Movie</strong>
+                            <span class="hc-muted d-block" th:text="|${row.hallName} - ${#temporals.format(row.startTime, 'HH:mm dd/MM')}|">Hall</span>
+                        </td>
+                        <td th:text="${row.branchName}">Branch</td>
+                        <td class="text-end" th:text="|${row.paidTicketCount}/${row.capacity}|">0/0</td>
+                        <td class="text-end">
+                            <div class="hc-coverage-meter"
+                                 th:classappend="${row.evaluation.name() == 'GOOD'} ? ' is-good' : (${row.evaluation.name() == 'AVERAGE'} ? ' is-average' : (${row.evaluation.name() == 'LOW' or row.evaluation.name() == 'NO_SALES'} ? ' is-low' : ' is-empty'))">
+                                <span th:text="${#numbers.formatDecimal(row.revenueCoveragePercent, 1, 1)} + '%'">0%</span>
+                                <div class="hc-coverage-track">
+                                    <i th:style="'width: ' + ${row.revenueCoveragePercent > 100 ? 100 : row.revenueCoveragePercent} + '%'"></i>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(row.actualTicketRevenue, 0, 'COMMA', 0, 'POINT')}">0</td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(row.potentialTicketRevenue, 0, 'COMMA', 0, 'POINT')}">0</td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(row.revenueGap, 0, 'COMMA', 0, 'POINT')}">0</td>
+                        <td>
+                            <span class="hc-badge"
+                                  th:classappend="${row.evaluation.name() == 'GOOD'} ? ' is-success' : (${row.evaluation.name() == 'AVERAGE'} ? ' is-warning' : (${row.evaluation.name() == 'LOW'} ? ' is-danger' : ''))"
+                                  th:text="${row.evaluationLabel}">Đánh giá</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

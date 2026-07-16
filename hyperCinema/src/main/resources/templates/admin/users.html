@@ -1,1038 +1,200 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Quản lý người dùng - HyperCinema')}"></head>
-<body class="min-h-screen bg-[#050505] text-[#F8FAFC]">
+<body class="min-h-screen">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
 <nav th:replace="~{fragments/layout :: adminSidebar('users')}"></nav>
 
-<!-- Page styles -->
-<style>
-    .modal-overlay {
-        display: none;
-    }
-    .modal-overlay.show {
-        display: flex !important;
-    }
-    .dropdown-menu {
-        display: none;
-        background-color: #0d0d12 !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 12px !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
-        padding: 6px !important;
-        min-width: 180px !important;
-        z-index: 100 !important;
-        animation: dropdownOpen 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    .dropdown-menu.show {
-        display: block !important;
-    }
-    .dropdown-item-custom {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 10px !important;
-        width: 100% !important;
-        padding: 8px 12px !important;
-        border-radius: 8px !important;
-        font-size: 13px !important;
-        font-weight: 500 !important;
-        color: #94a3b8 !important;
-        background: transparent !important;
-        border: none !important;
-        text-align: left !important;
-        cursor: pointer !important;
-        transition: all 0.15s ease !important;
-    }
-    .dropdown-item-custom:hover {
-        background-color: rgba(255, 255, 255, 0.06) !important;
-        color: #ffffff !important;
-    }
-    .dropdown-item-custom-danger {
-        color: #f87171 !important;
-    }
-    .dropdown-item-custom-danger:hover {
-        background-color: rgba(239, 68, 68, 0.1) !important;
-        color: #ef4444 !important;
-    }
-    @keyframes dropdownOpen {
-        from { transform: scale(0.95); opacity: 0; }
-        to { transform: scale(1); opacity: 1; }
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    @keyframes slideUp {
-        from { transform: translateY(15px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-    .animate-fadeIn {
-        animation: fadeIn 0.20s ease-out forwards;
-    }
-    .animate-slideUp {
-        animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-</style>
-
-<!-- Main Content -->
-<main class="md:ml-64 min-h-screen flex flex-col">
-    <div class="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
-
-        <!-- Page Header -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+<main class="hc-page">
+    <div class="hc-page-inner">
+        <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Quản lý người dùng</h1>
-                <p class="text-sm text-slate-400">Quản lý tài khoản, vai trò và phân quyền người dùng.</p>
+                <h1 class="hc-page-title">Quản lý người dùng</h1>
+                <p class="hc-page-subtitle">Quản lý tài khoản, vai trò, trạng thái và quyền truy cập.</p>
             </div>
-            <div>
-                <button onclick="openAddModal()"
-                        class="w-full md:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-primary to-amber-500 hover:from-primary-hover hover:to-amber-600 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-primary/10 hover:shadow-primary/20 cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                    Tạo tài khoản
-                </button>
-            </div>
+            <button type="button" class="hc-btn hc-btn-primary" data-user-open="add">Thêm người dùng</button>
         </div>
 
-        <!-- Statistics Grid -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-            <!-- Total Users -->
-            <div class="glass-card p-5 flex items-start gap-4">
-                <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                    <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-2xl font-bold text-white tracking-tight" th:text="${stats.total}">0</span>
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Tổng người dùng</span>
-                </div>
-            </div>
+        <div th:replace="~{fragments/components :: flashes}"></div>
 
-            <!-- Active Users -->
-            <div class="glass-card p-5 flex items-start gap-4">
-                <div class="w-12 h-12 rounded-xl bg-success/10 border border-success/20 flex items-center justify-center shrink-0">
-                    <svg class="w-6 h-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-2xl font-bold text-white tracking-tight" th:text="${stats.active}">0</span>
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Đang hoạt động</span>
-                </div>
-            </div>
-
-            <!-- Inactive Users -->
-            <div class="glass-card p-5 flex items-start gap-4">
-                <div class="w-12 h-12 rounded-xl bg-danger/10 border border-danger/20 flex items-center justify-center shrink-0">
-                    <svg class="w-6 h-6 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                    </svg>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-2xl font-bold text-white tracking-tight" th:text="${stats.inactive}">0</span>
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Ngừng hoạt động</span>
-                </div>
-            </div>
-
-            <!-- Administrators -->
-            <div class="glass-card p-5 flex items-start gap-4">
-                <div class="w-12 h-12 rounded-xl bg-info/10 border border-info/20 flex items-center justify-center shrink-0">
-                    <svg class="w-6 h-6 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-2xl font-bold text-white tracking-tight" th:text="${stats.admins}">0</span>
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">Quản trị viên</span>
-                </div>
-            </div>
+        <section class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4" aria-label="Thống kê người dùng">
+            <div class="hc-card p-5"><span class="hc-label">Tổng người dùng</span><strong class="text-3xl text-white" th:text="${stats.total}">0</strong></div>
+            <div class="hc-card p-5"><span class="hc-label">Đang hoạt động</span><strong class="text-3xl text-success" th:text="${stats.active}">0</strong></div>
+            <div class="hc-card p-5"><span class="hc-label">Tạm khóa</span><strong class="text-3xl text-warning" th:text="${stats.inactive}">0</strong></div>
+            <div class="hc-card p-5"><span class="hc-label">Administrator</span><strong class="text-3xl text-accent" th:text="${stats.admins}">0</strong></div>
         </section>
 
-        <!-- Filters & Search Block -->
-        <div class="glass-card p-6 mb-8 flex flex-col md:flex-row items-center gap-4">
-            <div class="w-full md:flex-1 relative">
-                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </span>
-                <input type="text" id="tableSearch" oninput="filterTable()"
-                       class="w-full pl-10 pr-4 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                       placeholder="Tìm kiếm theo tên, tên đăng nhập, email..."/>
-            </div>
-            <div class="w-full md:w-48">
-                <select id="roleFilter" onchange="filterTable()"
-                        class="w-full px-4 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer">
-                    <option value="">Tất cả vai trò</option>
-                    <option th:each="r : ${roles}" 
-                            th:value="${r.name == 'Administrator' || r.name == 'Admin' ? 'Quản trị viên' : (r.name == 'Manager' ? 'Quản lý' : (r.name == 'Staff' ? 'Nhân viên' : (r.name == 'Customer' ? 'Khách hàng' : (r.name == 'BranchManager' ? 'Quản lý chi nhánh' : r.name))))}" 
-                            th:text="${r.name == 'Administrator' || r.name == 'Admin' ? 'Quản trị viên' : (r.name == 'Manager' ? 'Quản lý' : (r.name == 'Staff' ? 'Nhân viên' : (r.name == 'Customer' ? 'Khách hàng' : (r.name == 'BranchManager' ? 'Quản lý chi nhánh' : r.name))))}"></option>
-                </select>
-            </div>
-            <div class="w-full md:w-48">
-                <select id="statusFilter" onchange="filterTable()"
-                        class="w-full px-4 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="Active">Đang hoạt động</option>
-                    <option value="Inactive">Ngừng hoạt động</option>
-                </select>
-            </div>
-        </div>
+        <section class="hc-card mb-6 p-5" aria-label="Bộ lọc người dùng">
+            <form th:action="@{/admin/users}" method="get" class="grid grid-cols-1 items-end gap-4 md:grid-cols-[2fr_1fr_1fr_auto]">
+                <div>
+                    <label for="search" class="hc-label">Tìm kiếm</label>
+                    <input class="hc-input" id="search" name="search" type="search" placeholder="Tên, username, email hoặc vai trò" th:value="${search}">
+                </div>
+                <div>
+                    <label for="role" class="hc-label">Vai trò</label>
+                    <select class="hc-input" id="role" name="role">
+                        <option value="" th:selected="${selectedRole == null or #strings.isEmpty(selectedRole)}">Tất cả</option>
+                        <option th:each="r : ${roles}" th:value="${r.name}" th:text="${r.name}" th:selected="${selectedRole == r.name}">Role</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="status" class="hc-label">Trạng thái</label>
+                    <select class="hc-input" id="status" name="status">
+                        <option value="" th:selected="${selectedStatus == null or #strings.isEmpty(selectedStatus)}">Tất cả</option>
+                        <option value="Active" th:selected="${selectedStatus == 'Active'}">Hoạt động</option>
+                        <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}">Ngừng hoạt động</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="hc-btn hc-btn-primary">Lọc</button>
+                    <a th:href="@{/admin/users}" class="hc-btn no-underline">Xóa</a>
+                </div>
+            </form>
+        </section>
 
-        <!-- Table Card -->
-        <div class="glass-card overflow-hidden">
-            <div class="overflow-x-auto min-h-[320px]">
-                <table class="w-full text-sm">
+        <section class="hc-card overflow-hidden" aria-label="Danh sách người dùng">
+            <div class="overflow-x-auto">
+                <table class="hc-table">
                     <thead>
-                        <tr class="border-b border-white/[0.08] text-slate-400">
-                            <th class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02] w-12 select-none">STT</th>
-                            <th id="th-user" onclick="sortTable('user')" class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02] cursor-pointer select-none hover:text-white transition-colors group">
-                                <div class="flex items-center gap-1">Người dùng</div>
-                            </th>
-                            <th id="th-email" onclick="sortTable('email')" class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02] cursor-pointer select-none hover:text-white transition-colors group">
-                                <div class="flex items-center gap-1">Email</div>
-                            </th>
-                            <th id="th-role" onclick="sortTable('role')" class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02] cursor-pointer select-none hover:text-white transition-colors group">
-                                <div class="flex items-center gap-1">Vai trò</div>
-                            </th>
-                            <th id="th-status" onclick="sortTable('status')" class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02] cursor-pointer select-none hover:text-white transition-colors group">
-                                <div class="flex items-center gap-1">Trạng thái</div>
-                            </th>
-                            <th id="th-login" onclick="sortTable('login')" class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02] cursor-pointer select-none hover:text-white transition-colors group">
-                                <div class="flex items-center gap-1">Đăng nhập cuối</div>
-                            </th>
-                            <th id="th-created" onclick="sortTable('created')" class="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02] cursor-pointer select-none hover:text-white transition-colors group">
-                                <div class="flex items-center gap-1">Ngày tạo</div>
-                            </th>
-                            <th class="px-6 py-3.5 text-right text-[11px] font-semibold uppercase tracking-wider bg-white/[0.02] w-28 select-none">Hành động</th>
-                        </tr>
+                    <tr>
+                        <th>ID</th>
+                        <th>Người dùng</th>
+                        <th>Email</th>
+                        <th>Vai trò</th>
+                        <th>Trạng thái</th>
+                        <th>Đăng nhập gần nhất</th>
+                        <th>Ngày tạo</th>
+                        <th class="text-right">Thao tác</th>
+                    </tr>
                     </thead>
-                    <tbody class="divide-y divide-white/[0.06] text-slate-300">
-                        <tr th:each="u : ${users}" class="hover:bg-white/[0.02] transition-colors">
-                            <td class="px-6 py-4 row-index font-semibold text-slate-400" th:text="${uStat.count}">1</td>
-                            <td class="px-6 py-4">
-                                <div class="flex flex-col gap-0.5">
-                                    <a th:href="@{/admin/users/{id}(id=${u.userId})}" th:text="${u.fullName}"
-                                       class="text-white font-semibold hover:text-primary transition-colors no-underline">John Admin</a>
-                                    <span th:text="'@' + ${u.username}" class="text-xs text-slate-500 font-medium">@john.admin</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-slate-300 font-medium" th:text="${u.email}">john.admin@company.com</td>
-                            <td class="px-6 py-4">
-                                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border"
-                                      th:classappend="${u.role != null && u.role.name == 'Administrator'} ? 'bg-danger/10 border-danger/20 text-danger' : (${u.role != null && u.role.name == 'Manager'} ? 'bg-info/10 border-info/20 text-info' : 'bg-primary/10 border-primary/20 text-primary')"
-                                      th:text="${u.role != null ? (u.role.name == 'Administrator' ? 'Quản trị viên' : (u.role.name == 'Manager' ? 'Quản lý' : (u.role.name == 'Staff' ? 'Nhân viên' : (u.role.name == 'Customer' ? 'Khách hàng' : u.role.name)))) : 'Khách xem'}">Quản trị viên</span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border"
-                                      th:classappend="${u.status == 'Active'} ? 'bg-success/10 border-success/20 text-success' : 'bg-slate-500/10 border-slate-500/20 text-slate-400'"
-                                      th:text="${u.status == 'Active' ? 'Hoạt động' : 'Khóa'}">Hoạt động</span>
-                            </td>
-                            <td class="px-6 py-4 text-slate-400 font-medium" th:text="${u.lastLogin != null ? #temporals.format(u.lastLogin, 'yyyy-MM-dd HH:mm') : 'N/A'}">2026-05-23 09:30</td>
-                            <td class="px-6 py-4 text-slate-500 font-medium" th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'yyyy-MM-dd') : 'N/A'}">2025-01-15</td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="inline-flex items-center gap-1.5 relative">
-                                    <a th:href="@{/admin/users/{id}(id=${u.userId})}" 
-                                       class="p-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-slate-300 hover:text-white transition-all text-xs font-medium no-underline"
-                                       title="View Details">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                    </a>
-                                    <button class="p-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-slate-300 hover:text-white transition-all cursor-pointer" 
-                                            title="Update User" 
-                                            th:if="${u.role == null || u.role.name != 'Customer'}"
-                                            th:onclick="openEditModal([[${u.userId}]], [[${u.fullName}]], [[${u.username}]], [[${u.email}]], [[${u.phone}]], [[${u.role != null ? u.role.roleId : null}]], [[${u.status}]])">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                    </button>
-                                    <div class="relative inline-block text-left">
-                                        <button class="p-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-slate-300 hover:text-white transition-all cursor-pointer" 
-                                                th:id="'dropdownBtn-' + ${u.userId}" 
-                                                th:onclick="toggleDropdown([[${u.userId}]])">
-                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                            </svg>
-                                        </button>
-                                        <!-- Custom Dropdown Menu -->
-                                        <ul class="absolute right-0 mt-1.5 w-48 bg-[#0D0D12]/95 backdrop-blur-xl border border-white/[0.08] rounded-xl shadow-xl z-50 p-1 hidden dropdown-menu" 
-                                            th:id="'dropdownMenu-' + ${u.userId}">
-                                            <li>
-                                                <button th:onclick="toggleStatus([[${u.userId}]])"
-                                                        class="dropdown-item-custom">
-                                                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                                    </svg>
-                                                    <span th:text="${u.status == 'Active' ? 'Khóa tài khoản' : 'Kích hoạt'}">Khóa tài khoản</span>
-                                                </button>
-                                            </li>
-                                            <li th:if="${u.role == null || u.role.name != 'Customer'}">
-                                                <button th:onclick="openResetPasswordModal([[${u.userId}]])"
-                                                        class="dropdown-item-custom">
-                                                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m-5 4a5 5 0 0110 0m-10 0a5 5 0 0010 0M12 11h.01M19 12h.01M16 15h.01M13 18h.01M12 2a10 10 0 11-10 10A10 10 0 0112 2z" />
-                                                    </svg>
-                                                    <span>Đặt lại mật khẩu</span>
-                                                </button>
-                                            </li>
-                                            <li th:if="${u.role == null || u.role.name != 'Customer'}">
-                                                <button th:onclick="deleteUser([[${u.userId}]])"
-                                                        class="dropdown-item-custom dropdown-item-custom-danger">
-                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                    <span>Xóa người dùng</span>
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr th:if="${#lists.isEmpty(users)}" class="empty-row">
-                            <td colspan="8" class="px-6 py-12 text-center text-slate-500">Không tìm thấy người dùng nào.</td>
-                        </tr>
+                    <tbody>
+                    <tr th:if="${users == null or #lists.isEmpty(users)}">
+                        <td colspan="8" class="py-12 text-center text-cinema-muted">Không tìm thấy người dùng phù hợp.</td>
+                    </tr>
+                    <tr th:each="u, stat : ${users}">
+                        <td class="tabular-nums" th:text="${u.userId}">1</td>
+                        <td>
+                            <a th:href="@{/admin/users/{id}(id=${u.userId})}" th:text="${u.fullName}" class="font-semibold text-white no-underline hover:text-accent">Tên người dùng</a>
+                            <div class="text-xs text-cinema-muted" th:text="|@${u.username}|">@username</div>
+                        </td>
+                        <td th:text="${u.email}">email@example.com</td>
+                        <td><span class="hc-badge border-info/40 bg-info/10 text-info" th:text="${u.role != null ? u.role.name : 'Viewer'}">Role</span></td>
+                        <td><span th:replace="~{fragments/components :: statusBadge(${u.status})}"></span></td>
+                        <td th:text="${u.lastLogin != null ? #temporals.format(u.lastLogin, 'yyyy-MM-dd HH:mm') : 'N/A'}">N/A</td>
+                        <td th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'yyyy-MM-dd') : 'N/A'}">N/A</td>
+                        <td>
+                            <div class="flex justify-end gap-2">
+                                <a th:href="@{/admin/users/{id}(id=${u.userId})}" class="hc-btn px-3 py-1.5 no-underline">Xem</a>
+                                <button type="button" class="hc-btn px-3 py-1.5"
+                                        data-user-open="edit"
+                                        th:attr="data-user-id=${u.userId},data-user-name=${u.fullName},data-user-username=${u.username},data-user-email=${u.email},data-user-phone=${u.phone},data-user-role=${u.role != null ? u.role.roleId : ''},data-user-status=${u.status}">
+                                    Sửa
+                                </button>
+                                <button type="button" class="hc-btn px-3 py-1.5" data-user-open="role" th:attr="data-user-id=${u.userId},data-user-role=${u.role != null ? u.role.roleId : ''}">Role</button>
+                                <button type="button" class="hc-btn px-3 py-1.5" data-user-action="toggle" th:attr="data-user-id=${u.userId}" th:text="${u.status == 'Active' ? 'Khóa' : 'Mở'}">Khóa</button>
+                                <button type="button" class="hc-btn px-3 py-1.5" data-user-open="reset" th:attr="data-user-id=${u.userId}">Mật khẩu</button>
+                                <button type="button" class="hc-btn px-3 py-1.5 text-danger hover:text-red-300" data-user-action="delete" th:attr="data-user-id=${u.userId}">Xóa</button>
+                            </div>
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
-
-            <!-- Pagination Footer -->
-            <div class="px-6 py-4 border-t border-white/[0.08] bg-white/[0.01] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div class="flex items-center gap-2 text-xs text-slate-400">
-                    <span>Hiển thị</span>
-                    <select id="pageSizeSelect" onchange="changePageSize()"
-                            class="px-2.5 py-1 bg-[#111827] border border-white/10 rounded-lg text-slate-300 focus:outline-none focus:border-primary cursor-pointer text-xs font-semibold">
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                    </select>
-                    <span>dòng</span>
-                </div>
-                <div class="text-xs text-slate-400 font-semibold" id="paginationInfo">
-                    Hiển thị 1 đến 5 trong tổng số 5 dòng
-                </div>
-                <div class="flex items-center gap-1" id="paginationControls">
-                    <!-- Dynamic pagination controls -->
-                </div>
-            </div>
-        </div>
-
+        </section>
     </div>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="add">
+        <section class="hc-card w-full max-w-lg p-6" role="dialog" aria-modal="true" aria-labelledby="addUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="addUserTitle" class="text-xl font-semibold text-white">Thêm người dùng</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
+            </div>
+            <form class="space-y-4" data-user-form="add">
+                <input class="hc-input" name="name" placeholder="Họ và tên" required>
+                <input class="hc-input" name="username" placeholder="Username" required>
+                <input class="hc-input" name="email" type="email" placeholder="Email" required>
+                <input class="hc-input" name="password" type="password" placeholder="Mật khẩu tạm" required>
+                <input class="hc-input" name="phone" placeholder="Số điện thoại" required>
+                <select class="hc-input" name="roleId" required>
+                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}">Role</option>
+                </select>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Tạo người dùng</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="edit">
+        <section class="hc-card w-full max-w-lg p-6" role="dialog" aria-modal="true" aria-labelledby="editUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="editUserTitle" class="text-xl font-semibold text-white">Cập nhật người dùng</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
+            </div>
+            <form class="space-y-4" data-user-form="edit">
+                <input type="hidden" name="id">
+                <input class="hc-input" name="name" placeholder="Họ và tên" required>
+                <input class="hc-input" name="username" placeholder="Username" required>
+                <input class="hc-input" name="email" type="email" placeholder="Email" required>
+                <input class="hc-input" name="phone" placeholder="Số điện thoại" required>
+                <select class="hc-input" name="roleId" required>
+                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}">Role</option>
+                </select>
+                <select class="hc-input" name="status" required>
+                    <option value="Active">Hoạt động</option>
+                    <option value="Inactive">Ngừng hoạt động</option>
+                </select>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="role">
+        <section class="hc-card w-full max-w-md p-6" role="dialog" aria-modal="true" aria-labelledby="roleUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="roleUserTitle" class="text-xl font-semibold text-white">Gán vai trò</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
+            </div>
+            <form class="space-y-4" data-user-form="role">
+                <input type="hidden" name="id">
+                <select class="hc-input" name="roleId" required>
+                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}">Role</option>
+                </select>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Cập nhật</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="reset">
+        <section class="hc-card w-full max-w-md p-6" role="dialog" aria-modal="true" aria-labelledby="resetUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="resetUserTitle" class="text-xl font-semibold text-white">Đặt lại mật khẩu</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
+            </div>
+            <form class="space-y-4" data-user-form="reset">
+                <input type="hidden" name="id">
+                <input class="hc-input" name="password" type="password" placeholder="Mật khẩu mới" required>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Cập nhật</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <div class="fixed bottom-5 right-5 z-[60] space-y-2" data-user-toasts></div>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <script defer th:src="@{/js/features/admin-users.js(v=1.0)}"></script>
 </main>
 
-<!-- ================= MODALS ================= -->
-
-<!-- Add User Modal -->
-<div id="addModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden animate-fadeIn modal-overlay">
-    <div class="glass-card w-full max-w-md overflow-hidden animate-slideUp">
-        <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
-            <h3 class="text-base font-semibold text-white">Thêm người dùng mới</h3>
-            <button onclick="closeModal('addModal')" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-        </div>
-        <form id="addUserForm" onsubmit="submitAddUser(event)" class="p-6 space-y-4">
-            <div class="flex flex-col gap-1.5">
-                <label for="add_name" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Họ và tên</label>
-                <input type="text" id="add_name" required
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                       placeholder="Ví dụ: Nguyễn Văn A">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="add_username" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Tên đăng nhập</label>
-                <input type="text" id="add_username" required
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                       placeholder="Ví dụ: nguyen.a">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="add_email" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Email</label>
-                <input type="email" id="add_email" required
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                       placeholder="Ví dụ: nguyena@company.com">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="add_password" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Mật khẩu</label>
-                <input type="password" id="add_password" required
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                       placeholder="Nhập mật khẩu tạm thời">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="add_phone" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Số điện thoại</label>
-                <input type="text" id="add_phone"
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                       placeholder="Ví dụ: 0123456789">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="add_role" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Vai trò</label>
-                <select id="add_role" required
-                        class="w-full px-4 py-2.5 bg-[#111827] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer">
-                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name == 'Administrator' ? 'Quản trị viên' : (r.name == 'Manager' ? 'Quản lý' : (r.name == 'Staff' ? 'Nhân viên' : (r.name == 'Customer' ? 'Khách hàng' : r.name)))}"></option>
-                </select>
-            </div>
-            <div class="flex justify-end gap-3 pt-4 border-t border-white/[0.08] bg-white/[0.02] -mx-6 -mb-6 p-6">
-                <button type="button" onclick="closeModal('addModal')" 
-                        class="px-4 py-2 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
-                    Hủy
-                </button>
-                <button type="submit" 
-                        class="px-4 py-2 bg-gradient-to-r from-primary to-amber-500 hover:from-primary-hover hover:to-amber-600 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
-                    Thêm người dùng
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Update User Modal -->
-<div id="editModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden animate-fadeIn modal-overlay">
-    <div class="glass-card w-full max-w-md overflow-hidden animate-slideUp">
-        <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
-            <h3 class="text-base font-semibold text-white">Cập nhật thông tin người dùng</h3>
-            <button onclick="closeModal('editModal')" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-        </div>
-        <form id="editUserForm" onsubmit="submitEditUser(event)" class="p-6 space-y-4">
-            <input type="hidden" id="edit_id">
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_name" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Họ và tên</label>
-                <input type="text" id="edit_name" required
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_username" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Tên đăng nhập</label>
-                <input type="text" id="edit_username" required
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_email" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Email</label>
-                <input type="email" id="edit_email" required
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_phone" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Số điện thoại</label>
-                <input type="text" id="edit_phone"
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_role" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Vai trò</label>
-                <select id="edit_role" required
-                        class="w-full px-4 py-2.5 bg-[#111827] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer">
-                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name == 'Administrator' ? 'Quản trị viên' : (r.name == 'Manager' ? 'Quản lý' : (r.name == 'Staff' ? 'Nhân viên' : (r.name == 'Customer' ? 'Khách hàng' : r.name)))}"></option>
-                </select>
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_status" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Trạng thái</label>
-                <select id="edit_status" required
-                        class="w-full px-4 py-2.5 bg-[#111827] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer">
-                    <option value="Active">Hoạt động</option>
-                    <option value="Inactive">Khóa</option>
-                </select>
-            </div>
-            <div class="flex justify-end gap-3 pt-4 border-t border-white/[0.08] bg-white/[0.02] -mx-6 -mb-6 p-6">
-                <button type="button" onclick="closeModal('editModal')" 
-                        class="px-4 py-2 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
-                    Hủy
-                </button>
-                <button type="submit" 
-                        class="px-4 py-2 bg-gradient-to-r from-primary to-amber-500 hover:from-primary-hover hover:to-amber-600 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
-                    Lưu thay đổi
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-
-
-<!-- Reset Password Modal -->
-<div id="resetPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden animate-fadeIn modal-overlay">
-    <div class="glass-card w-full max-w-sm overflow-hidden animate-slideUp">
-        <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
-            <h3 class="text-base font-semibold text-white">Đặt lại mật khẩu</h3>
-            <button onclick="closeModal('resetPasswordModal')" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-        </div>
-        <form id="resetPasswordForm" onsubmit="submitResetPassword(event)" class="p-6 space-y-4">
-            <input type="hidden" id="reset_user_id">
-            <div class="flex flex-col gap-1.5">
-                <label for="reset_password_val" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Mật khẩu mới</label>
-                <input type="password" id="reset_password_val" required
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                       placeholder="Nhập mật khẩu mới">
-            </div>
-            <div class="flex justify-end gap-3 pt-4 border-t border-white/[0.08] bg-white/[0.02] -mx-6 -mb-6 p-6">
-                <button type="button" onclick="closeModal('resetPasswordModal')" 
-                        class="px-4 py-2 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
-                    Hủy
-                </button>
-                <button type="submit" 
-                        class="px-4 py-2 bg-gradient-to-r from-primary to-amber-500 hover:from-primary-hover hover:to-amber-600 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
-                    Cập nhật mật khẩu
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Toast notifications wrapper -->
-<div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-auto"></div>
-
-<!-- ================= SCRIPTS ================= -->
-<script>
-    // Pagination State
-    let currentPage = 1;
-    let pageSize = 5; // Default page size to 5
-
-    // Sorting State
-    let currentSortColumn = 'user'; // Sort by user by default
-    let currentSortOrder = 'asc';
-
-    function sortTable(columnName) {
-        if (currentSortColumn === columnName) {
-            currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
-        } else {
-            currentSortColumn = columnName;
-            currentSortOrder = 'asc';
-        }
-        updateSortHeadersUI();
-        performSort();
-        currentPage = 1;
-        filterTable();
-    }
-
-    function updateSortHeadersUI() {
-        const headers = {
-            'user': document.getElementById('th-user'),
-            'email': document.getElementById('th-email'),
-            'role': document.getElementById('th-role'),
-            'status': document.getElementById('th-status'),
-            'login': document.getElementById('th-login'),
-            'created': document.getElementById('th-created')
-        };
-        
-        Object.keys(headers).forEach(col => {
-            const th = headers[col];
-            if (!th) return;
-            
-            let iconContainer = th.querySelector('.sort-icon-container');
-            if (!iconContainer) {
-                iconContainer = document.createElement('span');
-                iconContainer.className = 'inline-flex items-center ml-1 sort-icon-container';
-                iconContainer.innerHTML = `
-                    <svg class="w-3 h-3 sort-icon text-slate-600 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                        <path class="sort-path" stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
-                    </svg>
-                `;
-                th.appendChild(iconContainer);
-            }
-            
-            const icon = iconContainer.querySelector('.sort-icon');
-            const path = iconContainer.querySelector('.sort-path');
-            
-            if (col === currentSortColumn) {
-                icon.classList.remove('text-slate-600');
-                icon.classList.add('text-primary');
-                if (currentSortOrder === 'asc') {
-                    path.setAttribute('d', 'M5 15l7-7 7 7'); // Up arrow
-                } else {
-                    path.setAttribute('d', 'M19 9l-7 7-7-7'); // Down arrow
-                }
-            } else {
-                icon.classList.remove('text-primary');
-                icon.classList.add('text-slate-600');
-                path.setAttribute('d', 'M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9'); // Both arrows
-            }
-        });
-    }
-
-    function performSort() {
-        const tbody = document.querySelector('table tbody');
-        if (!tbody) return;
-        const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)'));
-        if (rows.length <= 1) return;
-        
-        rows.sort((rowA, rowB) => {
-            let valA = '';
-            let valB = '';
-            
-            switch (currentSortColumn) {
-                case 'user':
-                    const linkA = rowA.querySelector('td:nth-child(2) a');
-                    valA = linkA ? linkA.textContent.trim().toLowerCase() : '';
-                    const linkB = rowB.querySelector('td:nth-child(2) a');
-                    valB = linkB ? linkB.textContent.trim().toLowerCase() : '';
-                    break;
-                case 'email':
-                    const emailA = rowA.querySelector('td:nth-child(3)');
-                    valA = emailA ? emailA.textContent.trim().toLowerCase() : '';
-                    const emailB = rowB.querySelector('td:nth-child(3)');
-                    valB = emailB ? emailB.textContent.trim().toLowerCase() : '';
-                    break;
-                case 'role':
-                    const roleA = rowA.querySelector('td:nth-child(4) span');
-                    valA = roleA ? roleA.textContent.trim().toLowerCase() : '';
-                    const roleB = rowB.querySelector('td:nth-child(4) span');
-                    valB = roleB ? roleB.textContent.trim().toLowerCase() : '';
-                    break;
-                case 'status':
-                    const statusA = rowA.querySelector('td:nth-child(5) span');
-                    valA = statusA ? statusA.textContent.trim().toLowerCase() : '';
-                    const statusB = rowB.querySelector('td:nth-child(5) span');
-                    valB = statusB ? statusB.textContent.trim().toLowerCase() : '';
-                    break;
-                case 'login':
-                    const loginA = rowA.querySelector('td:nth-child(6)');
-                    valA = loginA ? loginA.textContent.trim() : '';
-                    if (valA === 'N/A') valA = '';
-                    const loginB = rowB.querySelector('td:nth-child(6)');
-                    valB = loginB ? loginB.textContent.trim() : '';
-                    if (valB === 'N/A') valB = '';
-                    break;
-                case 'created':
-                    const createdA = rowA.querySelector('td:nth-child(7)');
-                    valA = createdA ? createdA.textContent.trim() : '';
-                    if (valA === 'N/A') valA = '';
-                    const createdB = rowB.querySelector('td:nth-child(7)');
-                    valB = createdB ? createdB.textContent.trim() : '';
-                    if (valB === 'N/A') valB = '';
-                    break;
-                default:
-                    return 0;
-            }
-            
-            if (valA < valB) return currentSortOrder === 'asc' ? -1 : 1;
-            if (valA > valB) return currentSortOrder === 'asc' ? 1 : -1;
-            return 0;
-        });
-        
-        rows.forEach(row => tbody.appendChild(row));
-    }
-
-    // Initialize pagination and sorting on load
-    document.addEventListener('DOMContentLoaded', () => {
-        const selectEl = document.getElementById('pageSizeSelect');
-        if (selectEl) {
-            selectEl.value = pageSize;
-        }
-        updateSortHeadersUI();
-        performSort();
-        filterTable();
-    });
-
-    function changePageSize() {
-        const selectEl = document.getElementById('pageSizeSelect');
-        if (selectEl) {
-            pageSize = parseInt(selectEl.value);
-        }
-        currentPage = 1;
-        filterTable();
-    }
-
-    // Instant Client-side Table Search & Filter with Pagination
-    function filterTable() {
-        const searchQuery = document.getElementById('tableSearch').value.toLowerCase().trim();
-        const selectedRole = document.getElementById('roleFilter').value.toLowerCase().trim();
-        const selectedStatus = document.getElementById('statusFilter').value.toLowerCase().trim();
-        
-        const rows = document.querySelectorAll('table tbody tr');
-        const matchingRows = [];
-        
-        rows.forEach(row => {
-            const nameLink = row.querySelector('td:nth-child(2) a');
-            const nameText = nameLink ? nameLink.textContent.toLowerCase() : '';
-            
-            const usernameSpan = row.querySelector('td:nth-child(2) span');
-            const usernameText = usernameSpan ? usernameSpan.textContent.toLowerCase() : '';
-            
-            const emailCell = row.querySelector('td:nth-child(3)');
-            const emailText = emailCell ? emailCell.textContent.toLowerCase() : '';
-            
-            const roleBadge = row.querySelector('td:nth-child(4) span');
-            const roleText = roleBadge ? roleBadge.textContent.toLowerCase() : '';
-            
-            const statusBadge = row.querySelector('td:nth-child(5) span');
-            const statusText = statusBadge ? statusBadge.textContent.toLowerCase() : '';
-            
-            const matchesSearch = searchQuery === '' || 
-                                  nameText.includes(searchQuery) || 
-                                  usernameText.includes(searchQuery) || 
-                                  emailText.includes(searchQuery);
-                                  
-            const matchesRole = selectedRole === '' || 
-                                 roleText === selectedRole;
-                                 
-            const matchesStatus = selectedStatus === '' || 
-                                   statusText === selectedStatus;
-                                   
-            row.style.display = 'none'; // Hide by default, pagination will display matches on current page
-            
-            if (matchesSearch && matchesRole && matchesStatus) {
-                matchingRows.push(row);
-            }
-        });
-        
-        updatePagination(matchingRows);
-    }
-
-    function updatePagination(matchingRows) {
-        const totalItems = matchingRows.length;
-        const totalPages = Math.ceil(totalItems / pageSize) || 1;
-        
-        if (currentPage > totalPages) currentPage = totalPages;
-        if (currentPage < 1) currentPage = 1;
-        
-        const startIndex = (currentPage - 1) * pageSize;
-        const endIndex = Math.min(startIndex + pageSize, totalItems);
-        
-        // Hide all rows first
-        const allRows = document.querySelectorAll('table tbody tr');
-        allRows.forEach(row => row.style.display = 'none');
-        
-        // Show current page items and dynamically update sequence numbers
-        for (let i = startIndex; i < endIndex; i++) {
-            matchingRows[i].style.display = '';
-            const indexCell = matchingRows[i].querySelector('.row-index');
-            if (indexCell) {
-                indexCell.textContent = i + 1;
-            }
-        }
-        
-        // Update showing text
-        const infoEl = document.getElementById('paginationInfo');
-        if (infoEl) {
-            if (totalItems === 0) {
-                infoEl.textContent = 'Hiển thị 0 đến 0 của 0 dòng';
-            } else {
-                infoEl.textContent = `Hiển thị ${startIndex + 1} đến ${endIndex} của ${totalItems} dòng`;
-            }
-        }
-        
-        // Render control buttons
-        const controlsEl = document.getElementById('paginationControls');
-        if (controlsEl) {
-            controlsEl.innerHTML = '';
-            
-            // Previous Button
-            const prevBtn = document.createElement('button');
-            prevBtn.className = 'px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-slate-300 hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer';
-            prevBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>';
-            prevBtn.disabled = currentPage === 1;
-            prevBtn.onclick = (e) => {
-                e.preventDefault();
-                if (currentPage > 1) {
-                    currentPage--;
-                    filterTable();
-                }
-            };
-            controlsEl.appendChild(prevBtn);
-            
-            // Page buttons
-            const maxPagesToShow = 5;
-            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-            
-            if (endPage - startPage + 1 < maxPagesToShow) {
-                startPage = Math.max(1, endPage - maxPagesToShow + 1);
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
-                const pageBtn = document.createElement('button');
-                pageBtn.className = `px-3 py-1.5 border rounded-lg text-xs font-semibold transition-all cursor-pointer ${i === currentPage ? 'bg-primary text-white border-primary/20 shadow-md shadow-primary/10' : 'bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-slate-300 hover:text-white'}`;
-                pageBtn.textContent = i;
-                pageBtn.onclick = (e) => {
-                    e.preventDefault();
-                    currentPage = i;
-                    filterTable();
-                };
-                controlsEl.appendChild(pageBtn);
-            }
-            
-            // Next Button
-            const nextBtn = document.createElement('button');
-            nextBtn.className = 'px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-slate-300 hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer';
-            nextBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>';
-            nextBtn.disabled = currentPage === totalPages;
-            nextBtn.onclick = (e) => {
-                e.preventDefault();
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    filterTable();
-                }
-            };
-            controlsEl.appendChild(nextBtn);
-        }
-    }
-
-    // Context Actions Menu Dropdown handler
-    let activeDropdownId = null;
-
-    function toggleDropdown(userId) {
-        event.stopPropagation();
-        const menu = document.getElementById('dropdownMenu-' + userId);
-        const button = document.getElementById('dropdownBtn-' + userId);
-        
-        // Close other open dropdowns
-        if (activeDropdownId && activeDropdownId !== userId) {
-            const openMenu = document.getElementById('dropdownMenu-' + activeDropdownId);
-            if (openMenu) openMenu.classList.remove('show');
-        }
-
-        if (menu.classList.contains('show')) {
-            menu.classList.remove('show');
-            activeDropdownId = null;
-        } else {
-            // Smart auto-dropup positioning for bottom rows
-            const row = button.closest('tr');
-            const tbody = row.parentElement;
-            const rows = Array.from(tbody.children);
-            const index = rows.indexOf(row);
-            
-            if (index >= rows.length - 2 && rows.length > 2) {
-                menu.style.top = 'auto';
-                menu.style.bottom = 'calc(100% + 5px)';
-                menu.style.transformOrigin = 'bottom right';
-            } else {
-                menu.style.top = 'calc(100% + 5px)';
-                menu.style.bottom = 'auto';
-                menu.style.transformOrigin = 'top right';
-            }
-            
-            menu.classList.add('show');
-            activeDropdownId = userId;
-        }
-    }
-
-    // Close active dropdowns when clicking outside
-    document.addEventListener('click', function() {
-        if (activeDropdownId) {
-            const openMenu = document.getElementById('dropdownMenu-' + activeDropdownId);
-            if (openMenu) openMenu.classList.remove('show');
-            activeDropdownId = null;
-        }
-    });
-
-    // Modal Operations
-    function openModal(id) {
-        document.getElementById(id).classList.add('show');
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('show');
-    }
-
-    // Add Modal
-    function openAddModal() {
-        document.getElementById('addUserForm').reset();
-        openModal('addModal');
-    }
-
-    // Edit Modal
-    function openEditModal(id, name, username, email, phone, roleId, status) {
-        document.getElementById('edit_id').value = id;
-        document.getElementById('edit_name').value = name || '';
-        document.getElementById('edit_username').value = username || '';
-        document.getElementById('edit_email').value = email || '';
-        document.getElementById('edit_phone').value = phone || '';
-        document.getElementById('edit_role').value = roleId || '';
-        document.getElementById('edit_status').value = status || 'Active';
-        openModal('editModal');
-    }
-
-
-
-    // Reset Password Modal
-    function openResetPasswordModal(userId) {
-        document.getElementById('reset_user_id').value = userId;
-        document.getElementById('reset_password_val').value = '';
-        openModal('resetPasswordModal');
-    }
-
-    // Dynamic Toasts
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = `flex items-center justify-between gap-4 p-4 border rounded-xl shadow-xl backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0 ${
-            type === 'success' 
-            ? 'bg-success/10 border-success/20 text-success' 
-            : 'bg-danger/10 border-danger/20 text-danger'
-        }`;
-        
-        toast.innerHTML = `
-            <div class="flex items-center gap-2.5">
-                ${
-                    type === 'success'
-                    ? '<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
-                    : '<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>'
-                }
-                <span class="text-xs font-semibold text-white">${message}</span>
-            </div>
-            <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer text-sm leading-none shrink-0">&times;</button>
-        `;
-        
-        container.appendChild(toast);
-        // Force reflow
-        toast.offsetHeight;
-        toast.classList.remove('translate-y-2', 'opacity-0');
-        
-        setTimeout(() => {
-            toast.classList.add('translate-y-2', 'opacity-0');
-            setTimeout(() => toast.remove(), 300);
-        }, 4000);
-    }
-
-    // CSRF Header builder helper
-    function buildHeaders() {
-        const headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        };
-        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
-        if (csrfToken && csrfHeader) {
-            headers[csrfHeader] = csrfToken;
-        }
-        return headers;
-    }
-
-    // AJAX Form Submissions
-    
-    // 1. Submit Add User
-    function submitAddUser(event) {
-        event.preventDefault();
-        const payload = {
-            name: document.getElementById('add_name').value,
-            username: document.getElementById('add_username').value,
-            email: document.getElementById('add_email').value,
-            password: document.getElementById('add_password').value,
-            phone: document.getElementById('add_phone').value,
-            roleId: parseInt(document.getElementById('add_role').value)
-        };
-
-        fetch('/api/admin/users', {
-            method: 'POST',
-            headers: buildHeaders(),
-            body: JSON.stringify(payload)
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('Tạo người dùng thành công!');
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                return response.json().then(err => { throw new Error(err.message || 'Tạo người dùng thất bại') });
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
-
-    // 2. Submit Edit User
-    function submitEditUser(event) {
-        event.preventDefault();
-        const id = document.getElementById('edit_id').value;
-        const payload = {
-            name: document.getElementById('edit_name').value,
-            username: document.getElementById('edit_username').value,
-            email: document.getElementById('edit_email').value,
-            phone: document.getElementById('edit_phone').value,
-            roleId: parseInt(document.getElementById('edit_role').value),
-            status: document.getElementById('edit_status').value
-        };
-
-        fetch(`/api/admin/users/${id}`, {
-            method: 'PUT',
-            headers: buildHeaders(),
-            body: JSON.stringify(payload)
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('Cập nhật thông tin thành công!');
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                return response.json().then(err => { throw new Error(err.message || 'Cập nhật thông tin thất bại') });
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
-
-
-
-    // 4. Submit Reset Password
-    function submitResetPassword(event) {
-        event.preventDefault();
-        const userId = document.getElementById('reset_user_id').value;
-        const password = document.getElementById('reset_password_val').value;
-
-        fetch(`/api/admin/users/${userId}/reset-password`, {
-            method: 'POST',
-            headers: buildHeaders(),
-            body: JSON.stringify({ password: password })
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('Đặt lại mật khẩu thành công!');
-                closeModal('resetPasswordModal');
-            } else {
-                return response.json().then(err => { throw new Error(err.message || 'Đặt lại mật khẩu thất bại') });
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
-
-    // 5. Toggle Status
-    function toggleStatus(userId) {
-        fetch(`/api/admin/users/${userId}/toggle-status`, {
-            method: 'POST',
-            headers: buildHeaders()
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('Đã thay đổi trạng thái người dùng!');
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                throw new Error('Thay đổi trạng thái thất bại');
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
-
-    // 6. Delete User
-    function deleteUser(userId) {
-        if (confirm('Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản người dùng này khỏi hệ thống không?')) {
-            fetch(`/api/admin/users/${userId}`, {
-                method: 'DELETE',
-                headers: buildHeaders()
-            })
-            .then(response => {
-                if (response.ok) {
-                    showToast('Xóa người dùng thành công!');
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    return response.json().then(err => { throw new Error(err.message || 'Xóa người dùng thất bại') });
-                }
-            })
-            .catch(error => {
-                showToast(error.message, 'danger');
-            });
-        }
-    }
-</script>
 </body>
 </html>

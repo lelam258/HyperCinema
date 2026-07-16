@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Thanh toán VietQR - HyperCinema')}"></head>
+<body class="min-h-screen hc-customer">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: customerSidebar('bookings')}"></nav>
+
+<main class="hc-page hc-customer-page">
+    <div class="hc-vietqr-page">
+        <section class="hc-customer-hero" aria-labelledby="vietqr-title">
+            <div>
+                <p class="hc-kicker">Thanh toán</p>
+                <h1 id="vietqr-title" class="hc-page-title">Chuyển khoản VietQR</h1>
+                <p class="hc-page-subtitle">Quét mã, chuyển đúng số tiền và nội dung để hoàn tất đặt vé.</p>
+            </div>
+            <a th:href="@{/my/dashboard}" class="hc-button hc-button-outline">
+                <i data-lucide="chevron-left"></i>
+                Quay lại phim
+            </a>
+        </section>
+
+        <div th:if="${!vietQrConfigured}" class="hc-alert hc-alert-danger">
+            Chưa cấu hình tài khoản VietQR. Vui lòng cập nhật vietqr.bank-id và vietqr.account-no trong application.properties.
+        </div>
+
+        <section class="hc-vietqr-layout">
+            <article class="hc-panel hc-vietqr-card">
+                <div th:if="${vietQrConfigured}" class="hc-vietqr-frame">
+                    <img th:src="${qrUrl}" alt="Mã QR chuyển khoản VietQR">
+                </div>
+                <div th:unless="${vietQrConfigured}" class="hc-vietqr-frame is-empty">
+                    <i data-lucide="qr-code"></i>
+                </div>
+
+                <form th:action="@{|/payment/vietqr/${booking.bookingId}/confirm|}" method="post" class="hc-actions-stacked">
+                    <button type="submit" class="hc-button hc-button-primary hc-customer-primary">
+                        Tôi đã chuyển khoản
+                    </button>
+                    <a th:href="@{/my/bookings}" class="hc-button hc-button-outline">Xem vé của tôi</a>
+                </form>
+            </article>
+
+            <aside class="hc-panel hc-vietqr-summary">
+                <h2>Thông tin chuyển khoản</h2>
+                <dl class="hc-summary-list">
+                    <div>
+                        <dt>Booking</dt>
+                        <dd th:text="|#${booking.bookingId}|">#1</dd>
+                    </div>
+                    <div>
+                        <dt>Ngân hàng</dt>
+                        <dd th:text="${bankId != null and !#strings.isEmpty(bankId) ? bankId : '--'}">--</dd>
+                    </div>
+                    <div>
+                        <dt>Số tài khoản</dt>
+                        <dd th:text="${accountNo != null and !#strings.isEmpty(accountNo) ? accountNo : '--'}">--</dd>
+                    </div>
+                    <div>
+                        <dt>Chủ tài khoản</dt>
+                        <dd th:text="${accountName != null and !#strings.isEmpty(accountName) ? accountName : '--'}">--</dd>
+                    </div>
+                    <div>
+                        <dt>Nội dung</dt>
+                        <dd class="hc-vietqr-code" th:text="${transferContent}">HC1</dd>
+                    </div>
+                    <div>
+                        <dt>Tạm tính</dt>
+                        <dd th:text="${#numbers.formatDecimal(booking.orderSubtotal != null ? booking.orderSubtotal : booking.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</dd>
+                    </div>
+                    <div th:if="${booking.voucherDiscountAmount != null and booking.voucherDiscountAmount > 0}">
+                        <dt>Voucher</dt>
+                        <dd th:text="${'-' + #numbers.formatDecimal(booking.voucherDiscountAmount, 0, 'COMMA', 0, 'POINT') + ' VND'}">0 VND</dd>
+                    </div>
+                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}">
+                        <dt th:text="${booking.membershipPlanName != null and !#strings.isEmpty(booking.membershipPlanName) ? 'Membership ' + booking.membershipPlanName + (booking.membershipDiscountPercent != null ? ' (' + booking.membershipDiscountPercent + '%)' : '') : 'Membership'}">Membership</dt>
+                        <dd th:text="${'-' + #numbers.formatDecimal(booking.membershipDiscountAmount, 0, 'COMMA', 0, 'POINT') + ' VND'}">0 VND</dd>
+                    </div>
+                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}">
+                        <dt>Base membership</dt>
+                        <dd th:text="${#numbers.formatDecimal((booking.orderSubtotal != null ? booking.orderSubtotal : booking.totalPrice) - (booking.voucherDiscountAmount != null ? booking.voucherDiscountAmount : 0), 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</dd>
+                    </div>
+                    <div class="hc-summary-total">
+                        <dt>Số tiền</dt>
+                        <dd th:text="${#numbers.formatDecimal(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</dd>
+                    </div>
+                    <div th:if="${payment != null and payment.expiresAt != null}">
+                        <dt>Hạn thanh toán</dt>
+                        <dd th:text="${#temporals.format(payment.expiresAt, 'HH:mm dd/MM/yyyy')}">--</dd>
+                    </div>
+                </dl>
+                <p>Với bản demo, sau khi chuyển khoản bạn bấm xác nhận để hệ thống kích hoạt vé và F&amp;B.</p>
+            </aside>
+        </section>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

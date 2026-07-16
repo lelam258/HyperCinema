@@ -42,12 +42,42 @@
                         </select>
                         <span th:if="${#fields.hasErrors('hallType')}" th:errors="*{hallType}" class="mt-1 block text-xs text-danger"></span>
                     </div>
+                    <div>
+                        <label for="ticketPrice" class="hc-label">Giá fallback</label>
+                        <input class="hc-input" type="number" id="ticketPrice" th:field="*{ticketPrice}" th:classappend="${#fields.hasErrors('ticketPrice')} ? ' border-danger!' : ''" min="1" step="1000" required>
+                        <span th:if="${#fields.hasErrors('ticketPrice')}" th:errors="*{ticketPrice}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
                     <div th:if="${mode == 'edit'}">
                         <label for="capacity" class="hc-label">Sức chứa</label>
                         <input class="hc-input" type="number" id="capacity" th:field="*{capacity}" th:classappend="${#fields.hasErrors('capacity')} ? ' border-danger!' : ''" min="1" required>
                         <span th:if="${#fields.hasErrors('capacity')}" th:errors="*{capacity}" class="mt-1 block text-xs text-danger"></span>
                     </div>
                 </div>
+
+                <section class="hc-subcard p-4">
+                    <div class="mb-3">
+                        <h2 class="text-base font-semibold text-white">Bảng giá theo loại ghế</h2>
+                        <p class="text-xs text-cinema-muted">Giá này sẽ được dùng khi khách hoặc nhân viên chọn ghế trong phòng này.</p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+                        <div>
+                            <label for="standardPrice" class="hc-label">Thường</label>
+                            <input class="hc-input" type="number" id="standardPrice" th:field="*{standardPrice}" min="1" step="1000" placeholder="80000">
+                        </div>
+                        <div>
+                            <label for="vipPrice" class="hc-label">VIP</label>
+                            <input class="hc-input" type="number" id="vipPrice" th:field="*{vipPrice}" min="1" step="1000" placeholder="100000">
+                        </div>
+                        <div>
+                            <label for="couplePrice" class="hc-label">Ghế đôi</label>
+                            <input class="hc-input" type="number" id="couplePrice" th:field="*{couplePrice}" min="1" step="1000" placeholder="160000">
+                        </div>
+                        <div>
+                            <label for="disabledPrice" class="hc-label">Khuyết tật</label>
+                            <input class="hc-input" type="number" id="disabledPrice" th:field="*{disabledPrice}" min="0" step="1000" placeholder="0">
+                        </div>
+                    </div>
+                </section>
 
                 <div th:if="${mode == 'create'}" class="grid grid-cols-1 gap-4 md:grid-cols-3" data-hall-layout-form>
                     <div>

@@ -56,7 +56,7 @@ public class ManagerAnalyticsController {
             branches = Collections.singletonList(user.getBranch());
             restrictBranch = true;
         } else {
-            branches = branchRepository.findAll();
+            branches = branchRepository.findByStatusIgnoreCaseOrderByNameAsc("Active");
         }
 
         // Default dates: last 30 days

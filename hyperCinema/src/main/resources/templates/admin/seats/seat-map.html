@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(|Sơ đồ ghế - ${seats.hallName} - HyperCinema|)}"></head>
+<body>
+<div class="hc-shell">
+    <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+    <nav th:replace="${seatContext.admin} ? ~{fragments/layout :: adminSidebar('halls')} : (${seatContext.sidebar == 'manager'} ? ~{fragments/layout :: managerSidebar('halls')} : ~{fragments/layout :: branchSidebar('halls')})"></nav>
+
+    <main class="hc-page">
+        <nav class="hc-breadcrumb" aria-label="Breadcrumb">
+            <a th:href="@{/admin/halls}">Phòng chiếu</a>
+            <span>/</span>
+            <a th:href="@{|/admin/halls/${seats.hallId}|}" th:text="${seats.hallName}">Hall</a>
+            <span>/</span>
+            <strong>Sơ đồ ghế</strong>
+        </nav>
+
+        <section class="hc-page-head">
+            <div>
+                <p class="hc-kicker">Seat map</p>
+                <h1>Sơ đồ ghế</h1>
+                <p th:text="|${seats.branchName} / ${seats.hallName} / ${seats.totalSeats} ghế|">Rạp / Phòng / 0 ghế</p>
+            </div>
+        </section>
+
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <section class="hc-panel mb-4">
+            <div class="hc-panel-head">
+                <div>
+                    <p class="hc-kicker">Pricing</p>
+                    <h2>Bảng giá theo loại ghế</h2>
+                </div>
+                <i data-lucide="badge-dollar-sign"></i>
+            </div>
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <div th:each="price : ${seats.seatTypePrices}" class="hc-subcard p-3">
+                    <span class="hc-label" th:text="${price.label}">Thường</span>
+                    <strong class="text-white tabular-nums" th:text="${#numbers.formatDecimal(price.price, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</strong>
+                </div>
+            </div>
+        </section>
+
+        <section id="seat-layout-tools" class="hc-panel hc-seat-tools">
+            <div class="hc-panel-head">
+                <div>
+                    <p class="hc-kicker">Layout tools</p>
+                    <h2>Chỉnh trực tiếp sơ đồ ghế</h2>
+                </div>
+                <i data-lucide="layout-grid"></i>
+            </div>
+
+            <div class="hc-seat-tool-grid">
+                <form th:action="@{|/admin/halls/${seats.hallId}/seats/layout/rows|}" method="post" class="hc-seat-tool">
+                    <strong>Thêm hàng</strong>
+                    <select class="hc-input" name="type" aria-label="Loại ghế">
+                        <option value="STANDARD">Thường</option>
+                        <option value="VIP">VIP</option>
+                        <option value="COUPLE">Đôi (Couple)</option>
+                        <option value="DISABLED">Vô hiệu hóa</option>
+                    </select>
+                    <button type="submit" class="hc-button hc-button-primary">
+                        <i data-lucide="plus"></i>
+                        Thêm hàng
+                    </button>
+                </form>
+
+                <form th:action="@{|/admin/halls/${seats.hallId}/seats/layout/columns|}" method="post" class="hc-seat-tool">
+                    <strong>Thêm cột</strong>
+                    <select class="hc-input" name="type" aria-label="Loại ghế">
+                        <option value="STANDARD">Thường</option>
+                        <option value="VIP">VIP</option>
+                        <option value="COUPLE">Đôi (Couple)</option>
+                        <option value="DISABLED">Vô hiệu hóa</option>
+                    </select>
+                    <button type="submit" class="hc-button hc-button-outline">
+                        <i data-lucide="columns-3"></i>
+                        Thêm cột cuối
+                    </button>
+                </form>
+
+                <form th:action="@{|/admin/halls/${seats.hallId}/seats/layout/column-aisles|}" method="post" class="hc-seat-tool">
+                    <strong>Lối đi dọc</strong>
+                    <input class="hc-input" name="afterColumn" type="number" min="1" placeholder="Sau cột VD: 5" required>
+                    <button type="submit" class="hc-button hc-button-outline">
+                        <i data-lucide="move-horizontal"></i>
+                        Chèn lối đi dọc
+                    </button>
+                </form>
+
+                <form th:action="@{|/admin/halls/${seats.hallId}/seats/layout/row-aisles|}" method="post" class="hc-seat-tool">
+                    <strong>Lối đi ngang</strong>
+                    <input class="hc-input" name="afterRow" type="text" maxlength="1" placeholder="Sau hàng VD: B" required>
+                    <button type="submit" class="hc-button hc-button-outline">
+                        <i data-lucide="move-vertical"></i>
+                        Chèn lối đi ngang
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section th:if="${seats.empty}" class="hc-empty-state">
+            <i data-lucide="armchair"></i>
+            <h2>Phòng chiếu chưa có ghế</h2>
+            <p>Bắt đầu bằng công cụ thêm hàng ngay phía trên.</p>
+            <div class="hc-actions">
+                <a href="#seat-layout-tools" class="hc-button hc-button-outline">Thêm hàng</a>
+            </div>
+        </section>
+
+        <div th:unless="${seats.empty}" class="hc-seat-admin-layout" data-seat-admin-map>
+            <div class="hc-seat-map-column">
+                <section class="hc-seat-stage">
+                    <div class="hc-screen-line" aria-hidden="true"></div>
+                    <p class="hc-screen-label">Màn hình</p>
+                    <div class="hc-legend">
+                        <span><span class="hc-legend-dot is-success"></span>Sẵn sàng</span>
+                        <span><span class="hc-legend-dot is-warning"></span>Bảo trì</span>
+                        <span class="hc-badge">STD</span>
+                        <span class="hc-badge hc-badge-accent">VIP</span>
+                        <span class="hc-badge hc-badge-pink">CPL</span>
+                        <span class="hc-badge hc-badge-teal">DIS</span>
+                    </div>
+                </section>
+
+                <section class="hc-panel">
+                    <div class="hc-panel-head">
+                        <div>
+                            <p class="hc-kicker">Layout</p>
+                            <h2>Bản đồ ghế theo hàng</h2>
+                        </div>
+                        <i data-lucide="armchair"></i>
+                    </div>
+
+                    <th:block th:with="groupedSeats=${@seatGroupHelper.groupRows(seats.seats)}">
+                        <div class="hc-seat-row-list">
+                            <article th:each="entry : ${groupedSeats}"
+                                     th:classappend="${entry.gapBefore} ? ' has-row-gap-before' : ''"
+                                     class="hc-seat-row"
+                                     th:attr="aria-label=|Hàng ${entry.label}|">
+                                <div class="hc-seat-row-head">
+                                    <span th:text="${entry.label}">A</span>
+                                    <strong th:text="|${#lists.size(entry.seats)} ghế|">0 ghế</strong>
+                                </div>
+
+                                <div class="hc-seat-management-grid">
+                                    <th:block th:each="cell : ${entry.cells}">
+                                        <span th:if="${cell.aisle}" class="hc-seat-aisle-cell" aria-hidden="true"></span>
+
+                                        <span th:if="${cell.placeholder}"
+                                              class="hc-seat-card hc-seat-card-empty"
+                                              th:title="|Vị trí trống ${entry.label}${cell.number}|"
+                                              th:attr="aria-label=|Vị trí trống ${entry.label}${cell.number}|">
+                                            <i data-lucide="x"></i>
+                                        </span>
+
+                                        <th:block th:if="${cell.seat != null}" th:with="seat=${cell.seat}">
+                                            <button type="button"
+                                                    th:classappend="${seat.maintenanceStatus == 'UNDER_MAINTENANCE'} ? ' is-maintenance' : ''"
+                                                    class="hc-seat-card"
+                                                    data-seat-card
+                                                    th:attr="data-seat-id=${seat.seatId},
+                                                             data-seat-label=|${seat.seatRow}${seat.seatNumber}|,
+                                                             data-seat-row=${seat.seatRow},
+                                                             data-seat-number=${seat.seatNumber},
+                                                             data-seat-type=${seat.type != null ? #strings.toUpperCase(seat.type) : 'STANDARD'},
+                                                             data-seat-price=${seat.price},
+                                                             data-seat-maintenance=${seat.maintenanceStatus},
+                                                             data-seat-has-active-reference=${seat.hasActiveReference},
+                                                             data-seat-update-url=@{|/admin/halls/${seats.hallId}/seats/${seat.seatId}|},
+                                                             data-seat-maintenance-url=@{|/admin/halls/${seats.hallId}/seats/${seat.seatId}/maintenance|},
+                                                             data-seat-delete-url=@{|/admin/halls/${seats.hallId}/seats/${seat.seatId}/delete|},
+                                                             data-seat-next-maintenance=${seat.maintenanceStatus == 'UNDER_MAINTENANCE' ? 'AVAILABLE' : 'UNDER_MAINTENANCE'}"
+                                                    th:aria-label="|Chọn ghế ${seat.seatRow}${seat.seatNumber}|">
+                                                <span class="hc-seat-card-main">
+                                                    <strong th:text="|${seat.seatRow}${seat.seatNumber}|">A1</strong>
+                                                    <span th:switch="${seat.type != null ? #strings.toUpperCase(seat.type) : 'STANDARD'}">
+                                                        <span th:case="'STANDARD'" class="hc-badge">STD</span>
+                                                        <span th:case="'VIP'" class="hc-badge hc-badge-accent">VIP</span>
+                                                        <span th:case="'COUPLE'" class="hc-badge hc-badge-pink">CPL</span>
+                                                        <span th:case="'DISABLED'" class="hc-badge hc-badge-teal">DIS</span>
+                                                        <span th:case="*" class="hc-badge" th:text="${seat.type}">?</span>
+                                                    </span>
+                                                    <span th:if="${seat.maintenanceStatus == 'UNDER_MAINTENANCE'}" class="hc-seat-status is-maintenance">Bảo trì</span>
+                                                    <span class="hc-seat-status" th:text="${#numbers.formatDecimal(seat.price, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</span>
+                                                </span>
+                                            </button>
+                                        </th:block>
+                                    </th:block>
+                                </div>
+                            </article>
+                        </div>
+                    </th:block>
+                </section>
+            </div>
+
+            <aside class="hc-panel hc-seat-editor" data-seat-editor aria-label="Cấu hình ghế">
+                <div class="hc-panel-head">
+                    <div>
+                        <p class="hc-kicker">Cấu hình chi tiết</p>
+                        <h2>Chỉnh sửa ghế</h2>
+                    </div>
+                    <button type="button" class="hc-icon-button" data-seat-clear title="Bỏ chọn ghế">
+                        <span class="sr-only">Bỏ chọn ghế</span>
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+
+                <div class="hc-seat-editor-empty" data-seat-empty>
+                    <i data-lucide="mouse-pointer-click"></i>
+                    <strong>Chọn một ghế trên sơ đồ</strong>
+                    <p>Click vào ô ghế để sửa thông tin, đổi trạng thái bảo trì hoặc xóa ghế.</p>
+                </div>
+
+                <div class="hc-seat-editor-body" data-seat-editor-body hidden>
+                    <div class="hc-seat-editor-summary">
+                        <span>Ô đang chọn</span>
+                        <strong data-seat-editor-label>--</strong>
+                        <span class="hc-badge" data-seat-editor-badge>STD</span>
+                    </div>
+
+                    <form data-seat-update-form
+                          th:action="@{|/admin/halls/${seats.hallId}/seats/0|}"
+                          method="post"
+                          class="hc-seat-editor-form">
+                        <label class="hc-field">
+                            <span>Hàng ghế</span>
+                            <input class="hc-input" name="seatRow" type="text" maxlength="5" required data-seat-field="seatRow">
+                        </label>
+
+                        <label class="hc-field">
+                            <span>Số ghế</span>
+                            <input class="hc-input" name="seatNumber" type="number" min="1" required data-seat-field="seatNumber">
+                        </label>
+
+                        <label class="hc-field">
+                            <span>Loại ghế</span>
+                            <select class="hc-input" name="type" required data-seat-field="type">
+                                <option value="STANDARD">Thường</option>
+                                <option value="VIP">VIP</option>
+                                <option value="COUPLE">Đôi (Couple)</option>
+                                <option value="DISABLED">Vô hiệu hóa</option>
+                            </select>
+                        </label>
+
+                        <label class="hc-field">
+                            <span>Trạng thái bảo trì</span>
+                            <select class="hc-input" name="maintenanceStatus" required data-seat-field="maintenanceStatus">
+                                <option value="AVAILABLE">Sẵn sàng</option>
+                                <option value="UNDER_MAINTENANCE">Đang bảo trì</option>
+                            </select>
+                        </label>
+
+                        <button type="submit" class="hc-button hc-button-primary">
+                            <i data-lucide="save"></i>
+                            Lưu thay đổi
+                        </button>
+                    </form>
+
+                    <div class="hc-seat-editor-actions" aria-label="Thao tác nhanh">
+                        <form data-seat-maintenance-form
+                              th:action="@{|/admin/halls/${seats.hallId}/seats/0/maintenance|}"
+                              method="post">
+                            <input type="hidden" name="status" data-seat-maintenance-status>
+                            <button type="submit" class="hc-button hc-button-outline">
+                                <i data-lucide="wrench"></i>
+                                <span data-seat-maintenance-text>Đánh dấu bảo trì</span>
+                            </button>
+                        </form>
+
+                        <form data-seat-delete-form
+                              th:action="@{|/admin/halls/${seats.hallId}/seats/0/delete|}"
+                              method="post"
+                              onsubmit="return confirm('Bạn có chắc chắn muốn xóa ghế này?');">
+                            <button type="submit" class="hc-button hc-button-outline hc-icon-danger" data-seat-delete-button>
+                                <i data-lucide="trash-2"></i>
+                                Xóa ghế
+                            </button>
+                        </form>
+
+                        <p class="hc-seat-editor-note" data-seat-delete-note hidden>Ghế đang được sử dụng nên không thể xóa.</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+</div>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script defer th:src="@{/js/features/admin-seat-map.js(v=1.1)}"></script>
+</body>
+</html>

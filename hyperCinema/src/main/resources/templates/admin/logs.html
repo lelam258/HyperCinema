@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Nhật ký - HyperCinema')}"></head>
+<body>
+    <div class="hc-shell">
+        <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+        <nav th:replace="~{fragments/layout :: adminSidebar('dashboard')}"></nav>
+
+        <main class="hc-page">
+            <section class="hc-page-head">
+                <div>
+                    <p class="hc-kicker">Admin</p>
+                    <h1>Nhật ký hoạt động</h1>
+                    <p>Theo dõi các thay đổi gần đây trong hệ thống.</p>
+                </div>
+                <a class="hc-button hc-button-outline" th:href="@{/admin/dashboard}">
+                    <i data-lucide="layout-dashboard"></i>
+                    Dashboard
+                </a>
+            </section>
+
+            <section class="hc-panel">
+                <div class="hc-table-wrap">
+                    <table class="hc-table">
+                        <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Người thực hiện</th>
+                            <th>Hành động</th>
+                            <th>Chi tiết</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(logs)}">
+                            <td colspan="4" class="hc-empty">Chưa có nhật ký.</td>
+                        </tr>
+                        <tr th:each="log : ${logs}">
+                            <td th:text="${log.createdAt != null ? #temporals.format(log.createdAt, 'HH:mm dd/MM/yyyy') : 'N/A'}">N/A</td>
+                            <td th:text="${log.actorLabel}">System</td>
+                            <td><span class="hc-badge border-info/40 bg-info/10 text-info" th:text="${log.action}">ACTION</span></td>
+                            <td th:text="${log.description}">Chi tiết</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

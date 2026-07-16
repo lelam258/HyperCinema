@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Audit_Log")
+@Table(name = "audit_log")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class AuditLog {
@@ -32,7 +32,8 @@ public class AuditLog {
     @Column(name = "action", nullable = false, length = 50)
     private String action;
 
-    @Column(name = "details", nullable = false, columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "details", nullable = false)
     private String details;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -45,3 +46,4 @@ public class AuditLog {
         }
     }
 }
+

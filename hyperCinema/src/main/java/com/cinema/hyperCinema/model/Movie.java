@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Movie")
+@Table(name = "movie")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Movie {
@@ -26,7 +26,8 @@ public class Movie {
     @Column(nullable = false)
     private Integer duration;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Lob
+    @Column(nullable = false)
     private String description;
 
     @Column(name = "release_date", nullable = false)
@@ -61,3 +62,4 @@ public class Movie {
         if (status == null) status = "ComingSoon";
     }
 }
+

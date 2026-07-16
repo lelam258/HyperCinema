@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tạo ghế hàng loạt - HyperCinema')}"></head>
+<body>
+<div class="hc-shell">
+    <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+    <nav th:replace="${seatContext.admin} ? ~{fragments/layout :: adminSidebar('halls')} : (${seatContext.sidebar == 'manager'} ? ~{fragments/layout :: managerSidebar('halls')} : ~{fragments/layout :: branchSidebar('halls')})"></nav>
+
+    <main class="hc-page">
+        <nav class="hc-breadcrumb" aria-label="Breadcrumb">
+            <a th:href="@{/admin/halls}">Phòng chiếu</a>
+            <span>/</span>
+            <a th:href="@{|/admin/halls/${seatContext.hallId}/seats|}">Sơ đồ ghế</a>
+            <span>/</span>
+            <strong>Tạo hàng loạt</strong>
+        </nav>
+
+        <section class="hc-page-head">
+            <div>
+                <p class="hc-kicker">Seat generator</p>
+                <h1>Tạo ghế hàng loạt</h1>
+                <p th:text="|Phòng: ${seatContext.hallName} - ${seatContext.branchName}|">Phòng</p>
+            </div>
+        </section>
+
+        <section class="hc-panel">
+            <div class="hc-panel-head">
+                <div>
+                    <p class="hc-kicker">Cấu hình</p>
+                    <h2>Hàng, cột và lối đi</h2>
+                </div>
+                <i data-lucide="grid-3x3"></i>
+            </div>
+
+            <form th:object="${bulkRequest}"
+                  th:action="@{|/admin/halls/${seatContext.hallId}/seats/bulk|}"
+                  method="post"
+                  novalidate
+                  class="hc-stack"
+                  data-seat-bulk-form>
+                <div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+                    <strong>Không thể tạo ghế:</strong>
+                    <ul class="mt-2 list-disc space-y-1 pl-5">
+                        <li th:each="err : ${#fields.globalErrors()}" th:text="${err}">global error</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <label class="hc-label">Danh sách hàng ghế</label>
+                    <div class="hc-bulk-row-list" data-seat-row-container>
+                        <div th:each="row, stat : *{rows}" class="hc-bulk-row" data-seat-row>
+                            <input class="hc-input" type="text"
+                                   th:name="|rows[${stat.index}].rowLabel|"
+                                   th:value="${row.rowLabel}"
+                                   placeholder="Nhãn hàng (VD: A)"
+                                   maxlength="5"
+                                   required>
+                            <input class="hc-input" type="number"
+                                   th:name="|rows[${stat.index}].seatCount|"
+                                   th:value="${row.seatCount}"
+                                   placeholder="Số ghế"
+                                   min="1"
+                                   required>
+                            <button type="button" class="hc-icon-button hc-icon-danger" title="Xóa hàng" data-seat-row-remove>
+                                <i data-lucide="trash-2"></i>
+                                <span class="sr-only">Xóa hàng</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="button" class="hc-button hc-button-outline mt-3" data-seat-row-add>
+                        <i data-lucide="plus"></i>
+                        Thêm hàng
+                    </button>
+                    <p class="mt-2 text-sm text-cinema-muted">Muốn tạo lối đi ngang thì bỏ qua nhãn hàng. Ví dụ: A, B, D, E sẽ tạo khoảng trống giữa B và D.</p>
+                </div>
+
+                <label class="hc-field" for="columnAislesAfter">
+                    <span>Lối đi dọc sau cột</span>
+                    <input class="hc-input"
+                           type="text"
+                           id="columnAislesAfter"
+                           th:field="*{columnAislesAfter}"
+                           placeholder="VD: 5 hoặc 5, 12">
+                    <small class="hc-muted">Ví dụ hàng có 10 ghế và nhập 5 thì tạo A1-A5, bỏ trống một cột, rồi A7-A11.</small>
+                </label>
+
+                <div class="hc-form-grid">
+                    <label class="hc-field" for="type">
+                        <span>Loại ghế mặc định</span>
+                        <select class="hc-input" id="type" th:field="*{type}">
+                            <option value="STANDARD">Thường</option>
+                            <option value="VIP">VIP</option>
+                            <option value="COUPLE">Đôi (Couple)</option>
+                            <option value="DISABLED">Vô hiệu hóa</option>
+                        </select>
+                    </label>
+
+                    <label class="hc-field" for="maintenanceStatus">
+                        <span>Trạng thái bảo trì mặc định</span>
+                        <select class="hc-input" id="maintenanceStatus" th:field="*{maintenanceStatus}">
+                            <option value="AVAILABLE">Sẵn sàng</option>
+                            <option value="UNDER_MAINTENANCE">Đang bảo trì</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="hc-actions border-t border-cinema-border pt-5">
+                    <a th:href="@{|/admin/halls/${seatContext.hallId}/seats|}" class="hc-button hc-button-outline">Hủy</a>
+                    <button type="submit" class="hc-button hc-button-primary">
+                        <i data-lucide="save"></i>
+                        Tạo hàng loạt
+                    </button>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script defer th:src="@{/js/features/seat-bulk.js(v=1.1)}"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Activate your HyperCinema account</title>
+    <title>Kích hoạt tài khoản HyperCinema của bạn</title>
 </head>
 <body style="margin:0;padding:0;background:#111111;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#111111;padding:32px 12px;">
@@ -12,26 +12,26 @@
                     <tr>
                         <td style="padding:28px 32px 18px 32px;border-bottom:1px solid #333333;">
                             <h1 style="margin:0;color:#ffffff;font-size:24px;line-height:32px;">HyperCinema</h1>
-                            <p style="margin:8px 0 0 0;color:#b8b8b8;font-size:14px;">Account activation</p>
+                            <p style="margin:8px 0 0 0;color:#b8b8b8;font-size:14px;">Kích hoạt tài khoản</p>
                         </td>
                     </tr>
                     <tr>
                         <td style="padding:32px;">
-                            <h2 style="margin:0 0 12px 0;color:#ffffff;font-size:20px;line-height:28px;">Activate your account</h2>
+                            <h2 style="margin:0 0 12px 0;color:#ffffff;font-size:20px;line-height:28px;">Kích hoạt tài khoản của bạn</h2>
                             <p style="margin:0 0 20px 0;color:#d8d8d8;font-size:15px;line-height:24px;">
-                                Click the button below to activate your HyperCinema account.
+                                Vui lòng nhấp vào nút bên dưới để kích hoạt tài khoản HyperCinema của bạn.
                             </p>
 
                             <table role="presentation" cellspacing="0" cellpadding="0" style="margin:24px 0;">
                                 <tr>
                                     <td style="background:#ff3b30;border-radius:6px;">
-                                        <a th:href="${activationUrl}" href="#" style="display:inline-block;padding:13px 20px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;">Activate account</a>
+                                        <a th:href="${activationUrl}" href="#" style="display:inline-block;padding:13px 20px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;">Kích hoạt tài khoản</a>
                                     </td>
                                 </tr>
                             </table>
 
                             <p style="margin:0;color:#b8b8b8;font-size:13px;line-height:20px;">
-                                This activation link expires in <span th:text="${expireText}">24 hours</span>. If you did not create a HyperCinema account, you can ignore this email.
+                                Liên kết kích hoạt này sẽ hết hạn sau <span th:text="${expireText}">24 giờ</span>. Nếu bạn không đăng ký tài khoản HyperCinema, bạn có thể bỏ qua email này.
                             </p>
                         </td>
                     </tr>

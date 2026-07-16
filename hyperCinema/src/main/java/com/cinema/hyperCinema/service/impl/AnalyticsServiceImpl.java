@@ -56,7 +56,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         // Timeline Data: day by day
         Map<String, Map<String, Long>> timeline = new LinkedHashMap<>();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM dd", Locale.ENGLISH);
         for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
             String label = d.format(fmt);
             Map<String, Long> dayData = new HashMap<>();
@@ -105,7 +105,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         }
 
         List<Map<String, Object>> breakdownList = new ArrayList<>();
-        DateTimeFormatter tableDateFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter tableDateFmt = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH);
         for (Map.Entry<String, Map<LocalDate, Map<String, Object>>> bEntry : branchGroup.entrySet()) {
             String branchName = bEntry.getKey();
             for (Map.Entry<LocalDate, Map<String, Object>> dEntry : bEntry.getValue().entrySet()) {

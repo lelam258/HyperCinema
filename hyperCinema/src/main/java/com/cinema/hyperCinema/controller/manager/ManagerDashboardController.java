@@ -1,50 +1,56 @@
 package com.cinema.hyperCinema.controller.manager;
 
-import com.cinema.hyperCinema.service.dashboard.ManagerDashboardService;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
+import com.cinema.hyperCinema.dto.ui.admin.MetricCardView;
+import com.cinema.hyperCinema.dto.ui.admin.SeriesPointView;
+import com.cinema.hyperCinema.dto.ui.workspace.WorkspaceDashboardView;
+import com.cinema.hyperCinema.service.ui.WorkspaceUiDataService;
 
 @Controller
 @RequestMapping("/manager")
 public class ManagerDashboardController {
 
-    private final ManagerDashboardService dashboardService;
+    private final WorkspaceUiDataService workspaceUiDataService;
 
-    public ManagerDashboardController(ManagerDashboardService dashboardService) {
-        this.dashboardService = dashboardService;
+    public ManagerDashboardController(WorkspaceUiDataService workspaceUiDataService) {
+        this.workspaceUiDataService = workspaceUiDataService;
     }
 
     @GetMapping({"/dashboard", ""})
     public String dashboard(Model model) {
-        // ── KPI Cards ──
-        model.addAttribute("totalRevenue", dashboardService.sumChainRevenueThisMonth());
-        model.addAttribute("totalTickets", dashboardService.countChainTicketsThisMonth());
-        model.addAttribute("activeBranches", dashboardService.countActiveBranches());
-        model.addAttribute("nowShowingMovies", dashboardService.countNowShowingMovies());
-
-        // ── Charts ──
-        Map<String, Long> revenueData = dashboardService.getRevenueLastDays(14); // Xem 14 ngày
-        model.addAttribute("revenueLabels", revenueData.keySet());
-        model.addAttribute("revenueValues", revenueData.values());
-
-        // ── Tables ──
-        List<Object[]> branchLeaderboard = dashboardService.getBranchLeaderboardThisMonth();
-        model.addAttribute("branchLeaderboard", branchLeaderboard);
-
-        List<Object[]> topMovies = dashboardService.getTopMoviesThisMonth(5);
-        model.addAttribute("topMovies", topMovies);
-
-        // ── Meta ──
-        model.addAttribute("lastUpdated",
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")));
-
+        WorkspaceDashboardView dashboard = workspaceUiDataService.getManagerDashboard();
+        model.addAttribute("dashboard", dashboard);
+        model.addAttribute("totalRevenue", metricValue(dashboard, "revenue"));
+        model.addAttribute("totalTickets", metricValue(dashboard, "tickets"));
+        model.addAttribute("activeBranches", metricValue(dashboard, "branches"));
+        model.addAttribute("nowShowingMovies", metricValue(dashboard, "movies"));
+        model.addAttribute("revenueLabels", dashboard.getRevenueSeries().stream()
+                .map(SeriesPointView::getLabel)
+                .collect(Collectors.toList()));
+        model.addAttribute("revenueValues", dashboard.getRevenueSeries().stream()
+                .map(SeriesPointView::getValue)
+                .collect(Collectors.toList()));
+        model.addAttribute("branchLeaderboard", dashboard.getLeaderboard().stream()
+                .map(row -> new Object[] {row.getLabel(), row.getValue()})
+                .collect(Collectors.toList()));
+        model.addAttribute("topMovies", dashboard.getTopMovies().stream()
+                .map(movie -> new Object[] {movie.getTitle(), movie.getBookingCount()})
+                .collect(Collectors.toList()));
+        model.addAttribute("lastUpdated", dashboard.getLastUpdated());
         return "manager/dashboard";
+    }
+
+    private long metricValue(WorkspaceDashboardView dashboard, String key) {
+        return dashboard.getMetrics().stream()
+                .filter(metric -> key.equals(metric.getKey()))
+                .findFirst()
+                .map(MetricCardView::getValue)
+                .orElse(0L);
     }
 }

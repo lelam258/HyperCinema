@@ -8,19 +8,22 @@
         <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
-                <a th:href="@{/}" class="text-xl font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight no-underline">HyperCinema</a>
+                <a th:href="@{/movies}" class="text-xl font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight no-underline">HyperCinema</a>
             </div>
             <nav class="flex items-center gap-6">
                 <a th:href="@{/movies(status='NowShowing')}" class="text-sm font-medium transition-colors hover:text-primary no-underline text-slate-300">Phim đang chiếu</a>
                 <a th:href="@{/movies(status='ComingSoon')}" class="text-sm font-medium transition-colors hover:text-primary no-underline text-slate-300">Phim sắp chiếu</a>
             </nav>
             <div class="flex items-center gap-3">
-                <th:block th:if="${loggedIn}">
-                    <a th:href="${dashboardUrl}" class="px-4 py-2 text-sm font-semibold text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline">Tài khoản</a>
-                </th:block>
-                <th:block th:unless="${loggedIn}">
+                <th:block th:if="${!isLoggedInCustomer}">
                     <a th:href="@{/login}" class="px-4 py-2 text-sm font-semibold text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline">Đăng nhập</a>
                     <a th:href="@{/register}" class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all no-underline">Đăng ký</a>
+                </th:block>
+                <th:block th:if="${isLoggedInCustomer}">
+                    <a th:href="@{/my/dashboard}" class="px-4 py-2 text-sm font-semibold text-primary bg-primary/10 border border-primary/20 rounded-xl hover:bg-primary/20 transition-all no-underline">Dashboard</a>
+                    <form th:action="@{/logout}" method="post" class="inline">
+                        <button type="submit" class="px-4 py-2 text-sm font-semibold text-red-400 bg-white/[0.04] border border-white/10 rounded-xl hover:bg-red-500/10 hover:text-red-300 transition-all cursor-pointer">Đăng xuất</button>
+                    </form>
                 </th:block>
             </div>
         </div>
@@ -64,7 +67,7 @@
                     <div class="flex flex-wrap justify-center gap-4 mb-8 text-[11px]">
                         <div class="flex items-center gap-1.5"><div class="w-4 h-4 rounded border border-slate-500/30 bg-slate-700/20"></div><span class="text-slate-400">Standard</span></div>
                         <div class="flex items-center gap-1.5"><div class="w-4 h-4 rounded border border-primary/50 bg-primary/10"></div><span class="text-slate-400">VIP (+20k)</span></div>
-                        <div class="flex items-center gap-1.5"><div class="w-8 h-4 rounded border border-pink-500/50 bg-pink-500/10"></div><span class="text-slate-400">Double</span></div>
+                        <div class="flex items-center gap-1.5"><div class="w-8 h-4 rounded border border-pink-500/50 bg-pink-500/10"></div><span class="text-slate-400">Couple</span></div>
                         <div class="flex items-center gap-1.5"><div class="w-4 h-4 rounded bg-slate-800 border border-slate-700/50"></div><span class="text-slate-500">Đã đặt</span></div>
                     </div>
 
@@ -81,7 +84,7 @@
                                      th:data-type="${seat.type}"
                                      th:data-status="${seat.status}"
                                      th:onclick="${isLoggedInCustomer} ? 'toggleSeatSelection(this)' : null"
-                                     th:classappend="${seat.status == 'BOOKED'} ? 'bg-slate-800 border-slate-700/50 text-slate-600 cursor-not-allowed' : (${seat.status == 'RESERVED'} ? 'bg-amber-500/20 border-amber-500/40 text-amber-500/30 cursor-not-allowed' : (${seat.type == 'VIP'} ? 'border-primary/40 bg-primary/10 text-amber-200' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-primary/20' : '') : (${seat.type == 'Double'} ? 'col-span-2 w-14 border-pink-500/40 bg-pink-500/10 text-pink-200' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-pink-500/20' : '') : 'border-slate-500/30 bg-slate-700/10 text-slate-400' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-slate-700/30' : ''))))"
+                                     th:classappend="${seat.status == 'BOOKED'} ? 'bg-slate-800 border-slate-700/50 text-slate-600 cursor-not-allowed' : (${seat.status == 'RESERVED'} ? 'bg-amber-500/20 border-amber-500/40 text-amber-500/30 cursor-not-allowed' : (${seat.type == 'VIP'} ? 'border-primary/40 bg-primary/10 text-amber-200' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-primary/20' : '') : (${seat.type == 'COUPLE'} ? 'col-span-2 w-14 border-pink-500/40 bg-pink-500/10 text-pink-200' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-pink-500/20' : '') : 'border-slate-500/30 bg-slate-700/10 text-slate-400' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-slate-700/30' : ''))))"
                                      class="w-6.5 h-6.5 rounded flex items-center justify-center text-[9px] font-bold border select-none"
                                      th:title="|Hàng ${seat.seatRow} - Ghế ${seat.seatNumber} (${seat.type}) - ${seat.status}|">
                                     <span th:text="${seat.seatNumber}">1</span>
@@ -136,7 +139,7 @@
                     <div class="border-t border-white/5 pt-4 space-y-2">
                         <div class="flex items-center justify-between text-xs text-slate-400">
                             <span>Giá vé cơ bản:</span>
-                            <span class="font-semibold text-white tabular-nums" th:text="${#numbers.formatDecimal(showtime.price, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</span>
+                            <span class="font-semibold text-white tabular-nums" th:text="${#numbers.formatDecimal(showtime.hall.ticketPrice, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</span>
                         </div>
                         <div class="flex items-center justify-between text-sm border-t border-white/5 pt-2">
                             <span class="font-bold text-slate-300">TỔNG TIỀN:</span>
@@ -146,6 +149,10 @@
 
                     <form th:action="@{'/my/booking/' + ${showtime.showtimeId} + '/checkout'}" method="post" id="checkoutForm" class="pt-2">
                         <input type="hidden" id="selectedSeatsInput" name="seatIds" value="">
+                        <label for="receiverName" class="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Receiver Name</label>
+                        <input type="text" id="receiverName" name="receiverName" th:value="${customerName}" required maxlength="100" autocomplete="name"
+                               class="w-full mb-4 px-3 py-2.5 text-sm text-white bg-white/[0.04] border border-white/10 rounded-xl outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10"
+                               placeholder="Enter receiver name">
                         <button type="submit" id="submitBtn" disabled class="w-full py-3 text-sm font-bold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl transition-all duration-300 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-primary/20 cursor-pointer">
                             Thanh toán qua cổng VNPay
                         </button>
@@ -176,7 +183,7 @@
                 element.classList.remove('bg-primary', 'border-primary', 'text-white');
                 if (element.getAttribute('data-type') === 'VIP') {
                     element.classList.add('border-primary/40', 'bg-primary/10', 'text-amber-200');
-                } else if (element.getAttribute('data-type') === 'Double') {
+                } else if (element.getAttribute('data-type') === 'COUPLE') {
                     element.classList.add('border-pink-500/40', 'bg-pink-500/10', 'text-pink-200');
                 } else {
                     element.classList.add('border-slate-500/30', 'bg-slate-700/10', 'text-slate-400');

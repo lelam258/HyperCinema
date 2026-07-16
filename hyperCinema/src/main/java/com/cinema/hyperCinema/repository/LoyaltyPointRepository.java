@@ -11,4 +11,6 @@ public interface LoyaltyPointRepository extends JpaRepository<LoyaltyPoint, Inte
     // COALESCE nếu như SUM(lp.points) có giá trị thì sẽ lấy giá trị đó còn ngược lại là lấy 0
     @Query("SELECT COALESCE(SUM(lp.points), 0) FROM LoyaltyPoint lp WHERE lp.user.userId = :userId")
     Long sumPointsByUserId(@Param("userId") Integer userId);
+
+    boolean existsByUser_UserIdAndType(Integer userId, String type);
 }

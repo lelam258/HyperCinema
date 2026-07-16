@@ -1,33 +1,32 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
-/* Light Theme Variables */
 :root {
-    --bg-main: #f8fafc;            /* Light slate background */
-    --bg-card: #ffffff;            /* Pure white cards */
-    --bg-card-hover: #f1f5f9;      /* Soft slate hover background */
-    --bg-modal: #ffffff;           /* White modals */
-    --bg-sidebar: #ffffff;         /* White sidebar */
+    --bg-main: #0F0F0F;
+    --bg-card: #1F2937;
+    --bg-card-hover: #374151;
+    --bg-modal: #18181B;
+    --bg-sidebar: #18181B;
     
-    --border-color: #e2e8f0;       /* Slate-200 clean borders */
-    --border-hover: #cbd5e1;       /* Slate-300 hover borders */
-    --border-focus: #4f46e5;       /* Indigo focus color */
+    --border-color: #374151;
+    --border-hover: #4B5563;
+    --border-focus: #E50914;
     
-    --text-primary: #0f172a;       /* Slate-900 deep charcoal for primary text */
-    --text-secondary: #475569;     /* Slate-600 for secondary text */
-    --text-muted: #94a3b8;         /* Slate-400 for captions and icons */
+    --text-primary: #FFFFFF;
+    --text-secondary: #A1A1AA;
+    --text-muted: #6B7280;
     
-    --primary: #4f46e5;            /* Indigo primary */
-    --primary-hover: #4338ca;      /* Deep indigo hover */
-    --primary-glow: rgba(79, 70, 229, 0.12); /* Subtle shadow glow */
+    --primary: #E50914;
+    --primary-hover: #B80710;
+    --primary-glow: rgba(229, 9, 20, 0.22);
     
-    --success: #047857;            /* Emerald-700 for success text */
-    --success-bg: #ecfdf5;         /* Emerald-50 soft green background */
-    --danger: #b91c1c;             /* Red-700 for danger text */
-    --danger-bg: #fef2f2;          /* Red-50 soft red background */
-    --warning: #b45309;            /* Amber-700 for warning text */
-    --warning-bg: #fffbeb;         /* Amber-50 soft yellow background */
-    --info: #0e7490;               /* Cyan-700 for info text */
-    --info-bg: #ecfeff;            /* Cyan-50 soft cyan background */
+    --success: #22C55E;
+    --success-bg: rgba(34, 197, 94, 0.12);
+    --danger: #EF4444;
+    --danger-bg: rgba(239, 68, 68, 0.12);
+    --warning: #F5C518;
+    --warning-bg: rgba(245, 197, 24, 0.12);
+    --info: #3B82F6;
+    --info-bg: rgba(59, 130, 246, 0.12);
 }
 
 /* Reset and Global Styles */
@@ -883,4 +882,130 @@ body {
 .page-size-select:focus {
     border-color: var(--border-focus);
     outline: none;
+}
+
+/* Template parity compatibility layer for legacy admin pages. */
+.sidebar {
+    box-shadow: none;
+}
+
+.logo-icon {
+    background: var(--primary);
+    border-radius: 4px;
+    box-shadow: 0 0 15px rgba(229, 9, 20, 0.4);
+}
+
+.logo-text {
+    background: linear-gradient(to right, #ffffff, #f5c518);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: "Playfair Display", Georgia, serif;
+    font-style: italic;
+    letter-spacing: 0;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background-color: rgba(229, 9, 20, 0.1);
+    color: var(--primary);
+}
+
+.nav-link.active {
+    background: rgba(229, 9, 20, 0.1);
+    border-left-color: var(--primary);
+}
+
+.header-title h1,
+.stats-info h3,
+.modal-header h2,
+.profile-card h2,
+.permissions-card h3,
+.permission-info h4,
+.info-value {
+    color: var(--text-primary);
+}
+
+.filter-card,
+.stats-card,
+.table-card,
+.profile-card,
+.permissions-card,
+.permission-row,
+.modal-card,
+.toast,
+.dropdown-menu {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+.stats-card:hover,
+.permission-row:hover {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+.search-input,
+.select-input,
+.form-control,
+.page-size-select {
+    background-color: #111827;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.search-input::placeholder,
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.custom-table th {
+    background-color: #18181b;
+    border-bottom-color: var(--border-color);
+    color: #9ca3af;
+}
+
+.custom-table td {
+    border-bottom-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.custom-table tbody tr:hover,
+.dropdown-item:hover {
+    background-color: rgba(55, 65, 81, 0.45);
+}
+
+.badge-role,
+.action-btn,
+.btn-secondary,
+.pagination-btn {
+    background-color: #111827;
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.action-btn:hover,
+.btn-secondary:hover,
+.pagination-btn:hover:not(:disabled) {
+    background-color: #374151;
+    color: #ffffff;
+}
+
+.btn-primary,
+.pagination-btn.active {
+    background: var(--primary);
+    box-shadow: 0 0 20px rgba(229, 9, 20, 0.22);
+}
+
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.72);
+}
+
+.info-list {
+    background-color: #111827;
+    border-color: var(--border-color);
+}
+
+.toast {
+    border-left-color: var(--primary);
 }

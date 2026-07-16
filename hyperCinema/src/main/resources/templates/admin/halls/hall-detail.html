@@ -36,10 +36,21 @@
                     <div><dt class="hc-label mb-1">Mã phòng</dt><dd class="text-white tabular-nums" th:text="${hall.hallId}">1</dd></div>
                     <div><dt class="hc-label mb-1">Tên phòng</dt><dd class="text-white" th:text="${hall.name}">Hall</dd></div>
                     <div><dt class="hc-label mb-1">Loại phòng</dt><dd class="text-white" th:text="${hall.hallType}">2D</dd></div>
+                    <div><dt class="hc-label mb-1">Giá fallback</dt><dd class="text-white tabular-nums" th:text="${#numbers.formatDecimal(hall.ticketPrice, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</dd></div>
                     <div><dt class="hc-label mb-1">Trạng thái</dt><dd><span th:replace="~{fragments/components :: statusBadge(${hall.status})}"></span></dd></div>
                     <div><dt class="hc-label mb-1">Sức chứa</dt><dd class="text-white tabular-nums" th:text="${hall.capacity}">0</dd></div>
                     <div><dt class="hc-label mb-1">Số ghế</dt><dd class="text-white tabular-nums" th:text="${hall.seatCount}">0</dd></div>
                     <div><dt class="hc-label mb-1">Số suất chiếu</dt><dd class="text-white tabular-nums" th:text="${hall.showtimeCount}">0</dd></div>
+                </dl>
+            </section>
+
+            <section class="hc-card p-6" aria-label="Bảng giá ghế">
+                <h2 class="mb-4 text-lg font-semibold text-white">Bảng giá theo loại ghế</h2>
+                <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div th:each="price : ${hall.seatTypePrices}">
+                        <dt class="hc-label mb-1" th:text="${price.label}">Thường</dt>
+                        <dd class="text-white tabular-nums" th:text="${#numbers.formatDecimal(price.price, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</dd>
+                    </div>
                 </dl>
             </section>
 

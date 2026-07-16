@@ -5,7 +5,7 @@ import lombok.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "User_Membership")
+@Table(name = "user_membership")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class UserMembership {
@@ -32,3 +32,4 @@ public class UserMembership {
     @Column(length = 20)
     private String status;
 }
+

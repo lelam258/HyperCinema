@@ -15,6 +15,18 @@ public interface UserMembershipRepository extends JpaRepository<UserMembership, 
     Optional<UserMembership> findFirstByUser_UserIdAndStatusAndEndDateGreaterThanEqualOrderByEndDateDesc(
             Integer userId, String status, LocalDate today);
 
+    @Query("""
+            SELECT um FROM UserMembership um
+            JOIN FETCH um.plan
+            WHERE um.user.userId = :userId
+              AND UPPER(um.status) = UPPER(:status)
+              AND um.endDate >= :today
+            ORDER BY um.endDate DESC
+            """)
+    List<UserMembership> findActiveByUserIdWithPlan(@Param("userId") Integer userId,
+                                                    @Param("status") String status,
+                                                    @Param("today") LocalDate today);
+
     @Query("SELECT um FROM UserMembership um JOIN FETCH um.user WHERE um.status = :status AND um.endDate >= :today")
     List<UserMembership> findActiveMemberships(@Param("status") String status, @Param("today") LocalDate today);
 }

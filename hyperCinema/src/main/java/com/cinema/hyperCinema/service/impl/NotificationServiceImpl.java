@@ -84,16 +84,17 @@ public class NotificationServiceImpl implements NotificationService {
         Set<User> targetUsers = new HashSet<>();
         LocalDate today = LocalDate.now();
         LocalDateTime cutoffNewUser = LocalDateTime.now().minusDays(7);
+        List<User> activeUsers = userRepository.findByStatusIgnoreCase("Active");
 
         for (String segment : segments) {
             switch (segment.toLowerCase()) {
                 case "all":
                 case "all users":
-                    targetUsers.addAll(userRepository.findAll());
+                    targetUsers.addAll(activeUsers);
                     break;
                 case "admin":
                 case "admin users":
-                    targetUsers.addAll(userRepository.findAll().stream()
+                    targetUsers.addAll(activeUsers.stream()
                             .filter(u -> "Admin".equalsIgnoreCase(u.getRole().getName()))
                             .collect(Collectors.toList()));
                     break;
@@ -106,10 +107,9 @@ public class NotificationServiceImpl implements NotificationService {
                     break;
                 case "free":
                 case "free users":
-                    List<User> allUsers = userRepository.findAll();
                     List<User> activePremiumUsers = userMembershipRepository.findActiveMemberships("Active", today)
                             .stream().map(UserMembership::getUser).collect(Collectors.toList());
-                    for (User u : allUsers) {
+                    for (User u : activeUsers) {
                         if (!activePremiumUsers.contains(u)) {
                             targetUsers.add(u);
                         }
@@ -117,7 +117,7 @@ public class NotificationServiceImpl implements NotificationService {
                     break;
                 case "new":
                 case "new users":
-                    targetUsers.addAll(userRepository.findAll().stream()
+                    targetUsers.addAll(activeUsers.stream()
                             .filter(u -> u.getCreatedAt() != null && u.getCreatedAt().isAfter(cutoffNewUser))
                             .collect(Collectors.toList()));
                     break;

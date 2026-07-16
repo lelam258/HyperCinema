@@ -30,12 +30,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        return userRepository.findByStatusIgnoreCase("Active");
     }
 
     @Override
     public List<User> searchAndFilterUsers(String query, String roleName, String status) {
-        List<User> users = userRepository.findAll();
+        List<User> users = shouldIncludeAllStatuses(status)
+                ? userRepository.findAll()
+                : userRepository.findByStatusIgnoreCase("Active");
 
         return users.stream()
                 .filter(u -> {
@@ -100,9 +102,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public User updateUser(Integer id, User userDetails) {
         User user = getUserById(id);
-        if (user.getRole() != null && "Customer".equalsIgnoreCase(user.getRole().getName())) {
-            throw new IllegalArgumentException("Cannot update customer accounts");
-        }
 
         if (!user.getUsername().equals(userDetails.getUsername()) && userRepository.existsByUsername(userDetails.getUsername())) {
             throw new IllegalArgumentException("Username already exists: " + userDetails.getUsername());
@@ -132,10 +131,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Integer id) {
         User user = getUserById(id);
-        if (user.getRole() != null && "Customer".equalsIgnoreCase(user.getRole().getName())) {
-            throw new IllegalArgumentException("Cannot delete customer accounts");
-        }
-        userRepository.delete(user);
+        user.setStatus("Inactive");
+        userRepository.save(user);
     }
 
     @Override
@@ -161,9 +158,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public User resetUserPassword(Integer id, String newPassword) {
         User user = getUserById(id);
-        if (user.getRole() != null && "Customer".equalsIgnoreCase(user.getRole().getName())) {
-            throw new IllegalArgumentException("Cannot reset password for customer accounts");
-        }
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         return userRepository.save(user);
     }
@@ -184,5 +178,12 @@ public class UserServiceImpl implements UserService {
         stats.put("admins", admins);
 
         return stats;
+    }
+
+    private static boolean shouldIncludeAllStatuses(String status) {
+        return status != null
+                && !status.isBlank()
+                && !status.equalsIgnoreCase("All")
+                && !status.equalsIgnoreCase("All Status");
     }
 }
