@@ -3,6 +3,8 @@ package com.cinema.hyperCinema.controller.admin;
 import com.cinema.hyperCinema.model.Branch;
 import com.cinema.hyperCinema.repository.BranchRepository;
 import com.cinema.hyperCinema.service.AnalyticsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,12 +18,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/analytics")
 public class AdminAnalyticsController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminAnalyticsController.class);
 
     private final AnalyticsService analyticsService;
     private final BranchRepository branchRepository;
@@ -59,9 +64,12 @@ public class AdminAnalyticsController {
                 report = analyticsService.getTicketSalesReport(from, to, branchId);
             }
         } catch (Exception e) {
-            // Log the full stack trace so we can diagnose the 500 error
-            e.printStackTrace();
-            report = new java.util.HashMap<>();
+            log.error("Unable to load {} analytics report from {} to {} for branch {}",
+                    tab, from, to, branchId, e);
+            // The template expects every metric to be present. Rendering an empty map
+            // causes a second exception (for example while formatting foodUnits), which
+            // used to turn the whole analytics page into a blank black screen.
+            report = emptyReportFor(tab);
             model.addAttribute("errorMessage", e.getMessage());
         }
 
@@ -76,6 +84,26 @@ public class AdminAnalyticsController {
         model.addAttribute("lastUpdated", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")));
 
         return "admin/analytics";
+    }
+
+    private Map<String, Object> emptyReportFor(String tab) {
+        Map<String, Object> report = new HashMap<>();
+
+        if ("fb".equalsIgnoreCase(tab)) {
+            report.put("totalRevenue", 0L);
+            report.put("revenueGrowth", 0.0);
+            report.put("foodUnits", 0L);
+            report.put("beverageUnits", 0L);
+            report.put("foodRevenue", 0L);
+            report.put("beverageRevenue", 0L);
+            report.put("comboRevenue", 0L);
+            report.put("productLabels", List.of());
+            report.put("productQuantities", List.of());
+            report.put("productCategories", List.of());
+            report.put("products", List.of());
+        }
+
+        return report;
     }
 
     @GetMapping("/export")
