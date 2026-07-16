@@ -34,7 +34,12 @@ public class CustomerDashboardController {
     public String dashboard(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         CustomerDashboardView dashboard = workspaceUiDataService.getCustomerDashboard(userDetails.getUser());
         List<MovieListItem> nowShowingMovies = findCustomerMovies();
-        addCustomerAttributes(model, dashboard);
+        model.addAttribute("dashboard", dashboard);
+        model.addAttribute("customerName", dashboard.getCustomerName());
+        model.addAttribute("email", dashboard.getEmail());
+        model.addAttribute("phone", dashboard.getPhone());
+        model.addAttribute("rewardPoints", dashboard.getRewardPoints());
+        model.addAttribute("membershipTier", dashboard.getMembershipTier());
         model.addAttribute("lastUpdated", dashboard.getLastUpdated());
         model.addAttribute("movies", nowShowingMovies);
         model.addAttribute("nowShowingCount", nowShowingMovies.size());

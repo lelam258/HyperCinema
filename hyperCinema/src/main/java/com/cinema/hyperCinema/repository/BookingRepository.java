@@ -72,6 +72,7 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             + "WHERE h.branch.branchId = :branchId "
             + "AND b.status <> 'Cancelled' "
             + "GROUP BY m.title ORDER BY cnt DESC")
+            + "GROUP BY m.title ORDER BY cnt DESC")
     List<Object[]> findTopMoviesByBranchId(@Param("branchId") Integer branchId,
                                            Pageable pageable);
     default List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Integer userId) {

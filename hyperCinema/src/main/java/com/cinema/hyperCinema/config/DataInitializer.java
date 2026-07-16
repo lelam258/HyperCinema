@@ -137,6 +137,9 @@ public class DataInitializer implements CommandLineRunner {
             Role r = new Role();
             r.setName(name);
             roles.add(roleRepository.save(r));
+            Role r = new Role();
+            r.setName(name);
+            roles.add(roleRepository.save(r));
         }
         return roles;
     }
@@ -647,8 +650,16 @@ public class DataInitializer implements CommandLineRunner {
                 {"Coca-Cola (L)", 30000, "Nước uống"},
                 {"Pepsi (L)", 30000, "Nước uống"},
                 {"Nước suối", 15000, "Nước uống"},
+                {"Bắp rang bơ (L)", 45000, "Bắp rang"},
+                {"Bắp rang phô mai (L)", 55000, "Bắp rang"},
+                {"Coca-Cola (L)", 30000, "Nước uống"},
+                {"Pepsi (L)", 30000, "Nước uống"},
+                {"Nước suối", 15000, "Nước uống"},
                 {"Combo Couple", 120000, "Combo"},
                 {"Combo Gia đình", 180000, "Combo"},
+                {"Hotdog", 35000, "Snack"},
+                {"Nachos phô mai", 40000, "Snack"},
+                {"Kem ốc quế", 25000, "Snack"},
                 {"Hotdog", 35000, "Snack"},
                 {"Nachos phô mai", 40000, "Snack"},
                 {"Kem ốc quế", 25000, "Snack"},
@@ -839,6 +850,14 @@ public class DataInitializer implements CommandLineRunner {
             ticket.setStatus("Cancelled".equals(status) ? "Cancelled" : "Active");
             ticketRepository.save(ticket);
         }
+        for (int i = 0; i < seats.size(); i++) {
+            Ticket ticket = new Ticket();
+            ticket.setBooking(booking);
+            ticket.setSeat(seats.get(i));
+            ticket.setQrCode("SEED-" + booking.getBookingId() + "-" + (i + 1));
+            ticket.setStatus("Cancelled".equals(status) ? "Cancelled" : "Active");
+            ticketRepository.save(ticket);
+        }
 
         return booking;
     }
@@ -946,6 +965,7 @@ public class DataInitializer implements CommandLineRunner {
     private void ensureAuditLogTable() {
         jdbcTemplate.execute("""
                 CREATE TABLE IF NOT EXISTS `audit_log` (
+                CREATE TABLE IF NOT EXISTS `audit_log` (
                     `log_id` INT AUTO_INCREMENT PRIMARY KEY,
                     `user_id` INT NOT NULL,
                     `entity_type` VARCHAR(100) NOT NULL,
@@ -991,4 +1011,5 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 }
+
 
