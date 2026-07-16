@@ -29,8 +29,8 @@ public class VietQrPaymentController {
 
     public VietQrPaymentController(BookingService bookingService,
                                    BookingPaymentService bookingPaymentService,
-                                   @Value("${vietqr.bank-id:}") String bankId,
-                                   @Value("${vietqr.account-no:}") String accountNo,
+                                   @Value("${vietqr.bank-id}") String bankId,
+                                   @Value("${vietqr.account-no}") String accountNo,
                                    @Value("${vietqr.account-name:}") String accountName,
                                    @Value("${vietqr.template:compact2}") String qrTemplate) {
         this.bookingService = bookingService;
