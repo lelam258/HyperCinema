@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Đơn booking - HyperCinema')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: staffSidebar('bookings')}"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner">
+        <section class="hc-page-head">
+            <div>
+                <p class="hc-kicker">Nhân viên</p>
+                <h1 class="hc-page-title">Đơn booking</h1>
+                <p class="hc-page-subtitle">
+                    Nhân viên: <span th:text="${staffName}">Staff</span>
+                    <span aria-hidden="true"> - </span>
+                    Chi nhánh: <span th:text="${branchName}">Chi nhánh</span>
+                </p>
+            </div>
+            <a th:href="@{/staff/booking}" class="hc-button hc-button-primary no-underline">Bán vé</a>
+        </section>
+
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <section class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4" aria-label="Thống kê booking">
+            <div class="hc-card p-5"><span class="hc-label">Tổng đơn</span><strong class="block text-3xl text-white tabular-nums" th:text="${summary.total}">0</strong></div>
+            <div class="hc-card p-5"><span class="hc-label">Chờ thanh toán</span><strong class="block text-3xl text-warning tabular-nums" th:text="${summary.pending}">0</strong></div>
+            <div class="hc-card p-5"><span class="hc-label">Đã thanh toán</span><strong class="block text-3xl text-success tabular-nums" th:text="${summary.paid}">0</strong></div>
+            <div class="hc-card p-5"><span class="hc-label">Đã hủy</span><strong class="block text-3xl text-danger tabular-nums" th:text="${summary.cancelled}">0</strong></div>
+        </section>
+
+        <section class="hc-card mb-6 p-5" aria-label="Bộ lọc booking">
+            <form th:action="@{/staff/bookings}" method="get" class="grid grid-cols-1 gap-4 lg:grid-cols-4">
+                <label class="hc-field">
+                    <span>Tìm kiếm</span>
+                    <input class="hc-input" type="search" name="keyword" th:value="${filter.keyword}" placeholder="Mã đơn, khách, phim">
+                </label>
+                <label class="hc-field">
+                    <span>Trạng thái booking</span>
+                    <select class="hc-input" name="bookingStatus">
+                        <option value="">Tất cả</option>
+                        <option value="Pending" th:selected="${filter.bookingStatus == 'Pending'}">Chờ thanh toán</option>
+                        <option value="Paid" th:selected="${filter.bookingStatus == 'Paid'}">Đã thanh toán</option>
+                        <option value="Confirmed" th:selected="${filter.bookingStatus == 'Confirmed'}">Đã xác nhận</option>
+                        <option value="Served" th:selected="${filter.bookingStatus == 'Served'}">Đã phục vụ</option>
+                        <option value="Cancelled" th:selected="${filter.bookingStatus == 'Cancelled'}">Đã hủy</option>
+                    </select>
+                </label>
+                <label class="hc-field">
+                    <span>Thanh toán</span>
+                    <select class="hc-input" name="paymentStatus">
+                        <option value="">Tất cả</option>
+                        <option value="Pending" th:selected="${filter.paymentStatus == 'Pending'}">Chờ thanh toán</option>
+                        <option value="Paid" th:selected="${filter.paymentStatus == 'Paid'}">Đã thanh toán</option>
+                        <option value="Cancelled" th:selected="${filter.paymentStatus == 'Cancelled'}">Đã hủy</option>
+                    </select>
+                </label>
+                <label class="hc-field">
+                    <span>Ngày tạo từ</span>
+                    <input class="hc-input" type="date" name="createdFrom" th:value="${filter.createdFrom}">
+                </label>
+                <label class="hc-field">
+                    <span>Ngày tạo đến</span>
+                    <input class="hc-input" type="date" name="createdTo" th:value="${filter.createdTo}">
+                </label>
+                <label class="hc-field">
+                    <span>Ngày chiếu từ</span>
+                    <input class="hc-input" type="date" name="showtimeFrom" th:value="${filter.showtimeFrom}">
+                </label>
+                <label class="hc-field">
+                    <span>Ngày chiếu đến</span>
+                    <input class="hc-input" type="date" name="showtimeTo" th:value="${filter.showtimeTo}">
+                </label>
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="hc-button hc-button-primary">Lọc</button>
+                    <a th:href="@{/staff/bookings}" class="hc-button hc-button-outline no-underline">Xóa lọc</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="hc-card overflow-hidden" aria-label="Danh sách booking">
+            <div class="overflow-x-auto">
+                <table class="hc-table">
+                    <thead>
+                    <tr>
+                        <th>Booking</th>
+                        <th>Khách hàng</th>
+                        <th>Phim / suất chiếu</th>
+                        <th>Ghế</th>
+                        <th class="text-right">Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Thanh toán</th>
+                        <th class="text-right">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${bookings == null or bookings.empty}">
+                        <td colspan="8" class="py-12 text-center text-cinema-muted">Chưa có booking nào trong phạm vi chi nhánh.</td>
+                    </tr>
+                    <tr th:each="booking : ${bookings.content}">
+                        <td class="font-mono font-semibold text-white" th:text="|#${booking.bookingId}|">#1</td>
+                        <td>
+                            <strong class="block text-white" th:text="${booking.customerName}">Customer</strong>
+                            <span class="text-xs text-cinema-muted" th:text="${booking.customerEmail}">email</span>
+                        </td>
+                        <td>
+                            <strong class="block text-white" th:text="${booking.movieTitle}">Movie</strong>
+                            <span class="text-xs text-cinema-muted" th:text="${booking.showtimeStart != null ? #temporals.format(booking.showtimeStart, 'dd/MM/yyyy HH:mm') : 'N/A'}">Time</span>
+                        </td>
+                        <td th:text="${booking.seats != null and !#lists.isEmpty(booking.seats) ? #strings.listJoin(booking.seats, ', ') : booking.ticketCount}">A1</td>
+                        <td class="text-right tabular-nums" th:text="${#numbers.formatInteger(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'POINT') + ' VND'}">0 VND</td>
+                        <td><span class="hc-badge" th:text="${booking.bookingStatus}">Pending</span></td>
+                        <td><span class="hc-badge" th:text="${booking.paymentStatus != null and !#strings.isEmpty(booking.paymentStatus) ? booking.paymentStatus : 'N/A'}">Pending</span></td>
+                        <td class="text-right"><a th:href="@{|/staff/bookings/${booking.bookingId}|}" class="hc-button hc-button-outline no-underline">Xem</a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-4 border-t border-cinema-border p-5" th:if="${bookings != null and bookings.totalPages > 0}">
+                <span class="text-sm text-cinema-muted" th:text="|Trang ${bookings.number + 1}/${bookings.totalPages} - ${bookings.totalElements} đơn|">Trang</span>
+                <div class="flex gap-2">
+                    <a th:if="${!bookings.first}" th:href="@{/staff/bookings(keyword=${filter.keyword},bookingStatus=${filter.bookingStatus},paymentStatus=${filter.paymentStatus},createdFrom=${filter.createdFrom},createdTo=${filter.createdTo},showtimeFrom=${filter.showtimeFrom},showtimeTo=${filter.showtimeTo},page=${bookings.number - 1},size=${bookings.size})}" class="hc-button hc-button-outline no-underline">Trước</a>
+                    <a th:if="${!bookings.last}" th:href="@{/staff/bookings(keyword=${filter.keyword},bookingStatus=${filter.bookingStatus},paymentStatus=${filter.paymentStatus},createdFrom=${filter.createdFrom},createdTo=${filter.createdTo},showtimeFrom=${filter.showtimeFrom},showtimeTo=${filter.showtimeTo},page=${bookings.number + 1},size=${bookings.size})}" class="hc-button hc-button-outline no-underline">Sau</a>
+                </div>
+            </div>
+        </section>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

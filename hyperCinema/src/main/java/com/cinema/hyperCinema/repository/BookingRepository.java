@@ -85,10 +85,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             "tickets",
             "tickets.seat"
     })
-    default List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Integer userId) {
-        return findByUser_UserIdOrderByCreatedAtDesc(userId, Pageable.unpaged());
-    }
-
     List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Integer userId, Pageable pageable);
 
     long countByShowtime_ShowtimeId(Integer showtimeId);
@@ -168,4 +164,29 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             WHERE b.bookingId = :bookingId
             """)
     Optional<Booking> findManagementDetailById(@Param("bookingId") Integer bookingId);
+
+    @Query("SELECT COUNT(b) > 0 FROM Booking b " +
+           "WHERE b.user.userId = :userId " +
+           "AND b.showtime.movie.movieId = :movieId " +
+           "AND (b.status = 'Confirmed' OR b.status = 'Completed')")
+    boolean hasSuccessfulBookingForMovie(@Param("userId") Integer userId, @Param("movieId") Integer movieId);
+
+    @Query("SELECT b FROM Booking b " +
+           "JOIN FETCH b.showtime s " +
+           "JOIN FETCH s.movie m " +
+           "JOIN FETCH s.hall h " +
+           "JOIN FETCH h.branch br " +
+           "WHERE b.user.userId = :userId AND (b.status = 'Confirmed' OR b.status = 'Completed') " +
+           "ORDER BY b.createdAt DESC")
+    List<Booking> findSuccessfulBookingsByUser(@Param("userId") Integer userId);
+
+    @Query("SELECT COUNT(b) > 0 FROM Booking b " +
+           "WHERE b.user.userId = :userId " +
+           "AND b.showtime.movie.movieId = :movieId " +
+           "AND (b.status = 'Confirmed' OR b.status = 'Completed') " +
+           "AND b.showtime.endTime < :now")
+    boolean hasEndedSuccessfulBookingForMovie(
+            @Param("userId") Integer userId, 
+            @Param("movieId") Integer movieId, 
+            @Param("now") LocalDateTime now);
 }

@@ -4,6 +4,8 @@ import com.cinema.hyperCinema.dto.admin.hall.response.HallDetailView;
 import com.cinema.hyperCinema.dto.admin.hall.response.HallManagementContext;
 import com.cinema.hyperCinema.dto.admin.seat.request.SeatGenerateRequest;
 import com.cinema.hyperCinema.dto.admin.seat.request.SeatUpdateRequest;
+import com.cinema.hyperCinema.dto.admin.seat.response.SeatManagementContext;
+import com.cinema.hyperCinema.dto.admin.seat.response.SeatMapView;
 import com.cinema.hyperCinema.exception.seat.SeatValidationException;
 import com.cinema.hyperCinema.security.CustomUserDetails;
 import com.cinema.hyperCinema.service.hall.HallService;
@@ -26,6 +28,18 @@ public class SeatManagementController {
 
     private final SeatService seatService;
     private final HallService hallService;
+
+    @GetMapping
+    public String seatMap(@PathVariable Integer hallId,
+                          @AuthenticationPrincipal CustomUserDetails principal,
+                          Model model) {
+        SeatMapView seats = seatService.getSeatMap(hallId, principal.getUser());
+        addContext(model, principal, seats);
+        model.addAttribute("seats", seats);
+        model.addAttribute("seatUpdate", new SeatUpdateRequest());
+        model.addAttribute("seatAdd", new SeatUpdateRequest());
+        return "admin/seats/seat-map";
+    }
 
     @GetMapping("/generate")
     public String showGenerateForm(@PathVariable Integer hallId,
@@ -56,7 +70,7 @@ public class SeatManagementController {
         try {
             seatService.generateSeats(hallId, request, principal.getUser());
             redirectAttributes.addFlashAttribute("successKey", "seat.generate.success");
-            return "redirect:/admin/halls/" + hallId;
+            return "redirect:/admin/halls/" + hallId + "/seats";
         } catch (SeatValidationException ex) {
             bindingResult.reject(ex.getKey());
             HallDetailView hall = hallService.findById(hallId, principal.getUser());
@@ -66,7 +80,7 @@ public class SeatManagementController {
         }
     }
 
-    @PostMapping("/update/{seatId}")
+    @PostMapping({"/update/{seatId}", "/{seatId}"})
     public String updateSeat(@PathVariable Integer hallId,
                              @PathVariable Integer seatId,
                              @ModelAttribute("seatUpdate") SeatUpdateRequest request,
@@ -78,7 +92,22 @@ public class SeatManagementController {
         } catch (SeatValidationException ex) {
             redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
         }
-        return "redirect:/admin/halls/" + hallId;
+        return "redirect:/admin/halls/" + hallId + "/seats";
+    }
+
+    @PostMapping("/{seatId}/maintenance")
+    public String updateSeatMaintenance(@PathVariable Integer hallId,
+                                        @PathVariable Integer seatId,
+                                        @RequestParam String status,
+                                        @AuthenticationPrincipal CustomUserDetails principal,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            seatService.updateSeatMaintenance(seatId, status, principal.getUser());
+            redirectAttributes.addFlashAttribute("successKey", "seat.update.success");
+        } catch (SeatValidationException ex) {
+            redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
+        }
+        return "redirect:/admin/halls/" + hallId + "/seats";
     }
 
     @PostMapping("/add")
@@ -89,7 +118,7 @@ public class SeatManagementController {
                           RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("errorKey", "seat.add.validation_error");
-            return "redirect:/admin/halls/" + hallId;
+            return "redirect:/admin/halls/" + hallId + "/seats";
         }
 
         try {
@@ -98,10 +127,10 @@ public class SeatManagementController {
         } catch (SeatValidationException ex) {
             redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
         }
-        return "redirect:/admin/halls/" + hallId;
+        return "redirect:/admin/halls/" + hallId + "/seats";
     }
 
-    @PostMapping("/delete/{seatId}")
+    @PostMapping({"/delete/{seatId}", "/{seatId}/delete"})
     public String deleteSeat(@PathVariable Integer hallId,
                              @PathVariable Integer seatId,
                              @AuthenticationPrincipal CustomUserDetails principal,
@@ -112,7 +141,7 @@ public class SeatManagementController {
         } catch (SeatValidationException ex) {
             redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
         }
-        return "redirect:/admin/halls/" + hallId;
+        return "redirect:/admin/halls/" + hallId + "/seats";
     }
 
     @PostMapping("/clear")
@@ -125,11 +154,23 @@ public class SeatManagementController {
         } catch (SeatValidationException ex) {
             redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
         }
-        return "redirect:/admin/halls/" + hallId;
+        return "redirect:/admin/halls/" + hallId + "/seats";
     }
 
     private void addContext(Model model, CustomUserDetails principal) {
         HallManagementContext context = hallService.managementContext(principal.getUser());
         model.addAttribute("hallContext", context);
+    }
+
+    private void addContext(Model model, CustomUserDetails principal, SeatMapView seats) {
+        HallManagementContext context = hallService.managementContext(principal.getUser());
+        model.addAttribute("hallContext", context);
+        model.addAttribute("seatContext", SeatManagementContext.builder()
+                .admin(context.isAdmin())
+                .sidebar(context.getSidebar())
+                .hallId(seats.getHallId())
+                .hallName(seats.getHallName())
+                .branchName(seats.getBranchName())
+                .build());
     }
 }

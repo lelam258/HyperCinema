@@ -108,15 +108,6 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
               AND s.status = 'ACTIVE'
             ORDER BY s.startTime ASC
             """)
-    default List<Showtime> findByHall_Branch_BranchIdAndStartTimeAfterOrderByStartTimeAsc(
-            Integer branchId,
-            LocalDateTime startTime) {
-        return findByHall_Branch_BranchIdAndStartTimeAfterOrderByStartTimeAsc(
-                branchId,
-                startTime,
-                Pageable.unpaged());
-    }
-
     List<Showtime> findByHall_Branch_BranchIdAndStartTimeAfterOrderByStartTimeAsc(
             @Param("branchId") Integer branchId,
             @Param("startTime") LocalDateTime startTime,

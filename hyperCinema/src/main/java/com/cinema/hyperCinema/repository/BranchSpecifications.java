@@ -41,8 +41,11 @@ public final class BranchSpecifications {
                 String status = trimToNull(criteria.getStatus());
                 if (status != null && ALLOWED_STATUSES.contains(status)) {
                     predicates.add(cb.equal(root.get("status"), status));
+                } else {
+                    predicates.add(cb.notEqual(cb.lower(root.get("status")), "inactive"));
                 }
-
+            } else {
+                predicates.add(cb.notEqual(cb.lower(root.get("status")), "inactive"));
             }
 
             if (predicates.isEmpty()) {

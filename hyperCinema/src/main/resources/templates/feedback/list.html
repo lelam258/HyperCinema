@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Ý kiến đóng góp & Phản hồi - HyperCinema')}"></head>
+<body class="min-h-screen flex flex-col bg-[#050508]">
+
+    <!-- Header / Navbar công cộng -->
+    <header class="border-b border-white/[0.06] bg-[#0A0A0F]/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
+                <a th:href="@{/}" class="text-xl font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight no-underline">HyperCinema</a>
+            </div>
+            <nav class="flex items-center gap-6">
+                <a th:href="@{/movies(status='NowShowing')}" class="text-sm font-medium text-slate-300 transition-colors hover:text-primary no-underline">Phim đang chiếu</a>
+                <a th:href="@{/movies(status='ComingSoon')}" class="text-sm font-medium text-slate-300 transition-colors hover:text-primary no-underline">Phim sắp chiếu</a>
+                <a th:href="@{/feedback}" class="text-sm font-medium text-primary transition-colors hover:text-primary no-underline">Phản hồi khách hàng</a>
+            </nav>
+            <div class="flex items-center gap-3">
+                <th:block th:if="${loggedIn}">
+                    <a th:href="${dashboardUrl}" class="px-4 py-2 text-sm font-semibold text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline">Tài khoản</a>
+                </th:block>
+                <th:block th:unless="${loggedIn}">
+                    <a th:href="@{/login}" class="px-4 py-2 text-sm font-semibold text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline">Đăng nhập</a>
+                    <a th:href="@{/register}" class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all no-underline">Đăng ký</a>
+                </th:block>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-6 py-10">
+
+        <!-- Welcoming Alert / Flashes -->
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <!-- Section Header -->
+        <div class="mb-10 text-center sm:text-left flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+                <h1 class="text-4xl font-extrabold text-white tracking-tight mb-2 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Ý kiến khách hàng</h1>
+                <p class="text-sm text-slate-400 max-w-2xl">HyperCinema luôn lắng nghe ý kiến của bạn để không ngừng cải tiến và đem lại trải nghiệm điện ảnh tuyệt vời nhất.</p>
+            </div>
+            <div>
+                <a th:if="${isAuthenticated}" th:href="@{/my/feedback/new}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-amber-500 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 no-underline cursor-pointer">
+                    Gửi đóng góp ý kiến
+                </a>
+                <a th:if="${!isAuthenticated}" th:href="@{/login}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white/[0.06] border border-white/10 rounded-xl text-sm font-semibold text-white transition-all hover:bg-white/10 no-underline cursor-pointer">
+                    Đăng nhập để đóng góp
+                </a>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ STATS SUMMARY ═══════════════════ -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <!-- Average rating -->
+            <div class="glass-card p-6 flex flex-col items-center justify-center text-center">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Đánh giá trung bình</span>
+                <span class="text-5xl font-black text-white mb-2 tabular-nums" th:text="${stats.averageRating}">4.8</span>
+                <div class="flex items-center gap-1 mb-2 text-warning">
+                    <!-- Dynamic rendering of average stars -->
+                    <th:block th:each="starIdx : ${#numbers.sequence(1, 5)}">
+                        <svg th:class="${starIdx <= stats.averageRating} ? 'w-5 h-5 fill-current' : 'w-5 h-5 text-slate-600'" viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                    </th:block>
+                </div>
+                <span class="text-xs text-slate-500" th:text="|Dựa trên ${stats.totalCount} lượt đóng góp|">Dựa trên 120 lượt đóng góp</span>
+            </div>
+
+            <!-- Rating distribution bars -->
+            <div class="glass-card p-6 md:col-span-2 flex flex-col justify-center gap-2.5">
+                <!-- Loop from 5 down to 1 -->
+                <th:block th:each="ratingVal : ${#numbers.sequence(5, 1)}">
+                    <div class="flex items-center gap-3 text-sm text-slate-400">
+                        <span class="w-12 text-right font-medium" th:text="|${ratingVal} Sao|">5 Sao</span>
+                        <!-- Progress bar container -->
+                        <div class="flex-grow h-2 bg-white/5 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-primary to-amber-500 rounded-full transition-all duration-500"
+                                 th:style="|width: ${stats.ratingPercentages[ratingVal - 1]}%|"></div>
+                        </div>
+                        <span class="w-16 text-right tabular-nums" 
+                              th:text="|${stats.ratingPercentages[ratingVal - 1]}% (${stats.ratingCounts[ratingVal - 1]})|">75% (90)</span>
+                    </div>
+                </th:block>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ FEEDBACK LIST ═══════════════════ -->
+        <div th:if="${page == null or #lists.isEmpty(page.content)}" class="text-center py-20 glass-card">
+            <svg class="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
+            </svg>
+            <h3 class="text-lg font-bold text-slate-300">Chưa có ý kiến phản hồi nào</h3>
+            <p class="text-slate-500 text-sm mt-1">Hãy trở thành người đầu tiên gửi ý kiến phản hồi đóng góp cho chúng tôi!</p>
+        </div>
+
+        <div th:unless="${page == null or #lists.isEmpty(page.content)}" class="space-y-4 mb-8">
+            <div th:each="item : ${page.content}" class="glass-card p-6 flex flex-col md:flex-row md:items-start gap-4 transition-all duration-300 hover:border-white/15">
+                
+                <!-- Avatar & customer info -->
+                <div class="flex items-center md:items-start gap-3 shrink-0 md:w-48">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-amber-500/20 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0 uppercase"
+                         th:text="${#strings.substring(item.user.fullName, 0, 1)}">U</div>
+                    <div class="flex flex-col min-w-0">
+                        <span class="font-bold text-slate-200 text-sm truncate" th:text="${item.user.fullName}">Khách hàng</span>
+                        <span class="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">Khách hàng</span>
+                    </div>
+                </div>
+
+                <!-- Rating & comments -->
+                <div class="flex-grow flex flex-col gap-2">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-1 text-warning">
+                            <th:block th:each="starIdx : ${#numbers.sequence(1, 5)}">
+                                <svg th:class="${starIdx <= item.rating} ? 'w-4 h-4 fill-current' : 'w-4 h-4 text-slate-700'" viewBox="0 0 24 24">
+                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                                </svg>
+                            </th:block>
+                        </div>
+                        <span class="text-slate-500 text-xs tabular-nums" th:text="${#temporals.format(item.createdAt, 'HH:mm dd/MM/yyyy')}">12:34 02/07/2026</span>
+                    </div>
+                    
+                    <p class="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap" th:text="${item.comment}">Nội dung phản hồi...</p>
+                    
+                    <!-- Action buttons -->
+                    <div class="flex items-center justify-between mt-2 pt-2 border-t border-white/[0.04]">
+                        <a th:href="@{|/feedback/${item.feedbackId}|}" class="text-xs text-primary font-semibold hover:text-amber-400 no-underline cursor-pointer">Xem chi tiết &rarr;</a>
+                        
+                        <!-- Show edit button if current user owns the feedback -->
+                        <div th:if="${isAuthenticated and currentUserId == item.user.userId}">
+                            <a th:href="@{|/my/feedback/${item.feedbackId}/edit|}" class="inline-flex items-center gap-1 px-3 py-1 bg-white/[0.06] border border-white/10 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 no-underline cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg>
+                                Sửa ý kiến
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Pagination component -->
+        <th:block th:replace="~{fragments/components :: pagination(${page}, null, '/feedback')}"></th:block>
+
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

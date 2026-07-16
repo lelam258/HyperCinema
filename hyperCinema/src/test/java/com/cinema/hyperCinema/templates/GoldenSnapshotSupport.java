@@ -911,6 +911,13 @@ public final class GoldenSnapshotSupport {
                 .build();
         model.put("branch", branch);
         model.put("readOnly", false);
+        model.put("staffCandidates", List.of(UserSummary.builder()
+                .userId(32).fullName("Lê Thị C").email("c@example.com")
+                .phone("0907778899").role("Staff").status("Active").build()));
+        model.put("managerCandidates", branch.getManagers());
+        AssignStaffRequest assignStaffRequest = new AssignStaffRequest();
+        model.put("assignStaffRequest", assignStaffRequest);
+        bindEmpty(model, "assignStaffRequest", assignStaffRequest);
         model.put("successKey", "branch.status.changed");
         return model;
     }

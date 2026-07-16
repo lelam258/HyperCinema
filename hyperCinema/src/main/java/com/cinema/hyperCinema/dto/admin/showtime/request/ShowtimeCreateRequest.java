@@ -32,5 +32,4 @@ public class ShowtimeCreateRequest {
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime endTime;
 
-    private Integer price;
 }

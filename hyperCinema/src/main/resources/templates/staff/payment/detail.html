@@ -99,8 +99,8 @@
                 <!-- Cost Summary -->
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between text-slate-400">
-                        <span>Giá vé cơ bản:</span>
-                        <span class="font-medium text-white tabular-nums" th:text="${#numbers.formatDecimal(payment.booking.showtime.price, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</span>
+                        <span>Tong tien ve:</span>
+                        <span class="font-medium text-white tabular-nums" th:text="${#numbers.formatDecimal(payment.booking.seatSubtotal, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</span>
                     </div>
                     <div class="flex justify-between text-slate-400">
                         <span>Số lượng vé:</span>

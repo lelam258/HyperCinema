@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -62,4 +63,6 @@ public class MovieCreateRequest {
     private String trailerUrl;
 
     private Set<Integer> genreIds = new HashSet<>();
+
+    private MultipartFile posterFile;
 }

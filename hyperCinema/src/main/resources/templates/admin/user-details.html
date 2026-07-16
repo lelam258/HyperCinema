@@ -1,342 +1,145 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Chi tiết người dùng - ' + ${user.fullName} + ' - HyperCinema')}"></head>
-<body class="min-h-screen bg-[#050505] text-[#F8FAFC]">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(|Chi tiết người dùng - ${user.fullName} - HyperCinema|)}"></head>
+<body class="min-h-screen">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
 <nav th:replace="~{fragments/layout :: adminSidebar('users')}"></nav>
 
-<!-- Page styles -->
-<style>
-    .modal-overlay {
-        display: none;
-    }
-    .modal-overlay.show {
-        display: flex !important;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    @keyframes slideUp {
-        from { transform: translateY(15px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-    .animate-fadeIn {
-        animation: fadeIn 0.20s ease-out forwards;
-    }
-    .animate-slideUp {
-        animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-</style>
+<main class="hc-page">
+    <div class="hc-page-inner">
+        <a th:href="@{/admin/users}" class="mb-4 inline-flex text-sm text-cinema-muted no-underline hover:text-accent">← Quay lại danh sách</a>
 
-<!-- Main Content -->
-<main class="md:ml-64 min-h-screen flex flex-col">
-    <div class="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
-
-        <!-- Back Button Link -->
-        <a th:href="@{/admin/users}" 
-           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition-all no-underline mb-6 cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Quay lại danh sách
-        </a>
-
-        <!-- Page Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-white tracking-tight mb-1" th:text="'Hồ sơ người dùng: ' + ${user.fullName}">Hồ sơ người dùng: John Admin</h1>
-            <p class="text-sm text-slate-400">Giám sát hoạt động của người dùng, quyền truy cập và chi tiết trạng thái tài khoản.</p>
+        <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h1 class="hc-page-title" th:text="${user.fullName}">Tên người dùng</h1>
+                <p class="hc-page-subtitle" th:text="|@${user.username} - ${user.email}|">@username - email</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" class="hc-btn hc-btn-primary"
+                        data-user-open="edit"
+                        th:attr="data-user-id=${user.userId},data-user-name=${user.fullName},data-user-username=${user.username},data-user-email=${user.email},data-user-phone=${user.phone},data-user-role=${user.role != null ? user.role.roleId : ''},data-user-status=${user.status}">
+                    Chỉnh sửa
+                </button>
+                <button type="button" class="hc-btn" data-user-open="role" th:attr="data-user-id=${user.userId},data-user-role=${user.role != null ? user.role.roleId : ''}">Gán role</button>
+                <button type="button" class="hc-btn" data-user-open="reset" th:attr="data-user-id=${user.userId}">Đặt mật khẩu</button>
+                <button type="button" class="hc-btn text-warning" data-user-action="toggle" th:attr="data-user-id=${user.userId}" th:text="${user.status == 'Active' ? 'Khóa tài khoản' : 'Mở tài khoản'}">Khóa tài khoản</button>
+            </div>
         </div>
 
-        <!-- Detail Layout Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            
-            <!-- Left Column: Profile Card -->
-            <section class="glass-card p-6 flex flex-col items-center">
-                <div class="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-primary/20 mb-4"
-                     th:text="${#strings.substring(user.fullName, 0, 2).toUpperCase()}">JO</div>
-                <h2 class="text-xl font-bold text-white mb-1" th:text="${user.fullName}">John Admin</h2>
-                <div class="text-xs font-medium text-slate-400 mb-6" th:text="${user.email}">john.admin@company.com</div>
-
-                <div class="w-full space-y-4 mb-6">
-                    <div class="flex justify-between items-center text-xs py-2.5 border-b border-white/5">
-                        <span class="text-slate-500 font-semibold uppercase tracking-wider">Mã người dùng</span>
-                        <span class="text-white font-bold" th:text="${user.userId}">1</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs py-2.5 border-b border-white/5">
-                        <span class="text-slate-500 font-semibold uppercase tracking-wider">Trạng thái</span>
-                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border"
-                              th:classappend="${user.status == 'Active'} ? 'bg-success/10 border-success/20 text-success' : 'bg-slate-500/10 border-slate-500/20 text-slate-400'"
-                              th:text="${user.status == 'Active' ? 'Hoạt động' : 'Khóa'}">Hoạt động</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs py-2.5 border-b border-white/5">
-                        <span class="text-slate-500 font-semibold uppercase tracking-wider">Tên đăng nhập</span>
-                        <span class="text-white font-semibold" th:text="${user.username}">john.admin</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs py-2.5 border-b border-white/5">
-                        <span class="text-slate-500 font-semibold uppercase tracking-wider">Vai trò</span>
-                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border"
-                              th:classappend="${user.role != null && user.role.name == 'Administrator'} ? 'bg-danger/10 border-danger/20 text-danger' : (${user.role != null && user.role.name == 'Manager'} ? 'bg-info/10 border-info/20 text-info' : 'bg-primary/10 border-primary/20 text-primary')"
-                              th:text="${user.role != null ? (user.role.name == 'Administrator' ? 'Quản trị viên' : (user.role.name == 'Manager' ? 'Quản lý' : (user.role.name == 'Staff' ? 'Nhân viên' : (user.role.name == 'Customer' ? 'Khách hàng' : user.role.name)))) : 'Khách xem'}">Quản trị viên</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs py-2.5 border-b border-white/5">
-                        <span class="text-slate-500 font-semibold uppercase tracking-wider">Điện thoại</span>
-                        <span class="text-white font-medium" th:text="${user.phone != null && user.phone != '' ? user.phone : 'N/A'}">0123456789</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs py-2.5 border-b border-white/5">
-                        <span class="text-slate-500 font-semibold uppercase tracking-wider">Ngày tạo</span>
-                        <span class="text-white font-medium" th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm') : 'N/A'}">2025-01-15</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs py-2.5 border-b border-white/5">
-                        <span class="text-slate-500 font-semibold uppercase tracking-wider">Đăng nhập cuối</span>
-                        <span class="text-white font-medium" th:text="${user.lastLogin != null ? #temporals.format(user.lastLogin, 'yyyy-MM-dd HH:mm') : 'N/A'}">2026-05-23 09:30</span>
-                    </div>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[22rem_1fr]">
+            <section class="hc-card p-6" aria-label="Hồ sơ người dùng">
+                <div class="mb-6 text-center">
+                    <div class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary text-2xl font-bold text-white shadow-[0_0_24px_rgba(229,9,20,0.25)]"
+                         th:text="${#strings.toUpperCase(#strings.substring(user.fullName, 0, 1))}">H</div>
+                    <h2 class="text-xl font-semibold text-white" th:text="${user.fullName}">Tên người dùng</h2>
+                    <p class="text-sm text-cinema-muted" th:text="${user.email}">email@example.com</p>
                 </div>
 
-                <div class="w-full flex flex-col gap-2.5">
-                    <button class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-amber-500 hover:from-primary-hover hover:to-amber-600 text-white text-xs font-semibold rounded-lg transition-all shadow-md shadow-primary/10 cursor-pointer"
-                            th:onclick="openEditModal([[${user.userId}]], [[${user.fullName}]], [[${user.username}]], [[${user.email}]], [[${user.phone}]], [[${user.role != null ? user.role.roleId : null}]], [[${user.status}]])">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Cập nhật
-                    </button>
-                    <button class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-transparent border rounded-lg text-xs font-semibold transition-all cursor-pointer"
-                            th:onclick="toggleStatus([[${user.userId}]])"
-                            th:classappend="${user.status == 'Inactive'} ? 'border-success/30 text-success hover:bg-success/5' : 'border-danger/30 text-danger hover:bg-danger/5'">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path th:if="${user.status == 'Active'}" stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                            <path th:if="${user.status != 'Active'}" stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span th:text="${user.status == 'Active' ? 'Khóa tài khoản' : 'Kích hoạt'}">Khóa tài khoản</span>
-                    </button>
-                </div>
+                <dl class="space-y-4">
+                    <div class="flex items-center justify-between gap-4"><dt class="hc-label mb-0">User ID</dt><dd class="text-white tabular-nums" th:text="${user.userId}">1</dd></div>
+                    <div class="flex items-center justify-between gap-4"><dt class="hc-label mb-0">Trạng thái</dt><dd><span th:replace="~{fragments/components :: statusBadge(${user.status})}"></span></dd></div>
+                    <div class="flex items-center justify-between gap-4"><dt class="hc-label mb-0">Vai trò</dt><dd><span class="hc-badge border-info/40 bg-info/10 text-info" th:text="${user.role != null ? user.role.name : 'Viewer'}">Role</span></dd></div>
+                    <div class="flex items-center justify-between gap-4"><dt class="hc-label mb-0">Điện thoại</dt><dd class="text-white" th:text="${user.phone != null && user.phone != '' ? user.phone : 'N/A'}">N/A</dd></div>
+                    <div class="flex items-center justify-between gap-4"><dt class="hc-label mb-0">Ngày tạo</dt><dd class="text-white" th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm') : 'N/A'}">N/A</dd></div>
+                    <div class="flex items-center justify-between gap-4"><dt class="hc-label mb-0">Đăng nhập gần nhất</dt><dd class="text-white" th:text="${user.lastLogin != null ? #temporals.format(user.lastLogin, 'yyyy-MM-dd HH:mm') : 'N/A'}">N/A</dd></div>
+                </dl>
             </section>
 
-            <!-- Right Column: Access & Permissions -->
-            <section class="lg:col-span-2 glass-card p-6 flex flex-col gap-6">
-                <h3 class="text-lg font-bold text-white">Quyền hạn & Truy cập</h3>
-
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-white/[0.04] transition-all" 
-                         th:each="perm : ${permissions}">
-                        <div class="flex flex-col gap-1 pr-4">
-                            <h4 class="text-sm font-semibold text-white" th:text="${perm.key == 'Dashboard Access' ? 'Truy cập tổng quan' : (perm.key == 'Reports Access' ? 'Truy cập báo cáo' : (perm.key == 'System Settings Access' ? 'Truy cập cài đặt hệ thống' : perm.key))}">Dashboard Access</h4>
-                            <p class="text-xs text-slate-400 leading-normal" 
-                               th:text="${perm.key == 'Dashboard Access' ? 'Cho phép truy cập vào các báo cáo vận hành cốt lõi, thống kê vé và bảng phân tích chung.' : (perm.key == 'Reports Access' ? 'Cho phép tạo báo cáo kinh doanh, xuất lưới dữ liệu và xem báo cáo tài chính.' : 'Cho phép toàn quyền kiểm soát các tài khoản hệ thống, gán vai trò và nhật ký kiểm toán.')}">Access descriptions</p>
+            <section class="hc-card p-6" aria-label="Quyền truy cập">
+                <h2 class="mb-4 text-lg font-semibold text-white">Quyền truy cập</h2>
+                <div class="space-y-3">
+                    <article th:each="perm : ${permissions}" class="hc-subcard flex flex-wrap items-center justify-between gap-4 p-4">
+                        <div>
+                            <h3 class="font-semibold text-white" th:text="${perm.key}">Dashboard Access</h3>
+                            <p class="mt-1 text-sm text-cinema-muted" th:switch="${perm.key}">
+                                <span th:case="'Dashboard Access'">Cho phép xem dashboard vận hành và số liệu tổng quan.</span>
+                                <span th:case="'Reports Access'">Cho phép xem và xuất báo cáo kinh doanh.</span>
+                                <span th:case="'User Management'">Cho phép quản lý tài khoản, vai trò và trạng thái.</span>
+                                <span th:case="*">Quyền được xác định theo vai trò hiện tại.</span>
+                            </p>
                         </div>
-                        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border shrink-0 text-xs font-bold"
-                             th:classappend="${perm.value == 'Granted'} ? 'bg-success/10 border-success/20 text-success' : 'bg-danger/10 border-danger/20 text-danger'">
-                            <svg th:if="${perm.value == 'Granted'}" class="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <svg th:if="${perm.value != 'Granted'}" class="w-4 h-4 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span th:text="${perm.value == 'Granted' ? 'Được phép' : 'Bị từ chối'}">Được phép</span>
-                        </div>
-                    </div>
+                        <span th:classappend="${perm.value == 'Granted'} ? ' border-success/50 bg-success/10 text-success' : ' border-danger/50 bg-danger/10 text-danger'"
+                              class="hc-badge" th:text="${perm.value == 'Granted' ? 'Cho phép' : 'Từ chối'}">Granted</span>
+                    </article>
                 </div>
 
-                <!-- RBAC warning block -->
-                <div class="p-4 bg-white/[0.02] border border-dashed border-amber-500/20 rounded-xl flex items-start gap-3 mt-4">
-                    <svg class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <div class="flex flex-col gap-1">
-                        <h4 class="text-xs font-bold text-amber-500 uppercase tracking-wider">Cảnh báo Chính sách RBAC</h4>
-                        <p class="text-[11px] text-slate-400 leading-normal">
-                            Quyền kiểm soát truy cập được quản lý tự động theo vai trò bảo mật được chỉ định. Việc thay đổi các quyền cụ thể yêu cầu thay đổi vai trò vận hành của người dùng hoặc cập nhật các chính sách toàn hệ thống trong mô-đun cấu hình Bảo mật.
-                        </p>
-                    </div>
+                <div class="mt-6 rounded-xl border border-dashed border-cinema-border bg-cinema-panel-soft p-4">
+                    <h3 class="mb-2 font-semibold text-accent">RBAC policy</h3>
+                    <p class="text-sm leading-6 text-cinema-muted">Quyền truy cập được tính theo vai trò hiện tại. Muốn thay đổi quyền cụ thể, hãy đổi vai trò hoặc cập nhật chính sách bảo mật hệ thống.</p>
                 </div>
             </section>
         </div>
-
     </div>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="edit">
+        <section class="hc-card w-full max-w-lg p-6" role="dialog" aria-modal="true" aria-labelledby="editUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="editUserTitle" class="text-xl font-semibold text-white">Cập nhật người dùng</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
+            </div>
+            <form class="space-y-4" data-user-form="edit">
+                <input type="hidden" name="id">
+                <input class="hc-input" name="name" placeholder="Họ và tên" required>
+                <input class="hc-input" name="username" placeholder="Username" required>
+                <input class="hc-input" name="email" type="email" placeholder="Email" required>
+                <input class="hc-input" name="phone" placeholder="Số điện thoại" required>
+                <select class="hc-input" name="roleId" required>
+                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}">Role</option>
+                </select>
+                <select class="hc-input" name="status" required>
+                    <option value="Active">Hoạt động</option>
+                    <option value="Inactive">Ngừng hoạt động</option>
+                </select>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="role">
+        <section class="hc-card w-full max-w-md p-6" role="dialog" aria-modal="true" aria-labelledby="roleUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="roleUserTitle" class="text-xl font-semibold text-white">Gán vai trò</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
+            </div>
+            <form class="space-y-4" data-user-form="role">
+                <input type="hidden" name="id">
+                <select class="hc-input" name="roleId" required>
+                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name}">Role</option>
+                </select>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Cập nhật</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm" data-user-modal="reset">
+        <section class="hc-card w-full max-w-md p-6" role="dialog" aria-modal="true" aria-labelledby="resetUserTitle">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <h2 id="resetUserTitle" class="text-xl font-semibold text-white">Đặt lại mật khẩu</h2>
+                <button type="button" class="hc-btn h-9 w-9 px-0" data-user-close>&times;</button>
+            </div>
+            <form class="space-y-4" data-user-form="reset">
+                <input type="hidden" name="id">
+                <input class="hc-input" name="password" type="password" placeholder="Mật khẩu mới" required>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="hc-btn" data-user-close>Hủy</button>
+                    <button type="submit" class="hc-btn hc-btn-primary">Cập nhật</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <div class="fixed bottom-5 right-5 z-[60] space-y-2" data-user-toasts></div>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <script defer th:src="@{/js/features/admin-users.js(v=1.0)}"></script>
 </main>
 
-<!-- ================= EDIT MODAL ================= -->
-<div id="editModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden animate-fadeIn modal-overlay">
-    <div class="glass-card w-full max-w-md overflow-hidden animate-slideUp">
-        <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
-            <h3 class="text-base font-semibold text-white">Cập nhật thông tin người dùng</h3>
-            <button onclick="closeModal('editModal')" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-        </div>
-        <form id="editUserForm" onsubmit="submitEditUser(event)" class="p-6 space-y-4">
-            <input type="hidden" id="edit_id">
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_name" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Họ và tên</label>
-                <input type="text" id="edit_name" required
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_username" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Tên đăng nhập</label>
-                <input type="text" id="edit_username" required
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_email" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Email</label>
-                <input type="email" id="edit_email" required
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_phone" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Số điện thoại</label>
-                <input type="text" id="edit_phone"
-                       class="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_role" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Vai trò</label>
-                <select id="edit_role" required
-                        class="w-full px-4 py-2.5 bg-[#111827] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer">
-                    <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.name == 'Administrator' ? 'Quản trị viên' : (r.name == 'Manager' ? 'Quản lý' : (r.name == 'Staff' ? 'Nhân viên' : (r.name == 'Customer' ? 'Khách hàng' : r.name)))}"></option>
-                </select>
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_status" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Trạng thái</label>
-                <select id="edit_status" required
-                        class="w-full px-4 py-2.5 bg-[#111827] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer">
-                    <option value="Active">Hoạt động</option>
-                    <option value="Inactive">Khóa</option>
-                </select>
-            </div>
-            <div class="flex justify-end gap-3 pt-4 border-t border-white/[0.08] bg-white/[0.02] -mx-6 -mb-6 p-6">
-                <button type="button" onclick="closeModal('editModal')" 
-                        class="px-4 py-2 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
-                    Hủy
-                </button>
-                <button type="submit" 
-                        class="px-4 py-2 bg-gradient-to-r from-primary to-amber-500 hover:from-primary-hover hover:to-amber-600 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
-                    Lưu thay đổi
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Toast notifications wrapper -->
-<div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-auto"></div>
-
-<!-- ================= SCRIPTS ================= -->
-<script>
-    function openModal(id) {
-        document.getElementById(id).classList.add('show');
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('show');
-    }
-
-    function openEditModal(id, name, username, email, phone, roleId, status) {
-        document.getElementById('edit_id').value = id;
-        document.getElementById('edit_name').value = name || '';
-        document.getElementById('edit_username').value = username || '';
-        document.getElementById('edit_email').value = email || '';
-        document.getElementById('edit_phone').value = phone || '';
-        document.getElementById('edit_role').value = roleId || '';
-        document.getElementById('edit_status').value = status || 'Active';
-        openModal('editModal');
-    }
-
-    // Dynamic Toasts
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = `flex items-center justify-between gap-4 p-4 border rounded-xl shadow-xl backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0 ${
-            type === 'success' 
-            ? 'bg-success/10 border-success/20 text-success' 
-            : 'bg-danger/10 border-danger/20 text-danger'
-        }`;
-        
-        toast.innerHTML = `
-            <div class="flex items-center gap-2.5">
-                ${
-                    type === 'success'
-                    ? '<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
-                    : '<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>'
-                }
-                <span class="text-xs font-semibold text-white">${message}</span>
-            </div>
-            <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer text-sm leading-none shrink-0">&times;</button>
-        `;
-        
-        container.appendChild(toast);
-        // Force reflow
-        toast.offsetHeight;
-        toast.classList.remove('translate-y-2', 'opacity-0');
-        
-        setTimeout(() => {
-            toast.classList.add('translate-y-2', 'opacity-0');
-            setTimeout(() => toast.remove(), 300);
-        }, 4000);
-    }
-
-    // CSRF Header builder helper
-    function buildHeaders() {
-        const headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        };
-        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
-        if (csrfToken && csrfHeader) {
-            headers[csrfHeader] = csrfToken;
-        }
-        return headers;
-    }
-
-    function submitEditUser(event) {
-        event.preventDefault();
-        const id = document.getElementById('edit_id').value;
-        const payload = {
-            name: document.getElementById('edit_name').value,
-            username: document.getElementById('edit_username').value,
-            email: document.getElementById('edit_email').value,
-            phone: document.getElementById('edit_phone').value,
-            roleId: parseInt(document.getElementById('edit_role').value),
-            status: document.getElementById('edit_status').value
-        };
-
-        fetch(`/api/admin/users/${id}`, {
-            method: 'PUT',
-            headers: buildHeaders(),
-            body: JSON.stringify(payload)
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('Cập nhật hồ sơ thành công!');
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                return response.json().then(err => { throw new Error(err.message || 'Cập nhật hồ sơ thất bại') });
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
-
-    function toggleStatus(userId) {
-        fetch(`/api/admin/users/${userId}/toggle-status`, {
-            method: 'POST',
-            headers: buildHeaders()
-        })
-        .then(response => {
-            if (response.ok) {
-                showToast('Thay đổi trạng thái thành công!');
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                throw new Error('Thay đổi trạng thái thất bại');
-            }
-        })
-        .catch(error => {
-            showToast(error.message, 'danger');
-        });
-    }
-</script>
 </body>
 </html>

@@ -3,70 +3,231 @@
 <head th:replace="~{fragments/layout :: head('Bán vé tại quầy - HyperCinema')}">
     <title>Bán vé tại quầy - HyperCinema</title>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen hc-staff-pos-shell">
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
 <nav th:replace="~{fragments/layout :: staffSidebar('booking')}"></nav>
-<main class="md:ml-64 min-h-screen">
-    <div class="max-w-7xl mx-auto px-6 py-8">
-        <div class="mb-8 flex items-center justify-between flex-wrap gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Bán vé tại quầy</h1>
-                <p class="text-sm text-slate-400" th:text="'Quản lý bán vé cho chi nhánh: ' + ${branchName}">Quản lý bán vé cho chi nhánh: Chi nhánh 1</p>
+
+<main class="hc-page hc-staff-pos-page">
+    <section class="hc-staff-pos"
+             data-staff-pos-root
+             th:data-branch-id="${branchId}">
+        <div class="hc-staff-pos-workspace">
+            <div class="hc-staff-pos-tabs" role="tablist" aria-label="Bán vé tại quầy">
+                <button type="button"
+                        class="hc-staff-pos-tab is-active"
+                        data-pos-tab="movies"
+                        aria-selected="true">
+                    <i data-lucide="clapperboard"></i>
+                    Phim đang chiếu
+                </button>
+                <button type="button"
+                        class="hc-staff-pos-tab"
+                        data-pos-tab="fnb"
+                        aria-selected="false">
+                    <i data-lucide="popcorn"></i>
+                    Bắp nước
+                </button>
             </div>
-            <div class="text-xs text-slate-500 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
-                Cập nhật lúc: <span th:text="${lastUpdated}">10:00</span>
+
+            <div th:if="${bookingError}" class="hc-alert hc-alert-danger hc-staff-pos-alert" th:text="${bookingError}">
+                Không thể tạo booking.
             </div>
+
+            <section class="hc-staff-pos-pane is-active" data-pos-pane="movies">
+                <div th:if="${!hasBranch}" class="hc-staff-pos-blocked">
+                    <i data-lucide="building-2"></i>
+                    <strong>Nhân viên chưa được gán chi nhánh</strong>
+                    <span>Vui lòng gán chi nhánh trước khi bán vé tại quầy.</span>
+                </div>
+
+                <div th:if="${hasBranch and posShowtimeGroups != null and not #lists.isEmpty(posShowtimeGroups)}"
+                     class="hc-staff-pos-movie-grid">
+                    <article th:each="group : ${posShowtimeGroups}" class="hc-staff-pos-movie-card">
+                        <div class="hc-staff-pos-movie-head">
+                            <span class="hc-staff-pos-format" th:text="${group.formatLabel}">2D</span>
+                            <h2 th:text="${group.movieTitle}">Tên phim</h2>
+                        </div>
+                        <div class="hc-staff-pos-showtime-label">
+                            <i data-lucide="clock-3"></i>
+                            <span th:text="${group.today ? 'Suất chiếu hôm nay' : 'Suất chiếu sắp tới'}">
+                                Suất chiếu hôm nay
+                            </span>
+                        </div>
+                        <div class="hc-staff-pos-times">
+                            <button th:each="s : ${group.showtimes}"
+                                    type="button"
+                                    class="hc-staff-pos-time"
+                                    th:disabled="${!s.available}"
+                                    th:data-pos-showtime-id="${s.showtimeId}"
+                                    th:data-pos-showtime-title="${s.movieTitle}"
+                                    th:data-pos-showtime-format="${s.formatLabel}"
+                                    th:data-pos-showtime-hall="${s.hallName}"
+                                    th:data-pos-showtime-time="${#temporals.format(s.startTime, 'HH:mm dd/MM')}"
+                                    th:title="|${s.hallName} - ${s.displayPrice}|"
+                                    th:text="${#temporals.format(s.startTime, 'HH:mm')}">
+                                10:00
+                            </button>
+                        </div>
+                    </article>
+                </div>
+
+                <div th:if="${hasBranch and (posShowtimeGroups == null or #lists.isEmpty(posShowtimeGroups))}"
+                     class="hc-staff-pos-empty">
+                    <i data-lucide="calendar-x"></i>
+                    <strong>Chưa có suất chiếu</strong>
+                    <span>Chi nhánh hiện chưa có suất chiếu khả dụng để bán vé.</span>
+                </div>
+            </section>
+
+            <section class="hc-staff-pos-pane" data-pos-pane="fnb" hidden>
+                <div th:if="${foodItems != null and not #lists.isEmpty(foodItems)}"
+                     class="hc-staff-pos-fnb-grid">
+                    <article th:each="food : ${foodItems}"
+                             class="hc-staff-pos-fnb-item"
+                             th:data-pos-food-id="${food.itemId}"
+                             th:data-pos-food-name="${food.name}"
+                             th:data-pos-food-price="${food.price}">
+                        <div>
+                            <small th:text="${food.categoryName}">Combo</small>
+                            <strong th:text="${food.name}">Combo bắp nước</strong>
+                            <span class="hc-staff-pos-fnb-category" th:text="${food.displayPrice}">85.000 VND</span>
+                        </div>
+                        <div class="hc-staff-pos-stepper">
+                            <button type="button" data-pos-food-decrease aria-label="Giảm số lượng">-</button>
+                            <span data-pos-food-quantity>0</span>
+                            <button type="button" data-pos-food-increase aria-label="Tăng số lượng">+</button>
+                        </div>
+                    </article>
+                </div>
+
+                <div th:if="${foodItems == null or #lists.isEmpty(foodItems)}" class="hc-staff-pos-empty">
+                    <i data-lucide="popcorn"></i>
+                    <strong>Chưa có F&amp;B khả dụng</strong>
+                    <span>Các combo đang bán sẽ hiển thị tại đây.</span>
+                </div>
+            </section>
         </div>
 
-        <!-- Showtime List -->
-        <div class="glass-card overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-white/[0.08] bg-white/[0.02]">
-                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Phim</th>
-                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Phòng chiếu</th>
-                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Loại phòng</th>
-                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Bắt đầu</th>
-                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Kết thúc</th>
-                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 text-right">Giá vé cơ bản</th>
-                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 text-center">Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-white/[0.04]">
-                        <tr th:each="s : ${showtimes}" class="hover:bg-white/[0.02] transition-colors">
-                            <td class="px-6 py-4">
-                                <span class="block text-sm font-bold text-white" th:text="${s.movie.title}">Tên phim</span>
-                                <span class="block text-xs text-slate-500" th:text="${s.movie.duration} + ' phút'">120 phút</span>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-slate-300" th:text="${s.hall.name}">Phòng 1</td>
-                            <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-info/10 text-info border border-info/20" 
-                                      th:text="${s.hall.hallType}">
-                                    2D
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-sm font-semibold text-white" th:text="${#temporals.format(s.startTime, 'HH:mm dd/MM/yyyy')}">10:00</td>
-                            <td class="px-6 py-4 text-sm text-slate-400" th:text="${#temporals.format(s.endTime, 'HH:mm dd/MM/yyyy')}">12:00</td>
-                            <td class="px-6 py-4 text-sm font-bold text-right text-primary tabular-nums" th:text="${#numbers.formatDecimal(s.price, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</td>
-                            <td class="px-6 py-4 text-center">
-                                <a th:href="@{'/staff/booking/' + ${s.showtimeId}}" 
-                                   class="inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-lg hover:shadow-md hover:shadow-primary/20 transition-all duration-300 no-underline cursor-pointer">
-                                    Bán vé
-                                </a>
-                            </td>
-                        </tr>
-                        <tr th:if="${showtimes == null or #lists.isEmpty(showtimes)}">
-                            <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-500">
-                                Không có suất chiếu nào hoạt động hôm nay cho chi nhánh của bạn.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <aside class="hc-staff-pos-rail" aria-label="Giỏ hàng tại quầy">
+            <form th:action="@{/booking}" method="post" data-staff-pos-form>
+                <input type="hidden" name="showtimeId" data-pos-showtime-input>
+                <input type="hidden" name="paymentMethod" data-pos-payment-input>
+                <input type="hidden" name="voucherCode" data-pos-voucher-code>
+                <div data-pos-selected-seats></div>
+                <div data-pos-selected-food></div>
+
+                <div class="hc-staff-pos-rail-head">
+                    <h2>
+                        <i data-lucide="shopping-cart"></i>
+                        Hóa đơn
+                    </h2>
+                    <button type="button" class="hc-staff-pos-icon" data-pos-clear title="Làm mới hóa đơn">
+                        <i data-lucide="rotate-ccw"></i>
+                    </button>
+                </div>
+
+                <div class="hc-staff-pos-customer">
+                    <i data-lucide="phone"></i>
+                    <input type="tel"
+                           name="customerPhone"
+                           data-pos-customer-phone
+                           placeholder="Số điện thoại khách hàng">
+                    <button type="button" data-pos-customer-search>Tìm</button>
+                </div>
+                <span class="hc-staff-pos-inline-message" data-pos-customer-message></span>
+
+                <div class="hc-staff-pos-cart">
+                    <div class="hc-staff-pos-cart-empty" data-pos-cart-empty>
+                        <i data-lucide="ticket"></i>
+                        <span>Chọn suất chiếu và ghế để bắt đầu hóa đơn.</span>
+                    </div>
+                    <div class="hc-staff-pos-cart-list" data-pos-cart-list></div>
+                </div>
+
+                <div class="hc-staff-pos-total-box">
+                    <dl>
+                        <div>
+                            <dt>Tạm tính</dt>
+                            <dd data-pos-subtotal>0 VND</dd>
+                        </div>
+                        <div>
+                            <dt>Giảm giá</dt>
+                            <dd class="is-discount" data-pos-discount>0 VND</dd>
+                        </div>
+                    </dl>
+                    <div class="hc-staff-pos-voucher">
+                        <input type="text" data-pos-voucher-input placeholder="Mã voucher">
+                        <button type="button" data-pos-voucher-apply>
+                            <i data-lucide="badge-percent"></i>
+                            Áp dụng
+                        </button>
+                    </div>
+                    <span class="hc-staff-pos-inline-message" data-pos-voucher-message></span>
+                    <div class="hc-staff-pos-grand-total">
+                        <span>Tổng cộng</span>
+                        <strong data-pos-total>0 VND</strong>
+                    </div>
+                </div>
+
+                <div class="hc-staff-pos-payments" role="group" aria-label="Phương thức thanh toán">
+                    <button type="button" data-pos-payment="CASH">
+                        <i data-lucide="banknote"></i>
+                        Tiền mặt
+                    </button>
+                    <button type="button" data-pos-payment="CARD">
+                        <i data-lucide="credit-card"></i>
+                        Thẻ
+                    </button>
+                    <button type="button" data-pos-payment="VIETQR">
+                        <i data-lucide="qr-code"></i>
+                        VietQR
+                    </button>
+                </div>
+
+                <button type="submit" class="hc-staff-pos-submit" data-pos-submit disabled>
+                    Thanh toán
+                </button>
+            </form>
+        </aside>
+
+        <div class="hc-staff-pos-modal" data-pos-seat-modal hidden>
+            <button type="button"
+                    class="hc-staff-pos-modal-backdrop"
+                    data-pos-modal-close
+                    aria-label="Đóng chọn ghế"></button>
+            <div class="hc-staff-pos-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="pos-seat-title">
+                <div class="hc-staff-pos-modal-head">
+                    <div>
+                        <h2 id="pos-seat-title" data-pos-modal-title>Chọn ghế nhanh</h2>
+                        <span data-pos-modal-meta>Suất chiếu</span>
+                    </div>
+                    <button type="button" class="hc-staff-pos-modal-close" data-pos-modal-close aria-label="Đóng">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+
+                <div class="hc-staff-pos-modal-stage">
+                    <div class="hc-staff-pos-screen" aria-hidden="true"></div>
+                    <div class="hc-staff-pos-seat-grid" data-pos-seat-grid></div>
+                    <div class="hc-staff-pos-seat-empty" data-pos-seat-empty>
+                        <i data-lucide="armchair"></i>
+                        <strong>Đang tải sơ đồ ghế</strong>
+                        <span>Vui lòng chờ trong giây lát.</span>
+                    </div>
+                </div>
+
+                <div class="hc-staff-pos-modal-foot">
+                    <strong>Đã chọn <span data-pos-modal-seat-count>0</span> ghế</strong>
+                    <button type="button" class="hc-staff-pos-modal-confirm" data-pos-modal-confirm disabled>
+                        Thêm vào hóa đơn
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </section>
 </main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script defer th:src="@{/js/features/staff-pos.js(v=1.0)}"></script>
 </body>
 </html>

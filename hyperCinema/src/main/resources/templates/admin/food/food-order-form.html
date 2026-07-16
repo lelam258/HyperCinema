@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tạo đơn F&B - HyperCinema')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('food')}"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner max-w-3xl">
+        <a th:href="@{/admin/food-orders}" class="mb-4 inline-flex text-sm text-cinema-muted no-underline hover:text-accent">← Quay lại đơn F&B</a>
+
+        <div class="mb-6">
+            <h1 class="hc-page-title">Tạo đơn F&B</h1>
+            <p class="hc-page-subtitle">Chọn booking và các mặt hàng cần bán kèm.</p>
+        </div>
+
+        <section class="hc-card p-6 md:p-8">
+            <form th:object="${orderRequest}" th:action="@{/admin/food-orders}" method="post" novalidate class="space-y-5" data-food-order-form>
+                <div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+                    <strong>Không thể tạo đơn:</strong>
+                    <ul class="mt-2 list-disc space-y-1 pl-5">
+                        <li th:each="err : ${#fields.globalErrors()}" th:text="#{${err}}">global error</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <label for="bookingId" class="hc-label">Mã đơn đặt vé</label>
+                    <input class="hc-input" type="number" id="bookingId" th:field="*{bookingId}" th:classappend="${#fields.hasErrors('bookingId')} ? ' border-danger!' : ''" min="1" required placeholder="Nhập mã booking">
+                    <span th:if="${#fields.hasErrors('bookingId')}" th:errors="*{bookingId}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <div>
+                    <label class="hc-label">Mặt hàng</label>
+                    <div class="space-y-3" data-food-item-container>
+                        <div class="grid grid-cols-[1fr_7rem_auto] items-center gap-3" data-food-item-row>
+                            <select class="hc-input" name="items[0].itemId" required>
+                                <option value="">Chọn mặt hàng</option>
+                                <option th:each="item : ${availableItems}" th:value="${item.itemId}" th:text="|${item.name} - ${#numbers.formatInteger(item.price, 0, 'POINT')}đ (Còn: ${item.stock})|">Item</option>
+                            </select>
+                            <input class="hc-input" type="number" name="items[0].quantity" min="1" value="1" required placeholder="SL">
+                            <button type="button" class="hc-btn h-10 w-10 px-0 text-danger" data-food-item-remove title="Xóa mặt hàng">&times;</button>
+                        </div>
+                    </div>
+
+                    <button type="button" class="hc-btn mt-3" data-food-item-add>
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                        Thêm mặt hàng
+                    </button>
+                </div>
+
+                <template data-food-item-template>
+                    <div class="grid grid-cols-[1fr_7rem_auto] items-center gap-3" data-food-item-row>
+                        <select class="hc-input" data-food-item-select required>
+                            <option value="">Chọn mặt hàng</option>
+                            <option th:each="item : ${availableItems}" th:value="${item.itemId}" th:text="|${item.name} - ${#numbers.formatInteger(item.price, 0, 'POINT')}đ (Còn: ${item.stock})|">Item</option>
+                        </select>
+                        <input class="hc-input" type="number" data-food-item-quantity min="1" value="1" required placeholder="SL">
+                        <button type="button" class="hc-btn h-10 w-10 px-0 text-danger" data-food-item-remove title="Xóa mặt hàng">&times;</button>
+                    </div>
+                </template>
+
+                <div class="flex justify-end gap-3 border-t border-cinema-border pt-5">
+                    <a th:href="@{/admin/food-orders}" class="hc-btn no-underline">Hủy</a>
+                    <button type="submit" class="hc-btn hc-btn-primary">Tạo đơn</button>
+                </div>
+            </form>
+        </section>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <script defer th:src="@{/js/features/food-order-form.js(v=1.0)}"></script>
+</main>
+
+</body>
+</html>

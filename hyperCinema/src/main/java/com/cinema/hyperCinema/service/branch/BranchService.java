@@ -1,20 +1,17 @@
 package com.cinema.hyperCinema.service.branch;
 
-import java.util.List;
-
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchCreateRequest;
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchSearchCriteria;
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchUpdateRequest;
+import com.cinema.hyperCinema.dto.admin.branch.response.BranchDetailView;
+import com.cinema.hyperCinema.dto.admin.branch.response.BranchListItem;
+import com.cinema.hyperCinema.dto.admin.branch.response.UpdateResult;
+import com.cinema.hyperCinema.dto.admin.branch.response.UserSummary;
+import com.cinema.hyperCinema.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import com.cinema.hyperCinema.dto.admin.branch.request.BranchCreateRequest;
-import com.cinema.hyperCinema.dto.admin.branch.response.BranchDetailView;
-import com.cinema.hyperCinema.dto.admin.branch.response.BranchListItem;
-import com.cinema.hyperCinema.dto.admin.branch.request.BranchSearchCriteria;
-import com.cinema.hyperCinema.dto.admin.branch.request.BranchUpdateRequest;
-import com.cinema.hyperCinema.dto.admin.branch.response.UpdateResult;
-import com.cinema.hyperCinema.dto.admin.branch.response.UserSummary;
-import com.cinema.hyperCinema.exception.branch.BranchNotFoundException;
-import com.cinema.hyperCinema.exception.branch.BranchValidationException;
-import com.cinema.hyperCinema.model.User;
+import java.util.List;
 
 public interface BranchService {
 
@@ -41,6 +38,4 @@ public interface BranchService {
     List<UserSummary> listUnassignedManagers();
 
     List<UserSummary> listUnassignedStaff();
-
-    List<UserSummary> listManagersForBranch(Integer branchId);
 }

@@ -114,6 +114,18 @@ public class HallManagementController {
         request.setName(current.getName());
         request.setBranchId(current.getBranchId());
         request.setHallType(current.getHallType());
+        request.setTicketPrice(current.getTicketPrice());
+        current.getSeatTypePrices().forEach(price -> {
+            if ("STANDARD".equals(price.getSeatType())) {
+                request.setStandardPrice(price.getPrice());
+            } else if ("VIP".equals(price.getSeatType())) {
+                request.setVipPrice(price.getPrice());
+            } else if ("COUPLE".equals(price.getSeatType())) {
+                request.setCouplePrice(price.getPrice());
+            } else if ("DISABLED".equals(price.getSeatType())) {
+                request.setDisabledPrice(price.getPrice());
+            }
+        });
         request.setCapacity(current.getCapacity());
         request.setStatus(current.getStatus());
 

@@ -51,7 +51,11 @@ public final class HallSpecifications {
                 String status = trimToNull(criteria.getStatus());
                 if (status != null) {
                     predicates.add(cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
+                } else {
+                    predicates.add(cb.notEqual(cb.lower(root.get("status")), "inactive"));
                 }
+            } else {
+                predicates.add(cb.notEqual(cb.lower(root.get("status")), "inactive"));
             }
 
             if (predicates.isEmpty()) {

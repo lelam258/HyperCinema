@@ -58,7 +58,7 @@ public class AdminAnalyticsController {
             report = analyticsService.getTicketSalesReport(from, to, branchId);
         }
 
-        List<Branch> branches = branchRepository.findAll();
+        List<Branch> branches = branchRepository.findByStatusIgnoreCaseOrderByNameAsc("Active");
 
         model.addAttribute("tab", tab);
         model.addAttribute("from", from);

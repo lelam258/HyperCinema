@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${mode == 'edit'} ? 'Chỉnh sửa Voucher' : 'Tạo Voucher')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('vouchers')}"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner max-w-3xl">
+        <a th:href="${mode == 'edit'} ? @{|/admin/vouchers/${voucherId}|} : @{/admin/vouchers}" class="mb-4 inline-flex text-sm text-cinema-muted no-underline hover:text-accent">← Quay lại</a>
+
+        <div class="mb-6">
+            <h1 class="hc-page-title" th:text="${mode == 'edit'} ? 'Chỉnh sửa Voucher' : 'Tạo Voucher'">Tạo Voucher</h1>
+            <p class="hc-page-subtitle">Thiết lập mã, mức giảm, thời hạn và phạm vi áp dụng.</p>
+        </div>
+
+        <section class="hc-card p-6 md:p-8">
+            <div th:replace="~{fragments/components :: flashes}"></div>
+
+            <form th:object="${voucher}"
+                  th:action="${mode == 'edit'} ? @{|/admin/vouchers/${voucherId}|} : @{/admin/vouchers}"
+                  method="post" novalidate class="space-y-5" data-voucher-form>
+                <div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+                    <strong>Không thể lưu Voucher:</strong>
+                    <ul class="mt-2 list-disc space-y-1 pl-5">
+                        <li th:each="err : ${#fields.globalErrors()}" th:text="${err}">global error</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <label for="title" class="hc-label">Tiêu đề</label>
+                    <input class="hc-input" type="text" id="title" th:field="*{title}" th:classappend="${#fields.hasErrors('title')} ? ' border-danger!' : ''" maxlength="255" autocomplete="off" required>
+                    <span th:if="${#fields.hasErrors('title')}" th:errors="*{title}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <div>
+                    <label for="code" class="hc-label">Mã voucher</label>
+                    <input class="hc-input uppercase" type="text" id="code" th:field="*{code}" th:classappend="${#fields.hasErrors('code')} ? ' border-danger!' : ''" maxlength="50" autocomplete="off" required>
+                    <span th:if="${#fields.hasErrors('code')}" th:errors="*{code}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="discountType" class="hc-label">Loại giảm giá</label>
+                        <select class="hc-input" id="discountType" th:field="*{discountType}" th:classappend="${#fields.hasErrors('discountType')} ? ' border-danger!' : ''" required>
+                            <option value="">Chọn loại</option>
+                            <option value="PERCENTAGE">Phần trăm (%)</option>
+                            <option value="FIXED_AMOUNT">Số tiền cố định (VND)</option>
+                        </select>
+                        <span th:if="${#fields.hasErrors('discountType')}" th:errors="*{discountType}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
+                    <div>
+                        <label for="discountValue" class="hc-label">Giá trị giảm</label>
+                        <input class="hc-input" type="number" id="discountValue" th:field="*{discountValue}" th:classappend="${#fields.hasErrors('discountValue')} ? ' border-danger!' : ''" min="1" required>
+                        <span class="mt-1 block text-xs text-cinema-muted">Phần trăm: 1-100. Số tiền: VND.</span>
+                        <span th:if="${#fields.hasErrors('discountValue')}" th:errors="*{discountValue}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="minOrderValue" class="hc-label">Giá trị đơn tối thiểu</label>
+                        <input class="hc-input" type="number" id="minOrderValue" th:field="*{minOrderValue}" th:classappend="${#fields.hasErrors('minOrderValue')} ? ' border-danger!' : ''" min="0" required>
+                        <span th:if="${#fields.hasErrors('minOrderValue')}" th:errors="*{minOrderValue}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
+                    <div>
+                        <label for="maxUses" class="hc-label">Số lần dùng tối đa</label>
+                        <input class="hc-input" type="number" id="maxUses" th:field="*{maxUses}" th:classappend="${#fields.hasErrors('maxUses')} ? ' border-danger!' : ''" min="1" required>
+                        <span th:if="${#fields.hasErrors('maxUses')}" th:errors="*{maxUses}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="startDate" class="hc-label">Ngày bắt đầu</label>
+                        <input class="hc-input" type="datetime-local" id="startDate" th:field="*{startDate}" th:classappend="${#fields.hasErrors('startDate')} ? ' border-danger!' : ''" required>
+                        <span th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
+                    <div>
+                        <label for="endDate" class="hc-label">Ngày kết thúc</label>
+                        <input class="hc-input" type="datetime-local" id="endDate" th:field="*{endDate}" th:classappend="${#fields.hasErrors('endDate')} ? ' border-danger!' : ''" required>
+                        <span th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}" class="mt-1 block text-xs text-danger"></span>
+                    </div>
+                </div>
+
+                <label class="flex items-center gap-3 rounded-lg border border-cinema-border bg-cinema-panel-soft p-4 text-sm text-white">
+                    <input type="checkbox" id="branchSpecific" th:field="*{branchSpecific}" class="h-4 w-4 accent-[#E50914]" data-voucher-branch-toggle>
+                    <span>Áp dụng cho một chi nhánh cụ thể</span>
+                </label>
+
+                <div data-voucher-branch-field>
+                    <label for="branchId" class="hc-label">Chi nhánh</label>
+                    <select class="hc-input" id="branchId" th:field="*{branchId}" th:classappend="${#fields.hasErrors('branchId')} ? ' border-danger!' : ''">
+                        <option value="">Chọn chi nhánh</option>
+                        <option th:each="branch : ${branches}" th:value="${branch.branchId}" th:text="|${branch.name} - ${branch.city}|">Branch</option>
+                    </select>
+                    <span th:if="${#fields.hasErrors('branchId')}" th:errors="*{branchId}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <div th:if="${mode == 'edit'}">
+                    <label for="status" class="hc-label">Trạng thái</label>
+                    <select class="hc-input" id="status" th:field="*{status}" th:classappend="${#fields.hasErrors('status')} ? ' border-danger!' : ''">
+                        <option value="ACTIVE">Đang hoạt động</option>
+                        <option value="INACTIVE">Ngừng hoạt động</option>
+                    </select>
+                    <span class="mt-1 block text-xs text-cinema-muted">EXPIRED do hệ thống tự xác định theo thời hạn.</span>
+                    <span th:if="${#fields.hasErrors('status')}" th:errors="*{status}" class="mt-1 block text-xs text-danger"></span>
+                </div>
+
+                <div class="flex justify-end gap-3 border-t border-cinema-border pt-5">
+                    <a th:href="${mode == 'edit'} ? @{|/admin/vouchers/${voucherId}|} : @{/admin/vouchers}" class="hc-btn no-underline">Hủy</a>
+                    <button type="submit" th:text="${mode == 'edit'} ? 'Lưu thay đổi' : 'Tạo mới'" class="hc-btn hc-btn-primary">Tạo mới</button>
+                </div>
+            </form>
+        </section>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <script defer th:src="@{/js/features/voucher-form.js(v=1.0)}"></script>
+</main>
+
+</body>
+</html>
