@@ -34,16 +34,29 @@ public class CustomerDashboardController {
     public String dashboard(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         CustomerDashboardView dashboard = workspaceUiDataService.getCustomerDashboard(userDetails.getUser());
         List<MovieListItem> nowShowingMovies = findCustomerMovies();
+        addCustomerAttributes(model, dashboard);
+        model.addAttribute("lastUpdated", dashboard.getLastUpdated());
+        model.addAttribute("movies", nowShowingMovies);
+        model.addAttribute("nowShowingCount", nowShowingMovies.size());
+        return "my/dashboard";
+    }
+
+    @GetMapping("/tai-khoan")
+    public String account(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        CustomerDashboardView dashboard = workspaceUiDataService.getCustomerDashboard(userDetails.getUser());
+        addCustomerAttributes(model, dashboard);
+        model.addAttribute("lastUpdated", dashboard.getLastUpdated());
+        return "my/profile";
+    }
+
+    private void addCustomerAttributes(Model model, CustomerDashboardView dashboard) {
         model.addAttribute("dashboard", dashboard);
         model.addAttribute("customerName", dashboard.getCustomerName());
         model.addAttribute("email", dashboard.getEmail());
         model.addAttribute("phone", dashboard.getPhone());
         model.addAttribute("rewardPoints", dashboard.getRewardPoints());
         model.addAttribute("membershipTier", dashboard.getMembershipTier());
-        model.addAttribute("lastUpdated", dashboard.getLastUpdated());
-        model.addAttribute("movies", nowShowingMovies);
-        model.addAttribute("nowShowingCount", nowShowingMovies.size());
-        return "my/dashboard";
+        model.addAttribute("membershipProgress", dashboard.getMembershipProgress());
     }
 
     private List<MovieListItem> findCustomerMovies() {

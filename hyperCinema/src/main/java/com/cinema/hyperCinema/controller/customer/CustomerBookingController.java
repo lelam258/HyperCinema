@@ -32,6 +32,7 @@ public class CustomerBookingController {
         model.addAttribute("customerName", dashboard.getCustomerName());
         model.addAttribute("membershipTier", dashboard.getMembershipTier());
         model.addAttribute("rewardPoints", dashboard.getRewardPoints());
+        model.addAttribute("membershipProgress", dashboard.getMembershipProgress());
         return "my/bookings";
     }
 }

@@ -1,6 +1,7 @@
 package com.cinema.hyperCinema.dto.staff.booking;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 
 import lombok.Builder;
@@ -20,6 +21,14 @@ public class BookingDetailView {
     private final LocalDateTime showtimeStart;
     private final LocalDateTime showtimeEnd;
     private final LocalDateTime createdAt;
+    private final Long seatSubtotal;
+    private final Long foodSubtotal;
+    private final Long orderSubtotal;
+    private final Long voucherDiscountAmount;
+    private final Long membershipDiscountBase;
+    private final Long membershipDiscountAmount;
+    private final String membershipPlanName;
+    private final BigDecimal membershipDiscountPercent;
     private final Long totalPrice;
     private final String bookingStatus;
     private final String paymentStatus;

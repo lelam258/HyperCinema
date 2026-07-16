@@ -218,6 +218,14 @@ public class BookingManagementServiceImpl implements BookingManagementService {
                 .showtimeStart(showtime != null ? showtime.getStartTime() : null)
                 .showtimeEnd(showtime != null ? showtime.getEndTime() : null)
                 .createdAt(booking.getCreatedAt())
+                .seatSubtotal(booking.getSeatSubtotal())
+                .foodSubtotal(booking.getFoodSubtotal())
+                .orderSubtotal(booking.getOrderSubtotal())
+                .voucherDiscountAmount(booking.getVoucherDiscountAmount())
+                .membershipDiscountBase(membershipDiscountBase(booking))
+                .membershipDiscountAmount(booking.getMembershipDiscountAmount())
+                .membershipPlanName(booking.getMembershipPlanName())
+                .membershipDiscountPercent(booking.getMembershipDiscountPercent())
                 .totalPrice(booking.getTotalPrice())
                 .bookingStatus(booking.getStatus())
                 .paymentStatus(payment != null ? payment.getStatus() : "")
@@ -245,6 +253,14 @@ public class BookingManagementServiceImpl implements BookingManagementService {
                         .status(ticket.getStatus())
                         .build())
                 .toList();
+    }
+
+    private long membershipDiscountBase(Booking booking) {
+        long orderSubtotal = booking.getOrderSubtotal() != null
+                ? booking.getOrderSubtotal()
+                : (booking.getTotalPrice() != null ? booking.getTotalPrice() : 0L);
+        long voucherDiscount = booking.getVoucherDiscountAmount() != null ? booking.getVoucherDiscountAmount() : 0L;
+        return Math.max(0L, orderSubtotal - voucherDiscount);
     }
 
     private List<BookingFoodOrderView> toFoodOrderViews(Booking booking) {

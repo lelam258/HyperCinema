@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.cinema.hyperCinema.dto.admin.hall.response.BranchOption;
 import com.cinema.hyperCinema.dto.admin.hall.response.HallListItem;
+import com.cinema.hyperCinema.dto.admin.hall.response.SeatTypePriceView;
 import com.cinema.hyperCinema.dto.admin.showtime.request.ShowtimeCreateRequest;
 import com.cinema.hyperCinema.dto.admin.showtime.request.ShowtimeSearchCriteria;
 import com.cinema.hyperCinema.dto.admin.showtime.request.ShowtimeUpdateRequest;
@@ -37,6 +38,7 @@ import com.cinema.hyperCinema.repository.SeatReservationRepository;
 import com.cinema.hyperCinema.repository.ShowtimeRepository;
 import com.cinema.hyperCinema.repository.TicketRepository;
 import com.cinema.hyperCinema.repository.UserRepository;
+import com.cinema.hyperCinema.service.pricing.HallSeatTypePricingService;
 import com.cinema.hyperCinema.service.showtime.ShowtimeService;
 
 import lombok.RequiredArgsConstructor;
@@ -60,6 +62,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     private final SeatReservationRepository seatReservationRepository;
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
+    private final HallSeatTypePricingService hallSeatTypePricingService;
 
     @Override
     @Transactional(readOnly = true)
@@ -115,7 +118,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         showtime.setHall(hall);
         showtime.setStartTime(request.getStartTime());
         showtime.setEndTime(request.getEndTime());
-        showtime.setPrice(request.getPrice() == null ? 0 : request.getPrice());
+        showtime.setPrice(ticketPriceFor(hall));
         showtime.setStatus(SHOWTIME_ACTIVE);
         return toDetailView(showtimeRepository.save(showtime));
     }
@@ -139,7 +142,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         showtime.setHall(hall);
         showtime.setStartTime(request.getStartTime());
         showtime.setEndTime(request.getEndTime());
-        showtime.setPrice(request.getPrice() == null ? 0 : request.getPrice());
+        showtime.setPrice(ticketPriceFor(hall));
         showtime.setStatus(SHOWTIME_ACTIVE);
         return toDetailView(showtimeRepository.save(showtime));
     }
@@ -365,6 +368,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .startTime(detail.getStartTime())
                 .endTime(detail.getEndTime())
                 .price(detail.getPrice())
+                .priceRange(detail.getPriceRange())
+                .seatTypePrices(detail.getSeatTypePrices())
                 .bookingCount(detail.getBookingCount())
                 .ticketCount(detail.getTicketCount())
                 .reservationCount(detail.getReservationCount())
@@ -386,6 +391,9 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         boolean past = showtime.getStartTime() != null && showtime.getStartTime().isBefore(LocalDateTime.now());
         boolean cancelled = SHOWTIME_CANCELLED.equals(showtime.getStatus());
         boolean hasDependencies = bookingCount > 0 || ticketCount > 0 || reservationCount > 0 || paymentCount > 0;
+        List<SeatTypePriceView> seatTypePrices = hall == null
+                ? List.of()
+                : hallSeatTypePricingService.priceTable(hall.getHallId(), hall.getTicketPrice());
         return ShowtimeDetailView.builder()
                 .showtimeId(showtimeId)
                 .movieId(movie == null ? null : movie.getMovieId())
@@ -397,7 +405,9 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .hallName(hall == null ? "" : hall.getName())
                 .startTime(showtime.getStartTime())
                 .endTime(showtime.getEndTime())
-                .price(showtime.getPrice())
+                .price(ticketPriceFor(hall))
+                .priceRange(priceRange(seatTypePrices))
+                .seatTypePrices(seatTypePrices)
                 .bookingCount(bookingCount)
                 .ticketCount(ticketCount)
                 .reservationCount(reservationCount)
@@ -425,6 +435,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .branchName(branch == null ? "" : branch.getName())
                 .city(branch == null ? "" : branch.getCity())
                 .hallType(hall.getHallType())
+                .ticketPrice(hall.getTicketPrice())
+                .priceRange(priceRange(hallSeatTypePricingService.priceTable(hall.getHallId(), hall.getTicketPrice())))
                 .capacity(hall.getCapacity())
                 .status(hall.getStatus())
                 .build();
@@ -446,6 +458,28 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     private static Integer hallBranchId(Hall hall) {
         Branch branch = hall == null ? null : hall.getBranch();
         return branch == null ? null : branch.getBranchId();
+    }
+
+    private static Integer ticketPriceFor(Hall hall) {
+        Integer ticketPrice = hall == null ? null : hall.getTicketPrice();
+        if (ticketPrice == null || ticketPrice < 1) {
+            throw new ShowtimeValidationException("showtime.hall.ticket_price.invalid");
+        }
+        return ticketPrice;
+    }
+
+    private static String priceRange(List<SeatTypePriceView> prices) {
+        List<Integer> positivePrices = prices.stream()
+                .map(SeatTypePriceView::getPrice)
+                .filter(price -> price != null && price > 0)
+                .sorted()
+                .toList();
+        if (positivePrices.isEmpty()) {
+            return "0";
+        }
+        Integer min = positivePrices.get(0);
+        Integer max = positivePrices.get(positivePrices.size() - 1);
+        return min.equals(max) ? String.valueOf(min) : min + " - " + max;
     }
 
     private static String normalizeOptional(String value) {

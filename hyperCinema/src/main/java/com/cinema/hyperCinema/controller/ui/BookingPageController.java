@@ -9,7 +9,6 @@ import com.cinema.hyperCinema.service.booking.BookingService;
 import com.cinema.hyperCinema.service.movie.MovieService;
 import com.cinema.hyperCinema.service.ui.BookingUiDataService;
 import com.cinema.hyperCinema.service.ui.WorkspaceUiDataService;
-import com.cinema.hyperCinema.util.SeatPricing;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -116,11 +115,12 @@ public String movieBooking(@PathVariable Integer movieId,
                                 @RequestParam(name = "seatIds", required = false) List<Integer> seatIds,
                                 @RequestParam(name = "foodItemIds", required = false) List<Integer> foodItemIds,
                                 @RequestParam(name = "foodQuantities", required = false) List<Integer> foodQuantities,
+                                @RequestParam(name = "voucherCode", required = false) String voucherCode,
                                 RedirectAttributes redirectAttributes) {
         User user = userDetails.getUser();
         try {
             var savedBooking = bookingService.createPendingVietQrBooking(
-                    user, showtimeId, seatIds, foodItemIds, foodQuantities);
+                    user, showtimeId, seatIds, foodItemIds, foodQuantities, voucherCode);
             return "redirect:/payment/vietqr/" + savedBooking.getBookingId();
         } catch (IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
@@ -143,6 +143,7 @@ public String movieBooking(@PathVariable Integer movieId,
         model.addAttribute("customerName", dashboard.getCustomerName());
         model.addAttribute("membershipTier", dashboard.getMembershipTier());
         model.addAttribute("rewardPoints", dashboard.getRewardPoints());
+        model.addAttribute("membershipProgress", dashboard.getMembershipProgress());
     }
 
     private void addSelectedShowtimeModel(Showtime showtime, User user, Model model) {
@@ -267,6 +268,7 @@ public String movieBooking(@PathVariable Integer movieId,
     public static class ShowtimeSummaryView {
         private final Integer showtimeId;
         private final Integer movieId;
+        private final Integer branchId;
         private final String movieTitle;
         private final String posterUrl;
         private final String branchName;
@@ -279,6 +281,7 @@ public String movieBooking(@PathVariable Integer movieId,
 
         private ShowtimeSummaryView(Integer showtimeId,
                                     Integer movieId,
+                                    Integer branchId,
                                     String movieTitle,
                                     String posterUrl,
                                     String branchName,
@@ -290,6 +293,7 @@ public String movieBooking(@PathVariable Integer movieId,
                                     Integer price) {
             this.showtimeId = showtimeId;
             this.movieId = movieId;
+            this.branchId = branchId;
             this.movieTitle = movieTitle;
             this.posterUrl = posterUrl;
             this.branchName = branchName;
@@ -308,6 +312,7 @@ public String movieBooking(@PathVariable Integer movieId,
             return new ShowtimeSummaryView(
                     showtime.getShowtimeId(),
                     movie.getMovieId(),
+                    branch != null ? branch.getBranchId() : null,
                     movie.getTitle(),
                     movie.getPosterUrl(),
                     branch.getName(),
@@ -316,11 +321,12 @@ public String movieBooking(@PathVariable Integer movieId,
                     hall.getHallType(),
                     showtime.getStartTime(),
                     showtime.getEndTime(),
-                    SeatPricing.priceFor("STANDARD"));
+                    hall.getTicketPrice());
         }
 
         public Integer getShowtimeId() { return showtimeId; }
         public Integer getMovieId() { return movieId; }
+        public Integer getBranchId() { return branchId; }
         public String getMovieTitle() { return movieTitle; }
         public String getPosterUrl() { return posterUrl; }
         public String getBranchName() { return branchName; }

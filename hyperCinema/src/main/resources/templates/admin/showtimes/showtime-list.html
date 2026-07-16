@@ -73,6 +73,7 @@
                         <th>Phim</th>
                         <th>Chi nhánh</th>
                         <th>Phòng</th>
+                        <th class="text-right">Khoảng giá</th>
                         <th>Bắt đầu</th>
                         <th>Kết thúc</th>
                         <th class="text-right">Booking</th>
@@ -81,12 +82,13 @@
                     </thead>
                     <tbody>
                     <tr th:if="${page == null or #lists.isEmpty(page.content)}">
-                        <td colspan="7" class="py-12 text-center text-cinema-muted">Không có suất chiếu phù hợp.</td>
+                        <td colspan="8" class="py-12 text-center text-cinema-muted">Không có suất chiếu phù hợp.</td>
                     </tr>
                     <tr th:each="item : ${page != null ? page.content : {}}" th:if="${page != null and not #lists.isEmpty(page.content)}">
                         <td><a th:href="@{|/admin/showtimes/${item.showtimeId}|}" th:text="${item.movieTitle}" class="font-semibold text-white no-underline hover:text-accent">Movie</a></td>
                         <td th:text="${item.branchName}">Branch</td>
                         <td th:text="${item.hallName}">Hall</td>
+                        <td class="text-right tabular-nums" th:text="${item.priceRange} + ' đ'">80.000 - 160.000 đ</td>
                         <td class="tabular-nums" th:text="${#temporals.format(item.startTime, 'dd/MM/yyyy HH:mm')}">time</td>
                         <td class="tabular-nums" th:text="${#temporals.format(item.endTime, 'dd/MM/yyyy HH:mm')}">time</td>
                         <td class="text-right tabular-nums" th:text="${item.bookingCount}">0</td>

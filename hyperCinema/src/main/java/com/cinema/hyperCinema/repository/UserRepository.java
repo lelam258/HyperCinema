@@ -27,6 +27,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     Optional<User> findByEmail(String email);
 
+    List<User> findByStatusIgnoreCase(String status);
+
     @Query("SELECT u FROM User u "
             + "JOIN FETCH u.role "
             + "LEFT JOIN FETCH u.branch "
@@ -107,11 +109,13 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      */
     @Query("SELECT u FROM User u "
             + "WHERE u.role.name = 'Manager' "
+            + "AND u.status = 'Active' "
             + "AND u.branch IS NULL")
     List<User> findUnassignedManagers();
 
     @Query("SELECT u FROM User u "
             + "WHERE u.role.name = 'Staff' "
+            + "AND u.status = 'Active' "
             + "AND u.branch IS NULL")
     List<User> findUnassignedStaff();
 
@@ -154,8 +158,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     // ── Dashboard aggregate queries ──
 
     long countByStatus(String status);
-
-    List<User> findByStatusIgnoreCase(String status);
 
     @Query("SELECT u.role.name, COUNT(u) FROM User u GROUP BY u.role.name")
     List<Object[]> countUsersByRole();

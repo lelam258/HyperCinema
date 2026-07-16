@@ -64,6 +64,22 @@
                         <dt>Nội dung</dt>
                         <dd class="hc-vietqr-code" th:text="${transferContent}">HC1</dd>
                     </div>
+                    <div>
+                        <dt>Tạm tính</dt>
+                        <dd th:text="${#numbers.formatDecimal(booking.orderSubtotal != null ? booking.orderSubtotal : booking.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</dd>
+                    </div>
+                    <div th:if="${booking.voucherDiscountAmount != null and booking.voucherDiscountAmount > 0}">
+                        <dt>Voucher</dt>
+                        <dd th:text="${'-' + #numbers.formatDecimal(booking.voucherDiscountAmount, 0, 'COMMA', 0, 'POINT') + ' VND'}">0 VND</dd>
+                    </div>
+                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}">
+                        <dt th:text="${booking.membershipPlanName != null and !#strings.isEmpty(booking.membershipPlanName) ? 'Membership ' + booking.membershipPlanName + (booking.membershipDiscountPercent != null ? ' (' + booking.membershipDiscountPercent + '%)' : '') : 'Membership'}">Membership</dt>
+                        <dd th:text="${'-' + #numbers.formatDecimal(booking.membershipDiscountAmount, 0, 'COMMA', 0, 'POINT') + ' VND'}">0 VND</dd>
+                    </div>
+                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}">
+                        <dt>Base membership</dt>
+                        <dd th:text="${#numbers.formatDecimal((booking.orderSubtotal != null ? booking.orderSubtotal : booking.totalPrice) - (booking.voucherDiscountAmount != null ? booking.voucherDiscountAmount : 0), 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</dd>
+                    </div>
                     <div class="hc-summary-total">
                         <dt>Số tiền</dt>
                         <dd th:text="${#numbers.formatDecimal(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</dd>

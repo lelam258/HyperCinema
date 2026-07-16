@@ -34,7 +34,12 @@
             </a>
         </section>
 
-        <section class="hc-booking-workspace" data-booking-root aria-label="Booking workflow">
+        <section class="hc-booking-workspace"
+                 data-booking-root
+                 th:data-branch-id="${selectedShowtime != null ? selectedShowtime.branchId : null}"
+                 th:data-membership-active="${membershipProgress != null and membershipProgress.active}"
+                 th:data-membership-discount-percent="${membershipProgress != null and membershipProgress.discountPercent != null ? membershipProgress.discountPercent : 0}"
+                 aria-label="Booking workflow">
             <div class="hc-booking-main-stack">
                 <div th:if="${bookingError}" class="hc-alert hc-alert-danger" th:text="${bookingError}">
                     Không thể đặt vé.
@@ -120,6 +125,30 @@
                     <dl class="hc-summary-list">
                         <div class="hc-summary-total">
                             <dt>Tạm tính</dt>
+                            <dd data-booking-subtotal>0 VND</dd>
+                        </div>
+                        <div>
+                            <dt>Voucher</dt>
+                            <dd data-booking-voucher-discount>0 VND</dd>
+                        </div>
+                        <div th:if="${membershipProgress != null and membershipProgress.active}">
+                            <dt th:text="|Membership ${membershipProgress.currentTier} (${membershipProgress.discountPercent}%)|">Membership</dt>
+                            <dd data-booking-membership-discount>0 VND</dd>
+                        </div>
+                        <div th:if="${membershipProgress != null and membershipProgress.active}">
+                            <dt>Base membership</dt>
+                            <dd data-booking-membership-base>0 VND</dd>
+                        </div>
+                        <div th:unless="${membershipProgress != null and membershipProgress.active}">
+                            <dt>Membership</dt>
+                            <dd>Chua co uu dai</dd>
+                        </div>
+                        <div>
+                            <dt>Tong giam</dt>
+                            <dd data-booking-discount>0 VND</dd>
+                        </div>
+                        <div>
+                            <dt>Tong cong</dt>
                             <dd data-booking-total>0 VND</dd>
                         </div>
                     </dl>
@@ -129,8 +158,17 @@
                               method="post"
                               data-booking-form>
                             <input type="hidden" name="showtimeId" th:value="${selectedShowtime.showtimeId}">
+                            <input type="hidden" name="voucherCode" data-booking-voucher-code>
                             <div data-booking-selected-seats></div>
                             <div data-booking-selected-food></div>
+                            <div class="hc-staff-pos-voucher">
+                                <input type="text" data-booking-voucher-input placeholder="Ma voucher">
+                                <button type="button" data-booking-voucher-apply>
+                                    <i data-lucide="badge-percent"></i>
+                                    Ap dung
+                                </button>
+                            </div>
+                            <span class="hc-staff-pos-inline-message" data-booking-voucher-message></span>
                             <button type="submit"
                                     class="hc-button hc-button-primary hc-customer-primary"
                                     data-booking-submit
