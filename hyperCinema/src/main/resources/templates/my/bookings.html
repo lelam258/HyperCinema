@@ -13,6 +13,48 @@
             <p class="text-sm text-slate-400">Danh sách các vé bạn đã đặt trong hệ thống</p>
         </div>
 
+        <form th:action="@{/my/bookings}" method="get"
+              class="glass-card mb-6 flex flex-col gap-4 p-4 md:flex-row md:items-end md:justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tong so ve</p>
+                <p class="text-2xl font-bold text-white tabular-nums" th:text="${bookingCount}">0</p>
+            </div>
+            <div class="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 md:w-auto">
+                <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Sap xep
+                    <select name="sort"
+                            class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
+                        <option value="createdAt" th:selected="${sort == 'createdAt'}">Ngay dat</option>
+                        <option value="showtime" th:selected="${sort == 'showtime.startTime'}">Suat chieu</option>
+                        <option value="totalPrice" th:selected="${sort == 'totalPrice'}">Tong tien</option>
+                        <option value="status" th:selected="${sort == 'status'}">Trang thai</option>
+                        <option value="bookingId" th:selected="${sort == 'bookingId'}">Ma don</option>
+                    </select>
+                </label>
+                <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Chieu
+                    <select name="direction"
+                            class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
+                        <option value="desc" th:selected="${direction == 'desc'}">Giam dan</option>
+                        <option value="asc" th:selected="${direction == 'asc'}">Tang dan</option>
+                    </select>
+                </label>
+                <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Moi trang
+                    <select name="size"
+                            class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
+                        <option value="10" th:selected="${size == 10}">10</option>
+                        <option value="20" th:selected="${size == 20}">20</option>
+                        <option value="50" th:selected="${size == 50}">50</option>
+                    </select>
+                </label>
+            </div>
+            <button type="submit"
+                    class="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary-hover">
+                Ap dung
+            </button>
+        </form>
+
         <!-- Bookings Table -->
         <div class="glass-card overflow-hidden">
             <div class="overflow-x-auto">
@@ -74,6 +116,28 @@
                 </table>
             </div>
         </div>
+
+        <nav th:if="${page != null and page.totalPages > 1}"
+             class="mt-6 flex flex-col gap-3 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+            <p>
+                Trang <span class="font-semibold text-white" th:text="${page.number + 1}">1</span>
+                / <span class="font-semibold text-white" th:text="${page.totalPages}">1</span>
+            </p>
+            <div class="flex flex-wrap gap-2">
+                <a th:classappend="${page.first} ? ' pointer-events-none opacity-40' : ''"
+                   th:href="@{/my/bookings(page=${page.number - 1},size=${size},sort=${sort},direction=${direction})}"
+                   class="rounded-lg border border-white/10 px-3 py-2 text-white no-underline hover:bg-white/[0.06]">Truoc</a>
+                <a th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+                   th:if="${i >= page.number - 2 and i <= page.number + 2}"
+                   th:href="@{/my/bookings(page=${i},size=${size},sort=${sort},direction=${direction})}"
+                   th:classappend="${i == page.number} ? ' bg-primary text-white border-primary' : ' text-white'"
+                   class="rounded-lg border border-white/10 px-3 py-2 no-underline hover:bg-white/[0.06]"
+                   th:text="${i + 1}">1</a>
+                <a th:classappend="${page.last} ? ' pointer-events-none opacity-40' : ''"
+                   th:href="@{/my/bookings(page=${page.number + 1},size=${size},sort=${sort},direction=${direction})}"
+                   class="rounded-lg border border-white/10 px-3 py-2 text-white no-underline hover:bg-white/[0.06]">Sau</a>
+            </div>
+        </nav>
     </div>
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </main>

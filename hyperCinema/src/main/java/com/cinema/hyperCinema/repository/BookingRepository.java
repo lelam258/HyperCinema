@@ -85,7 +85,7 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             "tickets",
             "tickets.seat"
     })
-    List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Integer userId, Pageable pageable);
+    Page<Booking> findByUser_UserId(Integer userId, Pageable pageable);
 
     long countByShowtime_ShowtimeId(Integer showtimeId);
 
