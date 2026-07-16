@@ -52,9 +52,14 @@ public class VNPayController {
         }
 
         if (vnPayService.isSuccessful(params)) {
-            bookingPaymentService.confirmPayment(bookingId);
-            redirectAttributes.addFlashAttribute("bookingSuccess", "Thanh toan VNPay thanh cong.");
-            return "redirect:/my/bookings";
+            try {
+                bookingPaymentService.confirmPayment(bookingId);
+                redirectAttributes.addFlashAttribute("bookingSuccess", "Thanh toan VNPay thanh cong.");
+                return "redirect:/my/bookings";
+            } catch (IllegalStateException ex) {
+                redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
+                return "redirect:/booking?showtimeId=" + booking.getShowtime().getShowtimeId();
+            }
         }
 
         bookingPaymentService.failPayment(bookingId);

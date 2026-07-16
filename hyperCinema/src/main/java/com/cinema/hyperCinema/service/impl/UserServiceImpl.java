@@ -5,6 +5,7 @@ import com.cinema.hyperCinema.model.User;
 import com.cinema.hyperCinema.repository.RoleRepository;
 import com.cinema.hyperCinema.repository.UserRepository;
 import com.cinema.hyperCinema.service.UserService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,20 +20,24 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository) {
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        return userRepository.findByStatusIgnoreCase("Active");
     }
 
     @Override
     public List<User> searchAndFilterUsers(String query, String roleName, String status) {
-        List<User> users = userRepository.findAll();
+        List<User> users = shouldIncludeAllStatuses(status)
+                ? userRepository.findAll()
+                : userRepository.findByStatusIgnoreCase("Active");
 
         return users.stream()
                 .filter(u -> {
@@ -68,6 +73,9 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new IllegalArgumentException("Email already exists: " + user.getEmail());
         }
+        if (user.getFullName() == null) {
+            user.setFullName(user.getUsername());
+        }
 
         if (user.getRole() == null || user.getRole().getRoleId() == null) {
             // Default to Viewer if no role specified
@@ -84,6 +92,10 @@ public class UserServiceImpl implements UserService {
             user.setStatus("Active");
         }
 
+        if (user.getPasswordHash() != null) {
+            user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+        }
+        
         return userRepository.save(user);
     }
 
@@ -102,7 +114,7 @@ public class UserServiceImpl implements UserService {
         user.setUsername(userDetails.getUsername());
         user.setEmail(userDetails.getEmail());
         user.setPhone(userDetails.getPhone());
-
+        
         if (userDetails.getRole() != null && userDetails.getRole().getRoleId() != null) {
             Role role = roleRepository.findById(userDetails.getRole().getRoleId())
                     .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + userDetails.getRole().getRoleId()));
@@ -119,7 +131,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Integer id) {
         User user = getUserById(id);
-        userRepository.delete(user);
+        user.setStatus("Inactive");
+        userRepository.save(user);
     }
 
     @Override
@@ -145,7 +158,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User resetUserPassword(Integer id, String newPassword) {
         User user = getUserById(id);
-        user.setPasswordHash(newPassword); // In production, this would be encrypted
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
         return userRepository.save(user);
     }
 
@@ -165,5 +178,12 @@ public class UserServiceImpl implements UserService {
         stats.put("admins", admins);
 
         return stats;
+    }
+
+    private static boolean shouldIncludeAllStatuses(String status) {
+        return status != null
+                && !status.isBlank()
+                && !status.equalsIgnoreCase("All")
+                && !status.equalsIgnoreCase("All Status");
     }
 }

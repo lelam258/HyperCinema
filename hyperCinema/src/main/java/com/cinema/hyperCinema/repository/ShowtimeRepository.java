@@ -27,14 +27,42 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
      * <p>The traversal {@code Hall_Branch_BranchId} walks
      * {@link Showtime#getHall()} → {@code Hall.branch} → {@code Branch.branchId}.
      */
-    boolean existsByHall_Branch_BranchIdAndStartTimeAfter(Integer branchId, LocalDateTime now);
+    @Query("""
+            SELECT COUNT(s) > 0
+            FROM Showtime s
+            WHERE s.hall.branch.branchId = :branchId
+              AND s.startTime > :now
+              AND s.status = 'ACTIVE'
+            """)
+    boolean existsByHall_Branch_BranchIdAndStartTimeAfter(
+            @Param("branchId") Integer branchId,
+            @Param("now") LocalDateTime now);
 
-    boolean existsByMovie_MovieIdAndStartTimeAfter(Integer movieId, LocalDateTime now);
+    @Query("""
+            SELECT COUNT(s) > 0
+            FROM Showtime s
+            WHERE s.movie.movieId = :movieId
+              AND s.startTime > :now
+              AND s.status = 'ACTIVE'
+            """)
+    boolean existsByMovie_MovieIdAndStartTimeAfter(
+            @Param("movieId") Integer movieId,
+            @Param("now") LocalDateTime now);
 
     boolean existsByMovie_MovieId(Integer movieId);
 
+    @Query("""
+            SELECT COUNT(s) > 0
+            FROM Showtime s
+            WHERE s.movie.movieId = :movieId
+              AND s.hall.branch.branchId = :branchId
+              AND s.startTime > :now
+              AND s.status = 'ACTIVE'
+            """)
     boolean existsByMovie_MovieIdAndHall_Branch_BranchIdAndStartTimeAfter(
-            Integer movieId, Integer branchId, LocalDateTime now);
+            @Param("movieId") Integer movieId,
+            @Param("branchId") Integer branchId,
+            @Param("now") LocalDateTime now);
 
     long countByMovie_MovieIdAndStartTimeAfter(Integer movieId, LocalDateTime now);
 
@@ -42,12 +70,48 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
 
     long countByHall_HallId(Integer hallId);
 
-    boolean existsByHall_HallId(Integer hallId);
+    @Query("""
+            SELECT COUNT(s) > 0
+            FROM Showtime s
+            WHERE s.hall.hallId = :hallId
+              AND s.status = 'ACTIVE'
+            """)
+    boolean existsByHall_HallId(@Param("hallId") Integer hallId);
 
-    List<Showtime> findByStartTimeAfterOrderByStartTimeAsc(LocalDateTime startTime, Pageable pageable);
+    @Query("""
+            SELECT COUNT(s) > 0
+            FROM Showtime s
+            WHERE s.hall.hallId = :hallId
+              AND s.startTime > :now
+              AND s.status = 'ACTIVE'
+            """)
+    boolean existsByHall_HallIdAndStartTimeAfter(
+            @Param("hallId") Integer hallId,
+            @Param("now") LocalDateTime now);
 
+    @Query("""
+            SELECT s
+            FROM Showtime s
+            WHERE s.startTime > :startTime
+              AND s.status = 'ACTIVE'
+            ORDER BY s.startTime ASC
+            """)
+    List<Showtime> findByStartTimeAfterOrderByStartTimeAsc(
+            @Param("startTime") LocalDateTime startTime,
+            Pageable pageable);
+
+    @Query("""
+            SELECT s
+            FROM Showtime s
+            WHERE s.hall.branch.branchId = :branchId
+              AND s.startTime > :startTime
+              AND s.status = 'ACTIVE'
+            ORDER BY s.startTime ASC
+            """)
     List<Showtime> findByHall_Branch_BranchIdAndStartTimeAfterOrderByStartTimeAsc(
-            Integer branchId, LocalDateTime startTime, Pageable pageable);
+            @Param("branchId") Integer branchId,
+            @Param("startTime") LocalDateTime startTime,
+            Pageable pageable);
 
     @Query("""
             SELECT s
@@ -57,6 +121,7 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
             JOIN FETCH h.branch b
             WHERE m.movieId = :movieId
               AND s.startTime >= :startTime
+              AND s.status = 'ACTIVE'
             ORDER BY s.startTime ASC
             """)
     List<Showtime> findUpcomingByMovieIdWithHallAndBranch(
@@ -73,37 +138,19 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
             """)
     Optional<Showtime> findByIdWithMovieHallAndBranch(@Param("showtimeId") Integer showtimeId);
 
-    @Query(value = """
+    @Query("""
             SELECT s
             FROM Showtime s
             JOIN FETCH s.movie m
             JOIN FETCH s.hall h
             JOIN FETCH h.branch b
-            WHERE (:branchId IS NULL OR b.branchId = :branchId)
+            WHERE (:keyword IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:movieId IS NULL OR m.movieId = :movieId)
+              AND (:branchId IS NULL OR b.branchId = :branchId)
               AND (:hallId IS NULL OR h.hallId = :hallId)
               AND (:startFrom IS NULL OR s.startTime >= :startFrom)
               AND (:startTo IS NULL OR s.startTime <= :startTo)
-              AND (:keyword IS NULL OR :keyword = ''
-                   OR LOWER(m.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                   OR LOWER(h.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                   OR LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
-            """,
-            countQuery = """
-            SELECT COUNT(s)
-            FROM Showtime s
-            JOIN s.movie m
-            JOIN s.hall h
-            JOIN h.branch b
-            WHERE (:branchId IS NULL OR b.branchId = :branchId)
-              AND (:movieId IS NULL OR m.movieId = :movieId)
-              AND (:hallId IS NULL OR h.hallId = :hallId)
-              AND (:startFrom IS NULL OR s.startTime >= :startFrom)
-              AND (:startTo IS NULL OR s.startTime <= :startTo)
-              AND (:keyword IS NULL OR :keyword = ''
-                   OR LOWER(m.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                   OR LOWER(h.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                   OR LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+              AND s.status = 'ACTIVE'
             """)
     Page<Showtime> searchManaged(
             @Param("keyword") String keyword,
@@ -115,9 +162,10 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
             Pageable pageable);
 
     @Query("""
-            SELECT (COUNT(s) > 0)
+            SELECT COUNT(s) > 0
             FROM Showtime s
             WHERE s.hall.hallId = :hallId
+              AND s.status = 'ACTIVE'
               AND s.startTime < :endTime
               AND s.endTime > :startTime
             """)
@@ -127,10 +175,11 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
             @Param("endTime") LocalDateTime endTime);
 
     @Query("""
-            SELECT (COUNT(s) > 0)
+            SELECT COUNT(s) > 0
             FROM Showtime s
             WHERE s.hall.hallId = :hallId
               AND s.showtimeId <> :showtimeId
+              AND s.status = 'ACTIVE'
               AND s.startTime < :endTime
               AND s.endTime > :startTime
             """)
@@ -139,4 +188,48 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
             @Param("showtimeId") Integer showtimeId,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
+
+    @Query(value = """
+            SELECT s.showtime_id,
+                   m.title,
+                   br.branch_id,
+                   br.name AS branch_name,
+                   h.name AS hall_name,
+                   s.start_time,
+                   h.capacity,
+                   s.price,
+                   COALESCE(sales.paid_ticket_count, 0) AS paid_ticket_count,
+                   COALESCE(sales.actual_ticket_revenue, 0) AS actual_ticket_revenue
+            FROM showtime s
+            JOIN movie m ON m.movie_id = s.movie_id
+            JOIN hall h ON h.hall_id = s.hall_id
+            JOIN branch br ON br.branch_id = h.branch_id
+            LEFT JOIN (
+                SELECT paid.showtime_id,
+                       SUM(paid.ticket_count) AS paid_ticket_count,
+                       SUM(paid.seat_subtotal) AS actual_ticket_revenue
+                FROM (
+                    SELECT b.booking_id,
+                           b.showtime_id,
+                           COALESCE(b.seat_subtotal, 0) AS seat_subtotal,
+                           COUNT(t.ticket_id) AS ticket_count
+                    FROM booking b
+                    JOIN payment p ON p.booking_id = b.booking_id
+                    LEFT JOIN ticket t ON t.booking_id = b.booking_id
+                    WHERE p.status = :paymentStatus
+                      AND LOWER(COALESCE(b.status, '')) <> LOWER(:excludedBookingStatus)
+                    GROUP BY b.booking_id, b.showtime_id, b.seat_subtotal
+                ) paid
+                GROUP BY paid.showtime_id
+            ) sales ON sales.showtime_id = s.showtime_id
+            WHERE s.start_time >= :start
+              AND s.start_time < :end
+              AND (:branchId IS NULL OR br.branch_id = :branchId)
+            ORDER BY s.start_time DESC, br.name ASC, h.name ASC
+            """, nativeQuery = true)
+    List<Object[]> findShowtimeCoverageRows(@Param("start") LocalDateTime start,
+                                            @Param("end") LocalDateTime end,
+                                            @Param("branchId") Integer branchId,
+                                            @Param("paymentStatus") String paymentStatus,
+                                            @Param("excludedBookingStatus") String excludedBookingStatus);
 }

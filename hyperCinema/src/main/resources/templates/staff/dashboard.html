@@ -1,61 +1,55 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Không gian Nhân viên - HyperCinema')}"></head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+    Staff Dashboard — Premium Dark-Gold Glassmorphic Rebuild
+-->
+<head th:replace="~{fragments/layout :: head('Tổng quan Nhân viên - HyperCinema')}"></head>
 <body class="min-h-screen">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
 <nav th:replace="~{fragments/layout :: staffSidebar('dashboard')}"></nav>
 
-<main class="hc-page">
-    <div class="hc-page-inner">
-        <div class="mb-6">
-            <h1 class="hc-page-title" th:text="|Xin chào, ${staffName}|">Xin chào</h1>
-            <p class="hc-page-subtitle">Chi nhánh: <span th:text="${branchName}">Chi nhánh</span> · Cập nhật lúc <span th:text="${lastUpdated}">--:--</span></p>
+<!-- Main Content -->
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- Page Header -->
+        <div class="mb-8 font-sans">
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-1" th:text="'Xin chào, ' + ${staffName}">Xin chào, Nhân viên</h1>
+            <p class="text-sm text-slate-400">Cổng thông tin nhân viên · Chi nhánh: <span class="text-primary font-medium" th:text="${branchName}">Tên chi nhánh</span> · Cập nhật lúc <span th:text="${lastUpdated}">--:--</span></p>
         </div>
 
-        <section class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3" aria-label="Lối tắt quầy">
-            <a th:href="@{/staff/booking}" class="hc-card p-6 no-underline transition-colors hover:border-accent">
-                <span class="hc-label">Bán vé</span>
-                <strong class="block text-xl text-white">Tạo booking</strong>
-                <p class="mt-2 text-sm text-cinema-muted">Chọn phim, suất chiếu, ghế và thanh toán tại quầy.</p>
-            </a>
-            <a th:href="@{/admin/food-orders/new}" class="hc-card p-6 no-underline transition-colors hover:border-accent">
-                <span class="hc-label">F&B</span>
-                <strong class="block text-xl text-white">Tạo đơn đồ ăn</strong>
-                <p class="mt-2 text-sm text-cinema-muted">Bán bắp nước theo booking đã có.</p>
-            </a>
-            <a th:href="@{/admin/food-orders}" class="hc-card p-6 no-underline transition-colors hover:border-accent">
-                <span class="hc-label">Theo dõi</span>
-                <strong class="block text-xl text-white">Đơn F&B</strong>
-                <p class="mt-2 text-sm text-cinema-muted">Xác nhận hoặc hủy đơn đang xử lý.</p>
-            </a>
-        </section>
-
-        <section class="hc-card p-6" aria-label="Quy trình quầy">
-            <h2 class="mb-4 text-lg font-semibold text-white">Quy trình nhanh tại quầy</h2>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-                <div class="hc-subcard p-4">
-                    <span class="hc-badge border-accent/50 bg-accent/10 text-accent">1</span>
-                    <h3 class="mt-3 font-semibold text-white">Kiểm tra booking</h3>
-                    <p class="mt-1 text-sm text-cinema-muted">Xác nhận khách, phim, suất chiếu và ghế.</p>
+        <!-- Quick Operations -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+            <!-- Sell Tickets Card -->
+            <div class="glass-card p-6 flex flex-col justify-between transition-all duration-300 hover:border-white/15 cursor-pointer">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center mb-4"><svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+                    <h2 class="text-lg font-bold text-white mb-2">Bán vé & Dịch vụ đi kèm</h2>
+                    <p class="text-sm text-slate-400 mb-6">Xử lý đặt vé của khách hàng, in vé vật lý và bán đồ ăn nhẹ/đồ uống.</p>
                 </div>
-                <div class="hc-subcard p-4">
-                    <span class="hc-badge border-accent/50 bg-accent/10 text-accent">2</span>
-                    <h3 class="mt-3 font-semibold text-white">Thêm F&B</h3>
-                    <p class="mt-1 text-sm text-cinema-muted">Chọn combo hoặc mặt hàng còn tồn kho.</p>
-                </div>
-                <div class="hc-subcard p-4">
-                    <span class="hc-badge border-accent/50 bg-accent/10 text-accent">3</span>
-                    <h3 class="mt-3 font-semibold text-white">Xác nhận</h3>
-                    <p class="mt-1 text-sm text-cinema-muted">Kiểm tra tổng tiền và trạng thái thanh toán.</p>
-                </div>
-                <div class="hc-subcard p-4">
-                    <span class="hc-badge border-accent/50 bg-accent/10 text-accent">4</span>
-                    <h3 class="mt-3 font-semibold text-white">Bàn giao</h3>
-                    <p class="mt-1 text-sm text-cinema-muted">In vé hoặc hướng dẫn khách vào phòng chiếu.</p>
+                <div>
+                    <a th:href="@{/staff/booking}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-amber-500 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5">
+                        Mở cổng bán vé (POS)
+                    </a>
                 </div>
             </div>
-        </section>
+
+            <!-- Booking Management Card -->
+            <div class="glass-card p-6 flex flex-col justify-between transition-all duration-300 hover:border-white/15 cursor-pointer">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-info/15 flex items-center justify-center mb-4"><svg class="w-6 h-6 text-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 0 0 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 0 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg></div>
+                    <h2 class="text-lg font-bold text-white mb-2">Đơn booking</h2>
+                    <p class="text-sm text-slate-400 mb-6">Theo dõi đơn đặt vé tại chi nhánh, kiểm tra thanh toán và xử lý trạng thái phục vụ.</p>
+                </div>
+                <div>
+                    <a th:href="@{/staff/bookings}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:bg-white/[0.08]">
+                        Xem đơn booking
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </main>

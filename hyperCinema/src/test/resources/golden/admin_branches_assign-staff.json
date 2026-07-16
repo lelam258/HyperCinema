@@ -1,0 +1,62 @@
+{
+  "view": "admin/branches/assign-staff",
+  "title": "Gán Staff - CGV Vincom - HyperCinema",
+  "links": [
+    "/",
+    "/admin/analytics",
+    "/admin/branches",
+    "/admin/branches/11",
+    "/admin/dashboard",
+    "/admin/halls",
+    "/admin/movies",
+    "/admin/notifications",
+    "/admin/payments",
+    "/admin/users"
+  ],
+  "i18nKeys": [],
+  "forms": [
+    {
+      "action": "/admin/branches/11/staff",
+      "method": "post",
+      "fields": [
+        "select:userId=options[|31];selected=",
+        "select:managerId=options[|21];selected=",
+        "submit:Gán Staff"
+      ]
+    }
+  ],
+  "tables": [],
+  "pagination": null,
+  "text": [
+    "H",
+    "HyperCinema",
+    "Hệ thống",
+    "Tổng quan",
+    "Báo cáo & Thống kê",
+    "Quản lý phim",
+    "Quản lý chi nhánh",
+    "Quản lý phòng chiếu",
+    "Quản lý người dùng",
+    "Thông báo & Hỗ trợ",
+    "Quản lý Giao dịch",
+    "Đăng xuất",
+    "Quản lý Chi nhánh",
+    "/",
+    "CGV Vincom",
+    "/",
+    "Gán Staff",
+    "Gán Staff: CGV Vincom",
+    "Chọn nhân viên và Manager phụ trách trong cùng chi nhánh.",
+    "Thông tin gán Staff",
+    "Nhân viên (Staff)",
+    "-- Chọn Staff --",
+    "Trần Thị B (b@example.com)",
+    "Quản lý của Chi nhánh (Manager)",
+    "-- Chọn Manager --",
+    "Nguyễn Văn A (a@example.com)",
+    "Hủy",
+    "Gán Staff",
+    "HyperCinema",
+    "© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim."
+  ]
+}

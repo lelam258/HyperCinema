@@ -25,6 +25,22 @@
 
         <div th:replace="~{fragments/components :: flashes}"></div>
 
+        <section class="hc-panel mb-4">
+            <div class="hc-panel-head">
+                <div>
+                    <p class="hc-kicker">Pricing</p>
+                    <h2>Bảng giá theo loại ghế</h2>
+                </div>
+                <i data-lucide="badge-dollar-sign"></i>
+            </div>
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <div th:each="price : ${seats.seatTypePrices}" class="hc-subcard p-3">
+                    <span class="hc-label" th:text="${price.label}">Thường</span>
+                    <strong class="text-white tabular-nums" th:text="${#numbers.formatDecimal(price.price, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</strong>
+                </div>
+            </div>
+        </section>
+
         <section id="seat-layout-tools" class="hc-panel hc-seat-tools">
             <div class="hc-panel-head">
                 <div>
@@ -148,6 +164,7 @@
                                                              data-seat-row=${seat.seatRow},
                                                              data-seat-number=${seat.seatNumber},
                                                              data-seat-type=${seat.type != null ? #strings.toUpperCase(seat.type) : 'STANDARD'},
+                                                             data-seat-price=${seat.price},
                                                              data-seat-maintenance=${seat.maintenanceStatus},
                                                              data-seat-has-active-reference=${seat.hasActiveReference},
                                                              data-seat-update-url=@{|/admin/halls/${seats.hallId}/seats/${seat.seatId}|},
@@ -165,6 +182,7 @@
                                                         <span th:case="*" class="hc-badge" th:text="${seat.type}">?</span>
                                                     </span>
                                                     <span th:if="${seat.maintenanceStatus == 'UNDER_MAINTENANCE'}" class="hc-seat-status is-maintenance">Bảo trì</span>
+                                                    <span class="hc-seat-status" th:text="${#numbers.formatDecimal(seat.price, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</span>
                                                 </span>
                                             </button>
                                         </th:block>

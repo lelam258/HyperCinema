@@ -74,7 +74,7 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
                 .lastUpdated(displayMapper.dateTime(LocalDateTime.now()))
                 .build();
     }
-//tạo toàn bộ dữ liệu để trả về cho giao diện.
+
     private CustomerMembershipProgressView buildMembershipProgress(Integer userId, long points, LocalDate today) {
         UserMembership activeMembership = userId == null
                 ? null
@@ -83,14 +83,12 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
                         .findFirst()
                         .orElse(null);
         MembershipPlan currentPlan = activeMembership != null ? activeMembership.getPlan() : null;
-        //lay all member
         List<MembershipPlan> orderedPlans = membershipPlanRepository.findAll().stream()
                 .sorted(Comparator
                         .comparing((MembershipPlan plan) -> safePercent(plan.getDiscountPercent()))
                         .thenComparing(plan -> plan.getPrice() != null ? plan.getPrice() : 0)
                         .thenComparing(plan -> plan.getName() != null ? plan.getName() : ""))
                 .toList();
-        //tien do len rank
         TierProgress tierProgress = nextTierProgress(currentPlan, orderedPlans, points);
         String currentTier = currentPlan != null && currentPlan.getName() != null ? currentPlan.getName() : "Standard";
         BigDecimal discountPercent = currentPlan != null ? currentPlan.getDiscountPercent() : BigDecimal.ZERO;
@@ -116,16 +114,13 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
         if (orderedPlans == null || orderedPlans.isEmpty()) {
             return new TierProgress(null, 0, 0, 0, true);
         }
-        //xac dinh vi tri rank hien tai
         int currentIndex = currentPlan == null ? -1 : indexOfPlan(orderedPlans, currentPlan);
         int nextIndex = Math.min(currentIndex + 1, orderedPlans.size() - 1);
         boolean highestTier = currentIndex >= orderedPlans.size() - 1;
         if (highestTier) {
             long currentThreshold = thresholdForIndex(currentIndex);
-            //k con hang tiep k can cong diem nua
             return new TierProgress(null, currentThreshold, 0, 100, true);
         }
-        //lay hang ke tiep
         MembershipPlan nextPlan = orderedPlans.get(nextIndex);
         long previousThreshold = currentIndex >= 0 ? thresholdForIndex(currentIndex) : 0L;
         long nextThreshold = thresholdForIndex(nextIndex);
@@ -135,7 +130,7 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
         int progressPercent = (int) Math.max(0, Math.min(100, Math.round((earnedInRange * 100.0) / range)));
         return new TierProgress(nextPlan.getName(), nextThreshold, pointsNeeded, progressPercent, false);
     }
-//tìm vị trí của Membership hiện tại trong danh sách đã sắp xếp
+
     private int indexOfPlan(List<MembershipPlan> orderedPlans, MembershipPlan currentPlan) {
         for (int i = 0; i < orderedPlans.size(); i++) {
             MembershipPlan plan = orderedPlans.get(i);
@@ -148,7 +143,7 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
         }
         return 0;
     }
-//hàm quy định số điểm cần để đạt từng hạng
+
     private long thresholdForIndex(int index) {
         if (index < 0) {
             return 0L;
@@ -157,7 +152,6 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
         if (index < thresholds.length) {
             return thresholds[index];
         }
-        //Nếu số lượng hạng nhiều hơn 4, các hạng tiếp theo sẽ tăng thêm 5000 điểm mỗi cấp
         return thresholds[thresholds.length - 1] + ((long) index - thresholds.length + 1) * 5000L;
     }
 

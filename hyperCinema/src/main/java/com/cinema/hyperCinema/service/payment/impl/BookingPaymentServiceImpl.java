@@ -186,19 +186,16 @@ public class BookingPaymentServiceImpl implements BookingPaymentService {
     }
 
     private void awardLoyaltyPoints(Booking booking, Payment payment) {
-        //kiem tra du lieu co hop le khong
         if (booking == null || booking.getBookingId() == null || booking.getUser() == null
                 || booking.getUser().getUserId() == null) {
             return;
         }
-        //payment ton tai lay tien payment
         long amount = payment != null && payment.getAmount() != null ? payment.getAmount() : discountedTotal(booking);
         int earnedPoints = pointsForAmount(amount);
         if (earnedPoints <= 0) {
             return;
         }
         String type = "BOOKING_" + booking.getBookingId();
-        //kiem tra cong diem chua
         if (loyaltyPointRepository.existsByUser_UserIdAndType(booking.getUser().getUserId(), type)) {
             return;
         }
@@ -206,7 +203,6 @@ public class BookingPaymentServiceImpl implements BookingPaymentService {
         loyaltyPoint.setUser(booking.getUser());
         loyaltyPoint.setPoints(earnedPoints);
         loyaltyPoint.setType(type);
-        //luu database
         loyaltyPointRepository.save(loyaltyPoint);
     }
 

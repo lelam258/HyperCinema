@@ -136,8 +136,7 @@
                                 <a th:href="@{|/admin/vouchers/${item.voucherId}/edit|}" class="hc-voucher-action" aria-label="Sửa voucher">
                                     <i data-lucide="pencil"></i>
                                 </a>
-                                <form th:action="@{|/admin/vouchers/${item.voucherId}|}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa voucher này?');">
-                                    <input type="hidden" name="_method" value="delete">
+                                <form th:action="@{|/admin/vouchers/${item.voucherId}/delete|}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa voucher này?');">
                                     <button type="submit" class="hc-voucher-action" aria-label="Xóa voucher">
                                         <i data-lucide="trash-2"></i>
                                     </button>

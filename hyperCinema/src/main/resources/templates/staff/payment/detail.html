@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Chi tiết giao dịch - HyperCinema')}">
+    <title>Chi tiết giao dịch - HyperCinema</title>
+</head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: staffSidebar('payments')}"></nav>
+
+<!-- Main Content -->
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-4xl mx-auto px-6 py-8">
+
+        <!-- Back link -->
+        <div class="mb-6">
+            <a th:href="@{/staff/payments}" class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-primary transition-colors no-underline">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Quay lại danh sách giao dịch chi nhánh
+            </a>
+        </div>
+
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Chi tiết Giao dịch</h1>
+            <p class="text-sm text-slate-400">Mã giao dịch: <span class="text-white font-medium" th:text="${payment.paymentId}">#123</span></p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+            
+            <!-- Left: Invoice Sheet -->
+            <div class="md:col-span-2 glass-card p-6 border-t-4 border-t-primary relative overflow-hidden">
+                <div class="absolute -right-16 -top-16 w-32 h-32 rounded-full bg-primary/10 blur-2xl"></div>
+                
+                <div class="flex justify-between items-start border-b border-white/10 pb-5 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white mb-1">HÓA ĐƠN ĐIỆN TỬ</h2>
+                        <p class="text-xs text-slate-400" th:text="|Rạp: ${branchName}|">Chi nhánh</p>
+                    </div>
+                    <div class="text-right">
+                        <span th:classappend="${payment.status == 'Completed'} ? 'bg-success/15 border-success/30 text-success' : (${payment.status == 'Pending'} ? 'bg-warning/15 border-warning/30 text-warning' : 'bg-danger/15 border-danger/30 text-danger')"
+                              class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border"
+                              th:text="${payment.status}">COMPLETED</span>
+                    </div>
+                </div>
+
+                <!-- Invoice Meta Details -->
+                <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-sm mb-6 pb-6 border-b border-white/5">
+                    <div>
+                        <span class="block text-xs text-slate-500 uppercase font-semibold mb-1">Khách hàng</span>
+                        <span class="block text-white font-medium" th:text="${payment.booking.user.fullName}">Nguyen Van A</span>
+                        <span class="block text-xs text-slate-400" th:text="${payment.booking.user.email}">a@email.com</span>
+                        <span class="block text-xs text-slate-400" th:text="${payment.booking.user.phone}">090000000</span>
+                    </div>
+                    <div>
+                        <span class="block text-xs text-slate-500 uppercase font-semibold mb-1">Thanh toán qua</span>
+                        <span class="block text-white font-medium" th:text="${payment.method}">Cổng VNPay</span>
+                        <span class="block text-xs text-slate-500 uppercase font-semibold mt-3 mb-1">Thời gian GD</span>
+                        <span class="block text-xs text-slate-300" th:text="${#temporals.format(payment.createdAt, 'HH:mm:ss dd/MM/yyyy')}">10:00:00 01/01/2026</span>
+                    </div>
+                </div>
+
+                <!-- Movie & Showtime Info -->
+                <div class="mb-6 pb-6 border-b border-white/5">
+                    <span class="block text-xs text-slate-500 uppercase font-semibold mb-2">Thông tin phim & suất chiếu</span>
+                    <div class="bg-white/[0.02] border border-white/5 rounded-xl p-4 flex flex-col gap-2">
+                        <h3 class="text-base font-bold text-white leading-snug" th:text="${payment.booking.showtime.movie.title}">Tên Phim</h3>
+                        <div class="grid grid-cols-2 gap-y-2 gap-x-4 text-xs text-slate-300 mt-2">
+                            <div><strong class="text-slate-400">Rạp:</strong> <span th:text="${payment.booking.showtime.hall.branch.name}">Chi nhánh 1</span></div>
+                            <div><strong class="text-slate-400">Phòng:</strong> <span th:text="${payment.booking.showtime.hall.name} + ' (' + ${payment.booking.showtime.hall.hallType} + ')'">Phòng 1</span></div>
+                            <div><strong class="text-slate-400">Ngày chiếu:</strong> <span th:text="${#temporals.format(payment.booking.showtime.startTime, 'dd/MM/yyyy')}">01/01/2026</span></div>
+                            <div><strong class="text-slate-400">Suất chiếu:</strong> <span th:text="${#temporals.format(payment.booking.showtime.startTime, 'HH:mm')} + ' ~ ' + ${#temporals.format(payment.booking.showtime.endTime, 'HH:mm')}">10:00 - 12:00</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tickets / Seats List -->
+                <div class="mb-6">
+                    <span class="block text-xs text-slate-500 uppercase font-semibold mb-3">Danh sách ghế & vé</span>
+                    <div class="space-y-2.5">
+                        <div th:each="t : ${payment.booking.tickets}" class="flex items-center justify-between p-3 bg-white/[0.01] border border-white/5 rounded-xl text-sm">
+                            <div class="flex items-center gap-3">
+                                <span class="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs" th:text="${t.seat.seatRow} + ${t.seat.seatNumber}">A1</span>
+                                <div>
+                                    <span class="block text-xs text-slate-400">Mã vé:</span>
+                                    <span class="block text-white font-mono text-xs" th:text="${t.qrCode}">QR-X-Y</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span th:classappend="${t.status == 'Active'} ? 'text-success' : 'text-danger'" class="text-xs font-semibold" th:text="${t.status}">Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dash divider -->
+                <div class="border-t border-dashed border-white/20 my-6"></div>
+
+                <!-- Cost Summary -->
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between text-slate-400">
+                        <span>Tong tien ve:</span>
+                        <span class="font-medium text-white tabular-nums" th:text="${#numbers.formatDecimal(payment.booking.seatSubtotal, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</span>
+                    </div>
+                    <div class="flex justify-between text-slate-400">
+                        <span>Số lượng vé:</span>
+                        <span class="font-medium text-white tabular-nums" th:text="${payment.booking.tickets.size()}">1</span>
+                    </div>
+                    <div class="flex justify-between text-base border-t border-white/5 pt-3 mt-3">
+                        <span class="font-bold text-slate-300">TỔNG TIỀN THANH TOÁN:</span>
+                        <span class="text-xl font-extrabold text-primary tabular-nums" th:text="${#numbers.formatDecimal(payment.amount, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="space-y-6">
+                <!-- Booking ID Receipt Card -->
+                <div class="glass-card p-5 text-center flex flex-col items-center gap-3">
+                    <h3 class="text-sm font-semibold text-white uppercase tracking-wider">Mã Booking</h3>
+                    <div class="w-36 h-36 bg-white rounded-xl p-2.5 flex items-center justify-center shadow-lg">
+                        <div class="text-[10px] text-slate-800 font-bold border border-slate-300 border-dashed rounded-lg w-full h-full flex flex-col items-center justify-center p-2">
+                            <span class="block">BOOKING ID</span>
+                            <span class="block text-sm text-primary font-extrabold mt-1" th:text="${payment.booking.bookingId}">#123</span>
+                            <span class="block text-[8px] text-slate-500 mt-2">Dùng soát vé tại quầy</span>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-400 mt-2 leading-relaxed">
+                        Nhân viên kiểm tra thông tin giao dịch này và tiến hành phát vé cho khách hàng. Trạng thái đặt vé: 
+                        <strong class="text-white block mt-1" th:text="${payment.booking.status}">Confirmed</strong>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

@@ -1,161 +1,152 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Khách hàng - HyperCinema')}"></head>
-<body class="min-h-screen hc-customer">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+    Customer Dashboard — Premium Dark-Gold Glassmorphic Rebuild
+-->
+<head th:replace="~{fragments/layout :: head('Tổng quan của tôi - HyperCinema')}"></head>
+<body class="min-h-screen">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
 <nav th:replace="~{fragments/layout :: customerSidebar('home')}"></nav>
 
-<main class="hc-page hc-customer-page">
-    <div class="hc-customer-home">
-        <section class="hc-customer-hero hc-customer-hero-overview" aria-labelledby="movie-home-title">
-            <div>
-                <p class="hc-kicker">Tổng quan của bạn</p>
-                <h1 id="movie-home-title" class="hc-page-title">Phim đang chiếu</h1>
-                <p class="hc-page-subtitle">Chọn phim, giữ vé và theo dõi ưu đãi thành viên trong cùng một màn hình.</p>
-            </div>
-            <div class="hc-customer-tools" aria-label="Bộ lọc phim">
-                <label class="hc-customer-control">
-                    <i data-lucide="map-pin"></i>
-                    <select aria-label="Chọn khu vực">
-                        <option>Toàn quốc</option>
-                        <option>Hồ Chí Minh</option>
-                        <option>Hà Nội</option>
-                        <option>Đà Nẵng</option>
-                    </select>
-                </label>
-                <label class="hc-customer-control">
-                    <i data-lucide="search"></i>
-                    <input type="search" placeholder="Tìm kiếm phim..." aria-label="Tìm kiếm phim">
-                </label>
-            </div>
-        </section>
+<!-- Main Content -->
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-7xl mx-auto px-6 py-8">
 
-        <section class="hc-customer-overview" aria-label="Tổng quan người dùng">
-            <article class="hc-customer-overview-card is-member">
-                <div class="hc-customer-overview-icon">
-                    <i data-lucide="sparkles"></i>
-                </div>
-                <div>
-                    <span>Hạng thành viên</span>
-                    <strong th:text="${membershipTier}">Thành viên</strong>
-                    <small th:text="|${rewardPoints} điểm tích lũy|">0 điểm tích lũy</small>
-                </div>
-            </article>
-            <article class="hc-customer-overview-card">
-                <div class="hc-customer-overview-icon">
-                    <i data-lucide="film"></i>
-                </div>
-                <div>
-                    <span>Đang hiển thị</span>
-                    <strong th:text="${nowShowingCount}">0</strong>
-                    <small>phim sẵn sàng đặt vé</small>
-                </div>
-            </article>
-            <a th:href="@{/my/bookings}" class="hc-customer-overview-card hc-customer-overview-link">
-                <div class="hc-customer-overview-icon">
-                    <i data-lucide="tickets"></i>
-                </div>
-                <div>
-                    <span>Vé của tôi</span>
-                    <strong>Kiểm tra vé</strong>
-                    <small>Lịch sử booking và mã vào rạp</small>
-                </div>
-            </a>
-        </section>
+        <!-- Page Header -->
+        <div class="mb-8 font-sans">
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-1" th:text="'Xin chào, ' + ${customerName}">Xin chào, Khách hàng</h1>
+            <p class="text-sm text-slate-400">Chào mừng đến với HyperCinema · Cập nhật lần cuối lúc <span th:text="${lastUpdated}">--:--</span></p>
+        </div>
 
-        <section class="hc-movie-grid" aria-label="Danh sách phim đang chiếu">
-            <article class="hc-movie-card" th:each="movie : ${movies}">
-                <a th:href="@{/booking/movies/{movieId}(movieId=${movie.movieId})}" class="hc-movie-poster" aria-label="Đặt vé">
-                    <img th:if="${movie.posterUrl != null and not #strings.isEmpty(movie.posterUrl)}"
-                         th:src="${movie.posterUrl}"
-                         th:alt="|Poster ${movie.title}|">
-                    <span th:unless="${movie.posterUrl != null and not #strings.isEmpty(movie.posterUrl)}"
-                          class="hc-movie-poster-empty">
-                        <i data-lucide="clapperboard"></i>
-                    </span>
-                    <span class="hc-movie-badge"
-                          th:text="${movie.status == 'NowShowing' ? 'Đang chiếu' : (movie.status == 'ComingSoon' ? 'Sắp chiếu' : (movie.status == 'Ended' ? 'Đã kết thúc' : movie.status))}">Đang chiếu</span>
-                </a>
-                <div class="hc-movie-body">
-                    <h2>
-                        <a th:href="@{/booking/movies/{movieId}(movieId=${movie.movieId})}" th:text="${movie.title}">Tên phim</a>
-                    </h2>
-                    <p>
-                        <span th:text="${movie.genreNames != null and not #lists.isEmpty(movie.genreNames) ? #strings.listJoin(movie.genreNames, ', ') : 'Điện ảnh'}">Điện ảnh</span>
-                        <span th:if="${movie.duration != null}" th:text="| • ${movie.duration} phút|"> • 120 phút</span>
+        <!-- ═══════════════════ INFO CARDS ═══════════════════ -->
+        <div id="tai-khoan" class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8 scroll-mt-8">
+            <!-- Membership Tier -->
+            <div class="glass-card p-5 flex items-start gap-4 transition-all duration-300 hover:border-white/15 cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-warning/15 flex items-center justify-center shrink-0"><svg class="w-6 h-6 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-2xl font-bold text-white tracking-tight" th:text="${membershipTier}">Gold</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Hạng thành viên</span>
+                </div>
+            </div>
+            <!-- Reward Points -->
+            <div class="glass-card p-5 flex items-start gap-4 transition-all duration-300 hover:border-white/15 cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0"><svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg></div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-2xl font-bold text-white tabular-nums" th:text="${rewardPoints}">0</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Điểm tích lũy</span>
+                </div>
+            </div>
+            <!-- Member Profile -->
+            <div class="glass-card p-5 flex items-start gap-4 transition-all duration-300 hover:border-white/15 cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-info/15 flex items-center justify-center shrink-0"><svg class="w-6 h-6 text-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-white truncate" th:text="${email}">customer@gmail.com</span>
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wide" th:text="${phone}">0900000000</span>
+                </div>
+            </div>
+        </div>
+
+        <section class="glass-card p-6 mb-8" th:if="${membershipProgress != null}">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Membership</p>
+                    <div class="mt-2 flex flex-wrap items-end gap-3">
+                        <h2 class="text-2xl font-bold text-white" th:text="${membershipProgress.currentTier}">Standard</h2>
+                        <span class="rounded-lg border border-white/10 px-3 py-1 text-xs font-semibold text-primary"
+                              th:if="${membershipProgress.active}"
+                              th:text="|Giam ${membershipProgress.discountPercent}%|">Giam 10%</span>
+                        <span class="rounded-lg border border-white/10 px-3 py-1 text-xs font-semibold text-slate-400"
+                              th:unless="${membershipProgress.active}">Chua co uu dai</span>
+                    </div>
+                    <p class="mt-2 text-sm text-slate-400"
+                       th:if="${membershipProgress.active}"
+                       th:text="|Hieu luc ${#temporals.format(membershipProgress.startDate, 'dd/MM/yyyy')} - ${#temporals.format(membershipProgress.endDate, 'dd/MM/yyyy')}|">
+                        Hieu luc
                     </p>
-                    <div class="hc-movie-meta">
-                        <span th:if="${movie.releaseDate != null}" th:text="${#temporals.format(movie.releaseDate, 'dd/MM/yyyy')}">19/06/2026</span>
-                        <span th:if="${movie.languageName != null and not #strings.isEmpty(movie.languageName)}" th:text="${movie.languageName}">Vietnamese</span>
-                    </div>
-                    <a th:href="@{/booking/movies/{movieId}(movieId=${movie.movieId})}" class="hc-movie-cta">Đặt vé ngay</a>
+                    <p class="mt-2 text-sm text-slate-400"
+                       th:unless="${membershipProgress.active}">
+                        Membership discount se hien trong booking sau khi ban co goi dang hoat dong.
+                    </p>
                 </div>
-            </article>
-
-            <div th:if="${#lists.isEmpty(movies)}" class="hc-customer-empty">
-                <i data-lucide="film"></i>
-                <h2>Chưa có phim đang chiếu</h2>
-                <p>Danh sách phim sẽ được cập nhật khi rạp mở lịch mới.</p>
-            </div>
-        </section>
-
-        <section class="hc-customer-promo" aria-label="Ưu đãi thành viên">
-            <div>
-                <p class="hc-kicker">Ưu đãi tuần này</p>
-                <h2>Ưu đãi kép thứ 3</h2>
-                <p>Giảm 20% cho học sinh - sinh viên và tặng kèm 1 bắp rang ngọt khi mua vé thứ 3 hằng tuần.</p>
-            </div>
-            <a th:href="@{/my/dashboard}" class="hc-customer-promo-cta">Xem chi tiết</a>
-        </section>
-
-        <section id="tai-khoan" class="hc-customer-account-grid" aria-label="Tài khoản của tôi">
-            <article class="hc-customer-profile-panel">
-                <div class="hc-customer-profile-head">
-                    <div class="hc-customer-profile-avatar" th:text="${#strings.substring(customerName, 0, 1)}">C</div>
-                    <div>
-                        <p class="hc-kicker">Tài khoản</p>
-                        <h2 th:text="${customerName}">Khách hàng</h2>
-                        <span th:text="${email}">email@example.com</span>
+                <div class="min-w-0 lg:w-96">
+                    <div class="mb-2 flex items-center justify-between gap-3 text-sm">
+                        <span class="font-semibold text-white"
+                              th:text="${#numbers.formatInteger(membershipProgress.pointsBalance, 0, 'POINT') + ' diem'}">0 diem</span>
+                        <span class="text-slate-400"
+                              th:if="${!membershipProgress.highestTier}"
+                              th:text="|Con ${#numbers.formatInteger(membershipProgress.pointsNeeded, 0, 'POINT')} diem den ${membershipProgress.nextTier}|">
+                            Con 500 diem
+                        </span>
+                        <span class="text-slate-400"
+                              th:if="${membershipProgress.highestTier}">Hang cao nhat</span>
+                    </div>
+                    <div class="h-2 overflow-hidden rounded-full bg-white/10">
+                        <div class="h-full rounded-full bg-primary"
+                             th:style="|width:${membershipProgress.progressPercent}%|"></div>
+                    </div>
+                    <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
+                        <span th:text="${membershipProgress.currentTier}">Standard</span>
+                        <span th:if="${!membershipProgress.highestTier}" th:text="${membershipProgress.nextTier}">Gold</span>
+                        <span th:if="${membershipProgress.highestTier}">Complete</span>
                     </div>
                 </div>
-                <p class="hc-customer-profile-note">Thông tin này được dùng để giữ vé, nhận thông báo suất chiếu và áp dụng ưu đãi thành viên.</p>
-                <dl class="hc-customer-profile-list">
-                    <div>
-                        <dt>Hạng thành viên</dt>
-                        <dd th:text="${membershipTier}">Thành viên</dd>
-                    </div>
-                    <div>
-                        <dt>Điểm thưởng</dt>
-                        <dd th:text="${rewardPoints}">0</dd>
-                    </div>
-                    <div>
-                        <dt>Số điện thoại</dt>
-                        <dd th:text="${phone}">--</dd>
-                    </div>
-                </dl>
-            </article>
-
-            <div class="hc-customer-quick-actions">
-                <a th:href="@{/my/dashboard}" class="hc-customer-action">
-                    <i data-lucide="ticket"></i>
-                    <span>
-                        <strong>Mua vé mới</strong>
-                        <small>Chọn suất chiếu và ghế ngồi</small>
-                    </span>
-                </a>
-                <a th:href="@{/my/bookings}" class="hc-customer-action">
-                    <i data-lucide="tickets"></i>
-                    <span>
-                        <strong>Vé của tôi</strong>
-                        <small th:text="|${nowShowingCount} phim đang hiển thị|">0 phim đang hiển thị</small>
-                    </span>
-                </a>
             </div>
         </section>
+
+        <section id="phim-dang-chieu" class="mb-10">
+            <div class="mb-5 flex items-end justify-between gap-4">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Phim đang chiếu</p>
+                    <h2 class="text-2xl font-bold text-white">Chọn phim để đặt vé</h2>
+                </div>
+                <span class="text-sm text-slate-400" th:text="|${nowShowingCount} phim|">0 phim</span>
+            </div>
+
+            <div th:if="${movies == null or #lists.isEmpty(movies)}" class="glass-card p-8 text-center">
+                <h3 class="text-lg font-bold text-white">Chưa có phim hiển thị</h3>
+                <p class="text-sm text-slate-400 mt-2">Rạp sẽ cập nhật danh sách phim sớm.</p>
+            </div>
+
+            <div th:unless="${movies == null or #lists.isEmpty(movies)}" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-5">
+                <article th:each="movie : ${movies}" class="group rounded-2xl overflow-hidden bg-white/[0.03] border border-white/10 hover:border-primary/50 transition-all">
+                    <a th:href="@{/booking/movies/{movieId}(movieId=${movie.movieId})}" class="block no-underline">
+                        <div class="aspect-[2/3] bg-white/[0.05] overflow-hidden">
+                            <img th:if="${movie.posterUrl != null and not #strings.isEmpty(movie.posterUrl)}"
+                                 th:src="${movie.posterUrl}"
+                                 th:alt="${movie.title}"
+                                 class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105">
+                            <div th:unless="${movie.posterUrl != null and not #strings.isEmpty(movie.posterUrl)}"
+                                 class="h-full w-full flex items-center justify-center text-slate-500">
+                                <i data-lucide="clapperboard"></i>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <h3 class="line-clamp-2 text-sm font-bold text-white group-hover:text-primary" th:text="${movie.title}">Tên phim</h3>
+                            <p class="mt-1 text-xs text-slate-400">
+                                <span th:text="${movie.duration != null ? movie.duration + ' phút' : 'Đang cập nhật'}">120 phút</span>
+                            </p>
+                            <div class="mt-3 inline-flex items-center justify-center rounded-lg bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary">
+                                Đặt vé
+                            </div>
+                        </div>
+                    </a>
+                </article>
+            </div>
+        </section>
+
+        <!-- Call to Action -->
+        <div class="glass-card p-8 text-center max-w-2xl mx-auto mt-12">
+            <h2 class="text-xl font-bold text-white mb-3">Bạn đã sẵn sàng xem phim chưa?</h2>
+            <p class="text-sm text-slate-400 mb-6">Khám phá các suất chiếu hiện tại và đặt vé ngay lập tức.</p>
+            <a href="#phim-dang-chieu" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-amber-500 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5">
+                Đặt vé ngay
+            </a>
+        </div>
+
     </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </main>
-<footer th:replace="~{fragments/layout :: footer}"></footer>
 
 </body>
 </html>

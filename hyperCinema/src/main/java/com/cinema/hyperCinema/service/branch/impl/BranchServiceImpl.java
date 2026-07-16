@@ -55,10 +55,10 @@ public class BranchServiceImpl implements BranchService {
         branchValidator.validateCreate(request);
 
         Branch entity = new Branch();
-        entity.setName(request.getName());
-        entity.setAddress(request.getAddress());
-        entity.setCity(request.getCity());
-        entity.setPhone(request.getPhone());
+        entity.setName(normalizeText(request.getName()));
+        entity.setAddress(normalizeText(request.getAddress()));
+        entity.setCity(normalizeText(request.getCity()));
+        entity.setPhone(normalizeText(request.getPhone()));
         entity.setOpeningTime(request.getOpeningTime());
         entity.setClosingTime(request.getClosingTime());
         entity.setStatus("Active");
@@ -160,15 +160,19 @@ public class BranchServiceImpl implements BranchService {
         Branch branch = branchRepository.findById(branchId)
                 .orElseThrow(() -> new BranchNotFoundException(branchId));
 
-        if (hallRepository.existsByBranch_BranchId(branchId)) {
-            throw new BranchValidationException("branch.cannot_delete_with_halls");
+        if (showtimeRepository.existsByHall_Branch_BranchIdAndStartTimeAfter(
+                branchId, LocalDateTime.now())) {
+            throw new BranchValidationException("branch.cannot_deactivate_with_future_showtimes");
         }
 
-        if (userRepository.existsByBranch_BranchId(branchId)) {
-            throw new BranchValidationException("branch.cannot_delete_with_users");
+        String oldStatus = branch.getStatus();
+        if ("Inactive".equals(oldStatus)) {
+            return;
         }
+        branch.setStatus("Inactive");
+        Branch saved = branchRepository.save(branch);
 
-        branchRepository.delete(branch);
+        auditSafe(() -> branchAuditLogger.logStatusChange(saved, oldStatus, "Inactive", admin));
     }
 
     @Override
@@ -176,10 +180,12 @@ public class BranchServiceImpl implements BranchService {
 
         Branch branch = branchRepository.findById(branchId)
                 .orElseThrow(() -> new BranchNotFoundException(branchId));
+        ensureBranchActive(branch);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BranchValidationException(
                         "branch.assign_manager.role_invalid"));
+        ensureUserActive(user);
 
         branchValidator.validateManagerRoleAndConflict(user, branchId);
 
@@ -212,16 +218,19 @@ public class BranchServiceImpl implements BranchService {
 
         Branch branch = branchRepository.findById(branchId)
                 .orElseThrow(() -> new BranchNotFoundException(branchId));
+        ensureBranchActive(branch);
 
         User staff = userRepository.findById(userId)
                 .orElseThrow(() -> new BranchValidationException(
                         "branch.assign_staff.role_invalid"));
+        ensureUserActive(staff);
 
         branchValidator.validateStaffRole(staff);
 
         User manager = userRepository.findById(managerId)
                 .orElseThrow(() -> new BranchValidationException(
                         "branch.assign_staff.manager_branch_mismatch"));
+        ensureUserActive(manager);
 
         branchValidator.validateManagerOwnsBranch(manager, branchId);
 
@@ -280,12 +289,28 @@ public class BranchServiceImpl implements BranchService {
     }
 
     private static void applyRequest(Branch target, BranchUpdateRequest request) {
-        target.setName(request.getName());
-        target.setAddress(request.getAddress());
-        target.setCity(request.getCity());
-        target.setPhone(request.getPhone());
+        target.setName(normalizeText(request.getName()));
+        target.setAddress(normalizeText(request.getAddress()));
+        target.setCity(normalizeText(request.getCity()));
+        target.setPhone(normalizeText(request.getPhone()));
         target.setOpeningTime(request.getOpeningTime());
         target.setClosingTime(request.getClosingTime());
+    }
+
+    private static String normalizeText(String value) {
+        return value == null ? null : value.trim();
+    }
+
+    private static void ensureBranchActive(Branch branch) {
+        if (branch == null || !"Active".equalsIgnoreCase(branch.getStatus())) {
+            throw new BranchValidationException("branch.inactive");
+        }
+    }
+
+    private static void ensureUserActive(User user) {
+        if (user == null || !"Active".equalsIgnoreCase(user.getStatus())) {
+            throw new BranchValidationException("branch.user_inactive");
+        }
     }
 
     private void auditSafe(Runnable auditAction) {

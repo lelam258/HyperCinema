@@ -1,14 +1,7 @@
 package com.cinema.hyperCinema.controller.admin;
 
-import com.cinema.hyperCinema.dto.admin.branch.request.*;
-import com.cinema.hyperCinema.dto.admin.branch.response.BranchDetailView;
-import com.cinema.hyperCinema.dto.admin.branch.response.BranchListItem;
-import com.cinema.hyperCinema.dto.admin.branch.response.UpdateResult;
-import com.cinema.hyperCinema.exception.branch.BranchValidationException;
-import com.cinema.hyperCinema.security.CustomUserDetails;
-import com.cinema.hyperCinema.service.branch.BranchService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.util.Set;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,10 +13,29 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.Set;
+import com.cinema.hyperCinema.dto.admin.branch.request.AssignStaffRequest;
+import com.cinema.hyperCinema.dto.admin.branch.request.AssignManagerRequest;
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchCreateRequest;
+import com.cinema.hyperCinema.dto.admin.branch.response.BranchDetailView;
+import com.cinema.hyperCinema.dto.admin.branch.response.BranchListItem;
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchSearchCriteria;
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchStatusChangeRequest;
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchUpdateRequest;
+import com.cinema.hyperCinema.dto.admin.branch.response.UpdateResult;
+import com.cinema.hyperCinema.exception.branch.BranchValidationException;
+import com.cinema.hyperCinema.security.CustomUserDetails;
+import com.cinema.hyperCinema.service.branch.BranchService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequestMapping("/admin/branches")
@@ -116,6 +128,11 @@ public class BranchController {
 
         model.addAttribute("branch", branch);
         model.addAttribute("readOnly", readOnly);
+        if (isAdmin) {
+            model.addAttribute("staffCandidates", branchService.listUnassignedStaff());
+            model.addAttribute("managerCandidates", branch.getManagers());
+            model.addAttribute("assignStaffRequest", new AssignStaffRequest());
+        }
 
         return "admin/branches/branch-detail";
     }
@@ -287,12 +304,12 @@ public class BranchController {
 
             redirectAttributes.addFlashAttribute(
                     "successKey", "branch.staff.assigned");
+            return "redirect:/admin/branches/" + branchId;
         } catch (BranchValidationException ex) {
 
             redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
             return "redirect:/admin/branches/" + branchId + "/staff/assign";
         }
-        return "redirect:/admin/branches/" + branchId;
     }
 
     @PostMapping("/{branchId}/staff/{userId}/unassign")

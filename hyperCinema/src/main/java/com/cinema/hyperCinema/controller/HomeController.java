@@ -9,34 +9,26 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class HomeController {
 
     @GetMapping("/")
-    public String home(Authentication authentication) {
-        if (hasRole(authentication, "ROLE_ADMIN")) {
-            return "redirect:/admin/dashboard";
+    public String index(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
         }
-        if (hasRole(authentication, "ROLE_MANAGER")) {
-            return "redirect:/manager/dashboard";
-        }
-        if (hasRole(authentication, "ROLE_BRANCH_MANAGER") || hasRole(authentication, "ROLE_BRANCHMANAGER")) {
-            return "redirect:/branch/dashboard";
-        }
-        if (hasRole(authentication, "ROLE_STAFF")) {
-            return "redirect:/staff/dashboard";
-        }
-        if (hasRole(authentication, "ROLE_CUSTOMER")) {
-            return "redirect:/my/dashboard";
-        }
-        return "redirect:/login";
-    }
 
-    private boolean hasRole(Authentication authentication, String role) {
-        if (authentication == null || authentication.getAuthorities() == null) {
-            return false;
-        }
         for (GrantedAuthority authority : authentication.getAuthorities()) {
-            if (role.equals(authority.getAuthority())) {
-                return true;
+            String role = authority.getAuthority();
+            if (role.equals("ROLE_ADMIN")) {
+                return "redirect:/admin/dashboard";
+            } else if (role.equals("ROLE_MANAGER")) {
+                return "redirect:/manager/dashboard";
+            } else if (role.equals("ROLE_BRANCH_MANAGER") || role.equals("ROLE_BRANCHMANAGER")) {
+                return "redirect:/branch/dashboard";
+            } else if (role.equals("ROLE_STAFF")) {
+                return "redirect:/staff/dashboard";
+            } else if (role.equals("ROLE_CUSTOMER")) {
+                return "redirect:/my/dashboard";
             }
         }
-        return false;
+
+        return "redirect:/login";
     }
 }

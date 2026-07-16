@@ -1,0 +1,38 @@
+{
+  "view": "auth/register",
+  "title": "Đăng ký - HyperCinema",
+  "links": [
+    "/login"
+  ],
+  "i18nKeys": [],
+  "forms": [
+    {
+      "action": "/register",
+      "method": "post",
+      "fields": [
+        "fullName(text)=",
+        "email(email)=",
+        "username(text)=",
+        "password(password)=",
+        "confirmPassword(password)=",
+        "phone(text)=",
+        "submit:Đăng ký"
+      ]
+    }
+  ],
+  "tables": [],
+  "pagination": null,
+  "text": [
+    "Tạo tài khoản",
+    "HyperCinema",
+    "Họ và tên",
+    "Email",
+    "Tên đăng nhập",
+    "Mật khẩu",
+    "Xác nhận mật khẩu",
+    "Số điện thoại",
+    "Đăng ký",
+    "Đã có tài khoản?",
+    "Đăng nhập ngay"
+  ]
+}

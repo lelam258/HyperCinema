@@ -1,8 +1,10 @@
 package com.cinema.hyperCinema.repository;
 
 import com.cinema.hyperCinema.model.Booking;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Integer> {
@@ -74,7 +77,116 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
     long countByUser_UserId(Integer userId);
 
+    @EntityGraph(attributePaths = {
+            "showtime",
+            "showtime.movie",
+            "showtime.hall",
+            "showtime.hall.branch",
+            "tickets",
+            "tickets.seat"
+    })
     List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Integer userId, Pageable pageable);
 
     long countByShowtime_ShowtimeId(Integer showtimeId);
+
+    @Query(value = """
+            SELECT b
+            FROM Booking b
+            LEFT JOIN FETCH b.user u
+            LEFT JOIN FETCH b.showtime s
+            LEFT JOIN FETCH s.movie m
+            LEFT JOIN FETCH s.hall h
+            LEFT JOIN FETCH h.branch br
+            LEFT JOIN FETCH b.payment p
+            WHERE br.branchId = :branchId
+            AND (:bookingStatus IS NULL OR b.status = :bookingStatus)
+            AND (:paymentStatus IS NULL OR p.status = :paymentStatus)
+            AND (:movieId IS NULL OR m.movieId = :movieId)
+            AND (:createdFrom IS NULL OR b.createdAt >= :createdFrom)
+            AND (:createdTo IS NULL OR b.createdAt < :createdTo)
+            AND (:showtimeFrom IS NULL OR s.startTime >= :showtimeFrom)
+            AND (:showtimeTo IS NULL OR s.startTime < :showtimeTo)
+            AND (
+                :keyword IS NULL
+                OR LOWER(CONCAT('', b.bookingId)) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(u.fullName, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(u.username, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(u.email, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(m.title, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            )
+            """,
+            countQuery = """
+            SELECT COUNT(b)
+            FROM Booking b
+            LEFT JOIN b.user u
+            LEFT JOIN b.showtime s
+            LEFT JOIN s.movie m
+            LEFT JOIN s.hall h
+            LEFT JOIN h.branch br
+            LEFT JOIN b.payment p
+            WHERE br.branchId = :branchId
+            AND (:bookingStatus IS NULL OR b.status = :bookingStatus)
+            AND (:paymentStatus IS NULL OR p.status = :paymentStatus)
+            AND (:movieId IS NULL OR m.movieId = :movieId)
+            AND (:createdFrom IS NULL OR b.createdAt >= :createdFrom)
+            AND (:createdTo IS NULL OR b.createdAt < :createdTo)
+            AND (:showtimeFrom IS NULL OR s.startTime >= :showtimeFrom)
+            AND (:showtimeTo IS NULL OR s.startTime < :showtimeTo)
+            AND (
+                :keyword IS NULL
+                OR LOWER(CONCAT('', b.bookingId)) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(u.fullName, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(u.username, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(u.email, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(m.title, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            )
+            """)
+    Page<Booking> searchForBranchManagement(@Param("branchId") Integer branchId,
+                                            @Param("keyword") String keyword,
+                                            @Param("bookingStatus") String bookingStatus,
+                                            @Param("paymentStatus") String paymentStatus,
+                                            @Param("movieId") Integer movieId,
+                                            @Param("createdFrom") LocalDateTime createdFrom,
+                                            @Param("createdTo") LocalDateTime createdTo,
+                                            @Param("showtimeFrom") LocalDateTime showtimeFrom,
+                                            @Param("showtimeTo") LocalDateTime showtimeTo,
+                                            Pageable pageable);
+
+    @Query("""
+            SELECT b
+            FROM Booking b
+            LEFT JOIN FETCH b.user u
+            LEFT JOIN FETCH b.showtime s
+            LEFT JOIN FETCH s.movie m
+            LEFT JOIN FETCH s.hall h
+            LEFT JOIN FETCH h.branch br
+            LEFT JOIN FETCH b.payment p
+            WHERE b.bookingId = :bookingId
+            """)
+    Optional<Booking> findManagementDetailById(@Param("bookingId") Integer bookingId);
+
+    @Query("SELECT COUNT(b) > 0 FROM Booking b " +
+           "WHERE b.user.userId = :userId " +
+           "AND b.showtime.movie.movieId = :movieId " +
+           "AND (b.status = 'Confirmed' OR b.status = 'Completed')")
+    boolean hasSuccessfulBookingForMovie(@Param("userId") Integer userId, @Param("movieId") Integer movieId);
+
+    @Query("SELECT b FROM Booking b " +
+           "JOIN FETCH b.showtime s " +
+           "JOIN FETCH s.movie m " +
+           "JOIN FETCH s.hall h " +
+           "JOIN FETCH h.branch br " +
+           "WHERE b.user.userId = :userId AND (b.status = 'Confirmed' OR b.status = 'Completed') " +
+           "ORDER BY b.createdAt DESC")
+    List<Booking> findSuccessfulBookingsByUser(@Param("userId") Integer userId);
+
+    @Query("SELECT COUNT(b) > 0 FROM Booking b " +
+           "WHERE b.user.userId = :userId " +
+           "AND b.showtime.movie.movieId = :movieId " +
+           "AND (b.status = 'Confirmed' OR b.status = 'Completed') " +
+           "AND b.showtime.endTime < :now")
+    boolean hasEndedSuccessfulBookingForMovie(
+            @Param("userId") Integer userId, 
+            @Param("movieId") Integer movieId, 
+            @Param("now") LocalDateTime now);
 }

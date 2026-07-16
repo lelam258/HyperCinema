@@ -7,11 +7,11 @@ import com.cinema.hyperCinema.model.User;
 
 public interface WorkspaceUiDataService {
 
+    CustomerDashboardView getCustomerDashboard(User actor);
+
     WorkspaceDashboardView getManagerDashboard();
 
     WorkspaceDashboardView getBranchDashboard(User actor);
 
     WorkspaceDashboardView getStaffDashboard(User actor);
-
-    CustomerDashboardView getCustomerDashboard(User actor);
 }

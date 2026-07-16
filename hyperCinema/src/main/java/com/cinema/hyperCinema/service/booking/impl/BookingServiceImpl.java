@@ -1,37 +1,22 @@
 package com.cinema.hyperCinema.service.booking.impl;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import com.cinema.hyperCinema.dto.admin.voucher.response.VoucherPreview;
+import com.cinema.hyperCinema.model.*;
+import com.cinema.hyperCinema.repository.*;
+import com.cinema.hyperCinema.service.booking.BookingPricingResult;
+import com.cinema.hyperCinema.service.booking.BookingService;
+import com.cinema.hyperCinema.service.pricing.HallSeatTypePricingService;
+import com.cinema.hyperCinema.service.voucher.VoucherApplicationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cinema.hyperCinema.model.Booking;
-import com.cinema.hyperCinema.model.FoodItem;
-import com.cinema.hyperCinema.model.FoodOrder;
-import com.cinema.hyperCinema.model.FoodOrderItem;
-import com.cinema.hyperCinema.model.Payment;
-import com.cinema.hyperCinema.model.Seat;
-import com.cinema.hyperCinema.model.Showtime;
-import com.cinema.hyperCinema.model.Ticket;
-import com.cinema.hyperCinema.model.User;
-import com.cinema.hyperCinema.repository.BookingRepository;
-import com.cinema.hyperCinema.repository.FoodItemRepository;
-import com.cinema.hyperCinema.repository.FoodOrderItemRepository;
-import com.cinema.hyperCinema.repository.FoodOrderRepository;
-import com.cinema.hyperCinema.repository.PaymentRepository;
-import com.cinema.hyperCinema.repository.SeatRepository;
-import com.cinema.hyperCinema.repository.SeatReservationRepository;
-import com.cinema.hyperCinema.repository.ShowtimeRepository;
-import com.cinema.hyperCinema.repository.TicketRepository;
-import com.cinema.hyperCinema.service.booking.BookingService;
-import com.cinema.hyperCinema.util.SeatPricing;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -41,9 +26,11 @@ public class BookingServiceImpl implements BookingService {
     private static final String STATUS_CANCELLED = "CANCELLED";
     private static final String STATUS_CANCELLED_LEGACY = "Cancelled";
     private static final String MAINTENANCE = "UNDER_MAINTENANCE";
+    private static final String SHOWTIME_CANCELLED = "CANCELLED";
     private static final String PAYMENT_PENDING = "Pending";
     private static final String PAYMENT_METHOD_VIETQR = "VietQR";
     private static final String FOOD_ORDER_PENDING = "PENDING";
+    private static final String ROLE_CUSTOMER = "Customer";
 
     private final BookingRepository bookingRepository;
     private final ShowtimeRepository showtimeRepository;
@@ -54,6 +41,9 @@ public class BookingServiceImpl implements BookingService {
     private final FoodItemRepository foodItemRepository;
     private final FoodOrderRepository foodOrderRepository;
     private final FoodOrderItemRepository foodOrderItemRepository;
+    private final UserMembershipRepository userMembershipRepository;
+    private final VoucherApplicationService voucherApplicationService;
+    private final HallSeatTypePricingService hallSeatTypePricingService;
 
     public BookingServiceImpl(BookingRepository bookingRepository,
                               ShowtimeRepository showtimeRepository,
@@ -63,7 +53,10 @@ public class BookingServiceImpl implements BookingService {
                               PaymentRepository paymentRepository,
                               FoodItemRepository foodItemRepository,
                               FoodOrderRepository foodOrderRepository,
-                              FoodOrderItemRepository foodOrderItemRepository) {
+                              FoodOrderItemRepository foodOrderItemRepository,
+                              UserMembershipRepository userMembershipRepository,
+                              VoucherApplicationService voucherApplicationService,
+                              HallSeatTypePricingService hallSeatTypePricingService) {
         this.bookingRepository = bookingRepository;
         this.showtimeRepository = showtimeRepository;
         this.seatRepository = seatRepository;
@@ -73,6 +66,9 @@ public class BookingServiceImpl implements BookingService {
         this.foodItemRepository = foodItemRepository;
         this.foodOrderRepository = foodOrderRepository;
         this.foodOrderItemRepository = foodOrderItemRepository;
+        this.userMembershipRepository = userMembershipRepository;
+        this.voucherApplicationService = voucherApplicationService;
+        this.hallSeatTypePricingService = hallSeatTypePricingService;
     }
 
     @Override
@@ -107,35 +103,49 @@ public class BookingServiceImpl implements BookingService {
                                               Integer showtimeId,
                                               List<Integer> seatIds,
                                               List<Integer> foodItemIds,
-                                              List<Integer> foodQuantities) {
+                                              List<Integer> foodQuantities,
+                                              String voucherCode) {
         if (seatIds == null || seatIds.isEmpty()) {
-            throw new IllegalArgumentException("Vui lÃ²ng chá»n Ã­t nháº¥t má»™t gháº¿.");
+            throw new IllegalArgumentException("Vui long chon it nhat mot ghe.");
         }
 
         Showtime showtime = findShowtimeWithDetails(showtimeId)
-                .orElseThrow(() -> new IllegalStateException("Suáº¥t chiáº¿u khÃ´ng tá»“n táº¡i."));
+                .orElseThrow(() -> new IllegalStateException("Suat chieu khong ton tai."));
+
+        if (SHOWTIME_CANCELLED.equals(showtime.getStatus())) {
+            throw new IllegalStateException("Suat chieu khong ton tai.");
+        }
 
         List<Seat> seats = seatRepository.findAllById(seatIds);
         if (seats.size() != seatIds.size()
                 || seats.stream().anyMatch(seat -> !seat.getHall().getHallId().equals(showtime.getHall().getHallId()))
                 || seats.stream().anyMatch(seat -> MAINTENANCE.equals(seat.getMaintenanceStatus()))
                 || hasUnavailableSeats(showtimeId, seatIds)) {
-            throw new IllegalArgumentException("Má»™t sá»‘ gháº¿ vá»«a Ä‘Æ°á»£c Ä‘áº·t. Vui lÃ²ng chá»n láº¡i.");
+            throw new IllegalArgumentException("Ghe da duoc dat. Vui long chon lai.");
         }
 
         List<FoodSelection> foodSelections = selectedFood(foodItemIds, foodQuantities);
         long seatTotal = seats.stream()
-                .mapToLong(seat -> SeatPricing.priceFor(seat.getType()))
+                .mapToLong(seat -> hallSeatTypePricingService.priceForSeat(showtime.getHall(), seat))
                 .sum();
         long foodTotal = foodSelections.stream()
                 .mapToLong(selection -> (long) selection.item().getPrice() * selection.quantity())
                 .sum();
+        LocalDateTime now = LocalDateTime.now();
+        BookingPricingResult pricing = calculatePricing(user, showtime, seatTotal, foodTotal, voucherCode, now);
 
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setShowtime(showtime);
         booking.setStatus(STATUS_PENDING);
-        booking.setTotalPrice(seatTotal + foodTotal);
+        booking.setSeatSubtotal(pricing.seatSubtotal());
+        booking.setFoodSubtotal(pricing.foodSubtotal());
+        booking.setOrderSubtotal(pricing.orderSubtotal());
+        booking.setVoucherDiscountAmount(pricing.voucherDiscountAmount());
+        booking.setMembershipDiscountAmount(pricing.membershipDiscountAmount());
+        booking.setMembershipPlanName(pricing.membershipPlanName());
+        booking.setMembershipDiscountPercent(pricing.membershipDiscountPercent());
+        booking.setTotalPrice(pricing.finalTotal());
 
         List<Ticket> tickets = seats.stream()
                 .map(seat -> {
@@ -149,6 +159,14 @@ public class BookingServiceImpl implements BookingService {
                 .collect(Collectors.toList());
         booking.setTickets(tickets);
         Booking savedBooking = bookingRepository.save(booking);
+
+        if (pricing.voucherCode() != null) {
+            Promotion promotion = voucherApplicationService.applyValidated(
+                    pricing.voucherCode(), savedBooking, pricing.orderSubtotal(), branchId(showtime), now);
+            savedBooking.setPromotion(promotion);
+            savedBooking = bookingRepository.save(savedBooking);
+        }
+
         createPendingFoodOrder(savedBooking, foodSelections);
 
         Payment payment = new Payment();
@@ -161,12 +179,99 @@ public class BookingServiceImpl implements BookingService {
         return savedBooking;
     }
 
+    private BookingPricingResult calculatePricing(User user,
+                                                  Showtime showtime,
+                                                  long seatTotal,
+                                                  long foodTotal,
+                                                  String voucherCode,
+                                                  LocalDateTime now) {
+        long orderSubtotal = Math.max(0, seatTotal + foodTotal);
+        String normalizedVoucherCode = normalizeVoucherCode(voucherCode);
+        long voucherDiscount = 0L;
+        if (normalizedVoucherCode != null) {
+            VoucherPreview preview = voucherApplicationService.validateAndPreview(
+                    normalizedVoucherCode, orderSubtotal, branchId(showtime), now);
+            if (!preview.isValid()) {
+                throw new IllegalArgumentException(preview.getErrorKey());
+            }
+            voucherDiscount = clamp(preview.getDiscountAmount(), 0, orderSubtotal);
+        }
+
+        long afterVoucher = Math.max(0, orderSubtotal - voucherDiscount);
+        UserMembership membership = activeMembership(user, now.toLocalDate()).orElse(null);
+        String membershipPlanName = null;
+        BigDecimal membershipPercent = null;
+        long membershipDiscount = 0L;
+        if (membership != null && membership.getPlan() != null
+                && membership.getPlan().getDiscountPercent() != null
+                && membership.getPlan().getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+            membershipPlanName = membership.getPlan().getName();
+            membershipPercent = membership.getPlan().getDiscountPercent();
+            membershipDiscount = percentageDiscount(afterVoucher, membershipPercent);
+        }
+        membershipDiscount = clamp(membershipDiscount, 0, afterVoucher);
+
+        return new BookingPricingResult(
+                seatTotal,
+                foodTotal,
+                orderSubtotal,
+                null,
+                normalizedVoucherCode,
+                voucherDiscount,
+                membership,
+                membershipPlanName,
+                membershipPercent,
+                afterVoucher,
+                membershipDiscount,
+                Math.max(0, afterVoucher - membershipDiscount));
+    }
+
+    private Optional<UserMembership> activeMembership(User user, LocalDate today) {
+        if (!isCustomer(user) || user.getUserId() == null) {
+            return Optional.empty();
+        }
+        return userMembershipRepository.findActiveByUserIdWithPlan(user.getUserId(), STATUS_ACTIVE, today)
+                .stream()
+                .findFirst();
+    }
+
+    private boolean isCustomer(User user) {
+        return user != null
+                && user.getRole() != null
+                && ROLE_CUSTOMER.equalsIgnoreCase(user.getRole().getName());
+    }
+
+    private Integer branchId(Showtime showtime) {
+        if (showtime == null || showtime.getHall() == null || showtime.getHall().getBranch() == null) {
+            return null;
+        }
+        return showtime.getHall().getBranch().getBranchId();
+    }
+
+    private String normalizeVoucherCode(String voucherCode) {
+        if (voucherCode == null || voucherCode.isBlank()) {
+            return null;
+        }
+        return voucherCode.trim();
+    }
+
+    private long percentageDiscount(long amount, BigDecimal percent) {
+        return BigDecimal.valueOf(amount)
+                .multiply(percent)
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP)
+                .longValue();
+    }
+
+    private long clamp(long value, long min, long max) {
+        return Math.min(max, Math.max(min, value));
+    }
+
     private List<FoodSelection> selectedFood(List<Integer> foodItemIds, List<Integer> foodQuantities) {
         if (foodItemIds == null || foodItemIds.isEmpty()) {
             return List.of();
         }
         if (foodQuantities == null || foodItemIds.size() != foodQuantities.size()) {
-            throw new IllegalArgumentException("ThÃ´ng tin F&B khÃ´ng há»£p lá»‡.");
+            throw new IllegalArgumentException("Thong tin F&B khong hop le");
         }
 
         List<FoodSelection> selections = new ArrayList<>();
@@ -178,12 +283,12 @@ public class BookingServiceImpl implements BookingService {
             }
 
             FoodItem item = foodItemRepository.findById(itemId)
-                    .orElseThrow(() -> new IllegalArgumentException("Sáº£n pháº©m F&B khÃ´ng tá»“n táº¡i."));
+                    .orElseThrow(() -> new IllegalArgumentException("San pham F&B khong ton tai."));
             if (!Boolean.TRUE.equals(item.getIsAvailable())) {
-                throw new IllegalArgumentException("Má»™t sáº£n pháº©m F&B hiá»‡n khÃ´ng cÃ²n bÃ¡n.");
+                throw new IllegalArgumentException("San pham F&B hien khong con ban.");
             }
             if (item.getStock() == null || item.getStock() < quantity) {
-                throw new IllegalArgumentException("Má»™t sáº£n pháº©m F&B khÃ´ng Ä‘á»§ tá»“n kho.");
+                throw new IllegalArgumentException("San pham F&B khong con ton kho.");
             }
             selections.add(new FoodSelection(item, quantity));
         }

@@ -1,0 +1,183 @@
+{
+  "view": "admin/branches/branch-detail",
+  "title": "Chi tiết Chi nhánh - CGV Vincom - HyperCinema",
+  "links": [
+    "/",
+    "/admin/analytics",
+    "/admin/branches",
+    "/admin/branches/11/edit",
+    "/admin/branches/11/managers/assign",
+    "/admin/branches/11/staff/assign",
+    "/admin/dashboard",
+    "/admin/halls",
+    "/admin/movies",
+    "/admin/notifications",
+    "/admin/payments",
+    "/admin/users"
+  ],
+  "i18nKeys": [],
+  "forms": [
+    {
+      "action": "/admin/branches/11/status",
+      "method": "post",
+      "fields": [
+        "select:status=options[Active|Inactive|Maintenance];selected=Active",
+        "submit:Đổi"
+      ]
+    },
+    {
+      "action": "/admin/branches/11",
+      "method": "post",
+      "fields": [
+        "_method(hidden)=delete",
+        "submit:Xóa"
+      ]
+    },
+    {
+      "action": "/admin/branches/11/staff",
+      "method": "post",
+      "fields": [
+        "select:userId=options[|32];selected=",
+        "select:managerId=options[|21];selected=",
+        "submit:Gán Staff"
+      ]
+    },
+    {
+      "action": "/admin/branches/11/managers/21/unassign",
+      "method": "post",
+      "fields": [
+        "submit:Bỏ gán"
+      ]
+    },
+    {
+      "action": "/admin/branches/11/staff/31/unassign",
+      "method": "post",
+      "fields": [
+        "submit:Bỏ gán"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "columnCount": 4,
+      "headers": [
+        "Tên phòng",
+        "Sức chứa",
+        "Loại",
+        "Trạng thái"
+      ]
+    },
+    {
+      "columnCount": 5,
+      "headers": [
+        "Họ và tên",
+        "Email",
+        "Số điện thoại",
+        "Trạng thái",
+        "Thao tác"
+      ]
+    },
+    {
+      "columnCount": 5,
+      "headers": [
+        "Họ và tên",
+        "Email",
+        "Số điện thoại",
+        "Trạng thái",
+        "Thao tác"
+      ]
+    }
+  ],
+  "pagination": null,
+  "text": [
+    "H",
+    "HyperCinema",
+    "Hệ thống",
+    "Tổng quan",
+    "Báo cáo & Thống kê",
+    "Quản lý phim",
+    "Quản lý chi nhánh",
+    "Quản lý phòng chiếu",
+    "Quản lý người dùng",
+    "Thông báo & Hỗ trợ",
+    "Quản lý Giao dịch",
+    "Đăng xuất",
+    "Quản lý Chi nhánh",
+    "/",
+    "CGV Vincom",
+    "Đã cập nhật trạng thái Chi nhánh.",
+    "CGV Vincom",
+    "Trạng thái:",
+    "Hoạt động",
+    "Chỉnh sửa",
+    "Hoạt động",
+    "Ngừng hoạt động",
+    "Bảo trì",
+    "Đổi",
+    "Gán Manager",
+    "Gán Staff",
+    "Xóa",
+    "Gán Staff nhanh",
+    "Nhân viên (Staff)",
+    "-- Chọn Staff --",
+    "Lê Thị C (c@example.com)",
+    "Quản lý của Chi nhánh (Manager)",
+    "-- Chọn Manager --",
+    "Nguyễn Văn A (a@example.com)",
+    "Gán Staff",
+    "Thông tin chung",
+    "Tên Chi nhánh",
+    "CGV Vincom",
+    "Thành phố",
+    "Hà Nội",
+    "Số điện thoại",
+    "0241234567",
+    "Địa chỉ",
+    "191 Bà Triệu",
+    "Trạng thái",
+    "Hoạt động",
+    "Giờ mở cửa",
+    "09:00",
+    "Giờ đóng cửa",
+    "22:00",
+    "Ngày tạo",
+    "15/01/2025 09:30",
+    "Phòng chiếu",
+    "1 phòng",
+    "Tên phòng",
+    "Sức chứa",
+    "Loại",
+    "Trạng thái",
+    "Phòng 1",
+    "120",
+    "2D",
+    "Hoạt động",
+    "Nhân sự Chi nhánh",
+    "Quản lý",
+    "1 người",
+    "Họ và tên",
+    "Email",
+    "Số điện thoại",
+    "Trạng thái",
+    "Thao tác",
+    "Nguyễn Văn A",
+    "a@example.com",
+    "0901112233",
+    "Hoạt động",
+    "Bỏ gán",
+    "Nhân viên",
+    "1 người",
+    "Họ và tên",
+    "Email",
+    "Số điện thoại",
+    "Trạng thái",
+    "Thao tác",
+    "Trần Thị B",
+    "b@example.com",
+    "0904445566",
+    "Hoạt động",
+    "Bỏ gán",
+    "HyperCinema",
+    "© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim."
+  ]
+}

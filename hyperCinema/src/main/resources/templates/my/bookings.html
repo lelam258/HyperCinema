@@ -1,93 +1,81 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Vé của tôi - HyperCinema')}"></head>
-<body class="min-h-screen hc-customer">
-<div class="hc-shell">
-    <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
-    <nav th:replace="~{fragments/layout :: customerSidebar('bookings')}"></nav>
-
-    <main class="hc-page hc-customer-page">
-        <div class="hc-customer-home">
-            <section class="hc-customer-hero" aria-labelledby="booking-history-title">
-                <div>
-                    <p class="hc-kicker">Tài khoản</p>
-                    <h1 id="booking-history-title" class="hc-page-title">Vé của tôi</h1>
-                    <p class="hc-page-subtitle">Kiểm tra lịch sử đặt vé và thông tin vào rạp.</p>
-                </div>
-                <a class="hc-button hc-button-primary hc-customer-primary" th:href="@{/my/dashboard}">
-                    <i data-lucide="ticket"></i>
-                    Đặt vé
-                </a>
-            </section>
-
-            <div th:if="${bookingSuccess}" class="hc-alert hc-alert-success" th:text="${bookingSuccess}">
-                Đặt vé thành công.
-            </div>
-
-            <section class="hc-ticket-list" aria-label="Danh sách vé">
-                <div th:if="${#lists.isEmpty(bookings)}" class="hc-customer-empty">
-                    <i data-lucide="tickets"></i>
-                    <h2>Bạn chưa có booking nào</h2>
-                    <p>Chọn phim yêu thích và vé mới sẽ xuất hiện tại đây.</p>
-                    <a th:href="@{/my/dashboard}" class="hc-movie-cta">Mua vé ngay</a>
-                </div>
-
-                <article th:each="booking : ${bookings}" class="hc-ticket-card">
-                    <div class="hc-ticket-poster">
-                        <img th:if="${booking.showtime != null and booking.showtime.movie != null and booking.showtime.movie.posterUrl != null and not #strings.isEmpty(booking.showtime.movie.posterUrl)}"
-                             th:src="${booking.showtime.movie.posterUrl}"
-                             th:alt="|Poster ${booking.showtime.movie.title}|">
-                        <span th:unless="${booking.showtime != null and booking.showtime.movie != null and booking.showtime.movie.posterUrl != null and not #strings.isEmpty(booking.showtime.movie.posterUrl)}">
-                            <i data-lucide="ticket"></i>
-                        </span>
-                    </div>
-
-                    <div class="hc-ticket-content">
-                        <div class="hc-ticket-title-row">
-                            <div>
-                                <p class="hc-kicker" th:text="|Booking #${booking.bookingId}|">Booking #1</p>
-                                <h2 th:text="${booking.showtime != null and booking.showtime.movie != null ? booking.showtime.movie.title : 'Suất chiếu'}">Tên phim</h2>
-                            </div>
-                            <span class="hc-ticket-status" th:text="${booking.status == 'Pending' ? 'Chờ thanh toán' : (booking.status == 'Paid' ? 'Đã thanh toán' : (booking.status == 'Confirmed' ? 'Đã xác nhận' : (booking.status == 'Cancelled' ? 'Đã hủy' : (booking.status != null ? booking.status : 'Chờ xử lý'))))}">Chờ xử lý</span>
-                        </div>
-
-                        <dl class="hc-ticket-details">
-                            <div>
-                                <dt>Ngày đặt</dt>
-                                <dd th:text="${booking.createdAt != null ? #temporals.format(booking.createdAt, 'HH:mm dd/MM/yyyy') : 'N/A'}">N/A</dd>
-                            </div>
-                            <div>
-                                <dt>Suất chiếu</dt>
-                                <dd th:text="${booking.showtime != null and booking.showtime.startTime != null ? #temporals.format(booking.showtime.startTime, 'HH:mm dd/MM/yyyy') : 'Đang cập nhật'}">Đang cập nhật</dd>
-                            </div>
-                            <div>
-                                <dt>Rạp</dt>
-                                <dd th:text="${booking.showtime != null and booking.showtime.hall != null and booking.showtime.hall.branch != null ? booking.showtime.hall.branch.name : 'HyperCinema'}">HyperCinema</dd>
-                            </div>
-                            <div>
-                                <dt>Phòng</dt>
-                                <dd th:text="${booking.showtime != null and booking.showtime.hall != null ? booking.showtime.hall.name : 'N/A'}">N/A</dd>
-                            </div>
-                            <div>
-                                <dt>Số vé</dt>
-                                <dd th:text="${booking.tickets != null ? #lists.size(booking.tickets) : 0}">0</dd>
-                            </div>
-                            <div>
-                                <dt>Tổng tiền</dt>
-                                <dd th:text="${#numbers.formatDecimal(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</dd>
-                            </div>
-                        </dl>
-                    </div>
-
-                    <div class="hc-ticket-code">
-                        <i data-lucide="qr-code"></i>
-                        <span th:text="|HC-${booking.bookingId}|">HC-1</span>
-                    </div>
-                </article>
-            </section>
+<head th:replace="~{fragments/layout :: head('Lịch sử đặt vé - HyperCinema')}">
+    <title>Lịch sử đặt vé - HyperCinema</title>
+</head>
+<body class="min-h-screen">
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: customerSidebar('bookings')}"></nav>
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Lịch sử đặt vé</h1>
+            <p class="text-sm text-slate-400">Danh sách các vé bạn đã đặt trong hệ thống</p>
         </div>
-    </main>
-</div>
-<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+        <!-- Bookings Table -->
+        <div class="glass-card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-white/[0.08] bg-white/[0.02]">
+                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Mã Đơn</th>
+                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Phim</th>
+                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Rạp & Phòng</th>
+                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Suất Chiếu</th>
+                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 text-right">Tổng Tiền</th>
+                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 text-center">Trạng Thái</th>
+                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Danh sách ghế</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.04]">
+                        <tr th:each="b : ${bookings}" class="hover:bg-white/[0.02] transition-colors">
+                            <td class="px-6 py-4 text-sm font-semibold text-slate-200 tabular-nums" th:text="'#' + ${b.bookingId}">#12345</td>
+                            <td class="px-6 py-4 text-sm font-bold text-white" th:text="${b.showtime.movie.title}">Tên phim</td>
+                            <td class="px-6 py-4 text-sm text-slate-300">
+                                <span class="block" th:text="${b.showtime.hall.branch.name}">Chi nhánh</span>
+                                <span class="block text-xs text-slate-500" th:text="${b.showtime.hall.name}">Phòng chiếu</span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-300">
+                                <span class="block" th:text="${#temporals.format(b.showtime.startTime, 'HH:mm dd/MM/yyyy')}">Thời gian</span>
+                            </td>
+                            <td class="px-6 py-4 text-sm font-bold text-right text-primary tabular-nums" th:text="${#numbers.formatDecimal(b.totalPrice, 0, 'POINT', 0, 'POINT')} + ' đ'">120.000 đ</td>
+                            <td class="px-6 py-4 text-center">
+                                <span th:if="${b.status == 'Confirmed' || b.status == 'Completed'}" 
+                                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
+                                    Thành công
+                                </span>
+                                <span th:if="${b.status == 'Cancelled'}" 
+                                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger/10 text-danger border border-danger/20">
+                                    Đã hủy
+                                </span>
+                                <span th:if="${b.status != 'Confirmed' && b.status != 'Completed' && b.status != 'Cancelled'}" 
+                                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20"
+                                      th:text="${b.status}">
+                                    Chờ xử lý
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-400">
+                                <div class="flex flex-wrap gap-1">
+                                    <span th:each="t : ${b.tickets}" 
+                                          class="inline-flex items-center px-2 py-0.5 bg-white/5 rounded text-xs text-slate-300 border border-white/10"
+                                          th:text="${t.seat.seatRow} + ${t.seat.seatNumber}">
+                                        A1
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${bookings == null or #lists.isEmpty(bookings)}">
+                            <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-500">
+                                Bạn chưa có lịch sử đặt vé nào trong hệ thống.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
 </body>
 </html>

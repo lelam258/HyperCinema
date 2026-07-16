@@ -48,16 +48,49 @@
 
         <section class="hc-card mb-6 p-6" th:if="${!readOnly}">
             <h2 class="mb-4 font-serif text-lg text-white">Gán Staff nhanh</h2>
-            <form class="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr_auto]" method="post" th:action="@{/admin/branches/{id}/staff(id=${branch.branchId})}">
+            <form class="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr_auto]"
+                  method="post"
+                  th:action="@{/admin/branches/{id}/staff(id=${branch.branchId})}"
+                  th:object="${assignStaffRequest}">
                 <div>
-                    <label th:for="|staff-userId-${branch.branchId}|" class="hc-label">Staff userId</label>
-                    <input class="hc-input" type="number" min="1" name="userId" required placeholder="userId" th:id="|staff-userId-${branch.branchId}|">
+                    <label th:for="|staff-userId-${branch.branchId}|" class="hc-label">Nhân viên (Staff)</label>
+                    <select class="hc-input cursor-pointer"
+                            th:id="|staff-userId-${branch.branchId}|"
+                            th:field="*{userId}"
+                            required>
+                        <option value="">-- Chọn Staff --</option>
+                        <option th:if="${staffCandidates != null}"
+                                th:each="staff : ${staffCandidates}"
+                                th:value="${staff.userId}"
+                                th:text="|${staff.fullName} (${staff.email})|">
+                            Staff
+                        </option>
+                    </select>
+                    <span th:if="${staffCandidates != null and #lists.isEmpty(staffCandidates)}" class="mt-2 block text-xs text-warning">Không có Staff phù hợp để gán.</span>
+                    <span th:if="${staffCandidates == null}" class="mt-2 block text-xs text-danger">Danh sách Staff chưa được cung cấp.</span>
                 </div>
                 <div>
-                    <label th:for="|staff-managerId-${branch.branchId}|" class="hc-label">Manager userId</label>
-                    <input class="hc-input" type="number" min="1" name="managerId" required placeholder="managerId" th:id="|staff-managerId-${branch.branchId}|">
+                    <label th:for="|staff-managerId-${branch.branchId}|" class="hc-label">Quản lý của Chi nhánh (Manager)</label>
+                    <select class="hc-input cursor-pointer"
+                            th:id="|staff-managerId-${branch.branchId}|"
+                            th:field="*{managerId}"
+                            required>
+                        <option value="">-- Chọn Manager --</option>
+                        <option th:if="${managerCandidates != null}"
+                                th:each="manager : ${managerCandidates}"
+                                th:value="${manager.userId}"
+                                th:text="|${manager.fullName} (${manager.email})|">
+                            Manager
+                        </option>
+                    </select>
+                    <span th:if="${managerCandidates != null and #lists.isEmpty(managerCandidates)}" class="mt-2 block text-xs text-warning">Chi nhánh chưa có Manager khả dụng.</span>
+                    <span th:if="${managerCandidates == null}" class="mt-2 block text-xs text-danger">Danh sách Manager chưa được cung cấp.</span>
                 </div>
-                <button type="submit" class="hc-btn hc-btn-primary self-end">Gán Staff</button>
+                <button type="submit"
+                        class="hc-btn hc-btn-primary self-end"
+                        th:disabled="${staffCandidates == null or #lists.isEmpty(staffCandidates) or managerCandidates == null or #lists.isEmpty(managerCandidates)}">
+                    Gán Staff
+                </button>
             </form>
         </section>
 

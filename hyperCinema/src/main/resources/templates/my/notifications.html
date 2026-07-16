@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Thông báo của tôi - HyperCinema')}">
+    <title>Thông báo của tôi - HyperCinema</title>
+</head>
+<body class="min-h-screen">
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: customerSidebar('notifications')}"></nav>
+
+<!-- Main Content -->
+<main class="md:ml-64 min-h-screen pb-12">
+    <div class="max-w-4xl mx-auto px-6 py-8">
+        
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Thông báo</h1>
+                <p class="text-sm text-slate-400">Xem và quản lý các thông báo từ ban quản trị</p>
+            </div>
+            <!-- Quick Filters -->
+            <div class="flex items-center gap-2 bg-white/[0.04] p-1 rounded-xl border border-white/[0.08]">
+                <button onclick="filterNotifications('all')" id="filter-all" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white transition-all cursor-pointer">Tất cả</button>
+                <button onclick="filterNotifications('unread')" id="filter-unread" class="px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer">Chưa đọc</button>
+                <button onclick="filterNotifications('read')" id="filter-read" class="px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer">Đã đọc</button>
+            </div>
+        </div>
+
+        <!-- Notification List -->
+        <div class="space-y-4" id="notifications-container">
+            <!-- Loop through notifications -->
+            <div th:each="n : ${notifications}" 
+                 th:id="'notif-' + ${n.notificationId}"
+                 th:data-read="${n.read}"
+                 th:classappend="${!n.read} ? 'border-l-4 border-primary bg-white/[0.03]' : 'bg-white/[0.01]'"
+                 class="notification-card glass-card p-5 cursor-pointer hover:bg-white/[0.06] transition-all duration-200 flex gap-4 items-start relative group"
+                 th:onclick="'openNotificationDetail(' + ${n.notificationId} + ')'">
+                
+                <!-- Type Icon -->
+                <div class="p-2.5 rounded-xl shrink-0" 
+                     th:classappend="${n.type == 'Promotion' || n.type == 'Khuyến mãi'} ? 'bg-amber-500/10 text-amber-500' : (${n.type == 'System' || n.type == 'Hệ thống'} ? 'bg-info/10 text-info' : 'bg-success/10 text-success')">
+                    
+                    <!-- Promotion Icon -->
+                    <svg th:if="${n.type == 'Promotion' || n.type == 'Khuyến mãi'}" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    <!-- System Icon -->
+                    <svg th:if="${n.type == 'System' || n.type == 'Hệ thống'}" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <!-- Default/Other Icon -->
+                    <svg th:if="${n.type != 'Promotion' && n.type != 'Khuyến mãi' && n.type != 'System' && n.type != 'Hệ thống'}" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                </div>
+
+                <!-- Text details -->
+                <div class="flex-1 min-w-0 pr-6">
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                        <span class="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400" 
+                              th:text="${n.type != null ? n.type : 'Thông báo'}">Hệ thống</span>
+                        <span class="text-xs text-slate-500 tabular-nums" 
+                              th:text="${#temporals.format(n.createdAt != null ? n.createdAt : n.scheduledAt, 'HH:mm dd/MM/yyyy')}">10:30 24/06/2026</span>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-1 group-hover:text-primary transition-colors duration-200" 
+                        th:id="'title-' + ${n.notificationId}"
+                        th:text="${n.title}">Tiêu đề thông báo</h3>
+                    <!-- Message content hidden, but accessible by JS -->
+                    <div class="hidden" th:id="'msg-' + ${n.notificationId}" th:text="${n.message}"></div>
+                    <p class="text-sm text-slate-400 line-clamp-2" 
+                       th:id="'desc-' + ${n.notificationId}"
+                       th:text="${n.message}">Nội dung ngắn của thông báo...</p>
+                </div>
+
+                <!-- Unread status indicator -->
+                <div th:id="'dot-' + ${n.notificationId}"
+                     th:if="${!n.read}" 
+                     class="absolute top-5 right-5 w-2.5 h-2.5 rounded-full bg-primary shadow-lg shadow-primary/40 animate-pulse"></div>
+            </div>
+
+            <!-- Empty state -->
+            <div th:if="${notifications == null or #lists.isEmpty(notifications)}" 
+                 class="glass-card p-12 text-center text-slate-500">
+                <svg class="w-12 h-12 text-slate-600 mx-auto mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <p class="text-sm">Bạn chưa nhận được thông báo nào.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detail Modal -->
+    <div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 opacity-0 pointer-events-none transition-all duration-300 backdrop-blur-sm">
+        <div class="glass-card w-full max-w-lg overflow-hidden transform scale-95 transition-all duration-300 bg-[#0E0E14] border border-white/10 shadow-2xl">
+            <!-- Modal Header -->
+            <div class="px-6 py-5 border-b border-white/[0.08] flex items-center justify-between bg-white/[0.02]">
+                <div class="flex items-center gap-2">
+                    <span id="modal-type" class="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-primary/20 text-primary border border-primary/20">Hệ thống</span>
+                    <span id="modal-date" class="text-xs text-slate-500">10:30 24/06/2026</span>
+                </div>
+                <button onclick="closeNotificationModal()" class="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-white/5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4">
+                <h2 id="modal-title" class="text-xl font-bold text-white leading-snug">Tiêu đề thông báo chi tiết</h2>
+                <div class="max-h-[300px] overflow-y-auto pr-2 text-sm text-slate-300 leading-relaxed whitespace-pre-wrap font-sans" id="modal-message">
+                    Nội dung đầy đủ của thông báo hiển thị ở đây...
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-white/[0.08] flex justify-end bg-white/[0.02]">
+                <button onclick="closeNotificationModal()" class="px-5 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm font-semibold transition-all border border-white/10 cursor-pointer">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+<!-- Inline Javascript logic for AJAX, modal, and filtering -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    
+    // Open Notification Detail modal and mark as read
+    function openNotificationDetail(id) {
+        const titleEl = document.getElementById('title-' + id);
+        const msgEl = document.getElementById('msg-' + id);
+        const cardEl = document.getElementById('notif-' + id);
+        const typeEl = cardEl.querySelector('.text-slate-400');
+        const dateEl = cardEl.querySelector('.text-slate-500');
+        
+        // Populate modal fields
+        document.getElementById('modal-title').textContent = titleEl.textContent;
+        document.getElementById('modal-message').textContent = msgEl.textContent;
+        document.getElementById('modal-type').textContent = typeEl ? typeEl.textContent : 'Thông báo';
+        document.getElementById('modal-date').textContent = dateEl ? dateEl.textContent : '';
+        
+        // Open Modal
+        const modal = document.getElementById('detail-modal');
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.firstElementChild.classList.remove('scale-95');
+        modal.firstElementChild.classList.add('scale-100');
+        
+        // Check if unread, then mark as read
+        const isRead = cardEl.getAttribute('data-read') === 'true';
+        if (!isRead) {
+            markAsRead(id, cardEl);
+        }
+    }
+    
+    function closeNotificationModal() {
+        const modal = document.getElementById('detail-modal');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        modal.firstElementChild.classList.remove('scale-100');
+        modal.firstElementChild.classList.add('scale-95');
+    }
+    
+    // AJAX POST request to mark as read
+    function markAsRead(id, cardEl) {
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+        
+        fetch(`/my/notifications/${id}/read`, {
+            method: 'POST',
+            headers: {
+                [csrfHeader]: csrfToken,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update UI card attributes and styles
+                cardEl.setAttribute('data-read', 'true');
+                cardEl.classList.remove('border-l-4', 'border-primary', 'bg-white/[0.03]');
+                cardEl.classList.add('bg-white/[0.01]');
+                
+                // Hide Dot
+                const dot = document.getElementById('dot-' + id);
+                if (dot) {
+                    dot.remove();
+                }
+                
+                // Update Sidebar Badge Count
+                const sidebarBadge = document.getElementById('unread-badge-sidebar');
+                if (sidebarBadge) {
+                    if (data.unreadCount > 0) {
+                        sidebarBadge.textContent = data.unreadCount;
+                    } else {
+                        sidebarBadge.remove();
+                    }
+                }
+            }
+        })
+        .catch(error => console.error('Error marking notification as read:', error));
+    }
+    
+    // Filtering logic
+    function filterNotifications(filterType) {
+        // Toggle active button style
+        ['all', 'unread', 'read'].forEach(t => {
+            const btn = document.getElementById('filter-' + t);
+            if (t === filterType) {
+                btn.classList.add('bg-primary', 'text-white');
+                btn.classList.remove('text-slate-400', 'hover:text-white');
+            } else {
+                btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.add('text-slate-400', 'hover:text-white');
+            }
+        });
+        
+        // Filter cards
+        const cards = document.querySelectorAll('.notification-card');
+        cards.forEach(card => {
+            const isRead = card.getAttribute('data-read') === 'true';
+            if (filterType === 'all') {
+                card.style.display = 'flex';
+            } else if (filterType === 'unread') {
+                card.style.display = !isRead ? 'flex' : 'none';
+            } else if (filterType === 'read') {
+                card.style.display = isRead ? 'flex' : 'none';
+            }
+        });
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(e) {
+        const modal = document.getElementById('detail-modal');
+        if (e.target === modal) {
+            closeNotificationModal();
+        }
+    });
+    
+    /*]]>*/
+</script>
+</body>
+</html>

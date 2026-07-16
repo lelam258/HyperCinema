@@ -1,18 +1,14 @@
 package com.cinema.hyperCinema.controller.ui;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
+import com.cinema.hyperCinema.dto.admin.movie.response.MovieDetailView;
+import com.cinema.hyperCinema.dto.ui.booking.SeatAvailabilityView;
+import com.cinema.hyperCinema.dto.ui.workspace.CustomerDashboardView;
+import com.cinema.hyperCinema.model.*;
+import com.cinema.hyperCinema.security.CustomUserDetails;
+import com.cinema.hyperCinema.service.booking.BookingService;
+import com.cinema.hyperCinema.service.movie.MovieService;
+import com.cinema.hyperCinema.service.ui.BookingUiDataService;
+import com.cinema.hyperCinema.service.ui.WorkspaceUiDataService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -23,20 +19,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.cinema.hyperCinema.dto.admin.movie.response.MovieDetailView;
-import com.cinema.hyperCinema.dto.ui.booking.SeatAvailabilityView;
-import com.cinema.hyperCinema.dto.ui.workspace.CustomerDashboardView;
-import com.cinema.hyperCinema.model.Branch;
-import com.cinema.hyperCinema.model.Hall;
-import com.cinema.hyperCinema.model.Movie;
-import com.cinema.hyperCinema.model.Showtime;
-import com.cinema.hyperCinema.model.User;
-import com.cinema.hyperCinema.security.CustomUserDetails;
-import com.cinema.hyperCinema.service.booking.BookingService;
-import com.cinema.hyperCinema.service.movie.MovieService;
-import com.cinema.hyperCinema.service.ui.BookingUiDataService;
-import com.cinema.hyperCinema.service.ui.WorkspaceUiDataService;
-import com.cinema.hyperCinema.util.SeatPricing;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 public class BookingPageController {
@@ -77,29 +64,30 @@ public class BookingPageController {
         model.addAttribute("posSummary", bookingUiDataService.emptyPosSummary(user));
         if (showtimeId != null) {
             var selectedShowtime = bookingService.findShowtimeWithDetails(showtimeId);
+            // nếu selectedShowtime có tồn tại thì xử lý bên dưới
             if (selectedShowtime.isPresent()) {
                 addSelectedShowtimeModel(selectedShowtime.get(), user, model);
             } else if (customerFlow) {
-                return "redirect:/my/dashboard";
-            }
+            return "redirect:/my/dashboard";
         }
-        return customerFlow ? "my/booking" : "staff/booking";
     }
+        return customerFlow ? "my/booking" : "staff/booking";
+}
 
-    @GetMapping("/booking/movies/{movieId}")
-    public String movieBooking(@PathVariable Integer movieId,
-                               @RequestParam(required = false)
-                               @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-                               @RequestParam(required = false) String city,
-                               @AuthenticationPrincipal CustomUserDetails userDetails,
-                               Model model) {
-        User user = userDetails.getUser();
-        addCustomerModel(user, model);
+@GetMapping("/booking/movies/{movieId}")
+public String movieBooking(@PathVariable Integer movieId,
+                           @RequestParam(required = false)
+                           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                           @RequestParam(required = false) String city,
+                           @AuthenticationPrincipal CustomUserDetails userDetails,
+                           Model model) {
+    User user = userDetails.getUser();
+    addCustomerModel(user, model);
 
-        MovieDetailView movie = movieService.findById(movieId);
-        LocalDate selectedDate = date != null ? date : LocalDate.now();
-        List<Showtime> upcomingShowtimes = bookingService.findUpcomingShowtimesForMovie(movieId);
-        List<String> cities = upcomingShowtimes.stream()
+    MovieDetailView movie = movieService.findById(movieId);
+    LocalDate selectedDate = date != null ? date : LocalDate.now();
+    List<Showtime> upcomingShowtimes = bookingService.findUpcomingShowtimesForMovie(movieId);
+    List<String> cities = upcomingShowtimes.stream()
                 .map(showtime -> showtime.getHall().getBranch().getCity())
                 .filter(Objects::nonNull)
                 .distinct()
@@ -127,19 +115,27 @@ public class BookingPageController {
                                 @RequestParam(name = "seatIds", required = false) List<Integer> seatIds,
                                 @RequestParam(name = "foodItemIds", required = false) List<Integer> foodItemIds,
                                 @RequestParam(name = "foodQuantities", required = false) List<Integer> foodQuantities,
+                                @RequestParam(name = "voucherCode", required = false) String voucherCode,
                                 RedirectAttributes redirectAttributes) {
         User user = userDetails.getUser();
         try {
             var savedBooking = bookingService.createPendingVietQrBooking(
-                    user, showtimeId, seatIds, foodItemIds, foodQuantities);
+                    user, showtimeId, seatIds, foodItemIds, foodQuantities, voucherCode);
             return "redirect:/payment/vietqr/" + savedBooking.getBookingId();
         } catch (IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
-            return "redirect:/my/dashboard";
+            return customerFlow(userDetails) ? "redirect:/my/dashboard" : "redirect:/staff/booking";
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
-            return "redirect:/booking?showtimeId=" + showtimeId;
+            return customerFlow(userDetails)
+                    ? "redirect:/booking?showtimeId=" + showtimeId
+                    : "redirect:/staff/booking";
         }
+    }
+
+    private boolean customerFlow(CustomUserDetails userDetails) {
+        return userDetails != null && userDetails.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_CUSTOMER".equals(authority.getAuthority()));
     }
 
     private void addCustomerModel(User user, Model model) {
@@ -147,6 +143,7 @@ public class BookingPageController {
         model.addAttribute("customerName", dashboard.getCustomerName());
         model.addAttribute("membershipTier", dashboard.getMembershipTier());
         model.addAttribute("rewardPoints", dashboard.getRewardPoints());
+        model.addAttribute("membershipProgress", dashboard.getMembershipProgress());
     }
 
     private void addSelectedShowtimeModel(Showtime showtime, User user, Model model) {
@@ -271,6 +268,7 @@ public class BookingPageController {
     public static class ShowtimeSummaryView {
         private final Integer showtimeId;
         private final Integer movieId;
+        private final Integer branchId;
         private final String movieTitle;
         private final String posterUrl;
         private final String branchName;
@@ -283,6 +281,7 @@ public class BookingPageController {
 
         private ShowtimeSummaryView(Integer showtimeId,
                                     Integer movieId,
+                                    Integer branchId,
                                     String movieTitle,
                                     String posterUrl,
                                     String branchName,
@@ -294,6 +293,7 @@ public class BookingPageController {
                                     Integer price) {
             this.showtimeId = showtimeId;
             this.movieId = movieId;
+            this.branchId = branchId;
             this.movieTitle = movieTitle;
             this.posterUrl = posterUrl;
             this.branchName = branchName;
@@ -312,6 +312,7 @@ public class BookingPageController {
             return new ShowtimeSummaryView(
                     showtime.getShowtimeId(),
                     movie.getMovieId(),
+                    branch != null ? branch.getBranchId() : null,
                     movie.getTitle(),
                     movie.getPosterUrl(),
                     branch.getName(),
@@ -320,11 +321,12 @@ public class BookingPageController {
                     hall.getHallType(),
                     showtime.getStartTime(),
                     showtime.getEndTime(),
-                    SeatPricing.priceFor("STANDARD"));
+                    hall.getTicketPrice());
         }
 
         public Integer getShowtimeId() { return showtimeId; }
         public Integer getMovieId() { return movieId; }
+        public Integer getBranchId() { return branchId; }
         public String getMovieTitle() { return movieTitle; }
         public String getPosterUrl() { return posterUrl; }
         public String getBranchName() { return branchName; }

@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,6 +35,27 @@ public class Booking {
 
     @Column(name = "total_price", nullable = false)
     private Long totalPrice;
+
+    @Column(name = "seat_subtotal", nullable = false)
+    private Long seatSubtotal = 0L;
+
+    @Column(name = "food_subtotal", nullable = false)
+    private Long foodSubtotal = 0L;
+
+    @Column(name = "order_subtotal", nullable = false)
+    private Long orderSubtotal = 0L;
+
+    @Column(name = "voucher_discount_amount", nullable = false)
+    private Long voucherDiscountAmount = 0L;
+
+    @Column(name = "membership_discount_amount", nullable = false)
+    private Long membershipDiscountAmount = 0L;
+
+    @Column(name = "membership_plan_name", length = 100)
+    private String membershipPlanName;
+
+    @Column(name = "membership_discount_percent", precision = 5, scale = 2)
+    private BigDecimal membershipDiscountPercent;
 
     @Column(length = 20)
     private String status;

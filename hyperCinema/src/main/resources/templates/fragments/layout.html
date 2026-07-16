@@ -48,6 +48,7 @@
         <a th:href="@{/admin/movies}" th:classappend="${active == 'movies'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="clapperboard"></i>Quản lý Phim</a>
         <a th:href="@{/admin/food-items}" th:classappend="${active == 'food'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="popcorn"></i>Quản lý F&amp;B</a>
         <a th:href="@{/admin/vouchers}" th:classappend="${active == 'vouchers'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="badge-percent"></i>Quản lý Voucher</a>
+        <a th:href="@{/admin/reports/revenue}" th:classappend="${active == 'revenue-reports'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="chart-no-axes-combined"></i>Báo cáo doanh thu</a>
         <a th:href="@{/admin/users}" th:classappend="${active == 'users'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="users"></i>Vai trò &amp; Người dùng</a>
     </div>
     <div class="hc-sidebar-footer">
@@ -68,6 +69,8 @@
     <div class="hc-sidebar-scroll">
         <div class="hc-nav-section">Quản lý</div>
         <a th:href="@{/manager/dashboard}" th:classappend="${active == 'dashboard'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a th:href="@{/manager/bookings}" th:classappend="${active == 'bookings'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="tickets"></i>Đơn booking</a>
+        <a th:href="@{/manager/reports/revenue}" th:classappend="${active == 'revenue-reports'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="chart-no-axes-combined"></i>Báo cáo doanh thu</a>
         <a th:href="@{/admin/halls}" th:classappend="${active == 'halls'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="panel-top"></i>Quản lý Phòng chiếu</a>
         <a th:href="@{/admin/showtimes}" th:classappend="${active == 'showtimes'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="calendar-clock"></i>Quản lý Suất chiếu</a>
     </div>
@@ -111,6 +114,7 @@
         <div class="hc-nav-section">Nghiệp vụ</div>
         <a th:href="@{/staff/dashboard}" th:classappend="${active == 'dashboard'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="home"></i>Trang chủ</a>
         <a th:href="@{/staff/booking}" th:classappend="${active == 'booking'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="ticket"></i>Bán vé</a>
+        <a th:href="@{/staff/bookings}" th:classappend="${active == 'bookings'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="tickets"></i>Đơn booking</a>
     </div>
     <div class="hc-sidebar-footer">
         <form th:action="@{/logout}" method="post">
@@ -122,7 +126,10 @@
 <nav th:fragment="customerSidebar(active)" id="sidebar" class="hc-sidebar hc-customer-sidebar" data-sidebar
      th:with="displayName=${customerName != null and not #strings.isEmpty(customerName) ? customerName : 'Khách hàng'},
               displayTier=${membershipTier != null and not #strings.isEmpty(membershipTier) ? membershipTier : 'Thành viên'},
-              displayPoints=${rewardPoints != null ? rewardPoints : 0}">
+              displayPoints=${rewardPoints != null ? rewardPoints : 0},
+              displayPointsNeeded=${membershipProgress != null ? membershipProgress.pointsNeeded : 0},
+              displayNextTier=${membershipProgress != null ? membershipProgress.nextTier : null},
+              displayHighestTier=${membershipProgress != null and membershipProgress.highestTier}">
     <div class="hc-sidebar-brand">
         <div class="hc-brand-mark is-accent">C</div>
         <span class="hc-brand-text">Cinema<span>App</span></span>
@@ -130,18 +137,21 @@
     <div class="hc-sidebar-scroll">
         <div class="hc-nav-section">Khám phá</div>
         <a th:href="@{/my/dashboard}" th:classappend="${active == 'home'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="home"></i>Trang chủ Phim</a>
-        <a th:href="@{/my/dashboard}" th:classappend="${active == 'booking'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="ticket"></i>Mua vé ngay</a>
+        <a th:href="@{/my/dashboard#phim-dang-chieu}" th:classappend="${active == 'booking'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="ticket"></i>Mua vé ngay</a>
         <a th:href="@{/my/bookings}" th:classappend="${active == 'bookings'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="tickets"></i>Vé của tôi</a>
-        <a th:href="@{/my/dashboard#tai-khoan}" th:classappend="${active == 'dashboard'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="user"></i>Tài khoản</a>
+        <a th:href="@{/my/tai-khoan}" th:classappend="${active == 'account'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="user"></i>Tài khoản</a>
     </div>
     <div class="hc-sidebar-footer hc-customer-sidebar-footer">
         <div class="hc-vip-card">
             <span>Thành viên VIP</span>
-            <p th:text="|Tích lũy thêm ${displayPoints} điểm để nâng hạng.|">Tích lũy điểm để nâng hạng.</p>
+            <p th:if="${membershipProgress != null and !displayHighestTier}"
+               th:text="|Còn ${displayPointsNeeded} điểm để lên ${displayNextTier}.|">Còn 800 điểm để lên hạng.</p>
+            <p th:if="${membershipProgress != null and displayHighestTier}">Bạn đang ở hạng cao nhất.</p>
+            <p th:unless="${membershipProgress != null}" th:text="|Bạn đang có ${displayPoints} điểm tích lũy.|">Bạn đang có điểm tích lũy.</p>
         </div>
         <div class="hc-customer-account">
-            <a th:href="@{/my/dashboard#tai-khoan}" class="hc-customer-avatar" th:text="${#strings.substring(displayName, 0, 1)}">C</a>
-            <a th:href="@{/my/dashboard#tai-khoan}" class="hc-customer-meta">
+            <a th:href="@{/my/tai-khoan}" class="hc-customer-avatar" th:text="${#strings.substring(displayName, 0, 1)}">C</a>
+            <a th:href="@{/my/tai-khoan}" class="hc-customer-meta">
                 <strong th:text="${displayName}">Khách hàng</strong>
                 <span th:text="${displayTier}">Thành viên</span>
             </a>

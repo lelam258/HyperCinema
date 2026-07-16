@@ -11,11 +11,20 @@ const initHyperCinemaApp = () => {
         const root = grid.closest("[data-booking-root]") || grid.closest(".hc-grid-two") || document;
         const countNode = root.querySelector("[data-booking-seat-count]");
         const summaryNodes = root.querySelectorAll("[data-booking-seat-summary]");
+        const subtotalNode = root.querySelector("[data-booking-subtotal]");
+        const discountNode = root.querySelector("[data-booking-discount]");
+        const voucherDiscountNode = root.querySelector("[data-booking-voucher-discount]");
+        const membershipBaseNode = root.querySelector("[data-booking-membership-base]");
+        const membershipDiscountNode = root.querySelector("[data-booking-membership-discount]");
         const totalNode = root.querySelector("[data-booking-total]");
         const submitButton = root.querySelector("[data-booking-submit]");
         const selectedSeatsNode = root.querySelector("[data-booking-selected-seats]");
         const selectedFoodNode = root.querySelector("[data-booking-selected-food]");
+        const voucherInput = root.querySelector("[data-booking-voucher-input]");
+        const voucherCodeInput = root.querySelector("[data-booking-voucher-code]");
+        const voucherMessage = root.querySelector("[data-booking-voucher-message]");
         const foodItems = Array.from(root.querySelectorAll("[data-food-id]"));
+        let appliedVoucher = null;
 
         const syncSeatGridLayout = () => {
             if (!grid.closest(".hc-customer-booking-shell")) return;
@@ -81,6 +90,12 @@ const initHyperCinemaApp = () => {
         const formatCurrency = (value) =>
             new Intl.NumberFormat("vi-VN").format(value || 0) + " VND";
 
+        const clearVoucher = () => {
+            appliedVoucher = null;
+            if (voucherCodeInput) voucherCodeInput.value = "";
+            if (voucherMessage) voucherMessage.textContent = "";
+        };
+
         const syncSelectedSeatInputs = (selectedSeats) => {
             if (!selectedSeatsNode) return;
             selectedSeatsNode.replaceChildren();
@@ -136,7 +151,24 @@ const initHyperCinemaApp = () => {
             summaryNodes.forEach((summaryNode) => {
                 summaryNode.textContent = labels.length > 0 ? labels.join(", ") : "Chưa chọn ghế nào";
             });
-            if (totalNode) totalNode.textContent = formatCurrency(seatTotal + foodTotal);
+            const subtotal = seatTotal + foodTotal;
+            const voucherDiscount = appliedVoucher ? Number(appliedVoucher.discountAmount || 0) : 0;
+            const membershipPercent = root.dataset.membershipActive === "true"
+                ? Number(root.dataset.membershipDiscountPercent || 0)
+                : 0;
+            const membershipBase = Math.max(0, subtotal - voucherDiscount);
+            const membershipDiscount = Math.min(
+                membershipBase,
+                Math.max(0, Math.round((membershipBase * membershipPercent) / 100))
+            );
+            const discount = voucherDiscount + membershipDiscount;
+            if (subtotalNode) subtotalNode.textContent = formatCurrency(subtotal);
+            if (discountNode) discountNode.textContent = formatCurrency(discount);
+            if (voucherDiscountNode) voucherDiscountNode.textContent = formatCurrency(voucherDiscount);
+            if (membershipBaseNode) membershipBaseNode.textContent = formatCurrency(membershipBase);
+            if (membershipDiscountNode) membershipDiscountNode.textContent = formatCurrency(membershipDiscount);
+            if (totalNode) totalNode.textContent = formatCurrency(Math.max(0, subtotal - discount));
+            if (voucherCodeInput) voucherCodeInput.value = appliedVoucher?.code || "";
             if (submitButton) submitButton.disabled = selectedSeats.length === 0;
         };
 
@@ -145,6 +177,7 @@ const initHyperCinemaApp = () => {
             if (!seat || seat.disabled) return;
             event.preventDefault();
             seat.classList.toggle("is-selected");
+            clearVoucher();
             updateSummary();
         });
 
@@ -153,13 +186,56 @@ const initHyperCinemaApp = () => {
             item.querySelector("[data-food-decrease]")?.addEventListener("click", () => {
                 const quantity = Math.max(0, Number(quantityNode?.textContent || 0) - 1);
                 if (quantityNode) quantityNode.textContent = String(quantity);
+                clearVoucher();
                 updateSummary();
             });
             item.querySelector("[data-food-increase]")?.addEventListener("click", () => {
                 const quantity = Number(quantityNode?.textContent || 0) + 1;
                 if (quantityNode) quantityNode.textContent = String(quantity);
+                clearVoucher();
                 updateSummary();
             });
+        });
+
+        root.querySelector("[data-booking-voucher-apply]")?.addEventListener("click", async () => {
+            const code = voucherInput?.value?.trim() || "";
+            const selectedSeats = Array.from(grid.querySelectorAll(".hc-seat.is-selected"));
+            const foods = selectedFood();
+            const seatTotal = selectedSeats.reduce((sum, seat) => sum + Number(seat.dataset.seatPrice || 0), 0);
+            const foodTotal = foods.reduce((sum, food) => sum + food.price * food.quantity, 0);
+            const subtotal = seatTotal + foodTotal;
+            if (!code || subtotal <= 0) {
+                clearVoucher();
+                if (voucherMessage) voucherMessage.textContent = "Nhap voucher sau khi chon ghe.";
+                updateSummary();
+                return;
+            }
+            try {
+                const params = new URLSearchParams({
+                    code,
+                    orderValue: String(subtotal),
+                });
+                if (root.dataset.branchId) params.set("branchId", root.dataset.branchId);
+                const response = await fetch(`/api/ui/vouchers/preview?${params.toString()}`, {
+                    headers: { "Accept": "application/json" },
+                });
+                if (!response.ok) throw new Error("voucher-preview-failed");
+                const preview = await response.json();
+                if (!preview.valid) {
+                    clearVoucher();
+                    if (voucherMessage) voucherMessage.textContent = "Voucher khong hop le hoac chua du dieu kien.";
+                } else {
+                    appliedVoucher = {
+                        code: preview.code || code,
+                        discountAmount: preview.discountAmount || 0,
+                    };
+                    if (voucherMessage) voucherMessage.textContent = `Da ap dung ${preview.displayDiscount || formatCurrency(preview.discountAmount)}.`;
+                }
+            } catch (error) {
+                clearVoucher();
+                if (voucherMessage) voucherMessage.textContent = "Khong the kiem tra voucher luc nay.";
+            }
+            updateSummary();
         });
 
         syncSeatGridLayout();

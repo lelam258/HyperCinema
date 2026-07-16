@@ -1,14 +1,5 @@
 package com.cinema.hyperCinema.controller.ui;
 
-import java.util.List;
-
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.cinema.hyperCinema.dto.ui.booking.FoodAddonOptionView;
 import com.cinema.hyperCinema.dto.ui.booking.SeatAvailabilityView;
 import com.cinema.hyperCinema.dto.ui.booking.ShowtimeOptionView;
@@ -16,6 +7,10 @@ import com.cinema.hyperCinema.dto.ui.booking.VoucherPreviewView;
 import com.cinema.hyperCinema.model.User;
 import com.cinema.hyperCinema.security.CustomUserDetails;
 import com.cinema.hyperCinema.service.ui.BookingUiDataService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/ui")

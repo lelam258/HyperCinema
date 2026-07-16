@@ -2,6 +2,7 @@ package com.cinema.hyperCinema.dto.admin.seat.response;
 
 import java.util.List;
 
+import com.cinema.hyperCinema.dto.admin.hall.response.SeatTypePriceView;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,6 +21,8 @@ public class SeatMapView {
     private String hallName;
 
     private String branchName;
+
+    private List<SeatTypePriceView> seatTypePrices;
 
     private List<SeatListItem> seats;
 

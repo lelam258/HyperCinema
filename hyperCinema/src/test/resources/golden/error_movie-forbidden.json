@@ -1,0 +1,20 @@
+{
+  "view": "error/movie-forbidden",
+  "title": "Truy cập bị từ chối - HyperCinema",
+  "links": [
+    "/admin/movies"
+  ],
+  "i18nKeys": [
+    "#{__${errorKey}__}",
+    "#{movie.access_denied}"
+  ],
+  "forms": [],
+  "tables": [],
+  "pagination": null,
+  "text": [
+    "403",
+    "Truy cập bị từ chối",
+    "Bạn không có quyền truy cập Phim này.",
+    "Về danh sách Phim"
+  ]
+}

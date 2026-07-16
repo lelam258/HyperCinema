@@ -1,0 +1,62 @@
+{
+  "view": "admin/branches/branch-form",
+  "title": "Tạo Chi nhánh",
+  "links": [
+    "/",
+    "/admin/analytics",
+    "/admin/branches",
+    "/admin/dashboard",
+    "/admin/halls",
+    "/admin/movies",
+    "/admin/notifications",
+    "/admin/payments",
+    "/admin/users"
+  ],
+  "i18nKeys": [
+    "#{__${infoKey}__}"
+  ],
+  "forms": [
+    {
+      "action": "/admin/branches",
+      "method": "post",
+      "fields": [
+        "name(text)=Chi nh&aacute;nh mới",
+        "address(text)=123 Đường ABC",
+        "city(text)=Đ&agrave; Nẵng",
+        "phone(text)=0905123456",
+        "openingTime(time)=09:00",
+        "closingTime(time)=22:00",
+        "submit:Tạo mới"
+      ]
+    }
+  ],
+  "tables": [],
+  "pagination": null,
+  "text": [
+    "H",
+    "HyperCinema",
+    "Hệ thống",
+    "Tổng quan",
+    "Báo cáo & Thống kê",
+    "Quản lý phim",
+    "Quản lý chi nhánh",
+    "Quản lý phòng chiếu",
+    "Quản lý người dùng",
+    "Thông báo & Hỗ trợ",
+    "Quản lý Giao dịch",
+    "Đăng xuất",
+    "← Quay lại",
+    "Tạo Chi nhánh",
+    "Cập nhật thông tin vận hành, địa chỉ và giờ mở cửa.",
+    "Tên chi nhánh",
+    "Địa chỉ",
+    "Thành phố",
+    "Số điện thoại",
+    "Giờ mở cửa",
+    "Giờ đóng cửa",
+    "Hủy",
+    "Tạo mới",
+    "HyperCinema",
+    "© 2025 HyperCinema — Hệ thống quản trị rạp chiếu phim."
+  ]
+}

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Xem sơ đồ ghế - HyperCinema')}"></head>
+<body class="min-h-screen flex flex-col bg-[#050508]">
+
+    <!-- Header / Navbar công cộng -->
+    <header class="border-b border-white/[0.06] bg-[#0A0A0F]/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">H</div>
+                <a th:href="@{/movies}" class="text-xl font-bold bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent tracking-tight no-underline">HyperCinema</a>
+            </div>
+            <nav class="flex items-center gap-6">
+                <a th:href="@{/movies(status='NowShowing')}" class="text-sm font-medium transition-colors hover:text-primary no-underline text-slate-300">Phim đang chiếu</a>
+                <a th:href="@{/movies(status='ComingSoon')}" class="text-sm font-medium transition-colors hover:text-primary no-underline text-slate-300">Phim sắp chiếu</a>
+            </nav>
+            <div class="flex items-center gap-3">
+                <th:block th:if="${!isLoggedInCustomer}">
+                    <a th:href="@{/login}" class="px-4 py-2 text-sm font-semibold text-white bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline">Đăng nhập</a>
+                    <a th:href="@{/register}" class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all no-underline">Đăng ký</a>
+                </th:block>
+                <th:block th:if="${isLoggedInCustomer}">
+                    <a th:href="@{/my/dashboard}" class="px-4 py-2 text-sm font-semibold text-primary bg-primary/10 border border-primary/20 rounded-xl hover:bg-primary/20 transition-all no-underline">Dashboard</a>
+                    <form th:action="@{/logout}" method="post" class="inline">
+                        <button type="submit" class="px-4 py-2 text-sm font-semibold text-red-400 bg-white/[0.04] border border-white/10 rounded-xl hover:bg-red-500/10 hover:text-red-300 transition-all cursor-pointer">Đăng xuất</button>
+                    </form>
+                </th:block>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-5xl w-full mx-auto px-6 py-10">
+        
+        <!-- Error Alerts -->
+        <div th:if="${error}" class="mb-6 p-4 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl">
+            <span th:text="${error}">Lỗi</span>
+        </div>
+        
+        <!-- Back link -->
+        <div class="mb-8">
+            <a th:href="@{'/movies/' + ${showtime.movie.movieId}}" class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-primary transition-colors no-underline">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Quay lại chi tiết phim
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            
+            <!-- Left: Seat Map View -->
+            <div class="lg:col-span-2 glass-card p-6">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-6 border-b border-white/[0.06] pb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Sơ đồ ghế suất chiếu</h1>
+                        <p class="text-xs text-slate-400 mt-1" th:text="|Phòng: ${showtime.hall.name} - ${showtime.hall.branch.name}|">Phòng 1</p>
+                    </div>
+                </div>
+
+                <div class="relative overflow-x-auto p-4 bg-black/20 rounded-xl border border-white/5">
+                    <!-- Screen -->
+                    <div class="w-full max-w-sm mx-auto text-center mb-10">
+                        <div class="h-1 bg-slate-600 rounded-full shadow-[0_-4px_8px_rgba(255,255,255,0.2)]"></div>
+                        <span class="text-[9px] font-bold tracking-widest text-slate-500 uppercase mt-2 block">Màn Hình Chiếu</span>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex flex-wrap justify-center gap-4 mb-8 text-[11px]">
+                        <div class="flex items-center gap-1.5"><div class="w-4 h-4 rounded border border-slate-500/30 bg-slate-700/20"></div><span class="text-slate-400">Standard</span></div>
+                        <div class="flex items-center gap-1.5"><div class="w-4 h-4 rounded border border-primary/50 bg-primary/10"></div><span class="text-slate-400">VIP (+20k)</span></div>
+                        <div class="flex items-center gap-1.5"><div class="w-8 h-4 rounded border border-pink-500/50 bg-pink-500/10"></div><span class="text-slate-400">Couple</span></div>
+                        <div class="flex items-center gap-1.5"><div class="w-4 h-4 rounded bg-slate-800 border border-slate-700/50"></div><span class="text-slate-500">Đã đặt</span></div>
+                    </div>
+
+                    <!-- Grid Rows -->
+                    <div class="flex flex-col gap-2.5 min-w-[500px] pb-4">
+                        <div th:each="row : ${#lists.sort(#lists.toList(#sets.toSet(seats.![seatRow])))}" class="flex items-center justify-center gap-3">
+                            <div class="w-6 text-xs font-bold text-slate-400 text-right" th:text="${#strings.trim(row)}">A</div>
+                            
+                            <div class="flex items-center gap-1.5">
+                                <div th:each="seat : ${seats}" th:if="${#strings.trim(seat.seatRow) == #strings.trim(row)}"
+                                     th:data-id="${seat.seatId}"
+                                     th:data-code="${seat.seatRow} + '-' + ${seat.seatNumber}"
+                                     th:data-price="${seat.finalPrice}"
+                                     th:data-type="${seat.type}"
+                                     th:data-status="${seat.status}"
+                                     th:onclick="${isLoggedInCustomer} ? 'toggleSeatSelection(this)' : null"
+                                     th:classappend="${seat.status == 'BOOKED'} ? 'bg-slate-800 border-slate-700/50 text-slate-600 cursor-not-allowed' : (${seat.status == 'RESERVED'} ? 'bg-amber-500/20 border-amber-500/40 text-amber-500/30 cursor-not-allowed' : (${seat.type == 'VIP'} ? 'border-primary/40 bg-primary/10 text-amber-200' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-primary/20' : '') : (${seat.type == 'COUPLE'} ? 'col-span-2 w-14 border-pink-500/40 bg-pink-500/10 text-pink-200' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-pink-500/20' : '') : 'border-slate-500/30 bg-slate-700/10 text-slate-400' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-slate-700/30' : ''))))"
+                                     class="w-6.5 h-6.5 rounded flex items-center justify-center text-[9px] font-bold border select-none"
+                                     th:title="|Hàng ${seat.seatRow} - Ghế ${seat.seatNumber} (${seat.type}) - ${seat.status}|">
+                                    <span th:text="${seat.seatNumber}">1</span>
+                                </div>
+                            </div>
+                            
+                            <div class="w-6 text-xs font-bold text-slate-400 text-left" th:text="${#strings.trim(row)}">A</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Showtime summary & booking prompt -->
+            <div class="glass-card p-6 flex flex-col gap-6">
+                <div>
+                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Phim</h3>
+                    <h2 class="text-xl font-bold text-white leading-tight" th:text="${showtime.movie.title}">Tên Phim</h2>
+                    <p class="text-sm text-slate-400 mt-2" th:text="|Thời lượng: ${showtime.movie.duration} phút|">120 phút</p>
+                </div>
+
+                <div class="border-t border-white/[0.06] pt-4">
+                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Suất chiếu</h3>
+                    <div class="space-y-1.5 text-sm text-slate-300">
+                        <div><strong class="text-slate-400">Rạp:</strong> <span th:text="${showtime.hall.branch.name}">Chi nhánh 1</span></div>
+                        <div><strong class="text-slate-400">Phòng:</strong> <span th:text="|${showtime.hall.name} (${showtime.hall.hallType})|">Phòng 1</span></div>
+                        <div><strong class="text-slate-400">Giờ chiếu:</strong> <span th:text="${#temporals.format(showtime.startTime, 'HH:mm')} + ' ~ ' + ${#temporals.format(showtime.endTime, 'HH:mm')}">10:00 - 12:00</span></div>
+                        <div><strong class="text-slate-400">Ngày chiếu:</strong> <span th:text="${#temporals.format(showtime.startTime, 'dd/MM/yyyy')}">01/01/2026</span></div>
+                    </div>
+                </div>
+
+                <!-- Call to action (Unauthenticated) -->
+                <div th:if="${!isLoggedInCustomer}" class="border-t border-white/[0.06] pt-6 text-center space-y-4">
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Bạn muốn đặt vé cho suất chiếu này? Vui lòng đăng nhập tài khoản khách hàng để thực hiện giao dịch trực tuyến.
+                    </p>
+                    <div class="flex flex-col gap-2.5">
+                        <a th:href="@{/login}" class="w-full py-2.5 text-xs font-bold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 no-underline cursor-pointer">Đăng nhập đặt vé</a>
+                        <a th:href="@{/register}" class="w-full py-2.5 text-xs font-bold text-slate-300 bg-white/[0.06] border border-white/10 rounded-xl hover:bg-white/10 transition-all no-underline cursor-pointer">Đăng ký tài khoản</a>
+                    </div>
+                </div>
+
+                <!-- Checkout Form (Authenticated Customer) -->
+                <div th:if="${isLoggedInCustomer}" class="space-y-6 border-t border-white/[0.06] pt-4">
+                    <div>
+                        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Ghế đã chọn</h3>
+                        <div id="noSelectedLabel" class="text-sm text-slate-500 italic">Chưa chọn ghế nào.</div>
+                        <div id="selectedSeatsContainer" class="flex flex-wrap gap-2 hidden">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="border-t border-white/5 pt-4 space-y-2">
+                        <div class="flex items-center justify-between text-xs text-slate-400">
+                            <span>Giá vé cơ bản:</span>
+                            <span class="font-semibold text-white tabular-nums" th:text="${#numbers.formatDecimal(showtime.hall.ticketPrice, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm border-t border-white/5 pt-2">
+                            <span class="font-bold text-slate-300">TỔNG TIỀN:</span>
+                            <span id="totalPriceLabel" class="text-lg font-extrabold text-primary tabular-nums">0 đ</span>
+                        </div>
+                    </div>
+
+                    <form th:action="@{'/my/booking/' + ${showtime.showtimeId} + '/checkout'}" method="post" id="checkoutForm" class="pt-2">
+                        <input type="hidden" id="selectedSeatsInput" name="seatIds" value="">
+                        <button type="submit" id="submitBtn" disabled class="w-full py-3 text-sm font-bold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl transition-all duration-300 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-primary/20 cursor-pointer">
+                            Thanh toán qua cổng VNPay
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <script th:if="${isLoggedInCustomer}" th:inline="javascript">
+        let selectedSeats = new Map(); // seatId -> { code, price }
+
+        function toggleSeatSelection(element) {
+            const id = parseInt(element.getAttribute('data-id'));
+            const code = element.getAttribute('data-code');
+            const price = parseInt(element.getAttribute('data-price'));
+            const status = element.getAttribute('data-status');
+
+            if (status === 'BOOKED' || status === 'RESERVED') {
+                return;
+            }
+
+            if (selectedSeats.has(id)) {
+                selectedSeats.delete(id);
+                element.classList.remove('bg-primary', 'border-primary', 'text-white');
+                if (element.getAttribute('data-type') === 'VIP') {
+                    element.classList.add('border-primary/40', 'bg-primary/10', 'text-amber-200');
+                } else if (element.getAttribute('data-type') === 'COUPLE') {
+                    element.classList.add('border-pink-500/40', 'bg-pink-500/10', 'text-pink-200');
+                } else {
+                    element.classList.add('border-slate-500/30', 'bg-slate-700/10', 'text-slate-400');
+                }
+            } else {
+                selectedSeats.set(id, { code, price });
+                element.classList.remove('border-primary/40', 'bg-primary/10', 'text-amber-200', 'border-pink-500/40', 'bg-pink-500/10', 'text-pink-200', 'border-slate-500/30', 'bg-slate-700/10', 'text-slate-400');
+                element.classList.add('bg-primary', 'border-primary', 'text-white');
+            }
+
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const container = document.getElementById('selectedSeatsContainer');
+            const noLabel = document.getElementById('noSelectedLabel');
+            const totalLabel = document.getElementById('totalPriceLabel');
+            const hiddenInput = document.getElementById('selectedSeatsInput');
+            const submitBtn = document.getElementById('submitBtn');
+
+            container.innerHTML = '';
+            let totalPrice = 0;
+            let selectedIds = [];
+
+            if (selectedSeats.size === 0) {
+                noLabel.classList.remove('hidden');
+                container.classList.add('hidden');
+                totalLabel.innerText = '0 đ';
+                hiddenInput.value = '';
+                submitBtn.disabled = true;
+            } else {
+                noLabel.classList.add('hidden');
+                container.classList.remove('hidden');
+                submitBtn.disabled = false;
+
+                selectedSeats.forEach((value, key) => {
+                    selectedIds.push(key);
+                    totalPrice += value.price;
+
+                    const tag = document.createElement('span');
+                    tag.className = 'inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold text-white bg-primary/20 border border-primary/30';
+                    tag.innerText = value.code;
+                    container.appendChild(tag);
+                });
+
+                totalLabel.innerText = totalPrice.toLocaleString('vi-VN') + ' đ';
+                hiddenInput.value = selectedIds.join(',');
+            }
+        }
+    </script>
+
+</body>
+</html>

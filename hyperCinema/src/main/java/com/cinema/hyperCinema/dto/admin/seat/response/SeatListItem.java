@@ -21,6 +21,8 @@ public class SeatListItem {
 
     private String type;
 
+    private Integer price;
+
     private String maintenanceStatus;
 
     private boolean hasActiveReference;

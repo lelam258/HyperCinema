@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Chi tiết booking - HyperCinema')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: managerSidebar('bookings')}"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner max-w-6xl">
+        <a th:href="@{/manager/bookings}" class="mb-4 inline-flex text-sm text-cinema-muted no-underline hover:text-accent">Quay lại danh sách</a>
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <section class="hc-card mb-6 p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <p class="hc-kicker">Booking</p>
+                    <h1 class="hc-page-title" th:text="|#${booking.bookingId}|">#1</h1>
+                    <p class="hc-page-subtitle">
+                        <span th:text="${booking.movieTitle}">Movie</span>
+                        <span aria-hidden="true"> - </span>
+                        <span th:text="${booking.showtimeStart != null ? #temporals.format(booking.showtimeStart, 'dd/MM/yyyy HH:mm') : 'N/A'}">Time</span>
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <form th:if="${booking.canConfirmPayment}" th:action="@{|/manager/bookings/${booking.bookingId}/confirm-payment|}" method="post">
+                        <button type="submit" class="hc-button hc-button-primary">Xác nhận thanh toán</button>
+                    </form>
+                    <form th:if="${booking.canMarkServed}" th:action="@{|/manager/bookings/${booking.bookingId}/mark-served|}" method="post">
+                        <button type="submit" class="hc-button hc-button-outline">Đã phục vụ</button>
+                    </form>
+                    <form th:if="${booking.canCancel}" th:action="@{|/manager/bookings/${booking.bookingId}/cancel|}" method="post" onsubmit="return confirm('Hủy booking này?');">
+                        <button type="submit" class="hc-button hc-button-outline">Hủy booking</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <section class="hc-card p-6 lg:col-span-2">
+                <h2 class="mb-4 text-lg font-semibold text-white">Thông tin booking</h2>
+                <dl class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div><dt class="hc-label">Khách hàng</dt><dd class="text-white" th:text="${booking.customerName}">Customer</dd></div>
+                    <div><dt class="hc-label">Email</dt><dd class="text-white" th:text="${booking.customerEmail}">email</dd></div>
+                    <div><dt class="hc-label">Điện thoại</dt><dd class="text-white" th:text="${booking.customerPhone}">phone</dd></div>
+                    <div><dt class="hc-label">Chi nhánh</dt><dd class="text-white" th:text="${booking.branchName}">Branch</dd></div>
+                    <div><dt class="hc-label">Phòng</dt><dd class="text-white" th:text="${booking.hallName}">Hall</dd></div>
+                    <div><dt class="hc-label">Ngày tạo</dt><dd class="text-white" th:text="${booking.createdAt != null ? #temporals.format(booking.createdAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">Created</dd></div>
+                </dl>
+            </section>
+
+            <section class="hc-card p-6">
+                <h2 class="mb-4 text-lg font-semibold text-white">Thanh toán</h2>
+                <dl class="hc-summary-list">
+                    <div><dt>Booking</dt><dd th:text="${booking.bookingStatus}">Pending</dd></div>
+                    <div><dt>Payment</dt><dd th:text="${booking.paymentStatus != null and !#strings.isEmpty(booking.paymentStatus) ? booking.paymentStatus : 'N/A'}">Pending</dd></div>
+                    <div><dt>Phương thức</dt><dd th:text="${booking.paymentMethod != null and !#strings.isEmpty(booking.paymentMethod) ? booking.paymentMethod : 'N/A'}">VietQR</dd></div>
+                    <div><dt>Tam tinh</dt><dd th:text="${#numbers.formatInteger(booking.orderSubtotal != null ? booking.orderSubtotal : booking.totalPrice, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                    <div th:if="${booking.promotionName != null and !#strings.isEmpty(booking.promotionName)}"><dt>Voucher</dt><dd th:text="${booking.promotionName}">CODE</dd></div>
+                    <div th:if="${booking.voucherDiscountAmount != null and booking.voucherDiscountAmount > 0}"><dt>Giam voucher</dt><dd th:text="${'-' + #numbers.formatInteger(booking.voucherDiscountAmount, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}"><dt th:text="${booking.membershipPlanName != null and !#strings.isEmpty(booking.membershipPlanName) ? 'Membership ' + booking.membershipPlanName + (booking.membershipDiscountPercent != null ? ' (' + booking.membershipDiscountPercent + '%)' : '') : 'Membership'}">Membership</dt><dd th:text="${'-' + #numbers.formatInteger(booking.membershipDiscountAmount, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}"><dt>Base membership</dt><dd th:text="${#numbers.formatInteger(booking.membershipDiscountBase != null ? booking.membershipDiscountBase : 0, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                    <div class="hc-summary-total"><dt>Tổng</dt><dd th:text="${#numbers.formatInteger(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                </dl>
+            </section>
+        </div>
+
+        <section class="hc-card mt-6 overflow-hidden">
+            <div class="border-b border-cinema-border p-5"><h2 class="text-lg font-semibold text-white">Vé và ghế</h2></div>
+            <div class="overflow-x-auto">
+                <table class="hc-table">
+                    <thead><tr><th>Vé</th><th>Ghế</th><th>Loại</th><th>QR</th><th>Trạng thái</th></tr></thead>
+                    <tbody>
+                    <tr th:if="${booking.tickets == null or #lists.isEmpty(booking.tickets)}"><td colspan="5" class="py-8 text-center text-cinema-muted">Chưa có vé.</td></tr>
+                    <tr th:each="ticket : ${booking.tickets}">
+                        <td th:text="|#${ticket.ticketId}|">#1</td>
+                        <td th:text="${ticket.seatLabel}">A1</td>
+                        <td th:text="${ticket.seatType}">Standard</td>
+                        <td class="font-mono text-xs" th:text="${ticket.qrCode}">QR</td>
+                        <td><span class="hc-badge" th:text="${ticket.status}">Pending</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="hc-card mt-6 overflow-hidden">
+            <div class="border-b border-cinema-border p-5"><h2 class="text-lg font-semibold text-white">F&amp;B</h2></div>
+            <div class="overflow-x-auto">
+                <table class="hc-table">
+                    <thead><tr><th>Đơn F&B</th><th>Trạng thái</th><th class="text-right">Tổng tiền</th><th>Ngày tạo</th></tr></thead>
+                    <tbody>
+                    <tr th:if="${booking.foodOrders == null or #lists.isEmpty(booking.foodOrders)}"><td colspan="4" class="py-8 text-center text-cinema-muted">Chưa có đơn F&B.</td></tr>
+                    <tr th:each="order : ${booking.foodOrders}">
+                        <td th:text="|#${order.orderId}|">#1</td>
+                        <td><span class="hc-badge" th:text="${order.status}">PENDING</span></td>
+                        <td class="text-right" th:text="${#numbers.formatInteger(order.totalAmount != null ? order.totalAmount : 0, 0, 'POINT') + ' VND'}">0 VND</td>
+                        <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">date</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

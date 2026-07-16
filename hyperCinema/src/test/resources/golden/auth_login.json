@@ -1,0 +1,40 @@
+{
+  "view": "auth/login",
+  "title": "Đăng nhập - HyperCinema",
+  "links": [
+    "/forgot-password",
+    "/register"
+  ],
+  "i18nKeys": [],
+  "forms": [
+    {
+      "action": "/login",
+      "method": "post",
+      "fields": [
+        "username(text)=",
+        "password(password)=",
+        "submit:Đăng nhập"
+      ]
+    }
+  ],
+  "tables": [],
+  "pagination": null,
+  "text": [
+    "C",
+    "Cinema",
+    "App",
+    "Đăng nhập vào hệ thống",
+    "Tên đăng nhập hoặc mật khẩu không đúng.",
+    "Bạn đã đăng xuất thành công.",
+    "Đăng ký thành công. Vui lòng kiểm tra email để kích hoạt tài khoản.",
+    "Mật khẩu đã được cập nhật. Vui lòng đăng nhập lại.",
+    "Tài khoản đã được kích hoạt thành công.",
+    "Mã kích hoạt không đúng hoặc đã hết hạn.",
+    "Tên đăng nhập hoặc Email",
+    "Mật khẩu",
+    "Đăng nhập",
+    "Quên mật khẩu?",
+    "Chưa có tài khoản?",
+    "Đăng ký ngay"
+  ]
+}
