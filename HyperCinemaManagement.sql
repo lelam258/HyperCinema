@@ -152,6 +152,7 @@ CREATE TABLE [Booking] (
     [user_id] INT FOREIGN KEY REFERENCES [User]([user_id]),
     [showtime_id] INT FOREIGN KEY REFERENCES [Showtime]([showtime_id]),
     [promotion_id] INT FOREIGN KEY REFERENCES [Promotion]([promotion_id]),
+    [receiver_name] NVARCHAR(100),
     [total_price] BIGINT NOT NULL,
     [status] VARCHAR(20),
     [created_at] DATETIME DEFAULT GETDATE()
@@ -449,6 +450,7 @@ CREATE TABLE `Booking` (
     `user_id` INT NOT NULL,
     `showtime_id` INT NULL, 
     `promotion_id` INT NULL,
+    `receiver_name` VARCHAR(100) NULL,
     `booking_type` VARCHAR(50) NOT NULL, 
     `status` VARCHAR(50) NOT NULL,        
     `total_price` INT NOT NULL DEFAULT 0,  

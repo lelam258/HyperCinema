@@ -771,6 +771,7 @@ public class DataInitializer implements CommandLineRunner {
                 Booking booking = new Booking();
                 booking.setUser(customer);
                 booking.setShowtime(st);
+                booking.setReceiverName(customer.getFullName());
                 booking.setTotalPrice(ticketPriceTotal);
                 booking.setStatus(status);
                 booking.setCreatedAt(st.getStartTime().minusHours(1 + random.nextInt(48)));

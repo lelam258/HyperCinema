@@ -107,9 +107,15 @@ public class StaffDashboardController {
     @PostMapping("/booking/{showtimeId}/checkout")
     public String processCheckout(@PathVariable Integer showtimeId,
                                   @RequestParam("seatIds") List<Integer> seatIds,
+                                  @RequestParam("receiverName") String receiverName,
                                   @AuthenticationPrincipal CustomUserDetails userDetails,
                                   RedirectAttributes redirectAttributes) {
         User user = userDetails.getUser();
+        receiverName = receiverName == null ? "" : receiverName.trim();
+        if (receiverName.isEmpty() || receiverName.length() > 100) {
+            redirectAttributes.addFlashAttribute("error", "Receiver Name must be between 1 and 100 characters.");
+            return "redirect:/staff/booking/" + showtimeId;
+        }
         Showtime showtime = showtimeRepository.findById(showtimeId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy suất chiếu ID: " + showtimeId));
 
@@ -152,6 +158,7 @@ public class StaffDashboardController {
         Booking booking = new Booking();
         booking.setUser(user); // Gán người mua/tác nhân là staff bán tại quầy
         booking.setShowtime(showtime);
+        booking.setReceiverName(receiverName);
         booking.setTotalPrice(totalPrice);
         booking.setStatus("Completed");
         booking = bookingRepository.save(booking);

@@ -35,6 +35,9 @@ public class Booking {
     @Column(name = "total_price", nullable = false)
     private Long totalPrice;
 
+    @Column(name = "receiver_name", length = 100)
+    private String receiverName;
+
     @Column(length = 20)
     private String status;
 

@@ -146,6 +146,10 @@
 
                     <form th:action="@{'/my/booking/' + ${showtime.showtimeId} + '/checkout'}" method="post" id="checkoutForm" class="pt-2">
                         <input type="hidden" id="selectedSeatsInput" name="seatIds" value="">
+                        <label for="receiverName" class="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Receiver Name</label>
+                        <input type="text" id="receiverName" name="receiverName" th:value="${customerName}" required maxlength="100" autocomplete="name"
+                               class="w-full mb-4 px-3 py-2.5 text-sm text-white bg-white/[0.04] border border-white/10 rounded-xl outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10"
+                               placeholder="Enter receiver name">
                         <button type="submit" id="submitBtn" disabled class="w-full py-3 text-sm font-bold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl transition-all duration-300 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-primary/20 cursor-pointer">
                             Thanh toán qua cổng VNPay
                         </button>
