@@ -54,6 +54,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer>, JpaS
     Long sumRevenueByBranchAndDateRange(@Param("branchId") Integer branchId,
                                         @Param("start") LocalDateTime start,
                                         @Param("end") LocalDateTime end);
+
     @Query("""
             SELECT COALESCE(SUM(p.amount), 0),
                    COALESCE(SUM(b.seatSubtotal), 0),
@@ -144,5 +145,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer>, JpaS
                                             @Param("branchId") Integer branchId,
                                             @Param("paymentStatus") String paymentStatus,
                                             @Param("excludedBookingStatus") String excludedBookingStatus);
+
     long countByBooking_Showtime_ShowtimeId(Integer showtimeId);
 }

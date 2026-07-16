@@ -30,12 +30,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers("/api/**")
             )
-            .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/**")
-            )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate", "/api/auth/verify-email").permitAll()
-                .requestMatchers(HttpMethod.GET, "/vnpay-return", "/api/payment/vnpay-return").permitAll()
                 .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate", "/api/auth/verify-email").permitAll()
                 .requestMatchers(HttpMethod.GET, "/vnpay-return", "/api/payment/vnpay-return").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
