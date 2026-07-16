@@ -24,4 +24,6 @@ public class SeatUpdateRequest {
 
     @NotBlank(message = "Loại ghế không được để trống")
     private String type; // Standard, VIP, Double
+
+    private String maintenanceStatus;
 }

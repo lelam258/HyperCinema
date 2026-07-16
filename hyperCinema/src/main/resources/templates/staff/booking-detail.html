@@ -43,7 +43,7 @@
                     <div class="flex flex-wrap justify-center gap-4 mb-8 text-xs">
                         <div class="flex items-center gap-1.5"><div class="w-5 h-5 rounded border border-slate-500/30 bg-slate-700/20"></div><span class="text-slate-400">Standard</span></div>
                         <div class="flex items-center gap-1.5"><div class="w-5 h-5 rounded border border-primary/50 bg-primary/10"></div><span class="text-slate-400">VIP (+20k)</span></div>
-                        <div class="flex items-center gap-1.5"><div class="w-10 h-5 rounded border border-pink-500/50 bg-pink-500/10"></div><span class="text-slate-400">Double</span></div>
+                        <div class="flex items-center gap-1.5"><div class="w-10 h-5 rounded border border-pink-500/50 bg-pink-500/10"></div><span class="text-slate-400">Couple</span></div>
                         <div class="flex items-center gap-1.5"><div class="w-5 h-5 rounded bg-slate-800 border border-slate-700/50"></div><span class="text-slate-500">Đã đặt</span></div>
                         <div class="flex items-center gap-1.5"><div class="w-5 h-5 rounded bg-primary border border-primary"></div><span class="text-white">Đang chọn</span></div>
                     </div>
@@ -61,7 +61,7 @@
                                      th:data-type="${seat.type}"
                                      th:data-status="${seat.status}"
                                      th:onclick="'toggleSeatSelection(this)'"
-                                     th:classappend="${seat.status == 'BOOKED'} ? 'bg-slate-800 border-slate-700/50 text-slate-500 cursor-not-allowed' : (${seat.status == 'RESERVED'} ? 'bg-amber-500/20 border-amber-500/40 text-amber-500/50 cursor-not-allowed' : (${seat.type == 'VIP'} ? 'border-primary/50 bg-primary/10 hover:bg-primary/20 text-amber-200 cursor-pointer' : (${seat.type == 'Double'} ? 'col-span-2 w-16 border-pink-500/50 bg-pink-500/10 hover:bg-pink-500/20 text-pink-200 cursor-pointer' : 'border-slate-500/30 bg-slate-700/20 hover:bg-slate-700/40 text-slate-300 cursor-pointer')))"
+                                     th:classappend="${seat.status == 'BOOKED'} ? 'bg-slate-800 border-slate-700/50 text-slate-500 cursor-not-allowed' : (${seat.status == 'RESERVED'} ? 'bg-amber-500/20 border-amber-500/40 text-amber-500/50 cursor-not-allowed' : (${seat.type == 'VIP'} ? 'border-primary/50 bg-primary/10 hover:bg-primary/20 text-amber-200 cursor-pointer' : (${seat.type == 'COUPLE'} ? 'col-span-2 w-16 border-pink-500/50 bg-pink-500/10 hover:bg-pink-500/20 text-pink-200 cursor-pointer' : 'border-slate-500/30 bg-slate-700/20 hover:bg-slate-700/40 text-slate-300 cursor-pointer')))"
                                      class="w-7 h-7 rounded flex items-center justify-center text-[10px] font-bold border transition-colors select-none">
                                     <span th:text="${seat.seatNumber}">1</span>
                                 </div>
@@ -144,7 +144,7 @@
             element.classList.remove('bg-primary', 'border-primary', 'text-white');
             if (element.getAttribute('data-type') === 'VIP') {
                 element.classList.add('border-primary/50', 'bg-primary/10', 'text-amber-200');
-            } else if (element.getAttribute('data-type') === 'Double') {
+        } else if (element.getAttribute('data-type') === 'COUPLE') {
                 element.classList.add('border-pink-500/50', 'bg-pink-500/10', 'text-pink-200');
             } else {
                 element.classList.add('border-slate-500/30', 'bg-slate-700/20', 'text-slate-300');

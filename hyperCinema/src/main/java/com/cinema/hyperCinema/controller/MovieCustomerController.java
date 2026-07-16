@@ -30,6 +30,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MovieCustomerController {
 
+    private static final String SHOWTIME_CANCELLED = "CANCELLED";
+
     private final MovieService movieService;
     private final LanguageRepository languageRepository;
     private final GenreRepository genreRepository;
@@ -73,6 +75,10 @@ public class MovieCustomerController {
     public String viewShowtimeSeats(@PathVariable Integer showtimeId, Model model, Authentication authentication) {
         Showtime showtime = showtimeRepository.findById(showtimeId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy suất chiếu ID: " + showtimeId));
+
+        if (SHOWTIME_CANCELLED.equals(showtime.getStatus())) {
+            throw new IllegalArgumentException("Không tìm thấy suất chiếu ID: " + showtimeId);
+        }
 
         List<ShowtimeSeatView> seats = seatService.getSeatsForShowtime(showtimeId);
 

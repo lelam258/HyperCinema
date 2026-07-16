@@ -23,5 +23,6 @@ public interface BookingService {
                                        Integer showtimeId,
                                        List<Integer> seatIds,
                                        List<Integer> foodItemIds,
-                                       List<Integer> foodQuantities);
+                                       List<Integer> foodQuantities,
+                                       String voucherCode);
 }

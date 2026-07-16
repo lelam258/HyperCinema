@@ -44,3 +44,4 @@ public class Showtime {
         if (status == null) status = "ACTIVE";
     }
 }
+

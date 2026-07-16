@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Favorite_Movie")
+@Table(name = "favorite_movie")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,3 +29,4 @@ public class FavoriteMovie {
         }
     }
 }
+

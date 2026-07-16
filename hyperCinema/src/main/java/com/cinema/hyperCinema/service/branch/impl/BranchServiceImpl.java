@@ -1,40 +1,30 @@
 package com.cinema.hyperCinema.service.branch.impl;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchCreateRequest;
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchSearchCriteria;
+import com.cinema.hyperCinema.dto.admin.branch.request.BranchUpdateRequest;
+import com.cinema.hyperCinema.dto.admin.branch.response.*;
+import com.cinema.hyperCinema.exception.branch.BranchNotFoundException;
+import com.cinema.hyperCinema.exception.branch.BranchValidationException;
+import com.cinema.hyperCinema.model.Branch;
+import com.cinema.hyperCinema.model.User;
+import com.cinema.hyperCinema.repository.*;
+import com.cinema.hyperCinema.service.audit.BranchAuditLogger;
+import com.cinema.hyperCinema.service.branch.BranchDiffer;
+import com.cinema.hyperCinema.service.branch.BranchService;
+import com.cinema.hyperCinema.validation.BranchValidator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.cinema.hyperCinema.dto.admin.branch.request.BranchCreateRequest;
-import com.cinema.hyperCinema.dto.admin.branch.response.BranchDetailView;
-import com.cinema.hyperCinema.dto.admin.branch.response.BranchListItem;
-import com.cinema.hyperCinema.dto.admin.branch.request.BranchSearchCriteria;
-import com.cinema.hyperCinema.dto.admin.branch.request.BranchUpdateRequest;
-import com.cinema.hyperCinema.dto.admin.branch.response.FieldChange;
-import com.cinema.hyperCinema.dto.admin.branch.response.UpdateResult;
-import com.cinema.hyperCinema.dto.admin.branch.response.UserSummary;
-import com.cinema.hyperCinema.exception.branch.BranchNotFoundException;
-import com.cinema.hyperCinema.exception.branch.BranchValidationException;
-import com.cinema.hyperCinema.model.Branch;
-import com.cinema.hyperCinema.model.User;
-import com.cinema.hyperCinema.repository.BranchRepository;
-import com.cinema.hyperCinema.repository.BranchSpecifications;
-import com.cinema.hyperCinema.repository.HallRepository;
-import com.cinema.hyperCinema.repository.ShowtimeRepository;
-import com.cinema.hyperCinema.repository.UserRepository;
-import com.cinema.hyperCinema.service.audit.BranchAuditLogger;
-import com.cinema.hyperCinema.service.branch.BranchDiffer;
-import com.cinema.hyperCinema.service.branch.BranchService;
 import com.cinema.hyperCinema.util.BranchMapper;
-import com.cinema.hyperCinema.validation.BranchValidator;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -170,15 +160,19 @@ public class BranchServiceImpl implements BranchService {
         Branch branch = branchRepository.findById(branchId)
                 .orElseThrow(() -> new BranchNotFoundException(branchId));
 
-        if (hallRepository.existsByBranch_BranchId(branchId)) {
-            throw new BranchValidationException("branch.cannot_delete_with_halls");
+        if (showtimeRepository.existsByHall_Branch_BranchIdAndStartTimeAfter(
+                branchId, LocalDateTime.now())) {
+            throw new BranchValidationException("branch.cannot_deactivate_with_future_showtimes");
         }
 
-        if (userRepository.existsByBranch_BranchId(branchId)) {
-            throw new BranchValidationException("branch.cannot_delete_with_users");
+        String oldStatus = branch.getStatus();
+        if ("Inactive".equals(oldStatus)) {
+            return;
         }
+        branch.setStatus("Inactive");
+        Branch saved = branchRepository.save(branch);
 
-        branchRepository.delete(branch);
+        auditSafe(() -> branchAuditLogger.logStatusChange(saved, oldStatus, "Inactive", admin));
     }
 
     @Override
@@ -186,10 +180,12 @@ public class BranchServiceImpl implements BranchService {
 
         Branch branch = branchRepository.findById(branchId)
                 .orElseThrow(() -> new BranchNotFoundException(branchId));
+        ensureBranchActive(branch);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BranchValidationException(
                         "branch.assign_manager.role_invalid"));
+        ensureUserActive(user);
 
         branchValidator.validateManagerRoleAndConflict(user, branchId);
 
@@ -222,16 +218,19 @@ public class BranchServiceImpl implements BranchService {
 
         Branch branch = branchRepository.findById(branchId)
                 .orElseThrow(() -> new BranchNotFoundException(branchId));
+        ensureBranchActive(branch);
 
         User staff = userRepository.findById(userId)
                 .orElseThrow(() -> new BranchValidationException(
                         "branch.assign_staff.role_invalid"));
+        ensureUserActive(staff);
 
         branchValidator.validateStaffRole(staff);
 
         User manager = userRepository.findById(managerId)
                 .orElseThrow(() -> new BranchValidationException(
                         "branch.assign_staff.manager_branch_mismatch"));
+        ensureUserActive(manager);
 
         branchValidator.validateManagerOwnsBranch(manager, branchId);
 
@@ -275,16 +274,6 @@ public class BranchServiceImpl implements BranchService {
                 .toList();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<UserSummary> listManagersForBranch(Integer branchId) {
-        branchRepository.findById(branchId)
-                .orElseThrow(() -> new BranchNotFoundException(branchId));
-        return userRepository.findManagersByBranchId(branchId).stream()
-                .map(BranchMapper::toUserSummary)
-                .toList();
-    }
-
     private static Branch snapshot(Branch source) {
         Branch copy = new Branch();
         copy.setBranchId(source.getBranchId());
@@ -310,6 +299,18 @@ public class BranchServiceImpl implements BranchService {
 
     private static String normalizeText(String value) {
         return value == null ? null : value.trim();
+    }
+
+    private static void ensureBranchActive(Branch branch) {
+        if (branch == null || !"Active".equalsIgnoreCase(branch.getStatus())) {
+            throw new BranchValidationException("branch.inactive");
+        }
+    }
+
+    private static void ensureUserActive(User user) {
+        if (user == null || !"Active".equalsIgnoreCase(user.getStatus())) {
+            throw new BranchValidationException("branch.user_inactive");
+        }
     }
 
     private void auditSafe(Runnable auditAction) {

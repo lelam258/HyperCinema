@@ -30,12 +30,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        return userRepository.findByStatusIgnoreCase("Active");
     }
 
     @Override
     public List<User> searchAndFilterUsers(String query, String roleName, String status) {
-        List<User> users = userRepository.findAll();
+        List<User> users = shouldIncludeAllStatuses(status)
+                ? userRepository.findAll()
+                : userRepository.findByStatusIgnoreCase("Active");
 
         return users.stream()
                 .filter(u -> {
@@ -129,7 +131,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Integer id) {
         User user = getUserById(id);
-        userRepository.delete(user);
+        user.setStatus("Inactive");
+        userRepository.save(user);
     }
 
     @Override
@@ -175,5 +178,12 @@ public class UserServiceImpl implements UserService {
         stats.put("admins", admins);
 
         return stats;
+    }
+
+    private static boolean shouldIncludeAllStatuses(String status) {
+        return status != null
+                && !status.isBlank()
+                && !status.equalsIgnoreCase("All")
+                && !status.equalsIgnoreCase("All Status");
     }
 }

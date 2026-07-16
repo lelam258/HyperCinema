@@ -2,6 +2,7 @@ package com.cinema.hyperCinema.service.voucher;
 
 import com.cinema.hyperCinema.dto.admin.voucher.response.VoucherPreview;
 import com.cinema.hyperCinema.model.Booking;
+import com.cinema.hyperCinema.model.Promotion;
 
 import java.time.LocalDateTime;
 
@@ -35,4 +36,6 @@ public interface VoucherApplicationService {
      * @param now     thời điểm áp dụng
      */
     void apply(String code, Booking booking, LocalDateTime now);
+
+    Promotion applyValidated(String code, Booking booking, long orderValue, Integer bookingBranchId, LocalDateTime now);
 }

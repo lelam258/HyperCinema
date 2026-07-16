@@ -1,6 +1,8 @@
 package com.cinema.hyperCinema.dto.admin.showtime.response;
 
+import com.cinema.hyperCinema.dto.admin.hall.response.SeatTypePriceView;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,6 +38,10 @@ public class ShowtimeDetailView {
     private LocalDateTime endTime;
 
     private Integer price;
+
+    private String priceRange;
+
+    private List<SeatTypePriceView> seatTypePrices;
 
     private long bookingCount;
 

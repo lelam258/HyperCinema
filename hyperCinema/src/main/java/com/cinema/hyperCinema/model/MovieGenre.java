@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "Movie_Genre")
+@Table(name = "movie_genre")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class MovieGenre {
@@ -25,3 +25,4 @@ public class MovieGenre {
     @JoinColumn(name = "genre_id")
     private Genre genre;
 }
+

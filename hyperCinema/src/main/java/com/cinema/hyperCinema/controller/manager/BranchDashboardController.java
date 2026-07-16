@@ -1,61 +1,55 @@
 package com.cinema.hyperCinema.controller.manager;
 
-import com.cinema.hyperCinema.model.User;
-import com.cinema.hyperCinema.security.CustomUserDetails;
-import com.cinema.hyperCinema.service.dashboard.BranchManagerDashboardService;
+import java.util.stream.Collectors;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
+import com.cinema.hyperCinema.dto.ui.admin.MetricCardView;
+import com.cinema.hyperCinema.dto.ui.admin.SeriesPointView;
+import com.cinema.hyperCinema.dto.ui.workspace.WorkspaceDashboardView;
+import com.cinema.hyperCinema.security.CustomUserDetails;
+import com.cinema.hyperCinema.service.ui.WorkspaceUiDataService;
 
 @Controller
 @RequestMapping("/branch")
 public class BranchDashboardController {
 
-    private final BranchManagerDashboardService dashboardService;
+    private final WorkspaceUiDataService workspaceUiDataService;
 
-    public BranchDashboardController(BranchManagerDashboardService dashboardService) {
-        this.dashboardService = dashboardService;
+    public BranchDashboardController(WorkspaceUiDataService workspaceUiDataService) {
+        this.workspaceUiDataService = workspaceUiDataService;
     }
 
     @GetMapping({"/dashboard", ""})
     public String dashboard(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
-        User user = userDetails.getUser();
-        Integer branchId = null;
-
-        if (user.getBranch() != null) {
-            branchId = user.getBranch().getBranchId();
-            model.addAttribute("branchName", user.getBranch().getName());
-        } else {
-            // Fallback for demo or edge case
-            branchId = 1; 
-            model.addAttribute("branchName", "Chi nhánh 1");
-        }
-
-        // ── KPI Cards ──
-        model.addAttribute("branchRevenue", dashboardService.sumBranchRevenueThisMonth(branchId));
-        model.addAttribute("branchTickets", dashboardService.countBranchTicketsThisMonth(branchId));
-        model.addAttribute("todayBookings", dashboardService.countBranchBookingsToday(branchId));
-
-        // ── Charts ──
-        Map<String, Long> revenueData = dashboardService.getBranchRevenueLastDays(branchId, 14);
-        model.addAttribute("revenueLabels", revenueData.keySet());
-        model.addAttribute("revenueValues", revenueData.values());
-
-        // ── Tables ──
-        List<Object[]> topMovies = dashboardService.getBranchTopMovies(branchId, 5);
-        model.addAttribute("topMovies", topMovies);
-
-        // ── Meta ──
-        model.addAttribute("lastUpdated",
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")));
-
+        WorkspaceDashboardView dashboard = workspaceUiDataService.getBranchDashboard(userDetails.getUser());
+        model.addAttribute("dashboard", dashboard);
+        model.addAttribute("branchName", dashboard.getBranchName());
+        model.addAttribute("branchRevenue", metricValue(dashboard, "revenue"));
+        model.addAttribute("branchTickets", metricValue(dashboard, "tickets"));
+        model.addAttribute("todayBookings", metricValue(dashboard, "todayBookings"));
+        model.addAttribute("revenueLabels", dashboard.getRevenueSeries().stream()
+                .map(SeriesPointView::getLabel)
+                .collect(Collectors.toList()));
+        model.addAttribute("revenueValues", dashboard.getRevenueSeries().stream()
+                .map(SeriesPointView::getValue)
+                .collect(Collectors.toList()));
+        model.addAttribute("topMovies", dashboard.getTopMovies().stream()
+                .map(movie -> new Object[] {movie.getTitle(), movie.getBookingCount()})
+                .collect(Collectors.toList()));
+        model.addAttribute("lastUpdated", dashboard.getLastUpdated());
         return "branch/dashboard";
+    }
+
+    private long metricValue(WorkspaceDashboardView dashboard, String key) {
+        return dashboard.getMetrics().stream()
+                .filter(metric -> key.equals(metric.getKey()))
+                .findFirst()
+                .map(MetricCardView::getValue)
+                .orElse(0L);
     }
 }

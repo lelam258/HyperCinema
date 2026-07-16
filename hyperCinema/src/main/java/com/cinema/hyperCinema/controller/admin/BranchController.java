@@ -128,6 +128,11 @@ public class BranchController {
 
         model.addAttribute("branch", branch);
         model.addAttribute("readOnly", readOnly);
+        if (isAdmin) {
+            model.addAttribute("staffCandidates", branchService.listUnassignedStaff());
+            model.addAttribute("managerCandidates", branch.getManagers());
+            model.addAttribute("assignStaffRequest", new AssignStaffRequest());
+        }
 
         return "admin/branches/branch-detail";
     }
@@ -250,6 +255,19 @@ public class BranchController {
         }
     }
 
+    @GetMapping("/{branchId}/staff/assign")
+    public String assignStaffForm(@PathVariable Integer branchId, Model model) {
+
+        BranchDetailView branch = branchService.findById(branchId);
+
+        model.addAttribute("branch", branch);
+        model.addAttribute("staffCandidates", branchService.listUnassignedStaff());
+        model.addAttribute("managerCandidates", branch.getManagers());
+        model.addAttribute("assignStaffRequest", new AssignStaffRequest());
+
+        return "admin/branches/assign-staff";
+    }
+
     @PostMapping("/{branchId}/managers/{userId}/unassign")
     public String unassignManager(@PathVariable Integer branchId,
                                   @PathVariable Integer userId,
@@ -292,19 +310,6 @@ public class BranchController {
             redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
             return "redirect:/admin/branches/" + branchId + "/staff/assign";
         }
-    }
-
-    @GetMapping("/{branchId}/staff/assign")
-    public String assignStaffForm(@PathVariable Integer branchId, Model model) {
-
-        BranchDetailView branch = branchService.findById(branchId);
-
-        model.addAttribute("branch", branch);
-        model.addAttribute("staffCandidates", branchService.listUnassignedStaff());
-        model.addAttribute("managerCandidates", branchService.listManagersForBranch(branchId));
-        model.addAttribute("assignStaffRequest", new AssignStaffRequest());
-
-        return "admin/branches/assign-staff";
     }
 
     @PostMapping("/{branchId}/staff/{userId}/unassign")

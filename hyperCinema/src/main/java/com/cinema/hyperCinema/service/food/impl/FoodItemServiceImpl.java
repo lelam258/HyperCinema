@@ -54,7 +54,7 @@ public class FoodItemServiceImpl implements FoodItemService {
     @Transactional(readOnly = true)
     public List<FoodItemListResponse> findAll(User actor) {
         assertCanManageItem(actor);
-        List<FoodItem> items = foodItemRepository.findAllByOrderByCategoryNameAscNameAsc();
+        List<FoodItem> items = foodItemRepository.findByIsAvailableTrueOrderByCategoryNameAscNameAsc();
         return items.stream().map(this::toListResponse).collect(Collectors.toList());
     }
 
@@ -79,7 +79,13 @@ public class FoodItemServiceImpl implements FoodItemService {
         } else if (isAvailable != null) {
             items = foodItemRepository.findByIsAvailable(isAvailable);
         } else {
-            items = foodItemRepository.findAllByOrderByCategoryNameAscNameAsc();
+            items = foodItemRepository.findByIsAvailableTrueOrderByCategoryNameAscNameAsc();
+        }
+
+        if (isAvailable == null) {
+            items = items.stream()
+                    .filter(item -> Boolean.TRUE.equals(item.getIsAvailable()))
+                    .collect(Collectors.toList());
         }
 
         return items.stream().map(this::toListResponse).collect(Collectors.toList());
@@ -154,11 +160,9 @@ public class FoodItemServiceImpl implements FoodItemService {
         FoodItem item = foodItemRepository.findById(itemId)
                 .orElseThrow(() -> new FoodItemNotFoundException(itemId));
 
-        if (foodOrderItemRepository.existsByItemId(itemId)) {
-            throw new FoodValidationException("food.item.has_order_history");
-        }
-
-        foodItemRepository.delete(item);
+        item.setIsAvailable(false);
+        item.setStock(0);
+        foodItemRepository.save(item);
     }
 
     // -------------------------------------------------------------------------

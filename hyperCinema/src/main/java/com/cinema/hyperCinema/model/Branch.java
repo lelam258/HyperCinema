@@ -11,7 +11,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 @Entity
-@Table(name = "Branch")
+@Table(name = "branch")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -60,3 +60,4 @@ public class Branch {
         }
     }
 }
+

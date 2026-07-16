@@ -29,6 +29,10 @@ public interface HallRepository extends JpaRepository<Hall, Integer>, JpaSpecifi
      */
     List<Hall> findByBranch_BranchId(Integer branchId);
 
+    List<Hall> findByBranch_BranchIdAndStatusIgnoreCase(Integer branchId, String status);
+
+    List<Hall> findByStatusIgnoreCaseOrderByNameAsc(String status);
+
     boolean existsByBranch_BranchIdAndNameIgnoreCase(Integer branchId, String name);
 
     boolean existsByBranch_BranchIdAndNameIgnoreCaseAndHallIdNot(
