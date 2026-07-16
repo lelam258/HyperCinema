@@ -312,19 +312,6 @@ public class BranchController {
         }
     }
 
-    @GetMapping("/{branchId}/staff/assign")
-    public String assignStaffForm(@PathVariable Integer branchId, Model model) {
-
-        BranchDetailView branch = branchService.findById(branchId);
-
-        model.addAttribute("branch", branch);
-        model.addAttribute("staffCandidates", branchService.listUnassignedStaff());
-        model.addAttribute("managerCandidates", branch.getManagers());
-        model.addAttribute("assignStaffRequest", new AssignStaffRequest());
-
-        return "admin/branches/assign-staff";
-    }
-
     @PostMapping("/{branchId}/staff/{userId}/unassign")
     public String unassignStaff(@PathVariable Integer branchId,
                                 @PathVariable Integer userId,
