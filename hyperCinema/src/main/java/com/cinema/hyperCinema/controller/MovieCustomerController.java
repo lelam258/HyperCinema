@@ -86,6 +86,9 @@ public class MovieCustomerController {
         if (authentication != null && authentication.isAuthenticated()) {
             isLoggedInCustomer = authentication.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"));
+            if (isLoggedInCustomer && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
+                model.addAttribute("customerName", userDetails.getUser().getFullName());
+            }
         }
 
         model.addAttribute("showtime", showtime);
