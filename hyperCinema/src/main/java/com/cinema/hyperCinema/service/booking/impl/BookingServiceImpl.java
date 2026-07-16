@@ -147,18 +147,22 @@ public class BookingServiceImpl implements BookingService {
         booking.setMembershipDiscountPercent(pricing.membershipDiscountPercent());
         booking.setTotalPrice(pricing.finalTotal());
 
+        Booking savedBooking = bookingRepository.save(booking);
+        final Booking finalBooking = savedBooking;
+
+        long timestamp = System.currentTimeMillis();
         List<Ticket> tickets = seats.stream()
                 .map(seat -> {
                     Ticket ticket = new Ticket();
-                    ticket.setBooking(booking);
+                    ticket.setBooking(finalBooking);
                     ticket.setSeat(seat);
                     ticket.setStatus(STATUS_PENDING);
-                    ticket.setQrCode("HC-" + showtimeId + "-" + seat.getSeatId() + "-" + System.currentTimeMillis());
+                    ticket.setQrCode("HC-" + finalBooking.getBookingId() + "-" + seat.getSeatId() + "-" + timestamp);
                     return ticket;
                 })
                 .collect(Collectors.toList());
-        booking.setTickets(tickets);
-        Booking savedBooking = bookingRepository.save(booking);
+        savedBooking.setTickets(tickets);
+        savedBooking = bookingRepository.save(savedBooking);
 
         if (pricing.voucherCode() != null) {
             Promotion promotion = voucherApplicationService.applyValidated(
