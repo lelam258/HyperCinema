@@ -6,6 +6,8 @@ import com.cinema.hyperCinema.model.Promotion;
 
 import java.time.LocalDateTime;
 
+import java.time.LocalDateTime;
+
 /**
  * Service áp dụng voucher khi đặt vé.
  *

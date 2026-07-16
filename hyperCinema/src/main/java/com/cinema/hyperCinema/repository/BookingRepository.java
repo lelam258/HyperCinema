@@ -164,7 +164,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             WHERE b.bookingId = :bookingId
             """)
     Optional<Booking> findManagementDetailById(@Param("bookingId") Integer bookingId);
-
     @Query("SELECT COUNT(b) > 0 FROM Booking b " +
            "WHERE b.user.userId = :userId " +
            "AND b.showtime.movie.movieId = :movieId " +
