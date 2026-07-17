@@ -14,6 +14,13 @@ public class FoodOrderDetailResponse {
 
     private Integer orderId;
     private Integer bookingId;
+    private Integer branchId;
+    private String branchName;
+    private Integer staffUserId;
+    private String staffName;
+    private String customerPhone;
+    private String paymentMethod;
+    private String paymentStatus;
     private String status;
     private Integer totalAmount;
     private LocalDateTime createdAt;

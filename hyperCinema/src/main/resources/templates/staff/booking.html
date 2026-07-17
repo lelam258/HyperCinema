@@ -109,7 +109,11 @@
         </div>
 
         <aside class="hc-staff-pos-rail" aria-label="Giỏ hàng tại quầy">
-            <form th:action="@{/booking}" method="post" data-staff-pos-form>
+            <form th:action="@{/booking}"
+                  th:data-booking-action="@{/booking}"
+                  th:data-fnb-action="@{/staff/food-orders}"
+                  method="post"
+                  data-staff-pos-form>
                 <input type="hidden" name="showtimeId" data-pos-showtime-input>
                 <input type="hidden" name="paymentMethod" data-pos-payment-input>
                 <input type="hidden" name="voucherCode" data-pos-voucher-code>
@@ -162,6 +166,18 @@
                             Áp dụng
                         </button>
                     </div>
+                    <div class="hc-staff-pos-voucher-tools">
+                        <button type="button" data-pos-voucher-refresh>
+                            <i data-lucide="list-filter"></i>
+                            Voucher có sẵn
+                        </button>
+                        <button type="button" data-pos-voucher-clear hidden>
+                            <i data-lucide="x"></i>
+                            Bỏ voucher
+                        </button>
+                    </div>
+                    <div class="hc-staff-pos-voucher-selected" data-pos-voucher-selected hidden></div>
+                    <div class="hc-staff-pos-voucher-list" data-pos-voucher-list hidden></div>
                     <span class="hc-staff-pos-inline-message" data-pos-voucher-message></span>
                     <div class="hc-staff-pos-grand-total">
                         <span>Tổng cộng</span>

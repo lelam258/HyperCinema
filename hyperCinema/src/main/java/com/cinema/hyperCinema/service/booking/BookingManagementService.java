@@ -17,6 +17,8 @@ public interface BookingManagementService {
 
     BookingDetailView findDetail(User actor, Integer bookingId);
 
+    BookingDetailView findCustomerDetail(User actor, Integer bookingId);
+
     void confirmPayment(User actor, Integer bookingId);
 
     void markServed(User actor, Integer bookingId);

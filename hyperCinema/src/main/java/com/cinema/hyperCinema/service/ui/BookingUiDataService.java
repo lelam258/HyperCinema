@@ -13,6 +13,8 @@ public interface BookingUiDataService {
 
     List<FoodAddonOptionView> availableFoodItems(User actor);
 
+    List<VoucherOptionView> availableVouchers(User actor, long orderValue, Integer requestedBranchId);
+
     VoucherPreviewView previewVoucher(String code, long orderValue, Integer branchId);
 
     PosSummaryView emptyPosSummary(User actor);

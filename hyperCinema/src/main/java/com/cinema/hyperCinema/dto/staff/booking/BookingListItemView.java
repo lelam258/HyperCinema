@@ -21,6 +21,7 @@ public class BookingListItemView {
     private final Long totalPrice;
     private final String bookingStatus;
     private final String paymentStatus;
+    private final String paymentMethod;
     private final List<String> seats;
     private final int ticketCount;
 }

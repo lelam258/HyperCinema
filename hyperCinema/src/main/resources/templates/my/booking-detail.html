@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Chi tiet ve - HyperCinema')}"></head>
+<body class="min-h-screen">
+
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: customerSidebar('bookings')}"></nav>
+
+<main class="md:ml-64 min-h-screen">
+    <div class="max-w-6xl mx-auto px-6 py-8">
+        <a th:href="@{/my/bookings}" class="mb-5 inline-flex text-sm font-semibold text-slate-400 no-underline hover:text-white">Quay lai danh sach</a>
+
+        <section class="glass-card mb-6 p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Booking</p>
+                    <h1 class="text-3xl font-bold text-white tracking-tight" th:text="|#${booking.bookingId}|">#1</h1>
+                    <p class="mt-2 text-sm text-slate-400">
+                        <span th:text="${booking.movieTitle}">Movie</span>
+                        <span aria-hidden="true"> - </span>
+                        <span th:text="${booking.showtimeStart != null ? #temporals.format(booking.showtimeStart, 'HH:mm dd/MM/yyyy') : 'N/A'}">Time</span>
+                    </p>
+                </div>
+                <span class="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white" th:text="${booking.bookingStatus}">Status</span>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <section class="glass-card p-6 lg:col-span-2">
+                <h2 class="mb-4 text-lg font-semibold text-white">Thong tin ve</h2>
+                <dl class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div><dt class="text-xs uppercase tracking-wider text-slate-500">Rap</dt><dd class="mt-1 text-white" th:text="${booking.branchName}">Branch</dd></div>
+                    <div><dt class="text-xs uppercase tracking-wider text-slate-500">Phong</dt><dd class="mt-1 text-white" th:text="${booking.hallName}">Hall</dd></div>
+                    <div><dt class="text-xs uppercase tracking-wider text-slate-500">Ngay dat</dt><dd class="mt-1 text-white" th:text="${booking.createdAt != null ? #temporals.format(booking.createdAt, 'HH:mm dd/MM/yyyy') : 'N/A'}">Created</dd></div>
+                    <div><dt class="text-xs uppercase tracking-wider text-slate-500">Thanh toan</dt><dd class="mt-1 text-white" th:text="${booking.paymentStatus != null and !#strings.isEmpty(booking.paymentStatus) ? booking.paymentStatus : 'N/A'}">Payment</dd></div>
+                </dl>
+            </section>
+
+            <section class="glass-card p-6">
+                <h2 class="mb-4 text-lg font-semibold text-white">Tong tien</h2>
+                <dl class="grid gap-3 text-sm">
+                    <div class="flex justify-between gap-4"><dt class="text-slate-400">Tam tinh</dt><dd class="font-semibold text-white" th:text="${#numbers.formatInteger(booking.orderSubtotal != null ? booking.orderSubtotal : booking.totalPrice, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                    <div th:if="${booking.voucherDiscountAmount != null and booking.voucherDiscountAmount > 0}" class="flex justify-between gap-4"><dt class="text-slate-400">Voucher</dt><dd class="font-semibold text-success" th:text="${'-' + #numbers.formatInteger(booking.voucherDiscountAmount, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}" class="flex justify-between gap-4"><dt class="text-slate-400">Membership</dt><dd class="font-semibold text-success" th:text="${'-' + #numbers.formatInteger(booking.membershipDiscountAmount, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                    <div class="flex justify-between gap-4 border-t border-white/10 pt-3"><dt class="font-semibold text-white">Tong cong</dt><dd class="font-bold text-primary" th:text="${#numbers.formatInteger(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                </dl>
+            </section>
+        </div>
+
+        <section class="glass-card mt-6 overflow-hidden">
+            <div class="border-b border-white/10 p-5"><h2 class="text-lg font-semibold text-white">Ghe va ma ve</h2></div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="border-b border-white/[0.08] bg-white/[0.02]">
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Ve</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Ghe</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Loai</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Ma ve</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Trang thai</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.04]">
+                    <tr th:if="${booking.tickets == null or #lists.isEmpty(booking.tickets)}">
+                        <td colspan="5" class="px-6 py-10 text-center text-sm text-slate-500">Chua co ve.</td>
+                    </tr>
+                    <tr th:each="ticket : ${booking.tickets}" class="hover:bg-white/[0.02]">
+                        <td class="px-6 py-4 text-sm font-semibold text-white" th:text="|#${ticket.ticketId}|">#1</td>
+                        <td class="px-6 py-4 text-sm text-slate-300" th:text="${ticket.seatLabel}">A1</td>
+                        <td class="px-6 py-4 text-sm text-slate-300" th:text="${ticket.seatType}">Standard</td>
+                        <td class="px-6 py-4 text-xs font-mono text-slate-400" th:text="${ticket.qrCode}">QR</td>
+                        <td class="px-6 py-4 text-sm text-slate-300" th:text="${ticket.status}">Pending</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="glass-card mt-6 overflow-hidden">
+            <div class="border-b border-white/10 p-5"><h2 class="text-lg font-semibold text-white">F&amp;B</h2></div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="border-b border-white/[0.08] bg-white/[0.02]">
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Don</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Trang thai</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 text-right">Tong tien</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Ngay tao</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.04]">
+                    <tr th:if="${booking.foodOrders == null or #lists.isEmpty(booking.foodOrders)}">
+                        <td colspan="4" class="px-6 py-10 text-center text-sm text-slate-500">Chua co don F&amp;B.</td>
+                    </tr>
+                    <tr th:each="order : ${booking.foodOrders}" class="hover:bg-white/[0.02]">
+                        <td class="px-6 py-4 text-sm font-semibold text-white" th:text="|#${order.orderId}|">#1</td>
+                        <td class="px-6 py-4 text-sm text-slate-300" th:text="${order.status}">PENDING</td>
+                        <td class="px-6 py-4 text-right text-sm font-semibold text-white" th:text="${#numbers.formatInteger(order.totalAmount != null ? order.totalAmount : 0, 0, 'POINT') + ' VND'}">0 VND</td>
+                        <td class="px-6 py-4 text-sm text-slate-300" th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'HH:mm dd/MM/yyyy') : 'N/A'}">date</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+
+</body>
+</html>

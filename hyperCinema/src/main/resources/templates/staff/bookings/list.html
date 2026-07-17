@@ -91,12 +91,13 @@
                         <th class="text-right">Tổng tiền</th>
                         <th>Trạng thái</th>
                         <th>Thanh toán</th>
+                        <th>PTTT</th>
                         <th class="text-right">Thao tác</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${bookings == null or bookings.empty}">
-                        <td colspan="8" class="py-12 text-center text-cinema-muted">Chưa có booking nào trong phạm vi chi nhánh.</td>
+                        <td colspan="9" class="py-12 text-center text-cinema-muted">Chưa có booking nào trong phạm vi chi nhánh.</td>
                     </tr>
                     <tr th:each="booking : ${bookings.content}">
                         <td class="font-mono font-semibold text-white" th:text="|#${booking.bookingId}|">#1</td>
@@ -112,6 +113,7 @@
                         <td class="text-right tabular-nums" th:text="${#numbers.formatInteger(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'POINT') + ' VND'}">0 VND</td>
                         <td><span class="hc-badge" th:text="${booking.bookingStatus}">Pending</span></td>
                         <td><span class="hc-badge" th:text="${booking.paymentStatus != null and !#strings.isEmpty(booking.paymentStatus) ? booking.paymentStatus : 'N/A'}">Pending</span></td>
+                        <td th:text="${booking.paymentMethod != null and !#strings.isEmpty(booking.paymentMethod) ? booking.paymentMethod : 'N/A'}">VietQR</td>
                         <td class="text-right"><a th:href="@{|/staff/bookings/${booking.bookingId}|}" class="hc-button hc-button-outline no-underline">Xem</a></td>
                     </tr>
                     </tbody>

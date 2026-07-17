@@ -17,13 +17,16 @@ import com.cinema.hyperCinema.dto.ui.booking.FoodAddonOptionView;
 import com.cinema.hyperCinema.dto.ui.booking.PosSummaryView;
 import com.cinema.hyperCinema.dto.ui.booking.SeatAvailabilityView;
 import com.cinema.hyperCinema.dto.ui.booking.ShowtimeOptionView;
+import com.cinema.hyperCinema.dto.ui.booking.VoucherOptionView;
 import com.cinema.hyperCinema.dto.ui.booking.VoucherPreviewView;
 import com.cinema.hyperCinema.model.Branch;
 import com.cinema.hyperCinema.model.FoodItem;
+import com.cinema.hyperCinema.model.Promotion;
 import com.cinema.hyperCinema.model.Seat;
 import com.cinema.hyperCinema.model.Showtime;
 import com.cinema.hyperCinema.model.User;
 import com.cinema.hyperCinema.repository.FoodItemRepository;
+import com.cinema.hyperCinema.repository.PromotionRepository;
 import com.cinema.hyperCinema.repository.SeatRepository;
 import com.cinema.hyperCinema.repository.SeatReservationRepository;
 import com.cinema.hyperCinema.repository.ShowtimeRepository;
@@ -39,6 +42,7 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
     private static final String STATUS_CANCELLED = "CANCELLED";
     private static final String STATUS_CANCELLED_LEGACY = "Cancelled";
     private static final String STATUS_RESERVED = "ACTIVE";
+    private static final String PROMOTION_ACTIVE = "ACTIVE";
     private static final String MAINTENANCE = "UNDER_MAINTENANCE";
     private static final String SHOWTIME_CANCELLED = "CANCELLED";
 
@@ -47,6 +51,7 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
     private final TicketRepository ticketRepository;
     private final SeatReservationRepository seatReservationRepository;
     private final FoodItemRepository foodItemRepository;
+    private final PromotionRepository promotionRepository;
     private final VoucherApplicationService voucherApplicationService;
     private final UiDisplayMapper displayMapper;
     private final HallSeatTypePricingService hallSeatTypePricingService;
@@ -56,6 +61,7 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
                                     TicketRepository ticketRepository,
                                     SeatReservationRepository seatReservationRepository,
                                     FoodItemRepository foodItemRepository,
+                                    PromotionRepository promotionRepository,
                                     VoucherApplicationService voucherApplicationService,
                                     UiDisplayMapper displayMapper,
                                     HallSeatTypePricingService hallSeatTypePricingService) {
@@ -64,6 +70,7 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
         this.ticketRepository = ticketRepository;
         this.seatReservationRepository = seatReservationRepository;
         this.foodItemRepository = foodItemRepository;
+        this.promotionRepository = promotionRepository;
         this.voucherApplicationService = voucherApplicationService;
         this.displayMapper = displayMapper;
         this.hallSeatTypePricingService = hallSeatTypePricingService;
@@ -110,6 +117,22 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
         return foodItemRepository.findByIsAvailableTrueAndStockGreaterThanOrderByCategoryNameAscNameAsc(0)
                 .stream()
                 .map(this::toFoodOption)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<VoucherOptionView> availableVouchers(User actor, long orderValue, Integer requestedBranchId) {
+        if (orderValue <= 0) {
+            return Collections.emptyList();
+        }
+        Integer branchId = actor != null && actor.getBranch() != null
+                ? actor.getBranch().getBranchId()
+                : requestedBranchId;
+        return promotionRepository.findAvailableVoucherCandidates(
+                        PROMOTION_ACTIVE, LocalDateTime.now(), orderValue, branchId)
+                .stream()
+                .map(voucher -> toVoucherOption(voucher, branchId))
                 .collect(Collectors.toList());
     }
 
@@ -202,6 +225,38 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
                 .available(available)
                 .unavailableReason(available ? null : "food.item.unavailable")
                 .build();
+    }
+
+    private VoucherOptionView toVoucherOption(Promotion voucher, Integer branchId) {
+        return VoucherOptionView.builder()
+                .promotionId(voucher.getPromotionId())
+                .code(voucher.getCode())
+                .title(voucher.getTitle())
+                .discountLabel(discountLabel(voucher))
+                .minOrderValue(voucher.getMinOrderValue())
+                .displayMinOrderValue(displayMapper.currency(voucher.getMinOrderValue()))
+                .validUntil(displayMapper.dateTime(voucher.getEndDate()))
+                .branchScope(branchScope(voucher, branchId))
+                .eligible(true)
+                .disabledReason(null)
+                .build();
+    }
+
+    private String discountLabel(Promotion voucher) {
+        if ("PERCENTAGE".equalsIgnoreCase(voucher.getDiscountType())) {
+            return voucher.getDiscountValue() + "%";
+        }
+        return displayMapper.currency(voucher.getDiscountValue());
+    }
+
+    private String branchScope(Promotion voucher, Integer branchId) {
+        if (!Boolean.TRUE.equals(voucher.getBranchSpecific())) {
+            return "Toan he thong";
+        }
+        if (voucher.getBranch() != null && voucher.getBranch().getName() != null) {
+            return voucher.getBranch().getName();
+        }
+        return branchId != null ? "Chi nhanh #" + branchId : "Chi nhanh";
     }
 
     private boolean canAccessShowtime(Showtime showtime, User actor) {

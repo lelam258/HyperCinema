@@ -10,4 +10,6 @@ import java.util.List;
 public interface FoodOrderRepository extends JpaRepository<FoodOrder, Integer> {
 
     List<FoodOrder> findByBooking_BookingId(Integer bookingId);
+
+    List<FoodOrder> findByBookingIsNullAndBranch_BranchIdOrderByCreatedAtDesc(Integer branchId);
 }

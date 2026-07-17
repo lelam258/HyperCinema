@@ -26,8 +26,13 @@
         const showtimeInput = root.querySelector("[data-pos-showtime-input]");
         const paymentInput = root.querySelector("[data-pos-payment-input]");
         const voucherInput = root.querySelector("[data-pos-voucher-input]");
+        const voucherApply = root.querySelector("[data-pos-voucher-apply]");
         const voucherCodeInput = root.querySelector("[data-pos-voucher-code]");
         const voucherMessage = root.querySelector("[data-pos-voucher-message]");
+        const voucherRefresh = root.querySelector("[data-pos-voucher-refresh]");
+        const voucherClear = root.querySelector("[data-pos-voucher-clear]");
+        const voucherSelected = root.querySelector("[data-pos-voucher-selected]");
+        const voucherList = root.querySelector("[data-pos-voucher-list]");
         const customerPhone = root.querySelector("[data-pos-customer-phone]");
         const customerMessage = root.querySelector("[data-pos-customer-message]");
         const cartEmpty = root.querySelector("[data-pos-cart-empty]");
@@ -48,6 +53,8 @@
             food: new Map(),
             paymentMethod: "",
             voucher: null,
+            availableVouchers: [],
+            voucherListLoadedFor: null,
         };
 
         const modalState = {
@@ -61,7 +68,21 @@
         const clearVoucher = () => {
             state.voucher = null;
             if (voucherCodeInput) voucherCodeInput.value = "";
+            if (voucherSelected) {
+                voucherSelected.hidden = true;
+                voucherSelected.replaceChildren();
+            }
+            if (voucherClear) voucherClear.hidden = true;
             if (voucherMessage) voucherMessage.textContent = "";
+        };
+
+        const resetVoucherList = () => {
+            state.availableVouchers = [];
+            state.voucherListLoadedFor = null;
+            if (voucherList) {
+                voucherList.hidden = true;
+                voucherList.replaceChildren();
+            }
         };
 
         const selectedSubtotal = () => {
@@ -70,6 +91,10 @@
                 .reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
             return seatTotal + foodTotal;
         };
+
+        const hasFoodItems = () => state.food.size > 0;
+
+        const isStandaloneFoodOrder = () => hasFoodItems() && state.seats.length === 0 && !state.showtime?.id;
 
         const syncHiddenInputs = () => {
             if (showtimeInput) showtimeInput.value = state.showtime?.id || "";
@@ -154,6 +179,7 @@
                         state.food.delete(String(row.id));
                     }
                     clearVoucher();
+                    resetVoucherList();
                     sync();
                 });
                 cartList.appendChild(item);
@@ -161,7 +187,150 @@
             if (window.lucide) window.lucide.createIcons();
         };
 
+        const renderSelectedVoucher = () => {
+            if (!voucherSelected) return;
+            voucherSelected.replaceChildren();
+            if (!state.voucher) {
+                voucherSelected.hidden = true;
+                if (voucherClear) voucherClear.hidden = true;
+                return;
+            }
+            const item = document.createElement("div");
+            item.className = "hc-staff-pos-voucher-chip";
+            item.innerHTML = `
+                <i data-lucide="badge-percent"></i>
+                <span>
+                    <strong></strong>
+                    <small></small>
+                </span>
+            `;
+            item.querySelector("strong").textContent = state.voucher.title || state.voucher.code || "Voucher";
+            item.querySelector("small").textContent = `${state.voucher.code || ""} - ${currency(state.voucher.discountAmount || 0)}`;
+            voucherSelected.appendChild(item);
+            voucherSelected.hidden = false;
+            if (voucherClear) voucherClear.hidden = false;
+            if (window.lucide) window.lucide.createIcons();
+        };
+
+        const applyVoucher = async (code, source = null) => {
+            const voucherCode = String(code || "").trim();
+            const subtotal = selectedSubtotal();
+            if (!voucherCode || subtotal <= 0) {
+                clearVoucher();
+                if (voucherMessage) voucherMessage.textContent = "Nhap voucher sau khi da chon san pham.";
+                sync();
+                return;
+            }
+            try {
+                const params = new URLSearchParams({
+                    code: voucherCode,
+                    orderValue: String(subtotal),
+                });
+                if (root.dataset.branchId) params.set("branchId", root.dataset.branchId);
+                const response = await fetch(`/api/ui/vouchers/preview?${params.toString()}`, {
+                    headers: { "Accept": "application/json" },
+                });
+                if (!response.ok) throw new Error("voucher-preview-failed");
+                const preview = await response.json();
+                if (!preview.valid) {
+                    clearVoucher();
+                    if (voucherMessage) voucherMessage.textContent = "Voucher khong hop le hoac chua du dieu kien.";
+                } else {
+                    state.voucher = {
+                        code: preview.code || voucherCode,
+                        title: source?.title || preview.code || voucherCode,
+                        discountAmount: preview.discountAmount || 0,
+                    };
+                    if (voucherInput) voucherInput.value = state.voucher.code;
+                    if (voucherMessage) voucherMessage.textContent = `Da ap dung ${preview.displayDiscount || currency(preview.discountAmount)}.`;
+                }
+            } catch (error) {
+                clearVoucher();
+                if (voucherMessage) voucherMessage.textContent = "Khong the kiem tra voucher luc nay.";
+            }
+            sync();
+        };
+
+        const renderVoucherList = (message = "") => {
+            if (!voucherList) return;
+            voucherList.replaceChildren();
+            const vouchers = state.availableVouchers || [];
+            if (message || vouchers.length === 0) {
+                const empty = document.createElement("div");
+                empty.className = "hc-staff-pos-voucher-empty";
+                empty.textContent = message || "Khong co voucher phu hop voi hoa don hien tai.";
+                voucherList.appendChild(empty);
+                voucherList.hidden = false;
+                return;
+            }
+            vouchers.forEach((voucher) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "hc-staff-pos-voucher-option";
+                button.disabled = voucher.eligible === false;
+                button.innerHTML = `
+                    <span>
+                        <strong></strong>
+                        <small></small>
+                    </span>
+                    <b></b>
+                `;
+                button.querySelector("strong").textContent = voucher.title || voucher.code || "Voucher";
+                button.querySelector("small").textContent = [
+                    voucher.code,
+                    voucher.branchScope,
+                    voucher.validUntil ? `Den ${voucher.validUntil}` : "",
+                    voucher.displayMinOrderValue ? `Toi thieu ${voucher.displayMinOrderValue}` : "",
+                ].filter(Boolean).join(" - ");
+                button.querySelector("b").textContent = voucher.discountLabel || "";
+                button.addEventListener("click", () => applyVoucher(voucher.code, voucher));
+                voucherList.appendChild(button);
+            });
+            voucherList.hidden = false;
+        };
+
+        const loadAvailableVouchers = async () => {
+            const subtotal = selectedSubtotal();
+            if (subtotal <= 0) {
+                resetVoucherList();
+                renderVoucherList("Chon san pham truoc khi xem voucher.");
+                if (voucherMessage) voucherMessage.textContent = "Chon san pham truoc khi xem voucher.";
+                return;
+            }
+            const cacheKey = `${root.dataset.branchId || ""}:${subtotal}`;
+            if (state.voucherListLoadedFor === cacheKey && state.availableVouchers.length > 0) {
+                renderVoucherList();
+                return;
+            }
+            renderVoucherList("Dang tai voucher...");
+            try {
+                const params = new URLSearchParams({ orderValue: String(subtotal) });
+                if (root.dataset.branchId) params.set("branchId", root.dataset.branchId);
+                const response = await fetch(`/api/ui/vouchers/available?${params.toString()}`, {
+                    headers: { "Accept": "application/json" },
+                });
+                if (!response.ok) throw new Error("voucher-list-failed");
+                state.availableVouchers = await response.json();
+                state.voucherListLoadedFor = cacheKey;
+                renderVoucherList();
+                if (voucherMessage) {
+                    voucherMessage.textContent = state.availableVouchers.length > 0
+                        ? "Chon voucher co san hoac nhap ma thu cong."
+                        : "Khong co voucher phu hop voi hoa don hien tai.";
+                }
+            } catch (error) {
+                state.availableVouchers = [];
+                state.voucherListLoadedFor = null;
+                renderVoucherList("Khong the tai voucher luc nay.");
+                if (voucherMessage) voucherMessage.textContent = "Khong the tai voucher luc nay.";
+            }
+        };
+
         const sync = () => {
+            const standaloneFoodOrder = isStandaloneFoodOrder();
+            if (standaloneFoodOrder && state.voucher) {
+                clearVoucher();
+            }
             const subtotal = selectedSubtotal();
             const discount = state.voucher ? Number(state.voucher.discountAmount || 0) : 0;
             const total = Math.max(0, subtotal - discount);
@@ -169,9 +338,21 @@
             if (discountNode) discountNode.textContent = currency(discount);
             if (totalNode) totalNode.textContent = currency(total);
             if (voucherCodeInput) voucherCodeInput.value = state.voucher?.code || "";
-            if (submitButton) {
-                submitButton.disabled = !(state.showtime?.id && state.seats.length > 0 && state.paymentMethod);
+            if (form) {
+                form.action = standaloneFoodOrder
+                    ? (form.dataset.fnbAction || "/staff/food-orders")
+                    : (form.dataset.bookingAction || "/booking");
             }
+            if (voucherInput) voucherInput.disabled = standaloneFoodOrder;
+            if (voucherApply) voucherApply.disabled = standaloneFoodOrder;
+            if (voucherRefresh) voucherRefresh.disabled = standaloneFoodOrder;
+            if (submitButton) {
+                const bookingReady = state.showtime?.id && state.seats.length > 0 && state.paymentMethod;
+                const foodOrderReady = standaloneFoodOrder && state.paymentMethod;
+                submitButton.disabled = !(bookingReady || foodOrderReady);
+                submitButton.textContent = standaloneFoodOrder ? "Tao don F&B" : "Thanh toan";
+            }
+            renderSelectedVoucher();
             renderCart();
             syncHiddenInputs();
         };
@@ -320,6 +501,7 @@
             state.showtime = modalState.showtime;
             state.seats = modalState.seats.map((seat) => ({ ...seat }));
             clearVoucher();
+            resetVoucherList();
             timeButtons.forEach((button) => {
                 button.classList.toggle("is-selected", String(button.dataset.posShowtimeId) === String(state.showtime.id));
             });
@@ -362,6 +544,7 @@
                     state.food.delete(id);
                 }
                 clearVoucher();
+                resetVoucherList();
                 sync();
             };
             item.querySelector("[data-pos-food-decrease]")?.addEventListener("click", () => {
@@ -380,40 +563,24 @@
             });
         });
 
-        root.querySelector("[data-pos-voucher-apply]")?.addEventListener("click", async () => {
-            const code = voucherInput?.value?.trim() || "";
-            const subtotal = selectedSubtotal();
-            if (!code || subtotal <= 0) {
-                clearVoucher();
-                if (voucherMessage) voucherMessage.textContent = "Nhap voucher sau khi da chon san pham.";
-                sync();
+        voucherApply?.addEventListener("click", () => {
+            if (isStandaloneFoodOrder()) {
+                if (voucherMessage) voucherMessage.textContent = "Voucher chi ap dung cho hoa don dat ve.";
                 return;
             }
-            try {
-                const params = new URLSearchParams({
-                    code,
-                    orderValue: String(subtotal),
-                });
-                if (root.dataset.branchId) params.set("branchId", root.dataset.branchId);
-                const response = await fetch(`/api/ui/vouchers/preview?${params.toString()}`, {
-                    headers: { "Accept": "application/json" },
-                });
-                if (!response.ok) throw new Error("voucher-preview-failed");
-                const preview = await response.json();
-                if (!preview.valid) {
-                    clearVoucher();
-                    if (voucherMessage) voucherMessage.textContent = "Voucher khong hop le hoac chua du dieu kien.";
-                } else {
-                    state.voucher = {
-                        code: preview.code || code,
-                        discountAmount: preview.discountAmount || 0,
-                    };
-                    if (voucherMessage) voucherMessage.textContent = `Da ap dung ${preview.displayDiscount || currency(preview.discountAmount)}.`;
-                }
-            } catch (error) {
-                clearVoucher();
-                if (voucherMessage) voucherMessage.textContent = "Khong the kiem tra voucher luc nay.";
+            applyVoucher(voucherInput?.value || "");
+        });
+        voucherRefresh?.addEventListener("click", () => {
+            if (isStandaloneFoodOrder()) {
+                resetVoucherList();
+                if (voucherMessage) voucherMessage.textContent = "Voucher chi ap dung cho hoa don dat ve.";
+                return;
             }
+            loadAvailableVouchers();
+        });
+        voucherClear?.addEventListener("click", () => {
+            clearVoucher();
+            if (voucherInput) voucherInput.value = "";
             sync();
         });
 
@@ -432,6 +599,7 @@
             state.food.clear();
             state.paymentMethod = "";
             clearVoucher();
+            resetVoucherList();
             closeSeatModal();
             timeButtons.forEach((button) => button.classList.remove("is-selected"));
             paymentButtons.forEach((button) => button.classList.remove("is-selected"));

@@ -87,6 +87,32 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     })
     Page<Booking> findByUser_UserId(Integer userId, Pageable pageable);
 
+    @Query(value = """
+            SELECT b.bookingId
+            FROM Booking b
+            WHERE b.user.userId = :userId
+            """,
+            countQuery = """
+            SELECT COUNT(b)
+            FROM Booking b
+            WHERE b.user.userId = :userId
+            """)
+    Page<Integer> findBookingIdsByUserId(@Param("userId") Integer userId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {
+            "user",
+            "showtime",
+            "showtime.movie",
+            "showtime.hall",
+            "showtime.hall.branch",
+            "payment",
+            "promotion",
+            "tickets",
+            "tickets.seat"
+    })
+    @Query("SELECT DISTINCT b FROM Booking b WHERE b.bookingId IN :bookingIds")
+    List<Booking> findListDetailsByBookingIdIn(@Param("bookingIds") List<Integer> bookingIds);
+
     long countByShowtime_ShowtimeId(Integer showtimeId);
 
     @Query(value = """

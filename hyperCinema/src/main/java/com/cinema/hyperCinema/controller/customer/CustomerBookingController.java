@@ -6,10 +6,14 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.cinema.hyperCinema.exception.booking.BookingManagementException;
 import com.cinema.hyperCinema.security.CustomUserDetails;
+import com.cinema.hyperCinema.service.booking.BookingManagementService;
 import com.cinema.hyperCinema.service.booking.BookingService;
 import com.cinema.hyperCinema.service.ui.WorkspaceUiDataService;
 
@@ -18,11 +22,14 @@ import com.cinema.hyperCinema.service.ui.WorkspaceUiDataService;
 public class CustomerBookingController {
 
     private final BookingService bookingService;
+    private final BookingManagementService bookingManagementService;
     private final WorkspaceUiDataService workspaceUiDataService;
 
     public CustomerBookingController(BookingService bookingService,
+                                     BookingManagementService bookingManagementService,
                                      WorkspaceUiDataService workspaceUiDataService) {
         this.bookingService = bookingService;
+        this.bookingManagementService = bookingManagementService;
         this.workspaceUiDataService = workspaceUiDataService;
     }
 
@@ -37,7 +44,7 @@ public class CustomerBookingController {
         Sort.Direction sortDirection = "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
         String sortField = mapSortField(sort);
         PageRequest pageable = PageRequest.of(Math.max(0, page), normalizeSize(size),
-                Sort.by(sortDirection, sortField));
+                bookingSort(sortDirection, sortField));
         var bookingPage = bookingService.findBookingsByUser(userDetails.getUser().getUserId(), pageable);
         model.addAttribute("page", bookingPage);
         model.addAttribute("bookings", bookingPage.getContent());
@@ -50,6 +57,26 @@ public class CustomerBookingController {
         model.addAttribute("rewardPoints", dashboard.getRewardPoints());
         model.addAttribute("membershipProgress", dashboard.getMembershipProgress());
         return "my/bookings";
+    }
+
+    @GetMapping("/{bookingId}")
+    public String bookingDetail(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                @PathVariable Integer bookingId,
+                                RedirectAttributes redirectAttributes,
+                                Model model) {
+        try {
+            var booking = bookingManagementService.findCustomerDetail(userDetails.getUser(), bookingId);
+            var dashboard = workspaceUiDataService.getCustomerDashboard(userDetails.getUser());
+            model.addAttribute("booking", booking);
+            model.addAttribute("customerName", dashboard.getCustomerName());
+            model.addAttribute("membershipTier", dashboard.getMembershipTier());
+            model.addAttribute("rewardPoints", dashboard.getRewardPoints());
+            model.addAttribute("membershipProgress", dashboard.getMembershipProgress());
+            return "my/booking-detail";
+        } catch (BookingManagementException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessageKey());
+            return "redirect:/my/bookings";
+        }
     }
 
     private int normalizeSize(int size) {
@@ -67,5 +94,14 @@ public class CustomerBookingController {
             case "bookingId" -> "bookingId";
             default -> "createdAt";
         };
+    }
+
+    private Sort bookingSort(Sort.Direction direction, String sortField) {
+        Sort primary = Sort.by(direction, sortField);
+        if ("bookingId".equals(sortField)) {
+            return primary;
+        }
+        Sort.Direction tieBreakerDirection = "createdAt".equals(sortField) ? direction : Sort.Direction.DESC;
+        return primary.and(Sort.by(tieBreakerDirection, "bookingId"));
     }
 }

@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,600&family=Poppins:wght@300;400;500;600;700;800&family=Righteous&display=swap">
-    <link rel="stylesheet" th:href="@{/css/theme.css(v=2.4)}">
+    <link rel="stylesheet" th:href="@{/css/theme.css(v=2.5)}">
 </head>
 
 <body>
@@ -125,6 +125,7 @@
         <a th:href="@{/staff/booking}" th:classappend="${active == 'booking'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="ticket"></i>Bán vé</a>
         <a th:href="@{/staff/bookings}" th:classappend="${active == 'bookings'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="tickets"></i>Đơn booking</a>
         <a th:href="@{/staff/payments}" th:classappend="${active == 'payments'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="credit-card"></i>Giao dịch</a>
+        <a th:href="@{/staff/food-orders}" th:classappend="${active == 'food-orders'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="popcorn"></i>Đơn F&amp;B</a>
         <a th:href="@{/my/notifications}" th:classappend="${active == 'notifications'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="bell"></i>Thông báo</a>
     </div>
     <div class="hc-sidebar-footer">
