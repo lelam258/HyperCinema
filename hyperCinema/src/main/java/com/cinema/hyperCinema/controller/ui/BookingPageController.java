@@ -4,6 +4,7 @@ import com.cinema.hyperCinema.dto.admin.movie.response.MovieDetailView;
 import com.cinema.hyperCinema.dto.ui.booking.SeatAvailabilityView;
 import com.cinema.hyperCinema.dto.ui.workspace.CustomerDashboardView;
 import com.cinema.hyperCinema.model.*;
+import com.cinema.hyperCinema.repository.*;
 import com.cinema.hyperCinema.security.CustomUserDetails;
 import com.cinema.hyperCinema.service.booking.BookingService;
 import com.cinema.hyperCinema.service.movie.MovieService;
@@ -32,15 +33,21 @@ public class BookingPageController {
     private final WorkspaceUiDataService workspaceUiDataService;
     private final MovieService movieService;
     private final BookingService bookingService;
+    private final ReviewRepository reviewRepository;
+    private final ReviewInteractionRepository reviewInteractionRepository;
 
     public BookingPageController(BookingUiDataService bookingUiDataService,
                                  WorkspaceUiDataService workspaceUiDataService,
                                  MovieService movieService,
-                                 BookingService bookingService) {
+                                 BookingService bookingService,
+                                 ReviewRepository reviewRepository,
+                                 ReviewInteractionRepository reviewInteractionRepository) {
         this.bookingUiDataService = bookingUiDataService;
         this.workspaceUiDataService = workspaceUiDataService;
         this.movieService = movieService;
         this.bookingService = bookingService;
+        this.reviewRepository = reviewRepository;
+        this.reviewInteractionRepository = reviewInteractionRepository;
     }
 
     @GetMapping("/booking")
@@ -68,26 +75,26 @@ public class BookingPageController {
             if (selectedShowtime.isPresent()) {
                 addSelectedShowtimeModel(selectedShowtime.get(), user, model);
             } else if (customerFlow) {
-            return "redirect:/my/dashboard";
+                return "redirect:/my/dashboard";
+            }
         }
-    }
         return customerFlow ? "my/booking" : "staff/booking";
-}
+    }
 
-@GetMapping("/booking/movies/{movieId}")
-public String movieBooking(@PathVariable Integer movieId,
-                           @RequestParam(required = false)
-                           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-                           @RequestParam(required = false) String city,
-                           @AuthenticationPrincipal CustomUserDetails userDetails,
-                           Model model) {
-    User user = userDetails.getUser();
-    addCustomerModel(user, model);
+    @GetMapping("/booking/movies/{movieId}")
+    public String movieBooking(@PathVariable Integer movieId,
+                               @RequestParam(required = false)
+                               @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                               @RequestParam(required = false) String city,
+                               @AuthenticationPrincipal CustomUserDetails userDetails,
+                               Model model) {
+        User user = userDetails.getUser();
+        addCustomerModel(user, model);
 
-    MovieDetailView movie = movieService.findById(movieId);
-    LocalDate selectedDate = date != null ? date : LocalDate.now();
-    List<Showtime> upcomingShowtimes = bookingService.findUpcomingShowtimesForMovie(movieId);
-    List<String> cities = upcomingShowtimes.stream()
+        MovieDetailView movie = movieService.findById(movieId);
+        LocalDate selectedDate = date != null ? date : LocalDate.now();
+        List<Showtime> upcomingShowtimes = bookingService.findUpcomingShowtimesForMovie(movieId);
+        List<String> cities = upcomingShowtimes.stream()
                 .map(showtime -> showtime.getHall().getBranch().getCity())
                 .filter(Objects::nonNull)
                 .distinct()
@@ -106,6 +113,54 @@ public String movieBooking(@PathVariable Integer movieId,
         model.addAttribute("selectedDate", selectedDate);
         model.addAttribute("branchSchedules", branchSchedules);
         model.addAttribute("hasShowtimes", !branchSchedules.isEmpty());
+
+        // Load reviews and stats for initial display
+        java.util.Set<Integer> likedReviewIds = new java.util.HashSet<>();
+        java.util.Set<Integer> dislikedReviewIds = new java.util.HashSet<>();
+        if (userDetails != null) {
+            List<ReviewInteraction> interactions = reviewInteractionRepository.findByUser_UserId(userDetails.getUser().getUserId());
+            for (ReviewInteraction interaction : interactions) {
+                if (interaction.getIsLike()) {
+                    likedReviewIds.add(interaction.getReview().getReviewId());
+                } else {
+                    dislikedReviewIds.add(interaction.getReview().getReviewId());
+                }
+            }
+        }
+        model.addAttribute("likedReviewIds", likedReviewIds);
+        model.addAttribute("dislikedReviewIds", dislikedReviewIds);
+
+        List<Review> allReviews = reviewRepository.findByMovieIdWithUser(movieId);
+
+        double averageRating = 0.0;
+        if (!allReviews.isEmpty()) {
+            averageRating = allReviews.stream().mapToDouble(Review::getRating).average().orElse(0.0);
+            averageRating = Math.round(averageRating * 10.0) / 10.0;
+        }
+        model.addAttribute("averageRating", averageRating);
+        model.addAttribute("reviewCount", allReviews.size());
+        model.addAttribute("reviewsListForStats", allReviews);
+
+        // Apply pagination (5 items per page) for default load
+        String sort = "newest";
+        Integer ratingFilter = null;
+        int page = 0;
+
+        List<Review> filteredReviews = allReviews;
+        int pageSize = 5;
+        int totalElements = filteredReviews.size();
+        int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+        int fromIndex = page * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, totalElements);
+        List<Review> paginatedReviews = (fromIndex < totalElements) ? filteredReviews.subList(fromIndex, toIndex) : Collections.emptyList();
+
+        model.addAttribute("reviews", paginatedReviews);
+        model.addAttribute("sort", sort);
+        model.addAttribute("ratingFilter", ratingFilter);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalReviewsCount", totalElements);
+
         return "my/movie-detail";
     }
 

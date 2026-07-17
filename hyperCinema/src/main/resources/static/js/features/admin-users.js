@@ -28,6 +28,14 @@
         wrapper.classList.remove('flex');
     }
 
+    function closeMenus(except) {
+        document.querySelectorAll('[data-user-menu].is-open').forEach((menu) => {
+            if (menu === except) return;
+            menu.classList.remove('is-open');
+            menu.closest('.hc-users-menu-wrap')?.querySelector('[data-user-menu-toggle]')?.setAttribute('aria-expanded', 'false');
+        });
+    }
+
     function toast(message, type) {
         const container = document.querySelector('[data-user-toasts]');
         if (!container) return;
@@ -75,6 +83,19 @@
     }
 
     document.addEventListener('click', async (event) => {
+        const menuToggle = event.target.closest('[data-user-menu-toggle]');
+        if (menuToggle) {
+            const menu = menuToggle.closest('.hc-users-menu-wrap')?.querySelector('[data-user-menu]');
+            if (!menu) return;
+            const shouldOpen = !menu.classList.contains('is-open');
+            closeMenus(menu);
+            menu.classList.toggle('is-open', shouldOpen);
+            menuToggle.setAttribute('aria-expanded', String(shouldOpen));
+            return;
+        }
+
+        if (!event.target.closest('[data-user-menu]')) closeMenus();
+
         const closeButton = event.target.closest('[data-user-close]');
         if (closeButton) {
             closeModal(closeButton);
@@ -83,6 +104,7 @@
 
         const opener = event.target.closest('[data-user-open]');
         if (opener) {
+            closeMenus();
             const name = opener.dataset.userOpen;
             if (name === 'edit') fillEditForm(opener);
             if (name === 'role' || name === 'reset') fillIdForm(name, opener);
@@ -98,6 +120,7 @@
 
         const action = event.target.closest('[data-user-action]');
         if (!action) return;
+        closeMenus();
         const userId = action.dataset.userId;
         if (!userId) return;
 
@@ -192,6 +215,80 @@
 
     document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
+        closeMenus();
         document.querySelectorAll('[data-user-modal].flex').forEach(closeModal);
     });
+
+    const userRows = Array.from(document.querySelectorAll('[data-user-row]'));
+    const pageSizeSelect = document.querySelector('[data-user-page-size]');
+    const pageInfo = document.querySelector('[data-user-page-info]');
+    const pagination = document.querySelector('[data-user-pagination]');
+    let currentPage = 1;
+
+    function pageButton(label, page, options) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'hc-users-page-btn' + (options?.active ? ' is-active' : '');
+        button.textContent = label;
+        button.disabled = Boolean(options?.disabled);
+        if (options?.active) button.setAttribute('aria-current', 'page');
+        button.addEventListener('click', () => {
+            currentPage = page;
+            renderUserPage();
+        });
+        return button;
+    }
+
+    function pageGap() {
+        const gap = document.createElement('span');
+        gap.className = 'hc-users-page-gap';
+        gap.textContent = '…';
+        return gap;
+    }
+
+    function renderUserPagination(totalPages) {
+        if (!pagination) return;
+        pagination.replaceChildren();
+        if (totalPages <= 1) return;
+
+        pagination.appendChild(pageButton('‹', currentPage - 1, { disabled: currentPage === 1 }));
+        const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+        const end = Math.min(totalPages, Math.max(currentPage + 2, 5));
+
+        if (start > 1) {
+            pagination.appendChild(pageButton('1', 1));
+            if (start > 2) pagination.appendChild(pageGap());
+        }
+        for (let page = start; page <= end; page += 1) {
+            pagination.appendChild(pageButton(String(page), page, { active: page === currentPage }));
+        }
+        if (end < totalPages) {
+            if (end < totalPages - 1) pagination.appendChild(pageGap());
+            pagination.appendChild(pageButton(String(totalPages), totalPages));
+        }
+        pagination.appendChild(pageButton('›', currentPage + 1, { disabled: currentPage === totalPages }));
+    }
+
+    function renderUserPage() {
+        if (!userRows.length || !pageSizeSelect) return;
+        const pageSize = Number(pageSizeSelect.value) || 10;
+        const totalPages = Math.max(1, Math.ceil(userRows.length / pageSize));
+        currentPage = Math.max(1, Math.min(currentPage, totalPages));
+        const start = (currentPage - 1) * pageSize;
+        const end = Math.min(start + pageSize, userRows.length);
+
+        userRows.forEach((row, index) => {
+            row.hidden = index < start || index >= end;
+        });
+        if (pageInfo) pageInfo.textContent = `Hiển thị ${start + 1}–${end} trong ${userRows.length} người dùng`;
+        renderUserPagination(totalPages);
+    }
+
+    pageSizeSelect?.addEventListener('change', () => {
+        currentPage = 1;
+        closeMenus();
+        renderUserPage();
+    });
+
+    renderUserPage();
 })();

@@ -89,17 +89,23 @@ public class CustomerReviewController {
         int pageSize = 5;
         int totalElements = bookings.size();
         int totalPages = (int) Math.ceil((double) totalElements / pageSize);
-        int fromIndex = page * pageSize;
+        int currentPage = totalPages == 0 ? 0 : Math.max(0, Math.min(page, totalPages - 1));
+        int fromIndex = currentPage * pageSize;
         int toIndex = Math.min(fromIndex + pageSize, totalElements);
         List<Booking> paginatedBookings = (fromIndex < totalElements) ? bookings.subList(fromIndex, toIndex) : Collections.emptyList();
+        int paginationStart = Math.max(0, currentPage - 2);
+        int paginationEnd = Math.min(totalPages - 1, paginationStart + 4);
+        paginationStart = Math.max(0, paginationEnd - 4);
 
         model.addAttribute("customerName", user.getFullName());
         model.addAttribute("bookings", paginatedBookings);
         model.addAttribute("movieReviewMap", movieReviewMap);
         model.addAttribute("now", LocalDateTime.now());
         model.addAttribute("active", "reviews");
-        model.addAttribute("currentPage", page);
+        model.addAttribute("currentPage", currentPage);
         model.addAttribute("totalPages", totalPages);
+        model.addAttribute("paginationStart", paginationStart);
+        model.addAttribute("paginationEnd", paginationEnd);
         model.addAttribute("totalReviewsCount", totalElements);
         model.addAttribute("search", search);
         model.addAttribute("filter", filter);

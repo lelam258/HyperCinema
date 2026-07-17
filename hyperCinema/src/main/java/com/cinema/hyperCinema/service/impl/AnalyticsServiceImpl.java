@@ -56,7 +56,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         // Timeline Data: day by day
         Map<String, Map<String, Long>> timeline = new LinkedHashMap<>();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM dd", Locale.ENGLISH);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM");
         for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
             String label = d.format(fmt);
             Map<String, Long> dayData = new HashMap<>();
@@ -105,7 +105,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         }
 
         List<Map<String, Object>> breakdownList = new ArrayList<>();
-        DateTimeFormatter tableDateFmt = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH);
+        DateTimeFormatter tableDateFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         for (Map.Entry<String, Map<LocalDate, Map<String, Object>>> bEntry : branchGroup.entrySet()) {
             String branchName = bEntry.getKey();
             for (Map.Entry<LocalDate, Map<String, Object>> dEntry : bEntry.getValue().entrySet()) {
@@ -395,7 +395,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             // Excel exports are generated as CSV for native download compatibility
             if ("ticket".equalsIgnoreCase(reportType)) {
                 Map<String, Object> data = getTicketSalesReport(from, to, branchId);
-                pw.println("Branch,Date,Tickets Sold,Revenue,Avg Price");
+                pw.println("Chi nhánh,Ngày,Số vé bán,Doanh thu,Giá trung bình");
                 List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("breakdown");
                 for (Map<String, Object> row : list) {
                     pw.println(String.format("\"%s\",\"%s\",%s,%s,%.2f",
@@ -403,7 +403,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 }
             } else if ("fb".equalsIgnoreCase(reportType)) {
                 Map<String, Object> data = getFoodSalesReport(from, to, branchId);
-                pw.println("Product Name,Category,Quantity Sold,Unit Price,Total Revenue");
+                pw.println("Tên sản phẩm,Danh mục,Số lượng bán,Đơn giá,Tổng doanh thu");
                 List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("products");
                 for (Map<String, Object> row : list) {
                     pw.println(String.format("\"%s\",\"%s\",%s,%s,%s",
@@ -411,7 +411,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 }
             } else if ("occupancy".equalsIgnoreCase(reportType)) {
                 Map<String, Object> data = getHallOccupancyReport(from, to, branchId);
-                pw.println("Hall,Branch,Capacity,Seats Used,Occupancy Rate,Peak Hour");
+                pw.println("Phòng chiếu,Chi nhánh,Sức chứa,Ghế đã bán,Tỷ lệ lấp đầy,Giờ cao điểm");
                 List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("halls");
                 for (Map<String, Object> row : list) {
                     pw.println(String.format("\"%s\",\"%s\",%s,%s,%.2f%%,\"%s\"",
@@ -421,44 +421,46 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         } else if ("pdf".equalsIgnoreCase(format)) {
             // PDF export formatted as simple plain text dashboard ready for print
             pw.println("==========================================================");
-            pw.println("                 HYPERCINEMA OPERATIONAL REPORT           ");
+            pw.println("                 BÁO CÁO HOẠT ĐỘNG HYPERCINEMA            ");
             pw.println("==========================================================");
-            pw.println("Report Type: " + reportType.toUpperCase() + " SALES");
-            pw.println("Date Range:  " + from + " to " + to);
-            pw.println("Generated At: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            pw.println("Loại báo cáo:  DOANH THU VÉ");
+            pw.println("Khoảng thời gian:  " + from.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " đến " + to.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            pw.println("Thời gian xuất:   " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
             pw.println("----------------------------------------------------------");
 
             if ("ticket".equalsIgnoreCase(reportType)) {
                 Map<String, Object> data = getTicketSalesReport(from, to, branchId);
-                pw.println("TOTAL REVENUE:       " + data.get("totalRevenue") + " VND");
-                pw.println("TOTAL TICKETS SOLD:  " + data.get("totalTickets"));
-                pw.println("AVERAGE PRICE:       " + String.format("%.2f", data.get("avgPrice")) + " VND");
+                pw.println("TỔNG DOANH THU:      " + String.format("%,d VND", data.get("totalRevenue")));
+                pw.println("TỔNG SỐ VÉ BÁN:      " + String.format("%,d", data.get("totalTickets")));
+                pw.println("GIÁ VÉ TRUNG BÌNH:   " + String.format("%,.0f VND", data.get("avgPrice")));
                 pw.println("----------------------------------------------------------");
-                pw.println(String.format("%-25s %-15s %-10s %-15s", "Branch", "Date", "Tickets", "Revenue"));
+                pw.println(String.format("%-25s %-15s %-10s %-15s", "Chi nhánh", "Ngày", "Số vé", "Doanh thu"));
                 List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("breakdown");
                 for (Map<String, Object> row : list) {
                     pw.println(String.format("%-25s %-15s %-10s %-15s",
-                            row.get("branch"), row.get("date"), row.get("tickets"), row.get("revenue") + " VND"));
+                            row.get("branch"), row.get("date"), row.get("tickets"), String.format("%,d VND", row.get("revenue"))));
                 }
             } else if ("fb".equalsIgnoreCase(reportType)) {
                 Map<String, Object> data = getFoodSalesReport(from, to, branchId);
-                pw.println("TOTAL F&B REVENUE:   " + data.get("totalRevenue") + " VND");
-                pw.println("FOOD UNITS:          " + data.get("foodUnits"));
-                pw.println("BEVERAGE UNITS:      " + data.get("beverageUnits"));
+                pw.println("TỔNG DOANH THU F&B:  " + String.format("%,d VND", data.get("totalRevenue")));
+                pw.println("SỐ LƯỢNG ĐỒ ĂN:      " + String.format("%,d", data.get("foodUnits")));
+                pw.println("SỐ LƯỢNG ĐỒ UỐNG:    " + String.format("%,d", data.get("beverageUnits")));
                 pw.println("----------------------------------------------------------");
-                pw.println(String.format("%-25s %-15s %-10s %-15s", "Product Name", "Category", "Qty", "Revenue"));
+                pw.println(String.format("%-25s %-15s %-10s %-15s", "Tên sản phẩm", "Danh mục", "Số lượng", "Doanh thu"));
                 List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("products");
                 for (Map<String, Object> row : list) {
+                    String category = (String) row.get("category");
+                    String categoryVi = "Food".equalsIgnoreCase(category) ? "Đồ ăn" : ("Beverage".equalsIgnoreCase(category) ? "Đồ uống" : "Combo");
                     pw.println(String.format("%-25s %-15s %-10s %-15s",
-                            row.get("name"), row.get("category"), row.get("qty"), row.get("revenue") + " VND"));
+                            row.get("name"), categoryVi, row.get("qty"), String.format("%,d VND", row.get("revenue"))));
                 }
             } else if ("occupancy".equalsIgnoreCase(reportType)) {
                 Map<String, Object> data = getHallOccupancyReport(from, to, branchId);
-                pw.println("AVG OCCUPANCY:       " + String.format("%.2f%%", data.get("avgOccupancy")));
-                pw.println("PEAK BOOKING HOUR:   " + data.get("peakHour"));
-                pw.println("MOST USED HALL:      " + data.get("mostUsedHall"));
+                pw.println("TỶ LỆ LẤP ĐẦY TB:    " + String.format("%.2f%%", data.get("avgOccupancy")));
+                pw.println("GIỜ CAO ĐIỂM:        " + data.get("peakHour"));
+                pw.println("PHÒNG BẬN NHẤT:      " + data.get("mostUsedHall"));
                 pw.println("----------------------------------------------------------");
-                pw.println(String.format("%-20s %-20s %-10s %-10s %-10s", "Hall", "Branch", "Capacity", "Used", "Occupancy"));
+                pw.println(String.format("%-20s %-20s %-10s %-10s %-10s", "Phòng chiếu", "Chi nhánh", "Sức chứa", "Ghế bán", "Lấp đầy"));
                 List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("halls");
                 for (Map<String, Object> row : list) {
                     pw.println(String.format("%-20s %-20s %-10s %-10s %-10.1f%%",
@@ -506,7 +508,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     private List<FoodOrder> getFoodOrders(LocalDateTime start, LocalDateTime end, Integer branchId) {
         String jpql = "SELECT DISTINCT fo FROM FoodOrder fo JOIN FETCH fo.items i JOIN FETCH i.foodItem JOIN fo.booking bk JOIN bk.showtime s JOIN s.hall h " +
-                "WHERE fo.status = 'Completed' AND fo.createdAt BETWEEN :start AND :end ";
+                "WHERE fo.status = 'CONFIRMED' AND fo.createdAt BETWEEN :start AND :end ";
         if (branchId != null) {
             jpql += "AND h.branch.branchId = :branchId ";
         }
