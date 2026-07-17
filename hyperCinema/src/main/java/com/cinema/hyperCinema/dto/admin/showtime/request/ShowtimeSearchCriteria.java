@@ -1,6 +1,8 @@
 package com.cinema.hyperCinema.dto.admin.showtime.request;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jakarta.validation.constraints.Min;
@@ -9,7 +11,16 @@ import jakarta.validation.constraints.PositiveOrZero;
 public class ShowtimeSearchCriteria {
 
     public static final Set<String> ALLOWED_SORT_FIELDS =
-            Set.of("showtimeId", "startTime", "endTime", "price");
+            Set.of("showtimeId", "startTime", "endTime", "movieTitle", "branchName", "hallName", "price");
+
+    public static final Map<String, String> SORT_PROPERTIES = Map.of(
+            "showtimeId", "showtimeId",
+            "startTime", "startTime",
+            "endTime", "endTime",
+            "movieTitle", "movie.title",
+            "branchName", "hall.branch.name",
+            "hallName", "hall.name",
+            "price", "price");
 
     public static final Set<String> ALLOWED_DIRECTIONS =
             Set.of("ASC", "DESC");
@@ -21,6 +32,8 @@ public class ShowtimeSearchCriteria {
     public static final int DEFAULT_PAGE = 0;
 
     public static final int DEFAULT_SIZE = 10;
+
+    public static final List<Integer> ALLOWED_PAGE_SIZES = List.of(10, 20, 50);
 
     private String keyword;
 
@@ -51,7 +64,7 @@ public class ShowtimeSearchCriteria {
     }
 
     public void setKeyword(String keyword) {
-        this.keyword = keyword;
+        this.keyword = normalizeKeyword(keyword);
     }
 
     public Integer getMovieId() {
@@ -122,7 +135,7 @@ public class ShowtimeSearchCriteria {
     }
 
     public void setSize(Integer size) {
-        this.size = (size == null || size < 1) ? DEFAULT_SIZE : size;
+        this.size = (size == null || !ALLOWED_PAGE_SIZES.contains(size)) ? DEFAULT_SIZE : size;
     }
 
     public String getSort() {
@@ -151,11 +164,24 @@ public class ShowtimeSearchCriteria {
     }
 
     public ShowtimeSearchCriteria normalize() {
+        setKeyword(this.keyword);
         setPage(this.page);
         setSize(this.size);
         setSort(this.sort);
         setDirection(this.direction);
         setTimeState(this.timeState);
         return this;
+    }
+
+    public String toSortProperty() {
+        return SORT_PROPERTIES.getOrDefault(sort, DEFAULT_SORT);
+    }
+
+    private static String normalizeKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+        String trimmed = keyword.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

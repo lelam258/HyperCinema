@@ -144,7 +144,10 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer> {
             JOIN FETCH s.movie m
             JOIN FETCH s.hall h
             JOIN FETCH h.branch b
-            WHERE (:keyword IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :keyword, '%')))
+            WHERE (:keyword IS NULL
+                   OR LOWER(m.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(h.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:movieId IS NULL OR m.movieId = :movieId)
               AND (:branchId IS NULL OR b.branchId = :branchId)
               AND (:hallId IS NULL OR h.hallId = :hallId)
