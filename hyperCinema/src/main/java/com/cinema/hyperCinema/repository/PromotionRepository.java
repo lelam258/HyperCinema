@@ -14,9 +14,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PromotionRepository
-        extends JpaRepository<Promotion, Integer>, JpaSpecificationExecutor<Promotion> {
-
+public interface PromotionRepository extends JpaRepository<Promotion, Integer>, JpaSpecificationExecutor<Promotion> {
+    /** Tìm voucher theo Code (không phân biệt hoa thường). */
     Optional<Promotion> findByCodeIgnoreCase(String code);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

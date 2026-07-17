@@ -1,15 +1,19 @@
 {
   "view": "admin/branches/branch-list",
-  "title": "Quản lý Rạp - HyperCinema",
+  "title": "Quản lý Chi nhánh - HyperCinema",
   "links": [
-    "/",
     "/admin/analytics",
     "/admin/branches",
     "/admin/branches/11",
+    "/admin/branches/11/edit",
     "/admin/branches/12",
+    "/admin/branches/12/edit",
     "/admin/branches/new",
-    "/admin/branches?keyword=cgv&amp;city=Hà Nội&amp;status=Active&amp;sort=name&amp;direction=DESC",
-    "/admin/branches?keyword=cgv&amp;status=Active&amp;city=&amp;languageId=&amp;genreId=&amp;releaseDateFrom=&amp;releaseDateTo=&amp;sort=name&amp;direction=ASC&amp;page=1&amp;size=10",
+    "/admin/branches?keyword=cgv&amp;city=H%C3%A0%20N%E1%BB%99i&amp;status=Active&amp;sort=city&amp;direction=ASC",
+    "/admin/branches?keyword=cgv&amp;city=H%C3%A0%20N%E1%BB%99i&amp;status=Active&amp;sort=createdAt&amp;direction=ASC",
+    "/admin/branches?keyword=cgv&amp;city=H%C3%A0%20N%E1%BB%99i&amp;status=Active&amp;sort=name&amp;direction=ASC&amp;page=1&amp;size=10",
+    "/admin/branches?keyword=cgv&amp;city=H%C3%A0%20N%E1%BB%99i&amp;status=Active&amp;sort=name&amp;direction=DESC",
+    "/admin/branches?keyword=cgv&amp;city=H%C3%A0%20N%E1%BB%99i&amp;status=Active&amp;sort=status&amp;direction=ASC",
     "/admin/dashboard",
     "/admin/halls",
     "/admin/movies",
@@ -28,23 +32,47 @@
         "select:status=options[|Active|Inactive|Maintenance];selected=Active",
         "submit:Tìm kiếm"
       ]
+    },
+    {
+      "action": "/admin/branches/11",
+      "method": "post",
+      "fields": [
+        "_method(hidden)=delete",
+        "submit:"
+      ]
+    },
+    {
+      "action": "/admin/branches/12",
+      "method": "post",
+      "fields": [
+        "_method(hidden)=delete",
+        "submit:"
+      ]
     }
   ],
   "tables": [
     {
       "columnCount": 7,
       "headers": [
-        "Tên rạp",
+        "Tên chi nhánh",
         "Thành phố",
         "Địa chỉ",
-        "Điện thoại",
+        "Số điện thoại",
         "Trạng thái",
-        "Phòng chiếu",
+        "Số phòng chiếu",
         "Ngày tạo"
       ]
     }
   ],
-  "pagination": null,
+  "pagination": {
+    "info": "Trang 1 / 2 - tổng 12 chi nhánh",
+    "controls": [
+      "page-disabled:Trước",
+      "page-current:1",
+      "a:2(page=1)",
+      "a:Sau(page=1)"
+    ]
+  },
   "text": [
     "H",
     "HyperCinema",
@@ -58,43 +86,37 @@
     "Thông báo & Hỗ trợ",
     "Quản lý Giao dịch",
     "Đăng xuất",
-    "Branches",
-    "Quản lý Rạp",
-    "Theo dõi chi nhánh, thành phố, trạng thái vận hành và số phòng chiếu.",
-    "Tạo rạp",
+    "Quản lý Chi nhánh",
+    "Tạo mới",
     "Giá trị trạng thái không hợp lệ đã bị bỏ qua khi tìm kiếm.",
-    "Bộ lọc",
-    "Tìm kiếm rạp",
-    "Từ khóa",
+    "Từ khoá",
     "Thành phố",
     "Trạng thái",
     "Tất cả",
-    "Hoạt động",
-    "Ngừng hoạt động",
-    "Bảo trì",
-    "Xóa lọc",
+    "Active",
+    "Inactive",
+    "Maintenance",
     "Tìm kiếm",
-    "Danh sách",
-    "12 rạp",
-    "Tên rạp",
+    "Tên chi nhánh",
+    "▲",
     "Thành phố",
     "Địa chỉ",
-    "Điện thoại",
+    "Số điện thoại",
     "Trạng thái",
-    "Phòng chiếu",
+    "Số phòng chiếu",
     "Ngày tạo",
     "CGV Vincom",
     "Hà Nội",
     "191 Bà Triệu",
     "0241234567",
-    "Hoạt động",
+    "Active",
     "8",
     "15/01/2025 09:30",
     "Lotte Cinema",
     "Hồ Chí Minh",
     "54 Liễu Giai",
     "0289876543",
-    "Bảo trì",
+    "Maintenance",
     "5",
     "15/01/2025 09:30",
     "Trang",
@@ -103,6 +125,7 @@
     "2",
     "- tổng",
     "12",
+    "chi nhánh",
     "Trước",
     "1",
     "2",

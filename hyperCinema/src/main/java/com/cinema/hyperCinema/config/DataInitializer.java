@@ -45,6 +45,8 @@ public class DataInitializer implements CommandLineRunner {
     private final FoodOrderItemRepository foodOrderItemRepository;
     private final AuditLogRepository auditLogRepository;
     private final MembershipPlanRepository membershipPlanRepository;
+    private final NotificationRepository notificationRepository;
+    private final ReviewRepository reviewRepository;
     private final UserMembershipRepository userMembershipRepository;
     private final LoyaltyPointRepository loyaltyPointRepository;
     private final JdbcTemplate jdbcTemplate;
@@ -71,6 +73,8 @@ public class DataInitializer implements CommandLineRunner {
             FoodOrderItemRepository foodOrderItemRepository,
             AuditLogRepository auditLogRepository,
             MembershipPlanRepository membershipPlanRepository,
+            NotificationRepository notificationRepository,
+            ReviewRepository reviewRepository,
             UserMembershipRepository userMembershipRepository,
             LoyaltyPointRepository loyaltyPointRepository,
             JdbcTemplate jdbcTemplate,
@@ -93,6 +97,8 @@ public class DataInitializer implements CommandLineRunner {
         this.foodOrderItemRepository = foodOrderItemRepository;
         this.auditLogRepository = auditLogRepository;
         this.membershipPlanRepository = membershipPlanRepository;
+        this.notificationRepository = notificationRepository;
+        this.reviewRepository = reviewRepository;
         this.userMembershipRepository = userMembershipRepository;
         this.loyaltyPointRepository = loyaltyPointRepository;
         this.jdbcTemplate = jdbcTemplate;
@@ -126,6 +132,8 @@ public class DataInitializer implements CommandLineRunner {
         ensureSeedCustomers();
         ensureMembershipData();
         ensureBookingsAndPayments();
+        userRepository.findByUsername("admin").ifPresent(this::seedInitialNotifications);
+        seedReviews(movieRepository.findAll(), userRepository.findAll());
 
         System.out.println("=== DataInitializer: Hoàn tất seed dữ liệu mẫu ===");
     }
@@ -990,5 +998,109 @@ public class DataInitializer implements CommandLineRunner {
             auditLogRepository.save(log);
         }
     }
-}
 
+    private void seedInitialNotifications(User admin) {
+        List<Notification> existing = notificationRepository.findAll();
+        for (Notification notification : existing) {
+            if ("System Maintenance Scheduled".equalsIgnoreCase(notification.getTitle())) {
+                notification.setTitle("Lich bao tri he thong");
+                notification.setMessage("He thong se bao tri tu 02:00 den 04:00. Dich vu co the tam thoi gian doan.");
+                notificationRepository.save(notification);
+            } else if ("New Feature Available".equalsIgnoreCase(notification.getTitle())) {
+                notification.setTitle("Tinh nang moi kha dung");
+                notification.setMessage("Tinh nang thong ke moi da san sang de su dung.");
+                notificationRepository.save(notification);
+            } else if ("Security Alert".equalsIgnoreCase(notification.getTitle())) {
+                notification.setTitle("Canh bao bao mat");
+                notification.setMessage("Phat hien dang nhap tu thiet bi moi. Vui long kiem tra lai tai khoan.");
+                notificationRepository.save(notification);
+            } else if ("Account Verification Required".equalsIgnoreCase(notification.getTitle())) {
+                notification.setTitle("Yeu cau xac minh tai khoan");
+                notification.setMessage("Vui long xac minh email de tiep tuc su dung day du tinh nang.");
+                notificationRepository.save(notification);
+            }
+        }
+
+        if (notificationRepository.count() > 0) return;
+
+        Notification maintenance = new Notification();
+        maintenance.setUser(admin);
+        maintenance.setTitle("Lich bao tri he thong");
+        maintenance.setMessage("He thong se bao tri tu 02:00 den 04:00. Dich vu co the tam thoi gian doan.");
+        maintenance.setType("System");
+        maintenance.setRead(true);
+        maintenance.setCreatedAt(LocalDateTime.now().minusHours(9));
+        notificationRepository.save(maintenance);
+
+        Notification feature = new Notification();
+        feature.setUser(admin);
+        feature.setTitle("Tinh nang moi kha dung");
+        feature.setMessage("Tinh nang thong ke moi da san sang de su dung.");
+        feature.setType("Promotion");
+        feature.setRead(false);
+        feature.setCreatedAt(LocalDateTime.now().minusDays(1));
+        notificationRepository.save(feature);
+
+        Notification security = new Notification();
+        security.setUser(admin);
+        security.setTitle("Canh bao bao mat");
+        security.setMessage("Phat hien dang nhap tu thiet bi moi. Vui long kiem tra lai tai khoan.");
+        security.setType("Alert");
+        security.setRead(true);
+        security.setCreatedAt(LocalDateTime.now().minusDays(1));
+        notificationRepository.save(security);
+
+        Notification verification = new Notification();
+        verification.setUser(admin);
+        verification.setTitle("Yeu cau xac minh tai khoan");
+        verification.setMessage("Vui long xac minh email de tiep tuc su dung day du tinh nang.");
+        verification.setType("System");
+        verification.setRead(true);
+        verification.setCreatedAt(LocalDateTime.now().minusDays(5));
+        notificationRepository.save(verification);
+    }
+
+    private void seedReviews(List<Movie> movies, List<User> users) {
+        if (reviewRepository.count() > 0) return;
+
+        List<Review> reviews = new ArrayList<>();
+        List<User> customers = users.stream()
+                .filter(u -> u.getRole() != null && "Customer".equalsIgnoreCase(u.getRole().getName()))
+                .toList();
+
+        if (customers.isEmpty() || movies.isEmpty()) return;
+
+        for (Movie movie : movies) {
+            String title = movie.getTitle();
+            if ("Avengers: Doomsday".equalsIgnoreCase(title)) {
+                reviews.add(createReview(customers.get(0 % customers.size()), movie, 5, "Phim rat dang xem, ky xao an tuong.", 1));
+                reviews.add(createReview(customers.get(1 % customers.size()), movie, 4, "Cot truyen loi cuon va ket thuc bat ngo.", 2));
+            } else if ("Lat Mat 8".equalsIgnoreCase(title) || "Lật Mặt 8".equalsIgnoreCase(title)) {
+                reviews.add(createReview(customers.get(2 % customers.size()), movie, 5, "Phim gia dinh cam dong va giai tri.", 1));
+                reviews.add(createReview(customers.get(3 % customers.size()), movie, 4, "Dien xuat tu nhien, rat phu hop xem cung gia dinh.", 4));
+            } else if ("Godzilla x Kong".equalsIgnoreCase(title)
+                    || "Godzilla x Kong: The New Empire".equalsIgnoreCase(title)) {
+                reviews.add(createReview(customers.get(4 % customers.size()), movie, 4, "Hanh dong da mat, am thanh tot.", 2));
+                reviews.add(createReview(customers.get(5 % customers.size()), movie, 5, "Trai nghiem rap rat cuon.", 6));
+            } else if ("Dune: Part Two".equalsIgnoreCase(title)) {
+                reviews.add(createReview(customers.get(6 % customers.size()), movie, 5, "Hinh anh dep va am nhac xuat sac.", 3));
+                reviews.add(createReview(customers.get(7 % customers.size()), movie, 4, "Phim dai nhung van giu duoc mach cam xuc.", 7));
+            }
+        }
+
+        if (!reviews.isEmpty()) {
+            reviewRepository.saveAll(reviews);
+            System.out.println("=== DataInitializer: Seeded " + reviews.size() + " reviews ===");
+        }
+    }
+
+    private Review createReview(User user, Movie movie, Integer rating, String comment, int daysAgo) {
+        Review review = new Review();
+        review.setUser(user);
+        review.setMovie(movie);
+        review.setRating(rating);
+        review.setComment(comment);
+        review.setCreatedAt(LocalDateTime.now().minusDays(daysAgo).minusHours(random.nextInt(12)));
+        return review;
+    }
+}

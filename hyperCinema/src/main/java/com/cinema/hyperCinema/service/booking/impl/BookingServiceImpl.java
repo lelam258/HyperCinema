@@ -8,6 +8,9 @@ import com.cinema.hyperCinema.service.booking.BookingService;
 import com.cinema.hyperCinema.service.pricing.HallSeatTypePricingService;
 import com.cinema.hyperCinema.service.voucher.VoucherApplicationService;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,7 +76,12 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<Booking> findRecentBookingsByUser(Integer userId, int limit) {
-        return bookingRepository.findByUser_UserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, limit));
+        return findBookingsByUser(userId, PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"))).getContent();
+    }
+
+    @Override
+    public Page<Booking> findBookingsByUser(Integer userId, Pageable pageable) {
+        return bookingRepository.findByUser_UserId(userId, pageable);
     }
 
     @Override

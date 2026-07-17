@@ -31,7 +31,8 @@ public class SecurityConfig {
                 .ignoringRequestMatchers("/api/**")
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate", "/api/auth/verify-email").permitAll()
+                .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password", "/activate",
+                        "/api/auth/verify-email", "/movies", "/movies/**", "/feedback", "/feedback/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/vnpay-return", "/api/payment/vnpay-return").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 // ===== Branch Management — REQ 11.1, 11.2, 11.4 =====

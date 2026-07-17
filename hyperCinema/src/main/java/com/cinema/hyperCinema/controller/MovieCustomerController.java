@@ -8,6 +8,7 @@ import com.cinema.hyperCinema.model.Showtime;
 import com.cinema.hyperCinema.repository.GenreRepository;
 import com.cinema.hyperCinema.repository.LanguageRepository;
 import com.cinema.hyperCinema.repository.ShowtimeRepository;
+import com.cinema.hyperCinema.security.CustomUserDetails;
 import com.cinema.hyperCinema.service.movie.MovieService;
 import com.cinema.hyperCinema.service.seat.SeatService;
 import lombok.RequiredArgsConstructor;

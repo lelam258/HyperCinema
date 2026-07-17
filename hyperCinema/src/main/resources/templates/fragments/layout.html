@@ -42,6 +42,7 @@
     <div class="hc-sidebar-scroll">
         <div class="hc-nav-section">Quản trị hệ thống</div>
         <a th:href="@{/admin/dashboard}" th:classappend="${active == 'dashboard'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a th:href="@{/admin/analytics}" th:classappend="${active == 'analytics'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="bar-chart-3"></i>Thong ke</a>
         <a th:href="@{/admin/branches}" th:classappend="${active == 'branches'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="building-2"></i>Quản lý Chi nhánh</a>
         <a th:href="@{/admin/halls}" th:classappend="${active == 'halls'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="panel-top"></i>Quản lý Phòng chiếu</a>
         <a th:href="@{/admin/showtimes}" th:classappend="${active == 'showtimes'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="calendar-clock"></i>Quản lý Suất chiếu</a>
@@ -50,6 +51,8 @@
         <a th:href="@{/admin/vouchers}" th:classappend="${active == 'vouchers'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="badge-percent"></i>Quản lý Voucher</a>
         <a th:href="@{/admin/reports/revenue}" th:classappend="${active == 'revenue-reports'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="chart-no-axes-combined"></i>Báo cáo doanh thu</a>
         <a th:href="@{/admin/users}" th:classappend="${active == 'users'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="users"></i>Vai trò &amp; Người dùng</a>
+        <a th:href="@{/admin/notifications}" th:classappend="${active == 'notifications'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="bell"></i>Thong bao</a>
+        <a th:href="@{/admin/payments}" th:classappend="${active == 'payments'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="credit-card"></i>Giao dich</a>
     </div>
     <div class="hc-sidebar-footer">
         <form th:action="@{/logout}" method="post">
@@ -69,10 +72,13 @@
     <div class="hc-sidebar-scroll">
         <div class="hc-nav-section">Quản lý</div>
         <a th:href="@{/manager/dashboard}" th:classappend="${active == 'dashboard'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a th:href="@{/manager/analytics}" th:classappend="${active == 'analytics'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="bar-chart-3"></i>Thong ke</a>
         <a th:href="@{/manager/bookings}" th:classappend="${active == 'bookings'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="tickets"></i>Đơn booking</a>
         <a th:href="@{/manager/reports/revenue}" th:classappend="${active == 'revenue-reports'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="chart-no-axes-combined"></i>Báo cáo doanh thu</a>
         <a th:href="@{/admin/halls}" th:classappend="${active == 'halls'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="panel-top"></i>Quản lý Phòng chiếu</a>
         <a th:href="@{/admin/showtimes}" th:classappend="${active == 'showtimes'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="calendar-clock"></i>Quản lý Suất chiếu</a>
+        <a th:href="@{/admin/payments}" th:classappend="${active == 'payments'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="credit-card"></i>Giao dich</a>
+        <a th:href="@{/my/notifications}" th:classappend="${active == 'notifications'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="bell"></i>Thong bao</a>
     </div>
     <div class="hc-sidebar-footer">
         <form th:action="@{/logout}" method="post">
@@ -92,8 +98,11 @@
     <div class="hc-sidebar-scroll">
         <div class="hc-nav-section">Chi nhánh</div>
         <a th:href="@{/branch/dashboard}" th:classappend="${active == 'dashboard'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a th:href="@{/branch/analytics}" th:classappend="${active == 'analytics'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="bar-chart-3"></i>Thong ke</a>
         <a th:href="@{/admin/halls}" th:classappend="${active == 'halls'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="panel-top"></i>Quản lý Phòng chiếu</a>
         <a th:href="@{/admin/showtimes}" th:classappend="${active == 'showtimes'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="calendar-clock"></i>Quản lý Suất chiếu</a>
+        <a th:href="@{/admin/payments}" th:classappend="${active == 'payments'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="credit-card"></i>Giao dich</a>
+        <a th:href="@{/my/notifications}" th:classappend="${active == 'notifications'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="bell"></i>Thong bao</a>
     </div>
     <div class="hc-sidebar-footer">
         <form th:action="@{/logout}" method="post">
@@ -115,6 +124,8 @@
         <a th:href="@{/staff/dashboard}" th:classappend="${active == 'dashboard'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="home"></i>Trang chủ</a>
         <a th:href="@{/staff/booking}" th:classappend="${active == 'booking'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="ticket"></i>Bán vé</a>
         <a th:href="@{/staff/bookings}" th:classappend="${active == 'bookings'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="tickets"></i>Đơn booking</a>
+        <a th:href="@{/staff/payments}" th:classappend="${active == 'payments'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="credit-card"></i>Giao dich</a>
+        <a th:href="@{/my/notifications}" th:classappend="${active == 'notifications'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="bell"></i>Thong bao</a>
     </div>
     <div class="hc-sidebar-footer">
         <form th:action="@{/logout}" method="post">
@@ -139,6 +150,9 @@
         <a th:href="@{/my/dashboard}" th:classappend="${active == 'home'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="home"></i>Trang chủ Phim</a>
         <a th:href="@{/my/dashboard#phim-dang-chieu}" th:classappend="${active == 'booking'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="ticket"></i>Mua vé ngay</a>
         <a th:href="@{/my/bookings}" th:classappend="${active == 'bookings'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="tickets"></i>Vé của tôi</a>
+        <a th:href="@{/my/payments}" th:classappend="${active == 'payments'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="credit-card"></i>Giao dich</a>
+        <a th:href="@{/my/notifications}" th:classappend="${active == 'notifications'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="bell"></i>Thong bao</a>
+        <a th:href="@{/my/reviews}" th:classappend="${active == 'reviews'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="star"></i>Danh gia cua toi</a>
         <a th:href="@{/my/tai-khoan}" th:classappend="${active == 'account'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="user"></i>Tài khoản</a>
     </div>
     <div class="hc-sidebar-footer hc-customer-sidebar-footer">

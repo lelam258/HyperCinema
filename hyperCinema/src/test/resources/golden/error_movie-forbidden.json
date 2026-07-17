@@ -5,7 +5,7 @@
     "/admin/movies"
   ],
   "i18nKeys": [
-    "#{__${errorKey}__}",
+    "#{${errorKey}}",
     "#{movie.access_denied}"
   ],
   "forms": [],

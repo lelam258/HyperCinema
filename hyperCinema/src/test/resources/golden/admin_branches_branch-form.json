@@ -2,7 +2,6 @@
   "view": "admin/branches/branch-form",
   "title": "Tạo Chi nhánh",
   "links": [
-    "/",
     "/admin/analytics",
     "/admin/branches",
     "/admin/dashboard",
@@ -45,9 +44,7 @@
     "Thông báo & Hỗ trợ",
     "Quản lý Giao dịch",
     "Đăng xuất",
-    "← Quay lại",
     "Tạo Chi nhánh",
-    "Cập nhật thông tin vận hành, địa chỉ và giờ mở cửa.",
     "Tên chi nhánh",
     "Địa chỉ",
     "Thành phố",
