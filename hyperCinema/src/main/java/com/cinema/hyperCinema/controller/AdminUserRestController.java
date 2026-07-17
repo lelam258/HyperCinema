@@ -48,9 +48,6 @@ public class AdminUserRestController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable("id") Integer id, @RequestBody UserRequest request) {
         try {
-            if (isCustomer(id)) {
-                return customerMutationDenied();
-            }
             User userDetails = new User();
             userDetails.setFullName(request.getName());
             userDetails.setUsername(request.getUsername());
@@ -74,9 +71,6 @@ public class AdminUserRestController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable("id") Integer id) {
         try {
-            if (isCustomer(id)) {
-                return customerMutationDenied();
-            }
             userService.deleteUser(id);
             return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
         } catch (Exception e) {
@@ -97,9 +91,6 @@ public class AdminUserRestController {
     @PostMapping("/{id}/assign-role")
     public ResponseEntity<?> assignRole(@PathVariable("id") Integer id, @RequestBody Integer roleId) {
         try {
-            if (isCustomer(id)) {
-                return customerMutationDenied();
-            }
             User updated = userService.assignUserRole(id, roleId);
             return ResponseEntity.ok(updated);
         } catch (Exception e) {
@@ -110,9 +101,6 @@ public class AdminUserRestController {
     @PostMapping("/{id}/reset-password")
     public ResponseEntity<?> resetPassword(@PathVariable("id") Integer id, @RequestBody Map<String, String> body) {
         try {
-            if (isCustomer(id)) {
-                return customerMutationDenied();
-            }
             String newPassword = body.get("password");
             if (newPassword == null || newPassword.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Password cannot be empty"));
@@ -122,17 +110,6 @@ public class AdminUserRestController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
-    }
-
-    private boolean isCustomer(Integer userId) {
-        User user = userService.getUserById(userId);
-        return user.getRole() != null && "Customer".equalsIgnoreCase(user.getRole().getName());
-    }
-
-    private ResponseEntity<?> customerMutationDenied() {
-        return ResponseEntity.status(403).body(Map.of(
-                "message", "Tài khoản Customer chỉ được phép xem và khóa/mở khóa"
-        ));
     }
 
     @Getter @Setter

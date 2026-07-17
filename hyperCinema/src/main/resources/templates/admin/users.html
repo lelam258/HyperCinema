@@ -6,67 +6,56 @@
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
 <nav th:replace="~{fragments/layout :: adminSidebar('users')}"></nav>
 
-<main class="hc-page hc-users-page">
+<main class="hc-page">
     <div class="hc-page-inner">
-        <header class="hc-users-heading">
+        <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
-                <p class="hc-users-eyebrow">Quản trị hệ thống</p>
                 <h1 class="hc-page-title">Quản lý người dùng</h1>
-                <p class="hc-page-subtitle">Theo dõi tài khoản, vai trò và trạng thái truy cập trong một màn hình.</p>
+                <p class="hc-page-subtitle">Quản lý tài khoản, vai trò, trạng thái và quyền truy cập.</p>
             </div>
-        </header>
+            <button type="button" class="hc-btn hc-btn-primary" data-user-open="add">Thêm người dùng</button>
+        </div>
 
         <div th:replace="~{fragments/components :: flashes}"></div>
 
-        <section class="hc-users-toolbar" aria-label="Tìm kiếm và lọc người dùng">
-            <form th:action="@{/admin/users}" method="get" class="hc-users-filter-form">
-                <label class="hc-users-search" for="search">
-                    <i data-lucide="search" aria-hidden="true"></i>
-                    <span class="sr-only">Tìm kiếm</span>
-                    <input id="search" name="search" type="search"
-                           placeholder="Tìm theo tên, username, email hoặc vai trò..."
-                           th:value="${search}">
-                </label>
-                <label class="hc-users-select" for="role">
-                    <span class="sr-only">Vai trò</span>
-                    <select id="role" name="role">
-                        <option value="" th:selected="${selectedRole == null or #strings.isEmpty(selectedRole)}">Tất cả vai trò</option>
+        <section class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4" aria-label="Thống kê người dùng">
+            <div class="hc-card p-5"><span class="hc-label">Tổng người dùng</span><strong class="text-3xl text-white" th:text="${stats.total}">0</strong></div>
+            <div class="hc-card p-5"><span class="hc-label">Đang hoạt động</span><strong class="text-3xl text-success" th:text="${stats.active}">0</strong></div>
+            <div class="hc-card p-5"><span class="hc-label">Tạm khóa</span><strong class="text-3xl text-warning" th:text="${stats.inactive}">0</strong></div>
+            <div class="hc-card p-5"><span class="hc-label">Administrator</span><strong class="text-3xl text-accent" th:text="${stats.admins}">0</strong></div>
+        </section>
+
+        <section class="hc-card mb-6 p-5" aria-label="Bộ lọc người dùng">
+            <form th:action="@{/admin/users}" method="get" class="grid grid-cols-1 items-end gap-4 md:grid-cols-[2fr_1fr_1fr_auto]">
+                <div>
+                    <label for="search" class="hc-label">Tìm kiếm</label>
+                    <input class="hc-input" id="search" name="search" type="search" placeholder="Tên, username, email hoặc vai trò" th:value="${search}">
+                </div>
+                <div>
+                    <label for="role" class="hc-label">Vai trò</label>
+                    <select class="hc-input" id="role" name="role">
+                        <option value="" th:selected="${selectedRole == null or #strings.isEmpty(selectedRole)}">Tất cả</option>
                         <option th:each="r : ${roles}" th:value="${r.name}" th:text="${r.name}" th:selected="${selectedRole == r.name}">Role</option>
                     </select>
-                    <i data-lucide="chevron-down" aria-hidden="true"></i>
-                </label>
-                <label class="hc-users-select" for="status">
-                    <span class="sr-only">Trạng thái</span>
-                    <select id="status" name="status">
-                        <option value="" th:selected="${selectedStatus == null or #strings.isEmpty(selectedStatus)}">Tất cả trạng thái</option>
+                </div>
+                <div>
+                    <label for="status" class="hc-label">Trạng thái</label>
+                    <select class="hc-input" id="status" name="status">
+                        <option value="" th:selected="${selectedStatus == null or #strings.isEmpty(selectedStatus)}">Tất cả</option>
                         <option value="Active" th:selected="${selectedStatus == 'Active'}">Hoạt động</option>
-                        <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}">Đã khóa</option>
+                        <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}">Ngừng hoạt động</option>
                     </select>
-                    <i data-lucide="chevron-down" aria-hidden="true"></i>
-                </label>
-                <button type="submit" class="hc-users-filter-btn" title="Áp dụng bộ lọc">
-                    <i data-lucide="list-filter" aria-hidden="true"></i><span>Lọc</span>
-                </button>
-                <a th:if="${(search != null and !#strings.isEmpty(search)) or (selectedRole != null and !#strings.isEmpty(selectedRole)) or (selectedStatus != null and !#strings.isEmpty(selectedStatus))}"
-                   th:href="@{/admin/users}" class="hc-users-clear-btn" title="Xóa bộ lọc">
-                    <i data-lucide="x" aria-hidden="true"></i>
-                </a>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="hc-btn hc-btn-primary">Lọc</button>
+                    <a th:href="@{/admin/users}" class="hc-btn no-underline">Xóa</a>
+                </div>
             </form>
-            <button type="button" class="hc-users-add-btn" data-user-open="add">
-                <i data-lucide="plus" aria-hidden="true"></i><span>Thêm người dùng</span>
-            </button>
         </section>
 
-        <section class="hc-users-stats" aria-label="Thống kê người dùng">
-            <article class="hc-users-stat"><span>Tổng người dùng</span><strong th:text="${stats.total}">0</strong><i data-lucide="users"></i></article>
-            <article class="hc-users-stat is-success"><span>Đang hoạt động</span><strong th:text="${stats.active}">0</strong><i data-lucide="user-check"></i></article>
-            <article class="hc-users-stat is-warning"><span>Đã khóa</span><strong th:text="${stats.inactive}">0</strong><i data-lucide="user-x"></i></article>
-            <article class="hc-users-stat is-admin"><span>Quản trị viên</span><strong th:text="${stats.admins}">0</strong><i data-lucide="shield-check"></i></article>
-        </section>
-
-        <section class="hc-users-table-card" aria-label="Danh sách người dùng">
-            <div class="hc-users-table-scroll">
-                <table class="hc-users-table">
+        <section class="hc-card overflow-hidden" aria-label="Danh sách người dùng">
+            <div class="overflow-x-auto">
+                <table class="hc-table">
                     <thead>
                     <tr>
                         <th>ID</th>
@@ -76,85 +65,42 @@
                         <th>Trạng thái</th>
                         <th>Đăng nhập gần nhất</th>
                         <th>Ngày tạo</th>
-                        <th class="is-actions">Thao tác</th>
+                        <th class="text-right">Thao tác</th>
                     </tr>
                     </thead>
-                    <tbody data-user-table-body>
-                    <tr th:if="${users == null or #lists.isEmpty(users)}" class="hc-users-empty-row">
-                        <td colspan="8">Không tìm thấy người dùng phù hợp.</td>
+                    <tbody>
+                    <tr th:if="${users == null or #lists.isEmpty(users)}">
+                        <td colspan="8" class="py-12 text-center text-cinema-muted">Không tìm thấy người dùng phù hợp.</td>
                     </tr>
-                    <tr th:each="u : ${users}" data-user-row>
-                        <td class="hc-users-id tabular-nums" th:text="${u.userId}">1</td>
+                    <tr th:each="u, stat : ${users}">
+                        <td class="tabular-nums" th:text="${u.userId}">1</td>
                         <td>
-                            <a th:href="@{/admin/users/{id}(id=${u.userId})}" th:text="${u.fullName}" class="hc-users-name">Tên người dùng</a>
-                            <span class="hc-users-username" th:text="|@${u.username}|">@username</span>
+                            <a th:href="@{/admin/users/{id}(id=${u.userId})}" th:text="${u.fullName}" class="font-semibold text-white no-underline hover:text-accent">Tên người dùng</a>
+                            <div class="text-xs text-cinema-muted" th:text="|@${u.username}|">@username</div>
                         </td>
-                        <td class="hc-users-email" th:text="${u.email}">email@example.com</td>
+                        <td th:text="${u.email}">email@example.com</td>
+                        <td><span class="hc-badge border-info/40 bg-info/10 text-info" th:text="${u.role != null ? u.role.name : 'Viewer'}">Role</span></td>
+                        <td><span th:replace="~{fragments/components :: statusBadge(${u.status})}"></span></td>
+                        <td th:text="${u.lastLogin != null ? #temporals.format(u.lastLogin, 'yyyy-MM-dd HH:mm') : 'N/A'}">N/A</td>
+                        <td th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'yyyy-MM-dd') : 'N/A'}">N/A</td>
                         <td>
-                            <span class="hc-users-role"
-                                  th:classappend="${u.role != null and (u.role.name == 'Administrator' or u.role.name == 'Admin')} ? ' is-admin' : (${u.role != null and u.role.name == 'Customer'} ? ' is-customer' : '')"
-                                  th:text="${u.role != null ? u.role.name : 'Viewer'}">Role</span>
-                        </td>
-                        <td>
-                            <span class="hc-users-status" th:classappend="${u.status == 'Active'} ? ' is-active' : ' is-inactive'">
-                                <i data-lucide="activity" aria-hidden="true"></i>
-                                <span th:text="${u.status == 'Active' ? 'Hoạt động' : 'Đã khóa'}">Hoạt động</span>
-                            </span>
-                        </td>
-                        <td class="hc-users-date" th:text="${u.lastLogin != null ? #temporals.format(u.lastLogin, 'dd/MM/yyyy HH:mm') : 'Chưa đăng nhập'}">N/A</td>
-                        <td class="hc-users-date" th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'dd/MM/yyyy') : 'N/A'}">N/A</td>
-                        <td class="is-actions">
-                            <div class="hc-users-actions">
-                                <a th:href="@{/admin/users/{id}(id=${u.userId})}" class="hc-users-icon-btn" title="Xem chi tiết" aria-label="Xem chi tiết">
-                                    <i data-lucide="eye"></i>
-                                </a>
-                                <button th:if="${u.role == null or u.role.name != 'Customer'}" type="button" class="hc-users-icon-btn"
-                                        title="Chỉnh sửa" aria-label="Chỉnh sửa" data-user-open="edit"
+                            <div class="flex justify-end gap-2">
+                                <a th:href="@{/admin/users/{id}(id=${u.userId})}" class="hc-btn px-3 py-1.5 no-underline">Xem</a>
+                                <button type="button" class="hc-btn px-3 py-1.5"
+                                        data-user-open="edit"
                                         th:attr="data-user-id=${u.userId},data-user-name=${u.fullName},data-user-username=${u.username},data-user-email=${u.email},data-user-phone=${u.phone},data-user-role=${u.role != null ? u.role.roleId : ''},data-user-status=${u.status}">
-                                    <i data-lucide="square-pen"></i>
+                                    Sửa
                                 </button>
-                                <div class="hc-users-menu-wrap">
-                                    <button type="button" class="hc-users-icon-btn" data-user-menu-toggle
-                                            th:attr="aria-controls=|user-menu-${u.userId}|" aria-expanded="false"
-                                            title="Thêm thao tác" aria-label="Thêm thao tác">
-                                        <i data-lucide="ellipsis-vertical"></i>
-                                    </button>
-                                    <div class="hc-users-menu" th:id="|user-menu-${u.userId}|" data-user-menu>
-                                        <button type="button" data-user-action="toggle" th:attr="data-user-id=${u.userId}">
-                                            <i th:attr="data-lucide=${u.status == 'Active' ? 'lock' : 'lock-open'}"></i>
-                                            <span th:text="${u.status == 'Active' ? 'Khóa tài khoản' : 'Mở tài khoản'}">Khóa tài khoản</span>
-                                        </button>
-                                        <button th:if="${u.role == null or u.role.name != 'Customer'}" type="button" data-user-open="role"
-                                                th:attr="data-user-id=${u.userId},data-user-role=${u.role != null ? u.role.roleId : ''}">
-                                            <i data-lucide="shield"></i><span>Gán vai trò</span>
-                                        </button>
-                                        <button th:if="${u.role == null or u.role.name != 'Customer'}" type="button" data-user-open="reset" th:attr="data-user-id=${u.userId}">
-                                            <i data-lucide="key-round"></i><span>Đặt lại mật khẩu</span>
-                                        </button>
-                                        <button th:if="${u.role == null or u.role.name != 'Customer'}" type="button" class="is-danger" data-user-action="delete" th:attr="data-user-id=${u.userId}">
-                                            <i data-lucide="trash-2"></i><span>Xóa người dùng</span>
-                                        </button>
-                                    </div>
-                                </div>
+                                <button type="button" class="hc-btn px-3 py-1.5" data-user-open="role" th:attr="data-user-id=${u.userId},data-user-role=${u.role != null ? u.role.roleId : ''}">Role</button>
+                                <button type="button" class="hc-btn px-3 py-1.5" data-user-action="toggle" th:attr="data-user-id=${u.userId}" th:text="${u.status == 'Active' ? 'Khóa' : 'Mở'}">Khóa</button>
+                                <button type="button" class="hc-btn px-3 py-1.5" data-user-open="reset" th:attr="data-user-id=${u.userId}">Mật khẩu</button>
+                                <button type="button" class="hc-btn px-3 py-1.5 text-danger hover:text-red-300" data-user-action="delete" th:attr="data-user-id=${u.userId}">Xóa</button>
                             </div>
                         </td>
                     </tr>
                     </tbody>
                 </table>
             </div>
-            <footer class="hc-users-table-footer" th:if="${users != null and !#lists.isEmpty(users)}">
-                <label class="hc-users-page-size">Hiển thị
-                    <select data-user-page-size>
-                        <option value="5">5</option>
-                        <option value="10" selected>10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                    </select>
-                    dòng
-                </label>
-                <p data-user-page-info>Hiển thị 1–10</p>
-                <nav class="hc-users-pagination" data-user-pagination aria-label="Phân trang người dùng"></nav>
-            </footer>
         </section>
     </div>
 
