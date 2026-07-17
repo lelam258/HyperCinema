@@ -107,6 +107,7 @@ public class SecurityConfig {
                 .requestMatchers("/admin/vouchers", "/admin/vouchers/**")
                         .hasAnyRole("ADMIN", "MANAGER", "BRANCH_MANAGER", "BRANCHMANAGER")
                 .requestMatchers("/admin/reports/revenue", "/admin/reports/revenue/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // Catch-all for /admin/**
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/manager/bookings", "/manager/bookings/**").hasRole("MANAGER")

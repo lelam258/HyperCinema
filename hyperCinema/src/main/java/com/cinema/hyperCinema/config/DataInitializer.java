@@ -676,6 +676,35 @@ public class DataInitializer implements CommandLineRunner {
     // ───────────────────── BOOKINGS + PAYMENTS ─────────────────────
     private void ensureBookingsAndPayments() {
         long existingBookings = bookingRepository.count();
+        long existingTickets = ticketRepository.count();
+        long existingFoodOrders = foodOrderRepository.count();
+
+        if (existingBookings > 0 && (existingTickets == 0 || existingFoodOrders == 0)) {
+            System.out.println("=== DataInitializer: Database out of sync (Bookings: " + existingBookings + ", Tickets: " + existingTickets + ", FoodOrders: " + existingFoodOrders + "). Clearing and re-seeding... ===");
+            try {
+                jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
+                jdbcTemplate.execute("TRUNCATE TABLE food_order_item");
+                jdbcTemplate.execute("TRUNCATE TABLE food_order");
+                jdbcTemplate.execute("TRUNCATE TABLE payment");
+                jdbcTemplate.execute("TRUNCATE TABLE ticket");
+                jdbcTemplate.execute("TRUNCATE TABLE booking");
+                jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
+                existingBookings = 0;
+            } catch (Exception e) {
+                System.out.println("=== DataInitializer: Failed to truncate, deleting in batch instead ===");
+                try {
+                    foodOrderItemRepository.deleteAllInBatch();
+                    foodOrderRepository.deleteAllInBatch();
+                    paymentRepository.deleteAllInBatch();
+                    ticketRepository.deleteAllInBatch();
+                    bookingRepository.deleteAllInBatch();
+                    existingBookings = 0;
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+
         List<User> customers = userRepository.findAll().stream()
                 .filter(user -> user.getRole() != null && "Customer".equalsIgnoreCase(user.getRole().getName()))
                 .toList();
@@ -698,9 +727,12 @@ public class DataInitializer implements CommandLineRunner {
 
         int created = 0;
         int targetToCreate = (int) (REPORT_BOOKING_SEED_TARGET - existingBookings);
+        java.util.Map<Integer, List<Seat>> seatsCache = new java.util.HashMap<>();
         for (int i = 0; created < targetToCreate; i++) {
             Showtime showtime = showtimes.get(i % showtimes.size());
-            List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(showtime.getHall().getHallId());
+            List<Seat> seats = seatsCache.computeIfAbsent(showtime.getHall().getHallId(), hallId ->
+                    seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId)
+            );
             if (seats.isEmpty()) {
                 continue;
             }
@@ -745,8 +777,11 @@ public class DataInitializer implements CommandLineRunner {
 
         int seedIndex = 0;
         java.util.Map<String, Integer> lowCoverageSlots = new java.util.HashMap<>();
+        java.util.Map<Integer, List<Seat>> seatsCache = new java.util.HashMap<>();
         for (Showtime showtime : reportShowtimes) {
-            List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(showtime.getHall().getHallId());
+            List<Seat> seats = seatsCache.computeIfAbsent(showtime.getHall().getHallId(), hallId ->
+                    seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId)
+            );
             if (seats.isEmpty()) {
                 continue;
             }

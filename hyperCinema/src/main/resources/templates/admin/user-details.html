@@ -17,12 +17,13 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <button type="button" class="hc-btn hc-btn-primary"
+                        th:if="${user.role == null or user.role.name != 'Customer'}"
                         data-user-open="edit"
                         th:attr="data-user-id=${user.userId},data-user-name=${user.fullName},data-user-username=${user.username},data-user-email=${user.email},data-user-phone=${user.phone},data-user-role=${user.role != null ? user.role.roleId : ''},data-user-status=${user.status}">
                     Chỉnh sửa
                 </button>
-                <button type="button" class="hc-btn" data-user-open="role" th:attr="data-user-id=${user.userId},data-user-role=${user.role != null ? user.role.roleId : ''}">Gán role</button>
-                <button type="button" class="hc-btn" data-user-open="reset" th:attr="data-user-id=${user.userId}">Đặt mật khẩu</button>
+                <button th:if="${user.role == null or user.role.name != 'Customer'}" type="button" class="hc-btn" data-user-open="role" th:attr="data-user-id=${user.userId},data-user-role=${user.role != null ? user.role.roleId : ''}">Gán role</button>
+                <button th:if="${user.role == null or user.role.name != 'Customer'}" type="button" class="hc-btn" data-user-open="reset" th:attr="data-user-id=${user.userId}">Đặt mật khẩu</button>
                 <button type="button" class="hc-btn text-warning" data-user-action="toggle" th:attr="data-user-id=${user.userId}" th:text="${user.status == 'Active' ? 'Khóa tài khoản' : 'Mở tài khoản'}">Khóa tài khoản</button>
             </div>
         </div>
