@@ -48,12 +48,13 @@ public class ShowtimeManagementController {
         Pageable pageable = PageRequest.of(
                 criteria.getPage(),
                 criteria.getSize(),
-                Sort.by(direction, criteria.getSort()));
+                Sort.by(direction, criteria.toSortProperty()));
 
         Page<ShowtimeListItem> page = showtimeService.search(criteria, pageable, principal.getUser());
         addContext(model, principal);
         model.addAttribute("page", page);
         model.addAttribute("criteria", criteria);
+        model.addAttribute("pageSizes", ShowtimeSearchCriteria.ALLOWED_PAGE_SIZES);
 
         return "admin/showtimes/showtime-list";
     }

@@ -23,7 +23,7 @@
         <div th:replace="~{fragments/components :: flashes}"></div>
 
         <section class="hc-card mb-6 p-5" aria-label="Bộ lọc suất chiếu">
-            <form th:action="@{/admin/showtimes}" method="get" class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-7">
+            <form th:action="@{/admin/showtimes}" method="get" class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-8">
                 <div>
                     <label for="keyword" class="hc-label">Từ khóa</label>
                     <input class="hc-input" type="text" id="keyword" name="keyword" placeholder="Phim, phòng, chi nhánh" th:value="${criteria != null ? criteria.keyword : ''}">
@@ -57,8 +57,17 @@
                     <label for="dateTo" class="hc-label">Đến ngày</label>
                     <input class="hc-input" type="date" id="dateTo" name="dateTo" th:value="${criteria != null ? criteria.dateTo : ''}">
                 </div>
+                <div>
+                    <label for="size" class="hc-label">Moi trang</label>
+                    <select class="hc-input" id="size" name="size">
+                        <option th:each="option : ${pageSizes}" th:value="${option}" th:text="${option}" th:selected="${criteria != null and criteria.size == option}">10</option>
+                    </select>
+                </div>
                 <div class="flex gap-2">
                     <input type="hidden" name="timeState" th:value="${criteria != null ? criteria.timeState : 'UPCOMING'}">
+                    <input type="hidden" name="sort" th:value="${criteria != null ? criteria.sort : 'startTime'}">
+                    <input type="hidden" name="direction" th:value="${criteria != null ? criteria.direction : 'ASC'}">
+                    <input type="hidden" name="page" value="0">
                     <button type="submit" class="hc-btn hc-btn-primary flex-1">Tìm</button>
                     <a th:href="@{/admin/showtimes}" class="hc-btn no-underline">Xóa</a>
                 </div>
@@ -66,11 +75,29 @@
         </section>
 
         <section class="hc-card overflow-hidden" aria-label="Danh sách suất chiếu">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4 text-sm text-cinema-muted">
+                <div th:if="${page != null and page.totalElements > 0}"
+                     th:text="|${page.number * page.size + 1}-${((page.number + 1) * page.size > page.totalElements ? page.totalElements : (page.number + 1) * page.size)} / ${page.totalElements} showtimes|">1-10 / 10 showtimes</div>
+                <div th:if="${page == null or page.totalElements == 0}">No matching showtimes</div>
+                <div class="flex flex-wrap items-center gap-2" th:with="nextDirection=${criteria.direction == 'ASC' ? 'DESC' : 'ASC'}">
+                    <span>Sort</span>
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:classappend="${criteria.sort == 'startTime'} ? ' hc-btn-primary' : ''"
+                       th:href="@{/admin/showtimes(keyword=${criteria.keyword},movieId=${criteria.movieId},branchId=${criteria.branchId},hallId=${criteria.hallId},dateFrom=${criteria.dateFrom},dateTo=${criteria.dateTo},timeState=${criteria.timeState},page=0,size=${criteria.size},sort='startTime',direction=${criteria.sort == 'startTime' ? nextDirection : 'ASC'})}">Start</a>
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:classappend="${criteria.sort == 'endTime'} ? ' hc-btn-primary' : ''"
+                       th:href="@{/admin/showtimes(keyword=${criteria.keyword},movieId=${criteria.movieId},branchId=${criteria.branchId},hallId=${criteria.hallId},dateFrom=${criteria.dateFrom},dateTo=${criteria.dateTo},timeState=${criteria.timeState},page=0,size=${criteria.size},sort='endTime',direction=${criteria.sort == 'endTime' ? nextDirection : 'ASC'})}">End</a>
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:classappend="${criteria.sort == 'movieTitle'} ? ' hc-btn-primary' : ''"
+                       th:href="@{/admin/showtimes(keyword=${criteria.keyword},movieId=${criteria.movieId},branchId=${criteria.branchId},hallId=${criteria.hallId},dateFrom=${criteria.dateFrom},dateTo=${criteria.dateTo},timeState=${criteria.timeState},page=0,size=${criteria.size},sort='movieTitle',direction=${criteria.sort == 'movieTitle' ? nextDirection : 'ASC'})}">Movie</a>
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:classappend="${criteria.sort == 'branchName'} ? ' hc-btn-primary' : ''"
+                       th:href="@{/admin/showtimes(keyword=${criteria.keyword},movieId=${criteria.movieId},branchId=${criteria.branchId},hallId=${criteria.hallId},dateFrom=${criteria.dateFrom},dateTo=${criteria.dateTo},timeState=${criteria.timeState},page=0,size=${criteria.size},sort='branchName',direction=${criteria.sort == 'branchName' ? nextDirection : 'ASC'})}">Branch</a>
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:classappend="${criteria.sort == 'hallName'} ? ' hc-btn-primary' : ''"
+                       th:href="@{/admin/showtimes(keyword=${criteria.keyword},movieId=${criteria.movieId},branchId=${criteria.branchId},hallId=${criteria.hallId},dateFrom=${criteria.dateFrom},dateTo=${criteria.dateTo},timeState=${criteria.timeState},page=0,size=${criteria.size},sort='hallName',direction=${criteria.sort == 'hallName' ? nextDirection : 'ASC'})}">Hall</a>
+                </div>
+            </div>
             <div class="overflow-x-auto">
                 <table class="hc-table">
                     <thead>
                     <tr>
-                        <th>Phim</th>
+                        <th><a class="text-white no-underline hover:text-accent" th:href="@{/admin/showtimes(keyword=${criteria.keyword},movieId=${criteria.movieId},branchId=${criteria.branchId},hallId=${criteria.hallId},dateFrom=${criteria.dateFrom},dateTo=${criteria.dateTo},timeState=${criteria.timeState},page=0,size=${criteria.size},sort='movieTitle',direction=${criteria.sort == 'movieTitle' and criteria.direction == 'ASC' ? 'DESC' : 'ASC'})}">Phim</a></th>
                         <th>Chi nhánh</th>
                         <th>Phòng</th>
                         <th class="text-right">Khoảng giá</th>
@@ -105,6 +132,31 @@
                     </tr>
                     </tbody>
                 </table>
+            </div>
+            <div class="pagination-bar flex flex-col gap-3 px-5 py-4 text-sm text-cinema-muted sm:flex-row sm:items-center sm:justify-between" th:if="${page != null}">
+                <div class="pagination-info">
+                    <span th:if="${page.totalElements > 0}"
+                          th:text="|${page.number * page.size + 1}-${((page.number + 1) * page.size > page.totalElements ? page.totalElements : (page.number + 1) * page.size)} / ${page.totalElements} showtimes|">1-10 / 10 showtimes</span>
+                    <span th:if="${page.totalElements == 0}">No matching showtimes</span>
+                </div>
+                <div class="pagination-controls flex flex-wrap items-center gap-2" th:if="${page.totalPages > 1}">
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:if="${!page.first}"
+                       th:href="@{/admin/showtimes(keyword=${criteria.keyword},movieId=${criteria.movieId},branchId=${criteria.branchId},hallId=${criteria.hallId},dateFrom=${criteria.dateFrom},dateTo=${criteria.dateTo},timeState=${criteria.timeState},page=0,size=${criteria.size},sort=${criteria.sort},direction=${criteria.direction})}">First</a>
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:if="${!page.first}"
+                       th:href="@{/admin/showtimes(keyword=${criteria.keyword},movieId=${criteria.movieId},branchId=${criteria.branchId},hallId=${criteria.hallId},dateFrom=${criteria.dateFrom},dateTo=${criteria.dateTo},timeState=${criteria.timeState},page=${page.number - 1},size=${criteria.size},sort=${criteria.sort},direction=${criteria.direction})}">Prev</a>
+                    <span class="hc-btn px-3 py-1.5" th:each="pageNo : ${#numbers.sequence(0, page.totalPages - 1)}"
+                          th:if="${pageNo >= page.number - 2 and pageNo <= page.number + 2}"
+                          th:classappend="${pageNo == page.number} ? ' hc-btn-primary' : ''">
+                        <span th:if="${pageNo == page.number}" th:text="${pageNo + 1}">1</span>
+                        <a th:if="${pageNo != page.number}" class="text-white no-underline"
+                           th:href="@{/admin/showtimes(keyword=${criteria.keyword},movieId=${criteria.movieId},branchId=${criteria.branchId},hallId=${criteria.hallId},dateFrom=${criteria.dateFrom},dateTo=${criteria.dateTo},timeState=${criteria.timeState},page=${pageNo},size=${criteria.size},sort=${criteria.sort},direction=${criteria.direction})}"
+                           th:text="${pageNo + 1}">2</a>
+                    </span>
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:if="${!page.last}"
+                       th:href="@{/admin/showtimes(keyword=${criteria.keyword},movieId=${criteria.movieId},branchId=${criteria.branchId},hallId=${criteria.hallId},dateFrom=${criteria.dateFrom},dateTo=${criteria.dateTo},timeState=${criteria.timeState},page=${page.number + 1},size=${criteria.size},sort=${criteria.sort},direction=${criteria.direction})}">Next</a>
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:if="${!page.last}"
+                       th:href="@{/admin/showtimes(keyword=${criteria.keyword},movieId=${criteria.movieId},branchId=${criteria.branchId},hallId=${criteria.hallId},dateFrom=${criteria.dateFrom},dateTo=${criteria.dateTo},timeState=${criteria.timeState},page=${page.totalPages - 1},size=${criteria.size},sort=${criteria.sort},direction=${criteria.direction})}">Last</a>
+                </div>
             </div>
         </section>
     </div>
