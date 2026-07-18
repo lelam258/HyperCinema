@@ -47,6 +47,12 @@ public class CustomerReviewController {
             Model model) {
         User user = userDetails.getUser();
         List<Booking> bookings = bookingRepository.findSuccessfulBookingsByUser(user.getUserId());
+        LocalDateTime now = LocalDateTime.now();
+        bookings = bookings.stream()
+                .filter(booking -> booking.getShowtime() != null
+                        && booking.getShowtime().getEndTime() != null
+                        && booking.getShowtime().getEndTime().isBefore(now))
+                .collect(Collectors.toList());
         List<Review> reviews = reviewRepository.findByUser_UserId(user.getUserId());
 
         // Create a map of Movie ID -> Review to easily lookup in thymeleaf
@@ -100,7 +106,7 @@ public class CustomerReviewController {
         model.addAttribute("customerName", user.getFullName());
         model.addAttribute("bookings", paginatedBookings);
         model.addAttribute("movieReviewMap", movieReviewMap);
-        model.addAttribute("now", LocalDateTime.now());
+        model.addAttribute("now", now);
         model.addAttribute("active", "reviews");
         model.addAttribute("currentPage", currentPage);
         model.addAttribute("totalPages", totalPages);

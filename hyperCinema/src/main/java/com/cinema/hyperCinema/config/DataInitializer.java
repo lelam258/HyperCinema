@@ -1242,13 +1242,20 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        String[] comments = {
+        Set<String> generatedReviewComments = Set.of(
                 "Phim rat hay, hinh anh dep va trai nghiem tai rap rat an tuong.",
                 "Noi dung cuon hut, dien xuat tot va am thanh trong rap rat da.",
                 "Mot bo phim dang xem, toi rat thich cach xay dung nhan vat.",
                 "Tiet tau hop ly, nhieu canh quay dep va ket thuc an tuong.",
                 "Trai nghiem giai tri tot, se gioi thieu bo phim nay cho ban be."
-        };
+        );
+        List<Review> generatedReviews = reviewRepository.findAll().stream()
+                .filter(review -> generatedReviewComments.contains(review.getComment()))
+                .toList();
+        if (!generatedReviews.isEmpty()) {
+            reviewRepository.deleteAll(generatedReviews);
+            reviewRepository.flush();
+        }
 
         for (int customerIndex = 0; customerIndex < customers.size(); customerIndex++) {
             User customer = customers.get(customerIndex);
@@ -1257,20 +1264,6 @@ public class DataInitializer implements CommandLineRunner {
                 int daysAgo = 3 + movieIndex + (customerIndex % 4);
                 Seat seat = seats.get((customerIndex + movieIndex) % seats.size());
                 ensureEndedReviewBooking(customer, movie, hall, seat, daysAgo);
-
-                // Alternate reviewed/pending pairs so every customer and every movie
-                // has representative data in both review states.
-                boolean shouldBeReviewed = (customerIndex + movieIndex) % 2 == 0;
-                if (shouldBeReviewed && reviewRepository.findByUser_UserIdAndMovie_MovieId(
-                        customer.getUserId(), movie.getMovieId()).isEmpty()) {
-                    int rating = 3 + Math.floorMod(customerIndex + movieIndex, 3);
-                    reviewRepository.save(createReview(
-                            customer,
-                            movie,
-                            rating,
-                            comments[Math.floorMod(customerIndex + movieIndex, comments.length)],
-                            Math.max(1, daysAgo - 1)));
-                }
             }
         }
     }
@@ -1285,12 +1278,9 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        LocalDateTime startTime = LocalDateTime.now()
+        LocalDateTime startTime = LocalDate.of(2026, 7, 18)
                 .minusDays(daysAgo)
-                .withHour(19)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
+                .atTime(19, 0);
         Showtime showtime = new Showtime();
         showtime.setMovie(movie);
         showtime.setHall(hall);
