@@ -28,4 +28,25 @@ public interface PromotionRepository
     boolean existsByCodeIgnoreCaseAndPromotionIdNot(String code, Integer promotionId);
 
     List<Promotion> findByStatusAndEndDateBefore(String status, LocalDateTime endDate);
+
+    @Query("""
+            SELECT p
+            FROM Promotion p
+            LEFT JOIN FETCH p.branch b
+            WHERE p.status = :status
+              AND p.startDate <= :now
+              AND p.endDate >= :now
+              AND p.usedCount < p.maxUses
+              AND p.minOrderValue <= :orderValue
+              AND (
+                    p.branchSpecific = false
+                    OR (:branchId IS NOT NULL AND b.branchId = :branchId)
+                  )
+            ORDER BY p.endDate ASC, p.createdAt DESC, p.title ASC
+            """)
+    List<Promotion> findAvailableVoucherCandidates(@Param("status") String status,
+                                                    @Param("now") LocalDateTime now,
+                                                    @Param("orderValue") long orderValue,
+                                                    @Param("branchId") Integer branchId);
 }
+
