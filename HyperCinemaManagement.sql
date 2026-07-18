@@ -97,7 +97,8 @@ CREATE TABLE [showtime] (
     [hall_id] INT FOREIGN KEY REFERENCES [hall]([hall_id]),
     [start_time] DATETIME NOT NULL,
     [end_time] DATETIME NOT NULL,
-    [price] INT NOT NULL
+    [price] INT NOT NULL,
+    [status] VARCHAR(50) NOT NULL DEFAULT 'ACTIVE'
 );
 
 CREATE TABLE [user_membership] (
@@ -325,7 +326,7 @@ CREATE TABLE `user_membership` (
     `plan_id` INT NOT NULL,
     `start_date` DATE NOT NULL,
     `end_date` DATE NOT NULL,
-    `status` VARCHAR(50) NOT NULL,            
+    `status` VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
     FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`),
     FOREIGN KEY (`plan_id`) REFERENCES `membership_plan`(`plan_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

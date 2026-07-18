@@ -11,6 +11,7 @@ import com.cinema.hyperCinema.dto.admin.food.request.FoodOrderCreateRequest;
 import com.cinema.hyperCinema.dto.admin.food.request.FoodOrderItemRequest;
 import com.cinema.hyperCinema.dto.admin.food.response.FoodOrderDetailResponse;
 import com.cinema.hyperCinema.dto.admin.food.response.FoodOrderItemResponse;
+import com.cinema.hyperCinema.dto.staff.food.StandaloneFoodOrderRequest;
 import com.cinema.hyperCinema.exception.food.FoodAccessDeniedException;
 import com.cinema.hyperCinema.exception.food.FoodOrderNotFoundException;
 import com.cinema.hyperCinema.exception.food.FoodValidationException;
@@ -105,6 +106,76 @@ public class FoodOrderServiceImpl implements FoodOrderService {
         // Save order items with orderId
         for (FoodOrderItem oi : orderItems) {
             oi.setOrderId(savedOrder.getOrderId());
+        }
+        foodOrderItemRepository.saveAll(orderItems);
+
+        return buildOrderResponse(savedOrder, orderItems);
+    }
+
+    @Override
+    public FoodOrderDetailResponse createStandaloneOrder(StandaloneFoodOrderRequest request, User actor) {
+        assertCanManageOrder(actor);
+        if (!isStaff(actor)) {
+            throw new FoodAccessDeniedException();
+        }
+        if (actor.getBranch() == null || actor.getBranch().getBranchId() == null) {
+            throw new FoodValidationException("food.order.branch.required");
+        }
+        if (request == null || request.foodItemIds() == null || request.foodItemIds().isEmpty()) {
+            throw new FoodValidationException("food.order.items.required");
+        }
+        if (request.paymentMethod() == null || request.paymentMethod().isBlank()) {
+            throw new FoodValidationException("food.order.payment_method.required");
+        }
+        if (request.foodQuantities() == null || request.foodItemIds().size() != request.foodQuantities().size()) {
+            throw new FoodValidationException("food.order.quantity.invalid");
+        }
+
+        List<FoodOrderItem> orderItems = new ArrayList<>();
+        int totalAmount = 0;
+
+        for (int i = 0; i < request.foodItemIds().size(); i++) {
+            Integer itemId = request.foodItemIds().get(i);
+            Integer quantity = request.foodQuantities().get(i);
+            if (itemId == null || quantity == null || quantity <= 0) {
+                throw new FoodValidationException("food.order.quantity.invalid");
+            }
+
+            FoodItem foodItem = foodItemRepository.findById(itemId)
+                    .orElseThrow(() -> new FoodValidationException("food.item.not_found"));
+            if (!Boolean.TRUE.equals(foodItem.getIsAvailable())) {
+                throw new FoodValidationException("food.item.unavailable");
+            }
+            if (foodItem.getStock() < quantity) {
+                throw new FoodValidationException("food.item.insufficient_stock");
+            }
+
+            int unitPrice = foodItem.getPrice();
+            totalAmount += unitPrice * quantity;
+
+            FoodOrderItem orderItem = new FoodOrderItem();
+            orderItem.setItemId(foodItem.getItemId());
+            orderItem.setFoodItem(foodItem);
+            orderItem.setQuantity(quantity);
+            orderItem.setUnitPrice(unitPrice);
+            orderItems.add(orderItem);
+        }
+
+        FoodOrder order = new FoodOrder();
+        order.setBranch(actor.getBranch());
+        order.setStaff(actor);
+        order.setCustomerPhone(normalizePhone(request.customerPhone()));
+        order.setPaymentMethod(normalizePaymentMethod(request.paymentMethod()));
+        order.setPaymentStatus("PAID");
+        order.setStatus(OrderStatus.CONFIRMED.name());
+        order.setTotalAmount(totalAmount);
+
+        FoodOrder savedOrder = foodOrderRepository.save(order);
+        for (FoodOrderItem orderItem : orderItems) {
+            orderItem.setOrderId(savedOrder.getOrderId());
+            FoodItem foodItem = orderItem.getFoodItem();
+            foodItem.setStock(foodItem.getStock() - orderItem.getQuantity());
+            foodItemRepository.save(foodItem);
         }
         foodOrderItemRepository.saveAll(orderItems);
 
@@ -225,9 +296,27 @@ public class FoodOrderServiceImpl implements FoodOrderService {
 
         FoodOrder order = foodOrderRepository.findById(orderId)
                 .orElseThrow(() -> new FoodOrderNotFoundException(orderId));
+        assertCanAccessOrder(order, actor);
 
         List<FoodOrderItem> items = foodOrderItemRepository.findByOrderId(orderId);
         return buildOrderResponse(order, items);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FoodOrderDetailResponse> findStandaloneOrders(User actor) {
+        assertCanManageOrder(actor);
+        if (!isStaff(actor)) {
+            throw new FoodAccessDeniedException();
+        }
+        if (actor.getBranch() == null || actor.getBranch().getBranchId() == null) {
+            return List.of();
+        }
+        return foodOrderRepository.findByBookingIsNullAndBranch_BranchIdOrderByCreatedAtDesc(
+                        actor.getBranch().getBranchId())
+                .stream()
+                .map(order -> buildOrderResponse(order, foodOrderItemRepository.findByOrderId(order.getOrderId())))
+                .toList();
     }
 
     // -------------------------------------------------------------------------
@@ -259,11 +348,43 @@ public class FoodOrderServiceImpl implements FoodOrderService {
         return FoodOrderDetailResponse.builder()
                 .orderId(order.getOrderId())
                 .bookingId(order.getBooking() != null ? order.getBooking().getBookingId() : null)
+                .branchId(order.getBranch() != null ? order.getBranch().getBranchId() : null)
+                .branchName(order.getBranch() != null ? order.getBranch().getName() : null)
+                .staffUserId(order.getStaff() != null ? order.getStaff().getUserId() : null)
+                .staffName(order.getStaff() != null ? order.getStaff().getFullName() : null)
+                .customerPhone(order.getCustomerPhone())
+                .paymentMethod(order.getPaymentMethod())
+                .paymentStatus(order.getPaymentStatus())
                 .status(order.getStatus())
                 .totalAmount(order.getTotalAmount())
                 .createdAt(order.getCreatedAt())
                 .items(itemResponses)
                 .build();
+    }
+
+    private static String normalizePhone(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private static String normalizePaymentMethod(String value) {
+        if (value == null || value.isBlank()) {
+            throw new FoodValidationException("food.order.payment_method.required");
+        }
+        return value.trim().toUpperCase();
+    }
+
+    private void assertCanAccessOrder(FoodOrder order, User actor) {
+        if (!isStaff(actor) || order.getBranch() == null) {
+            return;
+        }
+        Integer actorBranchId = actor.getBranch() != null ? actor.getBranch().getBranchId() : null;
+        Integer orderBranchId = order.getBranch().getBranchId();
+        if (actorBranchId == null || !actorBranchId.equals(orderBranchId)) {
+            throw new FoodAccessDeniedException();
+        }
     }
 
     // -------------------------------------------------------------------------

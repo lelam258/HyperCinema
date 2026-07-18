@@ -81,7 +81,19 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public Page<Booking> findBookingsByUser(Integer userId, Pageable pageable) {
-        return bookingRepository.findByUser_UserId(userId, pageable);
+        Page<Integer> bookingIds = bookingRepository.findBookingIdsByUserId(userId, pageable);
+        if (bookingIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        Map<Integer, Booking> bookingsById = bookingRepository.findListDetailsByBookingIdIn(bookingIds.getContent())
+                .stream()
+                .collect(Collectors.toMap(Booking::getBookingId, booking -> booking));
+        List<Booking> orderedBookings = bookingIds.getContent().stream()
+                .map(bookingsById::get)
+                .filter(Objects::nonNull)
+                .toList();
+        return new org.springframework.data.domain.PageImpl<>(orderedBookings, pageable, bookingIds.getTotalElements());
     }
 
     @Override

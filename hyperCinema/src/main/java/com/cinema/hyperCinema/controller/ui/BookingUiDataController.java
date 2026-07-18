@@ -3,6 +3,7 @@ package com.cinema.hyperCinema.controller.ui;
 import com.cinema.hyperCinema.dto.ui.booking.FoodAddonOptionView;
 import com.cinema.hyperCinema.dto.ui.booking.SeatAvailabilityView;
 import com.cinema.hyperCinema.dto.ui.booking.ShowtimeOptionView;
+import com.cinema.hyperCinema.dto.ui.booking.VoucherOptionView;
 import com.cinema.hyperCinema.dto.ui.booking.VoucherPreviewView;
 import com.cinema.hyperCinema.model.User;
 import com.cinema.hyperCinema.security.CustomUserDetails;
@@ -44,6 +45,13 @@ public class BookingUiDataController {
                                              @RequestParam long orderValue,
                                              @RequestParam(required = false) Integer branchId) {
         return bookingUiDataService.previewVoucher(code, orderValue, branchId);
+    }
+
+    @GetMapping("/vouchers/available")
+    public List<VoucherOptionView> availableVouchers(@AuthenticationPrincipal CustomUserDetails principal,
+                                                     @RequestParam(defaultValue = "0") long orderValue,
+                                                     @RequestParam(required = false) Integer branchId) {
+        return bookingUiDataService.availableVouchers(actor(principal), orderValue, branchId);
     }
 
     private User actor(CustomUserDetails principal) {

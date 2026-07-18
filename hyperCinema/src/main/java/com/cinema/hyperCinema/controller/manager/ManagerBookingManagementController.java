@@ -36,7 +36,8 @@ public class ManagerBookingManagementController {
                        @RequestParam(defaultValue = "12") int size,
                        Model model) {
         var pageable = PageRequest.of(Math.max(page, 0), safeSize(size),
-                Sort.by(Sort.Direction.DESC, "createdAt"));
+                Sort.by(Sort.Direction.DESC, "createdAt")
+                        .and(Sort.by(Sort.Direction.DESC, "bookingId")));
         var bookings = bookingManagementService.findBookings(principal.getUser(), filter, pageable);
         model.addAttribute("bookings", bookings);
         model.addAttribute("summary", bookingManagementService.summarize(bookings));

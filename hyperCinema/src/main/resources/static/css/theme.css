@@ -24,6 +24,21 @@
     --hc-font-serif: "Playfair Display", ui-serif, Georgia, serif;
 }
 
+select {
+    color-scheme: dark;
+}
+
+select option,
+select optgroup {
+    background: var(--hc-panel-soft);
+    color: var(--hc-text);
+}
+
+select option:checked {
+    background: var(--hc-primary);
+    color: var(--hc-text);
+}
+
 /* Staff POS workspace */
 .hc-staff-pos-shell {
     background: #090909;
@@ -777,10 +792,99 @@
     grid-template-columns: minmax(0, 1fr) auto;
 }
 
-.hc-staff-pos-voucher button {
+.hc-staff-pos-voucher button,
+.hc-staff-pos-voucher-tools button {
     align-items: center;
     display: inline-flex;
     gap: 0.4rem;
+}
+
+.hc-staff-pos-voucher-tools {
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin-top: 0.55rem;
+}
+
+.hc-staff-pos-voucher-selected[hidden],
+.hc-staff-pos-voucher-list[hidden] {
+    display: none;
+}
+
+.hc-staff-pos-voucher-selected,
+.hc-staff-pos-voucher-list {
+    margin-top: 0.55rem;
+}
+
+.hc-staff-pos-voucher-chip,
+.hc-staff-pos-voucher-empty,
+.hc-staff-pos-voucher-option {
+    background: #111827;
+    border: 1px solid #334155;
+    border-radius: 7px;
+    color: #ffffff;
+}
+
+.hc-staff-pos-voucher-chip {
+    align-items: center;
+    display: grid;
+    gap: 0.55rem;
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 0.65rem;
+}
+
+.hc-staff-pos-voucher-chip svg,
+.hc-staff-pos-voucher-chip i {
+    color: #22c55e;
+    height: 1rem;
+    width: 1rem;
+}
+
+.hc-staff-pos-voucher-chip strong,
+.hc-staff-pos-voucher-chip small,
+.hc-staff-pos-voucher-option strong,
+.hc-staff-pos-voucher-option small {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.hc-staff-pos-voucher-chip small,
+.hc-staff-pos-voucher-option small {
+    color: #a8b3c4;
+    font-size: 0.72rem;
+    margin-top: 0.15rem;
+}
+
+.hc-staff-pos-voucher-list {
+    display: grid;
+    gap: 0.45rem;
+    max-height: 12rem;
+    overflow-y: auto;
+}
+
+.hc-staff-pos-voucher-empty {
+    color: #a8b3c4;
+    font-size: 0.78rem;
+    padding: 0.7rem;
+}
+
+.hc-staff-pos-voucher-option {
+    align-items: center;
+    cursor: pointer;
+    display: grid;
+    gap: 0.6rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 0.65rem;
+    text-align: left;
+}
+
+.hc-staff-pos-voucher-option:hover {
+    border-color: #e50914;
+}
+
+.hc-staff-pos-voucher-option b {
+    color: #22c55e;
+    font-size: 0.86rem;
 }
 
 .hc-staff-pos-grand-total {
@@ -903,7 +1007,9 @@
 
     .hc-staff-pos-seat-head,
     .hc-staff-pos-customer,
-    .hc-staff-pos-voucher {
+    .hc-staff-pos-voucher,
+    .hc-staff-pos-voucher-tools,
+    .hc-staff-pos-voucher-option {
         grid-template-columns: 1fr;
     }
 

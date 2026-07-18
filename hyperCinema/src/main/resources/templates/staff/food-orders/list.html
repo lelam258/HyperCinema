@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Don F&B - HyperCinema')}"></head>
+<body class="min-h-screen">
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: staffSidebar('food-orders')}"></nav>
+
+<main class="hc-page">
+    <div class="hc-page-inner">
+        <section class="hc-page-head">
+            <div>
+                <p class="hc-kicker">Nhan vien</p>
+                <h1 class="hc-page-title">Don F&amp;B</h1>
+                <p class="hc-page-subtitle">
+                    Nhan vien: <span th:text="${staffName}">Staff</span>
+                    <span aria-hidden="true"> - </span>
+                    Chi nhanh: <span th:text="${branchName}">Chi nhanh</span>
+                </p>
+            </div>
+            <a th:href="@{/staff/booking}" class="hc-button hc-button-primary no-underline">Tao don tai POS</a>
+        </section>
+
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <section class="hc-card overflow-hidden" aria-label="Danh sach don F&B">
+            <div class="overflow-x-auto">
+                <table class="hc-table">
+                    <thead>
+                    <tr>
+                        <th>Don</th>
+                        <th>Thoi gian</th>
+                        <th>Khach hang</th>
+                        <th>Thanh toan</th>
+                        <th>Trang thai</th>
+                        <th class="text-right">Tong tien</th>
+                        <th class="text-right">Thao tac</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${orders == null or #lists.isEmpty(orders)}">
+                        <td colspan="7" class="py-12 text-center text-cinema-muted">Chua co don F&amp;B doc lap nao.</td>
+                    </tr>
+                    <tr th:each="order : ${orders}">
+                        <td class="font-mono font-semibold text-white" th:text="|#${order.orderId}|">#1</td>
+                        <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">01/01/2026</td>
+                        <td th:text="${order.customerPhone != null and !#strings.isEmpty(order.customerPhone) ? order.customerPhone : 'Khach le'}">Khach le</td>
+                        <td th:text="${order.paymentMethod != null ? order.paymentMethod : 'N/A'}">CASH</td>
+                        <td><span class="hc-badge" th:text="${order.status}">CONFIRMED</span></td>
+                        <td class="text-right tabular-nums" th:text="${#numbers.formatInteger(order.totalAmount != null ? order.totalAmount : 0, 0, 'POINT') + ' VND'}">0 VND</td>
+                        <td class="text-right"><a th:href="@{|/staff/food-orders/${order.orderId}|}" class="hc-button hc-button-outline no-underline">Xem</a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+</body>
+</html>

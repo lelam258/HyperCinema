@@ -175,7 +175,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             if (order.getItems() == null) continue;
             for (FoodOrderItem item : order.getItems()) {
                 String pName = item.getFoodItem().getName();
-                String category = item.getFoodItem().getCategoryName();
+                String category = normalizeFoodCategory(item.getFoodItem().getCategoryName());
                 int qty = item.getQuantity();
                 long itemTotal = (long) item.getUnitPrice() * qty;
 
@@ -228,6 +228,22 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         report.put("products", productDetails);
 
         return report;
+    }
+
+    private String normalizeFoodCategory(String category) {
+        if (category == null || category.isBlank()) {
+            return "Food";
+        }
+        String normalized = category.trim().toLowerCase(Locale.ROOT);
+        if (normalized.equals("beverage")
+                || normalized.equals("nước uống")
+                || normalized.equals("đồ uống")) {
+            return "Beverage";
+        }
+        if (normalized.equals("combo")) {
+            return "Combo";
+        }
+        return "Food";
     }
 
     @Override

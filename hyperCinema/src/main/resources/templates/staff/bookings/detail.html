@@ -91,7 +91,7 @@
                             <dd th:text="${accountName != null and !#strings.isEmpty(accountName) ? accountName : '--'}">--</dd>
                         </div>
                         <div>
-                            <dt>Nội dung</dt>
+                            <dt>Nội dung chuyển khoản</dt>
                             <dd class="hc-vietqr-code" th:text="${transferContent}">HC39</dd>
                         </div>
                     </dl>
@@ -103,7 +103,7 @@
             <div class="border-b border-cinema-border p-5"><h2 class="text-lg font-semibold text-white">Vé và ghế</h2></div>
             <div class="overflow-x-auto">
                 <table class="hc-table">
-                    <thead><tr><th>Vé</th><th>Ghế</th><th>Loại</th><th>QR</th><th>Trạng thái</th></tr></thead>
+                    <thead><tr><th>Vé</th><th>Ghế</th><th>Loại</th><th>Mã vé</th><th>Trạng thái</th></tr></thead>
                     <tbody>
                     <tr th:if="${booking.tickets == null or #lists.isEmpty(booking.tickets)}"><td colspan="5" class="py-8 text-center text-cinema-muted">Chưa có vé.</td></tr>
                     <tr th:each="ticket : ${booking.tickets}">

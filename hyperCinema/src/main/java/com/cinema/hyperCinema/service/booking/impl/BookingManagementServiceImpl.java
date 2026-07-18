@@ -95,6 +95,19 @@ public class BookingManagementServiceImpl implements BookingManagementService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public BookingDetailView findCustomerDetail(User actor, Integer bookingId) {
+        Booking booking = bookingRepository.findManagementDetailById(bookingId)
+                .orElseThrow(() -> new BookingManagementException("booking.management.not_found"));
+        Integer actorUserId = actor != null ? actor.getUserId() : null;
+        Integer bookingUserId = booking.getUser() != null ? booking.getUser().getUserId() : null;
+        if (!Objects.equals(actorUserId, bookingUserId)) {
+            throw new BookingManagementException("booking.management.forbidden");
+        }
+        return toDetail(booking);
+    }
+
+    @Override
     @Transactional
     public void confirmPayment(User actor, Integer bookingId) {
         Booking booking = findScopedBooking(actor, bookingId);
@@ -197,6 +210,7 @@ public class BookingManagementServiceImpl implements BookingManagementService {
                 .totalPrice(booking.getTotalPrice())
                 .bookingStatus(booking.getStatus())
                 .paymentStatus(payment != null ? payment.getStatus() : "")
+                .paymentMethod(payment != null ? payment.getMethod() : "")
                 .seats(tickets.stream().map(ticket -> seatLabel(ticket.getSeat())).toList())
                 .ticketCount(tickets.size())
                 .build();

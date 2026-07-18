@@ -65,7 +65,7 @@
                         <dd class="hc-vietqr-code" th:text="${transferContent}">HC1</dd>
                     </div>
                     <div>
-                        <dt>Tạm tính</dt>
+                        <dt>Tam tinh</dt>
                         <dd th:text="${#numbers.formatDecimal(booking.orderSubtotal != null ? booking.orderSubtotal : booking.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</dd>
                     </div>
                     <div th:if="${booking.voucherDiscountAmount != null and booking.voucherDiscountAmount > 0}">

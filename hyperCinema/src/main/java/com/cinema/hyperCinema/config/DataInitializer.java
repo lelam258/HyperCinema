@@ -13,8 +13,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Seed dữ liệu mẫu khi DB trống.
@@ -26,6 +28,8 @@ public class DataInitializer implements CommandLineRunner {
     private static final int REPORT_BOOKING_SEED_TARGET = 1_000;
     private static final int REPORT_COVERAGE_SEED_DAYS = 7;
     private static final int REPORT_COVERAGE_MAX_BOOKING_SEATS = 6;
+    private static final int REPORT_FOOD_ORDER_SEED_TARGET = 60;
+    private static final int REPORT_FOOD_ORDER_SEED_DAYS = 30;
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
@@ -127,7 +131,10 @@ public class DataInitializer implements CommandLineRunner {
         List<Genre> currentGenres = ensureGenres();
         List<Movie> movies = ensureMovies(languages);
         ensureMovieGenres(movies, currentGenres);
-        ensureShowtimes(movies, hallRepository.findAll());
+        List<Hall> currentHalls = hallRepository.findAll();
+        ensureSeats(currentHalls);
+        ensureShowtimes(movies, currentHalls);
+        ensureFoodItems();
         ensureSeedBranchAssignments();
         ensureSeedCustomers();
         ensureMembershipData();
@@ -605,6 +612,17 @@ public class DataInitializer implements CommandLineRunner {
         return allSeats;
     }
 
+    private void ensureSeats(List<Hall> halls) {
+        List<Hall> hallsWithoutSeats = halls.stream()
+                .filter(hall -> seatRepository
+                        .findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hall.getHallId())
+                        .isEmpty())
+                .toList();
+        if (!hallsWithoutSeats.isEmpty()) {
+            seedSeats(hallsWithoutSeats);
+        }
+    }
+
     private void ensureShowtimes(List<Movie> movies, List<Hall> halls) {
         if (showtimeRepository.count() > 0 || movies.isEmpty() || halls.isEmpty()) {
             return;
@@ -673,14 +691,19 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    private void ensureFoodItems() {
+        if (foodItemRepository.count() == 0) {
+            seedFoodItems();
+        }
+    }
+
     // ───────────────────── BOOKINGS + PAYMENTS ─────────────────────
     private void ensureBookingsAndPayments() {
         long existingBookings = bookingRepository.count();
         long existingTickets = ticketRepository.count();
-        long existingFoodOrders = foodOrderRepository.count();
 
-        if (existingBookings > 0 && (existingTickets == 0 || existingFoodOrders == 0)) {
-            System.out.println("=== DataInitializer: Database out of sync (Bookings: " + existingBookings + ", Tickets: " + existingTickets + ", FoodOrders: " + existingFoodOrders + "). Clearing and re-seeding... ===");
+        if (existingBookings > 0 && existingTickets == 0) {
+            System.out.println("=== DataInitializer: Database out of sync (Bookings: " + existingBookings + ", Tickets: " + existingTickets + "). Clearing and re-seeding... ===");
             try {
                 jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
                 jdbcTemplate.execute("TRUNCATE TABLE food_order_item");
@@ -715,6 +738,18 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
+        java.util.Map<Integer, List<Seat>> seatsCache = new java.util.HashMap<>();
+        List<Showtime> bookableShowtimes = showtimes.stream()
+                .filter(showtime -> showtime.getHall() != null)
+                .filter(showtime -> !seatsCache.computeIfAbsent(showtime.getHall().getHallId(), hallId ->
+                        seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId)
+                ).isEmpty())
+                .toList();
+        if (bookableShowtimes.isEmpty()) {
+            System.out.println("=== DataInitializer: Khong co suat chieu nao co ghe, bo qua seed booking ===");
+            return;
+        }
+
         String[] bookingStatuses = {
                 "Confirmed", "Completed", "Pending", "Pending", "Cancelled", "Confirmed",
                 "Pending", "Completed", "Confirmed", "Pending", "Cancelled", "Completed"
@@ -726,16 +761,10 @@ public class DataInitializer implements CommandLineRunner {
         String[] paymentMethods = {"VNPay", "VietQR", "VNPay", "VietQR", "VNPay", "Cash"};
 
         int created = 0;
-        int targetToCreate = (int) (REPORT_BOOKING_SEED_TARGET - existingBookings);
-        java.util.Map<Integer, List<Seat>> seatsCache = new java.util.HashMap<>();
-        for (int i = 0; created < targetToCreate; i++) {
-            Showtime showtime = showtimes.get(i % showtimes.size());
-            List<Seat> seats = seatsCache.computeIfAbsent(showtime.getHall().getHallId(), hallId ->
-                    seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId)
-            );
-            if (seats.isEmpty()) {
-                continue;
-            }
+        int targetToCreate = Math.max(0, (int) (REPORT_BOOKING_SEED_TARGET - existingBookings));
+        while (created < targetToCreate) {
+            Showtime showtime = bookableShowtimes.get(created % bookableShowtimes.size());
+            List<Seat> seats = seatsCache.get(showtime.getHall().getHallId());
 
             String bookingStatus = bookingStatuses[created % bookingStatuses.length];
             String paymentStatus = paymentStatuses[created % paymentStatuses.length];
@@ -755,7 +784,61 @@ public class DataInitializer implements CommandLineRunner {
             created++;
         }
 
-        ensureShowtimeCoverageBookings(customers, showtimes, foodItems);
+        ensureShowtimeCoverageBookings(customers, bookableShowtimes, foodItems);
+        ensureFoodSalesData(foodItems);
+    }
+
+    private void ensureFoodSalesData(List<FoodItem> foodItems) {
+        if (foodItems.isEmpty()) {
+            return;
+        }
+
+        LocalDateTime rangeEnd = LocalDateTime.now();
+        LocalDateTime rangeStart = rangeEnd.toLocalDate()
+                .minusDays(REPORT_FOOD_ORDER_SEED_DAYS)
+                .atStartOfDay();
+        List<FoodOrder> existingOrders = foodOrderRepository.findAll();
+        long existingConfirmedOrders = existingOrders.stream()
+                .filter(order -> "CONFIRMED".equalsIgnoreCase(order.getStatus()))
+                .filter(order -> order.getCreatedAt() != null)
+                .filter(order -> !order.getCreatedAt().isBefore(rangeStart))
+                .filter(order -> !order.getCreatedAt().isAfter(rangeEnd))
+                .count();
+        int missingOrders = Math.max(0,
+                REPORT_FOOD_ORDER_SEED_TARGET - (int) existingConfirmedOrders);
+        if (missingOrders == 0) {
+            return;
+        }
+
+        Set<Integer> bookingsWithFoodOrders = new HashSet<>();
+        existingOrders.stream()
+                .filter(order -> order.getBooking() != null)
+                .map(order -> order.getBooking().getBookingId())
+                .forEach(bookingsWithFoodOrders::add);
+
+        List<Booking> candidates = bookingRepository.findAll().stream()
+                .filter(booking -> booking.getBookingId() != null)
+                .filter(booking -> !bookingsWithFoodOrders.contains(booking.getBookingId()))
+                .filter(booking -> booking.getCreatedAt() != null)
+                .filter(booking -> !booking.getCreatedAt().isBefore(rangeStart))
+                .filter(booking -> !booking.getCreatedAt().isAfter(rangeEnd))
+                .filter(booking -> "Confirmed".equalsIgnoreCase(booking.getStatus())
+                        || "Completed".equalsIgnoreCase(booking.getStatus()))
+                .sorted((left, right) -> right.getCreatedAt().compareTo(left.getCreatedAt()))
+                .toList();
+
+        int ordersToCreate = Math.min(missingOrders, candidates.size());
+        for (int i = 0; i < ordersToCreate; i++) {
+            int seedIndex = (int) existingConfirmedOrders + i;
+            FoodItem item = foodItems.get(seedIndex % foodItems.size());
+            int quantity = 1 + (seedIndex % 3);
+            createSeedFoodOrder(
+                    candidates.get(i),
+                    foodItems,
+                    seedIndex,
+                    item.getPrice() * quantity,
+                    candidates.get(i).getCreatedAt());
+        }
     }
 
     private void ensureShowtimeCoverageBookings(List<User> customers,
