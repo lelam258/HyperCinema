@@ -1224,12 +1224,16 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void ensureReviewHistoryDemoData() {
-        User customer = userRepository.findByUsername("customer1").orElse(null);
+        List<User> customers = userRepository.findAll().stream()
+                .filter(user -> user.getRole() != null
+                        && "Customer".equalsIgnoreCase(user.getRole().getName()))
+                .sorted((left, right) -> left.getUsername().compareTo(right.getUsername()))
+                .toList();
         List<Movie> movies = movieRepository.findAll().stream()
                 .sorted((left, right) -> left.getMovieId().compareTo(right.getMovieId()))
                 .toList();
         Hall hall = hallRepository.findAll().stream().findFirst().orElse(null);
-        if (customer == null || movies.size() < 3 || hall == null) {
+        if (customers.isEmpty() || movies.size() < 2 || hall == null) {
             return;
         }
 
@@ -1238,39 +1242,36 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        Movie reviewedMovie = movies.stream()
-                .filter(movie -> reviewRepository
-                        .findByUser_UserIdAndMovie_MovieId(customer.getUserId(), movie.getMovieId())
-                        .isPresent())
-                .findFirst()
-                .orElse(movies.get(0));
+        String[] comments = {
+                "Phim rat hay, hinh anh dep va trai nghiem tai rap rat an tuong.",
+                "Noi dung cuon hut, dien xuat tot va am thanh trong rap rat da.",
+                "Mot bo phim dang xem, toi rat thich cach xay dung nhan vat.",
+                "Tiet tau hop ly, nhieu canh quay dep va ket thuc an tuong.",
+                "Trai nghiem giai tri tot, se gioi thieu bo phim nay cho ban be."
+        };
 
-        if (reviewRepository.findByUser_UserIdAndMovie_MovieId(
-                customer.getUserId(), reviewedMovie.getMovieId()).isEmpty()) {
-            reviewRepository.save(createReview(
-                    customer,
-                    reviewedMovie,
-                    5,
-                    "Phim rat hay, hinh anh dep va trai nghiem tai rap rat an tuong.",
-                    2));
-        }
-        ensureEndedReviewBooking(customer, reviewedMovie, hall, seats.get(0), 4);
+        for (int customerIndex = 0; customerIndex < customers.size(); customerIndex++) {
+            User customer = customers.get(customerIndex);
+            for (int movieIndex = 0; movieIndex < movies.size(); movieIndex++) {
+                Movie movie = movies.get(movieIndex);
+                int daysAgo = 3 + movieIndex + (customerIndex % 4);
+                Seat seat = seats.get((customerIndex + movieIndex) % seats.size());
+                ensureEndedReviewBooking(customer, movie, hall, seat, daysAgo);
 
-        List<Movie> pendingReviewMovies = movies.stream()
-                .filter(movie -> !movie.getMovieId().equals(reviewedMovie.getMovieId()))
-                .filter(movie -> reviewRepository
-                        .findByUser_UserIdAndMovie_MovieId(customer.getUserId(), movie.getMovieId())
-                        .isEmpty())
-                .limit(2)
-                .toList();
-
-        for (int i = 0; i < pendingReviewMovies.size(); i++) {
-            ensureEndedReviewBooking(
-                    customer,
-                    pendingReviewMovies.get(i),
-                    hall,
-                    seats.get(Math.min(i + 1, seats.size() - 1)),
-                    6 + i * 2);
+                // Alternate reviewed/pending pairs so every customer and every movie
+                // has representative data in both review states.
+                boolean shouldBeReviewed = (customerIndex + movieIndex) % 2 == 0;
+                if (shouldBeReviewed && reviewRepository.findByUser_UserIdAndMovie_MovieId(
+                        customer.getUserId(), movie.getMovieId()).isEmpty()) {
+                    int rating = 3 + Math.floorMod(customerIndex + movieIndex, 3);
+                    reviewRepository.save(createReview(
+                            customer,
+                            movie,
+                            rating,
+                            comments[Math.floorMod(customerIndex + movieIndex, comments.length)],
+                            Math.max(1, daysAgo - 1)));
+                }
+            }
         }
     }
 
