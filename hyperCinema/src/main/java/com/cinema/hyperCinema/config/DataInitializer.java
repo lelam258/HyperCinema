@@ -141,6 +141,7 @@ public class DataInitializer implements CommandLineRunner {
         ensureBookingsAndPayments();
         userRepository.findByUsername("admin").ifPresent(this::seedInitialNotifications);
         seedReviews(movieRepository.findAll(), userRepository.findAll());
+        ensureReviewHistoryDemoData();
 
         System.out.println("=== DataInitializer: Hoàn tất seed dữ liệu mẫu ===");
     }
@@ -1220,5 +1221,91 @@ public class DataInitializer implements CommandLineRunner {
         review.setComment(comment);
         review.setCreatedAt(LocalDateTime.now().minusDays(daysAgo).minusHours(random.nextInt(12)));
         return review;
+    }
+
+    private void ensureReviewHistoryDemoData() {
+        User customer = userRepository.findByUsername("customer1").orElse(null);
+        List<Movie> movies = movieRepository.findAll().stream()
+                .sorted((left, right) -> left.getMovieId().compareTo(right.getMovieId()))
+                .toList();
+        Hall hall = hallRepository.findAll().stream().findFirst().orElse(null);
+        if (customer == null || movies.size() < 3 || hall == null) {
+            return;
+        }
+
+        List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hall.getHallId());
+        if (seats.isEmpty()) {
+            return;
+        }
+
+        Movie reviewedMovie = movies.stream()
+                .filter(movie -> reviewRepository
+                        .findByUser_UserIdAndMovie_MovieId(customer.getUserId(), movie.getMovieId())
+                        .isPresent())
+                .findFirst()
+                .orElse(movies.get(0));
+
+        if (reviewRepository.findByUser_UserIdAndMovie_MovieId(
+                customer.getUserId(), reviewedMovie.getMovieId()).isEmpty()) {
+            reviewRepository.save(createReview(
+                    customer,
+                    reviewedMovie,
+                    5,
+                    "Phim rat hay, hinh anh dep va trai nghiem tai rap rat an tuong.",
+                    2));
+        }
+        ensureEndedReviewBooking(customer, reviewedMovie, hall, seats.get(0), 4);
+
+        List<Movie> pendingReviewMovies = movies.stream()
+                .filter(movie -> !movie.getMovieId().equals(reviewedMovie.getMovieId()))
+                .filter(movie -> reviewRepository
+                        .findByUser_UserIdAndMovie_MovieId(customer.getUserId(), movie.getMovieId())
+                        .isEmpty())
+                .limit(2)
+                .toList();
+
+        for (int i = 0; i < pendingReviewMovies.size(); i++) {
+            ensureEndedReviewBooking(
+                    customer,
+                    pendingReviewMovies.get(i),
+                    hall,
+                    seats.get(Math.min(i + 1, seats.size() - 1)),
+                    6 + i * 2);
+        }
+    }
+
+    private void ensureEndedReviewBooking(User customer,
+                                          Movie movie,
+                                          Hall hall,
+                                          Seat seat,
+                                          int daysAgo) {
+        if (bookingRepository.hasEndedSuccessfulBookingForMovie(
+                customer.getUserId(), movie.getMovieId(), LocalDateTime.now())) {
+            return;
+        }
+
+        LocalDateTime startTime = LocalDateTime.now()
+                .minusDays(daysAgo)
+                .withHour(19)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
+        Showtime showtime = new Showtime();
+        showtime.setMovie(movie);
+        showtime.setHall(hall);
+        showtime.setStartTime(startTime);
+        showtime.setEndTime(startTime.plusMinutes(movie.getDuration() != null ? movie.getDuration() : 120));
+        showtime.setPrice(ticketPriceFor(hall));
+        showtime.setStatus("COMPLETED");
+        showtime = showtimeRepository.save(showtime);
+
+        Booking booking = createSeedBooking(
+                customer,
+                showtime,
+                List.of(seat),
+                0,
+                "Completed",
+                startTime.minusDays(2));
+        createSeedPayment(booking, "VNPay", "Completed", daysAgo, startTime.minusDays(2));
     }
 }
