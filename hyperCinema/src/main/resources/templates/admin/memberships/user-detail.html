@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Chi tiết thành viên khách hàng - HyperCinema')}"></head>
+<body class="min-h-screen">
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('memberships')}"></nav>
+<main class="hc-page hc-admin-page">
+    <header class="hc-admin-topbar">
+        <nav class="hc-admin-crumb" aria-label="Breadcrumb">
+            <a th:href="@{/admin/memberships/users}">Thành viên khách hàng</a>
+            <span>/</span>
+            <strong th:text="${membership.customerName}">Khách hàng</strong>
+        </nav>
+    </header>
+    <div class="hc-page-inner">
+        <div th:replace="~{fragments/components :: flashes}"></div>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-white" th:text="${membership.customerName}">Khách hàng</h1>
+                <p class="mt-1 text-sm text-cinema-muted" th:text="${membership.customerEmail + ' - ' + membership.customerPhone}">email</p>
+            </div>
+            <div class="flex gap-2">
+                <a class="hc-btn no-underline" th:href="@{|/admin/memberships/users/${membership.membershipId}/edit|}"><i data-lucide="pencil"></i> Sửa</a>
+                <a class="hc-btn no-underline" th:href="@{/admin/memberships/users}">Danh sách</a>
+            </div>
+        </div>
+        <section class="mt-6 grid gap-4 md:grid-cols-2">
+            <div class="rounded-xl border border-cinema-border bg-cinema-panel p-5">
+                <p class="text-sm text-cinema-muted">Gói</p>
+                <strong class="text-2xl text-white" th:text="${membership.planName}">Gold</strong>
+            </div>
+            <div class="rounded-xl border border-cinema-border bg-cinema-panel p-5">
+                <p class="text-sm text-cinema-muted">Giảm giá</p>
+                <strong class="text-2xl text-white" th:text="${membership.discountPercent + '%'}">10%</strong>
+            </div>
+            <div class="rounded-xl border border-cinema-border bg-cinema-panel p-5">
+                <p class="text-sm text-cinema-muted">Điểm yêu cầu của gói</p>
+                <strong class="text-2xl text-white" th:text="${#numbers.formatInteger(membership.price != null ? membership.price : 0, 0, 'POINT') + ' điểm'}">0 điểm</strong>
+            </div>
+            <div class="rounded-xl border border-cinema-border bg-cinema-panel p-5">
+                <p class="text-sm text-cinema-muted">Trạng thái</p>
+                <strong class="text-2xl text-white" th:text="${membership.status}">ACTIVE</strong>
+            </div>
+        </section>
+    </div>
+</main>
+<script defer th:src="@{/js/ui/sidebar.js(v=1.0)}"></script>
+</body>
+</html>

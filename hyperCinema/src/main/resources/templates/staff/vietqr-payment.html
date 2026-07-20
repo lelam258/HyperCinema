@@ -87,11 +87,11 @@
                         <dd th:text="${'-' + #numbers.formatDecimal(booking.voucherDiscountAmount, 0, 'COMMA', 0, 'POINT') + ' VND'}">0 VND</dd>
                     </div>
                     <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}">
-                        <dt th:text="${booking.membershipPlanName != null and !#strings.isEmpty(booking.membershipPlanName) ? 'Membership ' + booking.membershipPlanName + (booking.membershipDiscountPercent != null ? ' (' + booking.membershipDiscountPercent + '%)' : '') : 'Membership'}">Membership</dt>
+                        <dt th:text="${booking.membershipPlanName != null and !#strings.isEmpty(booking.membershipPlanName) ? 'Gói thành viên ' + booking.membershipPlanName + (booking.membershipDiscountPercent != null ? ' (' + booking.membershipDiscountPercent + '%)' : '') : 'Gói thành viên'}">Gói thành viên</dt>
                         <dd th:text="${'-' + #numbers.formatDecimal(booking.membershipDiscountAmount, 0, 'COMMA', 0, 'POINT') + ' VND'}">0 VND</dd>
                     </div>
                     <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}">
-                        <dt>Base membership</dt>
+                        <dt>Giá trị tính giảm thành viên</dt>
                         <dd th:text="${#numbers.formatDecimal((booking.orderSubtotal != null ? booking.orderSubtotal : booking.totalPrice) - (booking.voucherDiscountAmount != null ? booking.voucherDiscountAmount : 0), 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</dd>
                     </div>
                     <div class="hc-summary-total">

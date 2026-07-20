@@ -64,7 +64,7 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
 
         return CustomerDashboardView.builder()
                 .userId(userId)
-                .customerName(actor != null ? actor.getFullName() : "Customer")
+                .customerName(actor != null ? actor.getFullName() : "Khách hàng")
                 .email(actor != null ? actor.getEmail() : "")
                 .phone(actor != null ? actor.getPhone() : "")
                 .membershipTier(membershipTier)
@@ -83,10 +83,11 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
                         .findFirst()
                         .orElse(null);
         MembershipPlan currentPlan = activeMembership != null ? activeMembership.getPlan() : null;
-        List<MembershipPlan> orderedPlans = membershipPlanRepository.findAll().stream()
+        List<MembershipPlan> orderedPlans = membershipPlanRepository.findAllByOrderByLevelAscNameAsc().stream()
                 .sorted(Comparator
-                        .comparing((MembershipPlan plan) -> safePercent(plan.getDiscountPercent()))
-                        .thenComparing(plan -> plan.getPrice() != null ? plan.getPrice() : 0)
+                        .comparing((MembershipPlan plan) -> plan.getLevel() != null ? plan.getLevel() : Integer.MAX_VALUE)
+                        .thenComparing((MembershipPlan plan) -> requiredPoints(plan))
+                        .thenComparing((MembershipPlan plan) -> safePercent(plan.getDiscountPercent()))
                         .thenComparing(plan -> plan.getName() != null ? plan.getName() : ""))
                 .toList();
         TierProgress tierProgress = nextTierProgress(currentPlan, orderedPlans, points);
@@ -106,7 +107,7 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
                 .nextTierThreshold(tierProgress.nextTierThreshold())
                 .pointsNeeded(tierProgress.pointsNeeded())
                 .progressPercent(tierProgress.progressPercent())
-                .statusText(active ? "Dang hoat dong" : "Chua co membership dang hoat dong")
+                .statusText(active ? "Hiệu lực vĩnh viễn" : "Chưa có gói thành viên đang hoạt động")
                 .build();
     }
 
@@ -118,12 +119,12 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
         int nextIndex = Math.min(currentIndex + 1, orderedPlans.size() - 1);
         boolean highestTier = currentIndex >= orderedPlans.size() - 1;
         if (highestTier) {
-            long currentThreshold = thresholdForIndex(currentIndex);
+            long currentThreshold = requiredPoints(orderedPlans.get(currentIndex));
             return new TierProgress(null, currentThreshold, 0, 100, true);
         }
         MembershipPlan nextPlan = orderedPlans.get(nextIndex);
-        long previousThreshold = currentIndex >= 0 ? thresholdForIndex(currentIndex) : 0L;
-        long nextThreshold = thresholdForIndex(nextIndex);
+        long previousThreshold = currentIndex >= 0 ? requiredPoints(orderedPlans.get(currentIndex)) : 0L;
+        long nextThreshold = requiredPoints(nextPlan);
         long pointsNeeded = Math.max(0, nextThreshold - points);
         long range = Math.max(1, nextThreshold - previousThreshold);
         long earnedInRange = Math.max(0, Math.min(points - previousThreshold, range));
@@ -144,15 +145,11 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
         return 0;
     }
 
-    private long thresholdForIndex(int index) {
-        if (index < 0) {
+    private long requiredPoints(MembershipPlan plan) {
+        if (plan == null || plan.getPrice() == null || plan.getPrice() < 0) {
             return 0L;
         }
-        long[] thresholds = {500L, 1000L, 2000L, 5000L};
-        if (index < thresholds.length) {
-            return thresholds[index];
-        }
-        return thresholds[thresholds.length - 1] + ((long) index - thresholds.length + 1) * 5000L;
+        return plan.getPrice();
     }
 
     private BigDecimal safePercent(BigDecimal value) {
@@ -258,14 +255,14 @@ public class WorkspaceUiDataServiceImpl implements WorkspaceUiDataService {
     private List<WorkspaceActionView> branchActions(Integer branchId) {
         boolean assigned = branchId != null;
         return Arrays.asList(
-                action("Phong chieu", "/admin/halls", "panel-top", assigned, "Chua co chi nhanh"),
-                action("So do ghe", "/admin/seats", "armchair", assigned, "Chua co chi nhanh"));
+                action("Phòng chiếu", "/admin/halls", "panel-top", assigned, "Chưa có chi nhánh"),
+                action("Sơ đồ ghế", "/admin/seats", "armchair", assigned, "Chưa có chi nhánh"));
     }
 
     private List<WorkspaceActionView> staffActions(boolean assigned) {
         return Arrays.asList(
-                action("Ban ve", "/staff/booking", "ticket", assigned, "Chua co chi nhanh"),
-                action("Tao don F&B", "/admin/food-orders/new", "popcorn", assigned, "Chua co chi nhanh"));
+                action("Bán vé", "/staff/booking", "ticket", assigned, "Chưa có chi nhánh"),
+                action("Tạo đơn F&B", "/admin/food-orders/new", "popcorn", assigned, "Chưa có chi nhánh"));
     }
 
     private List<WorkspaceActionView> customerActions() {

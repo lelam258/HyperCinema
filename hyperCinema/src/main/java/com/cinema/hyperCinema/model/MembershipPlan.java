@@ -29,10 +29,29 @@ public class MembershipPlan {
     @Column(nullable = false)
     private Integer price;
 
+    @Column(nullable = false)
+    private Integer level = 1;
+
     @Column(name = "duration_days", nullable = false)
-    private Integer durationDays;
+    private Integer durationDays = 0;
+
+    @Column(nullable = false, length = 20)
+    private String status = "ACTIVE";
 
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL)
     private List<UserMembership> userMemberships;
+
+    @PrePersist
+    protected void onCreate() {
+        if (durationDays == null) {
+            durationDays = 0;
+        }
+        if (level == null || level < 1) {
+            level = 1;
+        }
+        if (status == null || status.isBlank()) {
+            status = "ACTIVE";
+        }
+    }
 }
 

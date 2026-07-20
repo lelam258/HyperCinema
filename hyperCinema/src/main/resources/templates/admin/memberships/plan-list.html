@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Gói thành viên - HyperCinema')}"></head>
+<body class="min-h-screen">
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('memberships')}"></nav>
+
+<main class="hc-page hc-admin-page">
+    <header class="hc-admin-topbar">
+        <nav class="hc-admin-crumb" aria-label="Breadcrumb">
+            <a th:href="@{/admin/dashboard}">Admin</a>
+            <span>/</span>
+            <strong>Thành viên</strong>
+        </nav>
+    </header>
+
+    <div class="hc-page-inner">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-white">Gói thành viên</h1>
+                <p class="mt-1 text-sm text-cinema-muted">Quản lý thứ tự hạng thành viên, mốc điểm và mức giảm giá.</p>
+            </div>
+            <div class="flex gap-2">
+                <a th:href="@{/admin/memberships/users}" class="hc-btn no-underline">Thành viên khách hàng</a>
+                <a th:href="@{/admin/memberships/plans/new}" class="hc-btn hc-btn-primary no-underline"><i data-lucide="plus"></i> Tạo gói</a>
+            </div>
+        </div>
+
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <form th:action="@{/admin/memberships/plans}" method="get" class="mt-6 flex flex-wrap gap-3">
+            <input type="hidden" name="sort" th:value="${criteria.sort}">
+            <input type="hidden" name="direction" th:value="${criteria.direction}">
+            <input type="hidden" name="size" th:value="${criteria.size}">
+            <input class="hc-input min-w-64" type="text" name="keyword" placeholder="Tìm theo tên gói" th:value="${criteria.keyword}">
+            <select class="hc-input" name="status">
+                <option value="" th:selected="${criteria.status == null}">Tất cả trạng thái</option>
+                <option value="ACTIVE" th:selected="${criteria.status == 'ACTIVE'}">ACTIVE</option>
+                <option value="INACTIVE" th:selected="${criteria.status == 'INACTIVE'}">INACTIVE</option>
+            </select>
+            <button type="submit" class="hc-btn"><i data-lucide="search"></i> Lọc</button>
+        </form>
+
+        <section class="mt-6 overflow-x-auto rounded-xl border border-cinema-border bg-cinema-panel">
+            <table class="min-w-full text-left text-sm">
+                <thead class="border-b border-cinema-border text-xs uppercase text-cinema-muted">
+                <tr>
+                    <th class="px-5 py-3">Cấp</th>
+                    <th class="px-5 py-3">Gói</th>
+                    <th class="px-5 py-3">Giảm giá</th>
+                    <th class="px-5 py-3">Điểm yêu cầu</th>
+                    <th class="px-5 py-3">Số khách hàng</th>
+                    <th class="px-5 py-3">Trạng thái</th>
+                    <th class="px-5 py-3 text-right">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${page == null or #lists.isEmpty(page.content)}">
+                    <td colspan="7" class="px-5 py-8 text-center text-cinema-muted">Chưa có gói thành viên phù hợp.</td>
+                </tr>
+                <tr th:each="plan : ${page.content}" class="border-b border-cinema-border/70">
+                    <td class="px-5 py-4 font-semibold text-white" th:text="${plan.level}">1</td>
+                    <td class="px-5 py-4">
+                        <a class="font-semibold text-white no-underline" th:href="@{|/admin/memberships/plans/${plan.planId}|}" th:text="${plan.name}">Gold</a>
+                    </td>
+                    <td class="px-5 py-4" th:text="${plan.discountPercent + '%'}">10%</td>
+                    <td class="px-5 py-4" th:text="${#numbers.formatInteger(plan.price != null ? plan.price : 0, 0, 'POINT') + ' điểm'}">0 điểm</td>
+                    <td class="px-5 py-4">
+                        <a class="font-semibold text-white no-underline"
+                           th:href="@{/admin/memberships/users(planId=${plan.planId},status=${'ACTIVE'})}"
+                           th:text="${plan.activeUserCount + ' khách hàng'}">0 khách hàng</a>
+                    </td>
+                    <td class="px-5 py-4">
+                        <span class="hc-badge" th:text="${plan.status}">ACTIVE</span>
+                    </td>
+                    <td class="px-5 py-4">
+                        <div class="flex flex-wrap justify-end gap-2">
+                            <a class="hc-btn h-9 px-3 no-underline" th:href="@{/admin/memberships/plans/new(beforeId=${plan.planId})}" title="Thêm mốc trước">
+                                <i data-lucide="arrow-up-to-line"></i>
+                            </a>
+                            <a class="hc-btn h-9 px-3 no-underline" th:href="@{/admin/memberships/plans/new(afterId=${plan.planId})}" title="Thêm mốc sau">
+                                <i data-lucide="arrow-down-to-line"></i>
+                            </a>
+                            <a class="hc-btn h-9 px-3 no-underline" th:href="@{|/admin/memberships/plans/${plan.planId}/edit|}" title="Sửa"><i data-lucide="pencil"></i></a>
+                            <form th:action="@{|/admin/memberships/plans/${plan.planId}/delete|}" method="post">
+                                <button type="submit" class="hc-btn h-9 px-3" title="Ngừng hoạt động" onclick="return confirm('Ngừng hoạt động gói này?')"><i data-lucide="ban"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="flex items-center justify-between px-5 py-4 text-sm text-cinema-muted" th:if="${page != null and page.totalPages > 0}">
+                <span th:text="|Trang ${page.number + 1}/${page.totalPages} - ${page.totalElements} gói|">Trang 1</span>
+                <div class="flex gap-2">
+                    <a th:if="${not page.first}" class="hc-btn no-underline" th:href="@{/admin/memberships/plans(keyword=${criteria.keyword},status=${criteria.status},page=${page.number - 1},size=${page.size},sort=${criteria.sort},direction=${criteria.direction})}">Trước</a>
+                    <a th:if="${not page.last}" class="hc-btn no-underline" th:href="@{/admin/memberships/plans(keyword=${criteria.keyword},status=${criteria.status},page=${page.number + 1},size=${page.size},sort=${criteria.sort},direction=${criteria.direction})}">Sau</a>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<script defer th:src="@{/js/ui/sidebar.js(v=1.0)}"></script>
+</body>
+</html>

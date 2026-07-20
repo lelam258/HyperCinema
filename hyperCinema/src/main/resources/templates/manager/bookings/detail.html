@@ -27,7 +27,7 @@
                         <button type="submit" class="hc-button hc-button-primary">Xác nhận thanh toán</button>
                     </form>
                     <form th:if="${booking.canMarkServed}" th:action="@{|/manager/bookings/${booking.bookingId}/mark-served|}" method="post">
-                        <button type="submit" class="hc-button hc-button-outline">Đã phục vụ</button>
+                        <button type="submit" class="hc-button hc-button-outline">Xác nhận xuất vé</button>
                     </form>
                     <form th:if="${booking.canCancel}" th:action="@{|/manager/bookings/${booking.bookingId}/cancel|}" method="post" onsubmit="return confirm('Hủy booking này?');">
                         <button type="submit" class="hc-button hc-button-outline">Hủy booking</button>
