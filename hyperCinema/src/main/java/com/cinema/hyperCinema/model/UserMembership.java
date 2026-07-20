@@ -23,10 +23,10 @@ public class UserMembership {
     @JoinColumn(name = "plan_id")
     private MembershipPlan plan;
 
-    @Column(name = "start_date", nullable = false)
+    @Column(name = "start_date")
     private LocalDate startDate;
 
-    @Column(name = "end_date", nullable = false)
+    @Column(name = "end_date")
     private LocalDate endDate;
 
     @Column(length = 20)
