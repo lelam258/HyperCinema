@@ -93,7 +93,7 @@ public class VietQrPaymentController {
             return false;
         }
         if (isCustomer(principal)) {
-            return ownerMatches(booking, principal);
+            return false;
         }
         if (isStaff(principal) || isManager(principal)) {
             return ownerMatches(booking, principal) || sameBranch(booking, principal);
@@ -136,7 +136,7 @@ public class VietQrPaymentController {
         if (isManager(principal)) {
             return "redirect:/manager/bookings";
         }
-        return "redirect:/my/dashboard";
+        return "redirect:/my/bookings";
     }
 
     private String redirectAfterConfirm(CustomUserDetails principal, Integer bookingId) {

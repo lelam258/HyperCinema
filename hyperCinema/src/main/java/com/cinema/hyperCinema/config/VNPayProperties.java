@@ -2,6 +2,9 @@ package com.cinema.hyperCinema.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @ConfigurationProperties(prefix = "vnpay")
 public record VNPayProperties(
         String tmnCode,
@@ -24,16 +27,28 @@ public record VNPayProperties(
     }
 
     public boolean isConfigured() {
-        return !tmnCode.isBlank()
-                && !hashSecret.isBlank()
-                && !payUrl.isBlank()
-                && !returnUrl.isBlank()
-                && !version.isBlank()
-                && !command.isBlank()
-                && !orderType.isBlank();
+        return missingRequiredKeys().isEmpty();
+    }
+
+    public List<String> missingRequiredKeys() {
+        List<String> missing = new ArrayList<>();
+        addIfBlank(missing, "vnpay.tmn-code", tmnCode);
+        addIfBlank(missing, "vnpay.hash-secret", hashSecret);
+        addIfBlank(missing, "vnpay.pay-url", payUrl);
+        addIfBlank(missing, "vnpay.return-url", returnUrl);
+        addIfBlank(missing, "vnpay.version", version);
+        addIfBlank(missing, "vnpay.command", command);
+        addIfBlank(missing, "vnpay.order-type", orderType);
+        return missing;
     }
 
     private static String normalize(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private static void addIfBlank(List<String> missing, String key, String value) {
+        if (value.isBlank()) {
+            missing.add(key);
+        }
     }
 }

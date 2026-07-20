@@ -180,20 +180,17 @@ public class BookingPageController {
                                 HttpServletRequest request,
                                 RedirectAttributes redirectAttributes) {
         User user = userDetails.getUser();
-        boolean vnPaySelected = customerFlow(userDetails) && "VNPay".equalsIgnoreCase(paymentMethod);
+        boolean vnPaySelected = "VNPay".equalsIgnoreCase(paymentMethod);
         try {
+            if (!vnPaySelected) {
+                throw new IllegalArgumentException("Hien chi ho tro thanh toan VNPay.");
+            }
             if (vnPaySelected) {
                 vnPayService.validatePaymentConfiguration();
             }
-            var savedBooking = vnPaySelected
-                    ? bookingService.createPendingVNPayBooking(
-                            user, showtimeId, seatIds, foodItemIds, foodQuantities, voucherCode)
-                    : bookingService.createPendingVietQrBooking(
-                            user, showtimeId, seatIds, foodItemIds, foodQuantities, voucherCode);
-            if (vnPaySelected) {
-                return "redirect:" + vnPayService.createPaymentUrl(savedBooking, request);
-            }
-            return "redirect:/payment/vietqr/" + savedBooking.getBookingId();
+            var savedBooking = bookingService.createPendingVNPayBooking(
+                    user, showtimeId, seatIds, foodItemIds, foodQuantities, voucherCode);
+            return "redirect:" + vnPayService.createPaymentUrl(savedBooking, request);
         } catch (IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
             return customerFlow(userDetails)

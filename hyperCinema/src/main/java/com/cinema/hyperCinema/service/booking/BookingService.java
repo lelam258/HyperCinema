@@ -23,10 +23,10 @@ public interface BookingService {
 
     List<Showtime> findUpcomingShowtimesForMovie(Integer movieId);
 
-    Booking createPendingVietQrBooking(User user,
-                                       Integer showtimeId,
-                                       List<Integer> seatIds,
-                                       List<Integer> foodItemIds,
-                                       List<Integer> foodQuantities,
-                                       String voucherCode);
+    Booking createPendingVNPayBooking(User user,
+                                      Integer showtimeId,
+                                      List<Integer> seatIds,
+                                      List<Integer> foodItemIds,
+                                      List<Integer> foodQuantities,
+                                      String voucherCode);
 }

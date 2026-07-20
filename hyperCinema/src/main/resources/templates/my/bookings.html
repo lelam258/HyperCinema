@@ -14,33 +14,88 @@
         </div>
 
         <form th:action="@{/my/bookings}" method="get"
-              class="glass-card mb-6 flex flex-col gap-4 p-4 md:flex-row md:items-end md:justify-between">
+              class="glass-card mb-6 grid grid-cols-1 gap-4 p-4 lg:grid-cols-6">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tong so ve</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tổng số vé</p>
                 <p class="text-2xl font-bold text-white tabular-nums" th:text="${bookingCount}">0</p>
             </div>
-            <div class="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 md:w-auto">
+            <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 lg:col-span-2">
+                Tìm kiếm
+                <input name="keyword" th:value="${filter.keyword}" placeholder="Mã đơn, phim, rạp, PTTT"
+                       class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Đơn vé
+                <select name="bookingStatus"
+                        class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
+                    <option value="">Tất cả</option>
+                    <option value="Pending" th:selected="${filter.bookingStatus == 'Pending'}">Chờ xử lý</option>
+                    <option value="Paid" th:selected="${filter.bookingStatus == 'Paid'}">Chưa nhận vé</option>
+                    <option value="Confirmed" th:selected="${filter.bookingStatus == 'Confirmed'}">Đã xác nhận</option>
+                    <option value="Served" th:selected="${filter.bookingStatus == 'Served'}">Đã xuất vé</option>
+                    <option value="Completed" th:selected="${filter.bookingStatus == 'Completed'}">Hoàn thành</option>
+                    <option value="Cancelled" th:selected="${filter.bookingStatus == 'Cancelled'}">Đã hủy</option>
+                </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Thanh toán
+                <select name="paymentStatus"
+                        class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
+                    <option value="">Tất cả</option>
+                    <option value="Pending" th:selected="${filter.paymentStatus == 'Pending'}">Chờ thanh toán</option>
+                    <option value="Paid" th:selected="${filter.paymentStatus == 'Paid'}">Đã thanh toán</option>
+                    <option value="Completed" th:selected="${filter.paymentStatus == 'Completed'}">Thành công</option>
+                    <option value="Cancelled" th:selected="${filter.paymentStatus == 'Cancelled'}">Đã hủy</option>
+                    <option value="Failed" th:selected="${filter.paymentStatus == 'Failed'}">Thất bại</option>
+                </select>
+            </label>
+            <div class="grid grid-cols-2 gap-3 lg:col-span-2">
                 <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Sap xep
+                    Ngày đặt từ
+                    <input type="date" name="createdFrom" th:value="${filter.createdFrom}"
+                           class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
+                </label>
+                <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Ngày đặt đến
+                    <input type="date" name="createdTo" th:value="${filter.createdTo}"
+                           class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
+                </label>
+            </div>
+            <div class="grid grid-cols-2 gap-3 lg:col-span-2">
+                <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Ngày chiếu từ
+                    <input type="date" name="showtimeFrom" th:value="${filter.showtimeFrom}"
+                           class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
+                </label>
+                <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Ngày chiếu đến
+                    <input type="date" name="showtimeTo" th:value="${filter.showtimeTo}"
+                           class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
+                </label>
+            </div>
+            <div class="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 lg:col-span-3">
+                <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Sắp xếp
                     <select name="sort"
                             class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
-                        <option value="createdAt" th:selected="${sort == 'createdAt'}">Ngay dat</option>
-                        <option value="showtime" th:selected="${sort == 'showtime.startTime'}">Suat chieu</option>
-                        <option value="totalPrice" th:selected="${sort == 'totalPrice'}">Tong tien</option>
-                        <option value="status" th:selected="${sort == 'status'}">Trang thai</option>
-                        <option value="bookingId" th:selected="${sort == 'bookingId'}">Ma don</option>
+                        <option value="createdAt" th:selected="${sort == 'createdAt'}">Ngày đặt</option>
+                        <option value="showtime" th:selected="${sort == 'showtime'}">Suất chiếu</option>
+                        <option value="movie" th:selected="${sort == 'movie'}">Phim</option>
+                        <option value="totalPrice" th:selected="${sort == 'totalPrice'}">Tổng tiền</option>
+                        <option value="status" th:selected="${sort == 'status'}">Trạng thái</option>
+                        <option value="bookingId" th:selected="${sort == 'bookingId'}">Mã đơn</option>
                     </select>
                 </label>
                 <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Chieu
+                    Chiều
                     <select name="direction"
                             class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
-                        <option value="desc" th:selected="${direction == 'desc'}">Giam dan</option>
-                        <option value="asc" th:selected="${direction == 'asc'}">Tang dan</option>
+                        <option value="desc" th:selected="${direction == 'desc'}">Giảm dần</option>
+                        <option value="asc" th:selected="${direction == 'asc'}">Tăng dần</option>
                     </select>
                 </label>
                 <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Moi trang
+                    Mỗi trang
                     <select name="size"
                             class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white">
                         <option value="10" th:selected="${size == 10}">10</option>
@@ -49,23 +104,29 @@
                     </select>
                 </label>
             </div>
-            <button type="submit"
-                    class="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary-hover">
-                Ap dung
-            </button>
+            <div class="flex items-end gap-2">
+                <button type="submit"
+                        class="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary-hover">
+                    Áp dụng
+                </button>
+                <a th:href="@{/my/bookings}"
+                   class="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-white no-underline hover:bg-white/[0.06]">
+                    Xóa
+                </a>
+            </div>
         </form>
 
-        <!-- Bookings Table -->
         <div class="glass-card overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="border-b border-white/[0.08] bg-white/[0.02]">
-                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Mã Đơn</th>
+                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Mã đơn</th>
+                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Ngày đặt</th>
                             <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Phim</th>
-                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Rạp & Phòng</th>
-                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Suất Chiếu</th>
-                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 text-right">Tổng Tiền</th>
+                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Rạp &amp; Phòng</th>
+                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Suất chiếu</th>
+                            <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 text-right">Tổng tiền</th>
                             <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 text-center">Đơn vé</th>
                             <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 text-center">Thanh toán</th>
                             <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 text-center">PTTT</th>
@@ -78,6 +139,7 @@
                             <td class="px-6 py-4 text-sm font-semibold text-slate-200 tabular-nums">
                                 <a th:href="@{|/my/bookings/${b.bookingId}|}" class="text-white no-underline hover:text-primary" th:text="'#' + ${b.bookingId}">#12345</a>
                             </td>
+                            <td class="px-6 py-4 text-sm text-slate-300 whitespace-nowrap" th:text="${b.createdAt != null ? #temporals.format(b.createdAt, 'HH:mm dd/MM/yyyy') : 'N/A'}">10:00 01/01/2026</td>
                             <td class="px-6 py-4 text-sm font-bold text-white" th:text="${b.showtime.movie.title}">Tên phim</td>
                             <td class="px-6 py-4 text-sm text-slate-300">
                                 <span class="block" th:text="${b.showtime.hall.branch.name}">Chi nhánh</span>
@@ -88,36 +150,39 @@
                             </td>
                             <td class="px-6 py-4 text-sm font-bold text-right text-primary tabular-nums" th:text="${#numbers.formatDecimal(b.totalPrice, 0, 'POINT', 0, 'POINT')} + ' đ'">120.000 đ</td>
                             <td class="px-6 py-4 text-center">
-                                <span th:if="${b.status == 'Confirmed' || b.status == 'Completed'}" 
+                                <span th:if="${b.status == 'Paid' || b.status == 'Confirmed'}"
                                       class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
-                                    Thành công
+                                    Chưa nhận vé
                                 </span>
-                                <span th:if="${b.status == 'Cancelled'}" 
+                                <span th:if="${b.status == 'Served' || b.status == 'Completed'}"
+                                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/5 text-slate-300 border border-white/10">
+                                    Đã xuất vé
+                                </span>
+                                <span th:if="${b.status == 'Cancelled'}"
                                       class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger/10 text-danger border border-danger/20">
                                     Đã hủy
                                 </span>
-                                <span th:if="${b.status != 'Confirmed' && b.status != 'Completed' && b.status != 'Cancelled'}" 
+                                <span th:if="${b.status != 'Paid' && b.status != 'Confirmed' && b.status != 'Served' && b.status != 'Completed' && b.status != 'Cancelled'}"
                                       class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20"
-                                      th:text="${b.status}">
+                                      th:text="${b.status == 'Pending' ? 'Chờ xử lý' : b.status}">
                                     Chờ xử lý
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <span th:if="${b.payment != null and (b.payment.status == 'Completed' || b.payment.status == 'Paid')}"
-                                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20"
-                                      th:text="${b.payment.status}">Paid</span>
+                                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">Đã thanh toán</span>
                                 <span th:if="${b.payment != null and b.payment.status == 'Pending'}"
-                                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">Pending</span>
+                                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">Chờ thanh toán</span>
                                 <span th:if="${b.payment != null and b.payment.status != 'Completed' and b.payment.status != 'Paid' and b.payment.status != 'Pending'}"
                                       class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger/10 text-danger border border-danger/20"
-                                      th:text="${b.payment.status}">Failed</span>
+                                      th:text="${b.payment.status == 'Failed' ? 'Thất bại' : (b.payment.status == 'Cancelled' ? 'Đã hủy' : b.payment.status)}">Thất bại</span>
                                 <span th:if="${b.payment == null}"
                                       class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/5 text-slate-400 border border-white/10">N/A</span>
                             </td>
-                            <td class="px-6 py-4 text-center text-sm text-slate-300" th:text="${b.payment != null and b.payment.method != null ? b.payment.method : 'N/A'}">VietQR</td>
+                            <td class="px-6 py-4 text-center text-sm text-slate-300" th:text="${b.payment != null and b.payment.method != null ? b.payment.method : 'N/A'}">N/A</td>
                             <td class="px-6 py-4 text-sm text-slate-400">
                                 <div class="flex flex-wrap gap-1">
-                                    <span th:each="t : ${b.tickets}" 
+                                    <span th:each="t : ${b.tickets}"
                                           class="inline-flex items-center px-2 py-0.5 bg-white/5 rounded text-xs text-slate-300 border border-white/10"
                                           th:text="${t.seat.seatRow} + ${t.seat.seatNumber}">
                                         A1
@@ -132,7 +197,7 @@
                             </td>
                         </tr>
                         <tr th:if="${bookings == null or #lists.isEmpty(bookings)}">
-                            <td colspan="10" class="px-6 py-12 text-center text-sm text-slate-500">
+                            <td colspan="11" class="px-6 py-12 text-center text-sm text-slate-500">
                                 Bạn chưa có lịch sử đặt vé nào trong hệ thống.
                             </td>
                         </tr>
@@ -149,16 +214,16 @@
             </p>
             <div class="flex flex-wrap gap-2">
                 <a th:classappend="${page.first} ? ' pointer-events-none opacity-40' : ''"
-                   th:href="@{/my/bookings(page=${page.number - 1},size=${size},sort=${sort},direction=${direction})}"
-                   class="rounded-lg border border-white/10 px-3 py-2 text-white no-underline hover:bg-white/[0.06]">Truoc</a>
+                   th:href="@{/my/bookings(keyword=${filter.keyword},bookingStatus=${filter.bookingStatus},paymentStatus=${filter.paymentStatus},createdFrom=${filter.createdFrom},createdTo=${filter.createdTo},showtimeFrom=${filter.showtimeFrom},showtimeTo=${filter.showtimeTo},page=${page.number - 1},size=${size},sort=${sort},direction=${direction})}"
+                   class="rounded-lg border border-white/10 px-3 py-2 text-white no-underline hover:bg-white/[0.06]">Trước</a>
                 <a th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
                    th:if="${i >= page.number - 2 and i <= page.number + 2}"
-                   th:href="@{/my/bookings(page=${i},size=${size},sort=${sort},direction=${direction})}"
+                   th:href="@{/my/bookings(keyword=${filter.keyword},bookingStatus=${filter.bookingStatus},paymentStatus=${filter.paymentStatus},createdFrom=${filter.createdFrom},createdTo=${filter.createdTo},showtimeFrom=${filter.showtimeFrom},showtimeTo=${filter.showtimeTo},page=${i},size=${size},sort=${sort},direction=${direction})}"
                    th:classappend="${i == page.number} ? ' bg-primary text-white border-primary' : ' text-white'"
                    class="rounded-lg border border-white/10 px-3 py-2 no-underline hover:bg-white/[0.06]"
                    th:text="${i + 1}">1</a>
                 <a th:classappend="${page.last} ? ' pointer-events-none opacity-40' : ''"
-                   th:href="@{/my/bookings(page=${page.number + 1},size=${size},sort=${sort},direction=${direction})}"
+                   th:href="@{/my/bookings(keyword=${filter.keyword},bookingStatus=${filter.bookingStatus},paymentStatus=${filter.paymentStatus},createdFrom=${filter.createdFrom},createdTo=${filter.createdTo},showtimeFrom=${filter.showtimeFrom},showtimeTo=${filter.showtimeTo},page=${page.number + 1},size=${size},sort=${sort},direction=${direction})}"
                    class="rounded-lg border border-white/10 px-3 py-2 text-white no-underline hover:bg-white/[0.06]">Sau</a>
             </div>
         </nav>

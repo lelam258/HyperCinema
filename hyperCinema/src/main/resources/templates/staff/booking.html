@@ -174,21 +174,7 @@
                         <strong data-pos-total>0 VND</strong>
                     </div>
                 </div>
-
-                <div class="hc-staff-pos-payments" role="group" aria-label="Phương thức thanh toán">
-                    <button type="button" data-pos-payment="CASH">
-                        <i data-lucide="banknote"></i>
-                        Tiền mặt
-                    </button>
-                    <button type="button" data-pos-payment="CARD">
-                        <i data-lucide="credit-card"></i>
-                        Thẻ
-                    </button>
-                    <button type="button" data-pos-payment="VIETQR">
-                        <i data-lucide="qr-code"></i>
-                        VietQR
-                    </button>
-                </div>
+                <input type="hidden" name="paymentMethod" value="VNPay" data-pos-payment-input>
 
                 <button type="submit" class="hc-staff-pos-submit" data-pos-submit disabled>
                     Thanh toán

@@ -6,16 +6,19 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.cinema.hyperCinema.config.VNPayProperties;
 import com.cinema.hyperCinema.model.Booking;
+import com.cinema.hyperCinema.model.Payment;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -25,22 +28,23 @@ public class VNPayService {
     private static final DateTimeFormatter VNPAY_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     private final VNPayProperties properties;
+    private final long paymentTimeoutMinutes;
 
-    public VNPayService(VNPayProperties properties) {
+    public VNPayService(VNPayProperties properties,
+                        @Value("${booking.payment.timeout-minutes:15}") long paymentTimeoutMinutes) {
         this.properties = properties;
+        this.paymentTimeoutMinutes = paymentTimeoutMinutes;
     }
 
     public String createPaymentUrl(Booking booking, HttpServletRequest request) {
-        if (!properties.isConfigured()) {
-            throw new IllegalStateException("VNPay is not configured");
-        }
+        validatePaymentConfiguration();
 
         LocalDateTime now = LocalDateTime.now();
         Map<String, String> params = new TreeMap<>();
         params.put("vnp_Version", properties.version());
         params.put("vnp_Command", properties.command());
         params.put("vnp_TmnCode", properties.tmnCode());
-        params.put("vnp_Amount", String.valueOf(booking.getTotalPrice() * 100));
+        params.put("vnp_Amount", String.valueOf(paymentAmount(booking) * 100));
         params.put("vnp_CurrCode", "VND");
         params.put("vnp_TxnRef", String.valueOf(booking.getBookingId()));
         params.put("vnp_OrderInfo", "Thanh toan ve HyperCinema #" + booking.getBookingId());
@@ -49,14 +53,33 @@ public class VNPayService {
         params.put("vnp_ReturnUrl", properties.returnUrl());
         params.put("vnp_IpAddr", clientIp(request));
         params.put("vnp_CreateDate", now.format(VNPAY_DATE_FORMAT));
-        params.put("vnp_ExpireDate", now.plusMinutes(15).format(VNPAY_DATE_FORMAT));
+        LocalDateTime expiresAt = booking.getPayment() != null && booking.getPayment().getExpiresAt() != null
+                ? booking.getPayment().getExpiresAt()
+                : now.plusMinutes(paymentTimeoutMinutes);
+        params.put("vnp_ExpireDate", expiresAt.format(VNPAY_DATE_FORMAT));
 
         String hashData = buildQuery(params, true);
         String query = buildQuery(params, true);
         return properties.payUrl() + "?" + query + "&vnp_SecureHash=" + hmacSha512(properties.hashSecret(), hashData);
     }
 
+    public void validatePaymentConfiguration() {
+        var missingKeys = properties.missingRequiredKeys();
+        if (!missingKeys.isEmpty()) {
+            throw new IllegalStateException("Cau hinh VNPay chua hoan tat. Thieu: "
+                    + String.join(", ", missingKeys)
+                    + ". Vui long thu lai sau.");
+        }
+    }
+
     public boolean isValidReturn(Map<String, String> requestParams) {
+        return isValidCallback(requestParams);
+    }
+
+    public boolean isValidCallback(Map<String, String> requestParams) {
+        if (!properties.isConfigured()) {
+            return false;
+        }
         String secureHash = requestParams.get("vnp_SecureHash");
         if (secureHash == null || secureHash.isBlank()) {
             return false;
@@ -74,6 +97,31 @@ public class VNPayService {
     public boolean isSuccessful(Map<String, String> requestParams) {
         return "00".equals(requestParams.get("vnp_ResponseCode"))
                 && "00".equals(requestParams.get("vnp_TransactionStatus"));
+    }
+
+    public Optional<Integer> bookingId(Map<String, String> requestParams) {
+        try {
+            String value = requestParams.get("vnp_TxnRef");
+            return value == null || value.isBlank() ? Optional.empty() : Optional.of(Integer.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<Long> callbackAmount(Map<String, String> requestParams) {
+        try {
+            String value = requestParams.get("vnp_Amount");
+            if (value == null || value.isBlank()) {
+                return Optional.empty();
+            }
+            long amountTimes100 = Long.parseLong(value);
+            if (amountTimes100 < 0 || amountTimes100 % 100 != 0) {
+                return Optional.empty();
+            }
+            return Optional.of(amountTimes100 / 100);
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
     }
 
     private String buildQuery(Map<String, String> params, boolean encodeValues) {
@@ -112,5 +160,13 @@ public class VNPayService {
             return forwardedFor.split(",")[0].trim();
         }
         return request.getRemoteAddr() != null ? request.getRemoteAddr() : "127.0.0.1";
+    }
+
+    private long paymentAmount(Booking booking) {
+        Payment payment = booking.getPayment();
+        if (payment != null && payment.getAmount() != null) {
+            return Math.max(0L, payment.getAmount());
+        }
+        return booking.getTotalPrice() != null ? Math.max(0L, booking.getTotalPrice()) : 0L;
     }
 }

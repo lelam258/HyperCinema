@@ -161,4 +161,17 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("SELECT u.role.name, COUNT(u) FROM User u GROUP BY u.role.name")
     List<Object[]> countUsersByRole();
+
+    @Query("""
+            SELECT u FROM User u
+            JOIN FETCH u.role
+            WHERE UPPER(u.role.name) = 'CUSTOMER'
+              AND UPPER(u.status) = 'ACTIVE'
+              AND (:keyword IS NULL
+                   OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(u.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))
+            ORDER BY u.fullName ASC
+            """)
+    List<User> findActiveCustomers(@Param("keyword") String keyword);
 }
