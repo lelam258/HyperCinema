@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Gói thành viên - HyperCinema')}"></head>
+<body class="min-h-screen">
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: adminSidebar('memberships')}"></nav>
+
+<main class="hc-page hc-admin-page">
+    <header class="hc-admin-topbar">
+        <nav class="hc-admin-crumb" aria-label="Breadcrumb">
+            <a th:href="@{/admin/memberships/plans}">Thành viên</a>
+            <span>/</span>
+            <strong th:text="${mode == 'edit' ? 'Sửa gói' : 'Tạo gói'}">Gói</strong>
+        </nav>
+    </header>
+    <div class="hc-page-inner max-w-3xl">
+        <h1 class="text-3xl font-bold text-white" th:text="${mode == 'edit' ? 'Sửa gói thành viên' : 'Tạo gói thành viên'}">Gói</h1>
+        <div th:replace="~{fragments/components :: flashes}"></div>
+
+        <form class="mt-6 space-y-5 rounded-xl border border-cinema-border bg-cinema-panel p-6"
+              th:object="${plan}"
+              th:action="${mode == 'edit'} ? @{|/admin/memberships/plans/${planId}|} : @{/admin/memberships/plans}"
+              method="post">
+            <div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+                <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Lỗi</p>
+            </div>
+            <div th:if="${#fields.hasErrors('*') and !#fields.hasGlobalErrors()}" class="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+                <p th:each="err : ${#fields.errors('*')}" th:text="${err}">Lỗi</p>
+            </div>
+            <input type="hidden" th:field="*{level}">
+            <label class="block">
+                <span class="mb-1 block text-sm text-cinema-muted">Tên gói</span>
+                <input class="hc-input w-full" th:field="*{name}" maxlength="100">
+            </label>
+            <label class="block">
+                <span class="mb-1 block text-sm text-cinema-muted">Giảm giá (%)</span>
+                <input class="hc-input w-full" type="number" min="0" max="100" step="0.01" th:field="*{discountPercent}">
+            </label>
+            <label class="block">
+                <span class="mb-1 block text-sm text-cinema-muted">Số điểm yêu cầu</span>
+                <input class="hc-input w-full" type="number" min="0" th:field="*{price}">
+            </label>
+            <label class="block">
+                <span class="mb-1 block text-sm text-cinema-muted">Trạng thái</span>
+                <select class="hc-input w-full" th:field="*{status}">
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="INACTIVE">INACTIVE</option>
+                </select>
+            </label>
+            <div class="flex justify-end gap-3">
+                <a class="hc-btn no-underline" th:href="@{/admin/memberships/plans}">Hủy</a>
+                <button class="hc-btn hc-btn-primary" type="submit"><i data-lucide="save"></i> Lưu</button>
+            </div>
+        </form>
+    </div>
+</main>
+<script defer th:src="@{/js/ui/sidebar.js(v=1.0)}"></script>
+</body>
+</html>

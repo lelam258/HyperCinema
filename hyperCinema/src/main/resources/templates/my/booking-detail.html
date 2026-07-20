@@ -37,12 +37,12 @@
             </section>
 
             <section class="glass-card p-6">
-                <h2 class="mb-4 text-lg font-semibold text-white">Tong tien</h2>
+                <h2 class="mb-4 text-lg font-semibold text-white">Tổng tiền</h2>
                 <dl class="grid gap-3 text-sm">
-                    <div class="flex justify-between gap-4"><dt class="text-slate-400">Tam tinh</dt><dd class="font-semibold text-white" th:text="${#numbers.formatInteger(booking.orderSubtotal != null ? booking.orderSubtotal : booking.totalPrice, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                    <div class="flex justify-between gap-4"><dt class="text-slate-400">Tạm tính</dt><dd class="font-semibold text-white" th:text="${#numbers.formatInteger(booking.orderSubtotal != null ? booking.orderSubtotal : booking.totalPrice, 0, 'POINT') + ' VND'}">0 VND</dd></div>
                     <div th:if="${booking.voucherDiscountAmount != null and booking.voucherDiscountAmount > 0}" class="flex justify-between gap-4"><dt class="text-slate-400">Voucher</dt><dd class="font-semibold text-success" th:text="${'-' + #numbers.formatInteger(booking.voucherDiscountAmount, 0, 'POINT') + ' VND'}">0 VND</dd></div>
-                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}" class="flex justify-between gap-4"><dt class="text-slate-400">Membership</dt><dd class="font-semibold text-success" th:text="${'-' + #numbers.formatInteger(booking.membershipDiscountAmount, 0, 'POINT') + ' VND'}">0 VND</dd></div>
-                    <div class="flex justify-between gap-4 border-t border-white/10 pt-3"><dt class="font-semibold text-white">Tong cong</dt><dd class="font-bold text-primary" th:text="${#numbers.formatInteger(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}" class="flex justify-between gap-4"><dt class="text-slate-400">Gói thành viên</dt><dd class="font-semibold text-success" th:text="${'-' + #numbers.formatInteger(booking.membershipDiscountAmount, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                    <div class="flex justify-between gap-4 border-t border-white/10 pt-3"><dt class="font-semibold text-white">Tổng cộng</dt><dd class="font-bold text-primary" th:text="${#numbers.formatInteger(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'POINT') + ' VND'}">0 VND</dd></div>
                 </dl>
             </section>
         </div>
@@ -57,12 +57,12 @@
                         <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Ghe</th>
                         <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Loai</th>
                         <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Ma ve</th>
-                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Trang thai</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Trạng thái</th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.04]">
                     <tr th:if="${booking.tickets == null or #lists.isEmpty(booking.tickets)}">
-                        <td colspan="5" class="px-6 py-10 text-center text-sm text-slate-500">Chua co ve.</td>
+                        <td colspan="5" class="px-6 py-10 text-center text-sm text-slate-500">Chưa có vé.</td>
                     </tr>
                     <tr th:each="ticket : ${booking.tickets}" class="hover:bg-white/[0.02]">
                         <td class="px-6 py-4 text-sm font-semibold text-white" th:text="|#${ticket.ticketId}|">#1</td>
@@ -83,14 +83,14 @@
                     <thead>
                     <tr class="border-b border-white/[0.08] bg-white/[0.02]">
                         <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Don</th>
-                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Trang thai</th>
-                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 text-right">Tong tien</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Trạng thái</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 text-right">Tổng tiền</th>
                         <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Ngay tao</th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.04]">
                     <tr th:if="${booking.foodOrders == null or #lists.isEmpty(booking.foodOrders)}">
-                        <td colspan="4" class="px-6 py-10 text-center text-sm text-slate-500">Chua co don F&amp;B.</td>
+                        <td colspan="4" class="px-6 py-10 text-center text-sm text-slate-500">Chưa có đơn F&amp;B.</td>
                     </tr>
                     <tr th:each="order : ${booking.foodOrders}" class="hover:bg-white/[0.02]">
                         <td class="px-6 py-4 text-sm font-semibold text-white" th:text="|#${order.orderId}|">#1</td>

@@ -132,23 +132,23 @@
                             <dd data-booking-voucher-discount>0 VND</dd>
                         </div>
                         <div th:if="${membershipProgress != null and membershipProgress.active}">
-                            <dt th:text="|Membership ${membershipProgress.currentTier} (${membershipProgress.discountPercent}%)|">Membership</dt>
+                            <dt th:text="|Gói thành viên ${membershipProgress.currentTier} (${membershipProgress.discountPercent}%)|">Gói thành viên</dt>
                             <dd data-booking-membership-discount>0 VND</dd>
                         </div>
                         <div th:if="${membershipProgress != null and membershipProgress.active}">
-                            <dt>Base membership</dt>
+                            <dt>Giá trị tính giảm thành viên</dt>
                             <dd data-booking-membership-base>0 VND</dd>
                         </div>
                         <div th:unless="${membershipProgress != null and membershipProgress.active}">
-                            <dt>Membership</dt>
-                            <dd>Chua co uu dai</dd>
+                            <dt>Gói thành viên</dt>
+                            <dd>Chưa có ưu đãi</dd>
                         </div>
                         <div>
-                            <dt>Tong giam</dt>
+                            <dt>Tổng giảm</dt>
                             <dd data-booking-discount>0 VND</dd>
                         </div>
                         <div>
-                            <dt>Tong cong</dt>
+                            <dt>Tổng cộng</dt>
                             <dd data-booking-total>0 VND</dd>
                         </div>
                     </dl>
@@ -169,6 +169,16 @@
                                 </button>
                             </div>
                             <span class="hc-staff-pos-inline-message" data-booking-voucher-message></span>
+                            <div class="hc-payment-choice-group" aria-label="Phuong thuc thanh toan">
+                                <label class="hc-payment-choice">
+                                    <input type="radio" name="paymentMethod" value="VNPay" checked>
+                                    <span>VNPay Online</span>
+                                </label>
+                                <label class="hc-payment-choice">
+                                    <input type="radio" name="paymentMethod" value="VietQR">
+                                    <span>VietQR</span>
+                                </label>
+                            </div>
                             <button type="submit"
                                     class="hc-button hc-button-primary hc-customer-primary"
                                     data-booking-submit
