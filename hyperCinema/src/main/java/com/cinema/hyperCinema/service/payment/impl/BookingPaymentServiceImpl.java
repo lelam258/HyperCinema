@@ -21,6 +21,8 @@ import com.cinema.hyperCinema.repository.FoodOrderRepository;
 import com.cinema.hyperCinema.repository.LoyaltyPointRepository;
 import com.cinema.hyperCinema.repository.PaymentRepository;
 import com.cinema.hyperCinema.service.payment.BookingPaymentService;
+import com.cinema.hyperCinema.service.payment.PaymentCallbackResult;
+import com.cinema.hyperCinema.service.payment.PaymentCallbackResult.Status;
 
 @Service
 public class BookingPaymentServiceImpl implements BookingPaymentService {
@@ -69,15 +71,44 @@ public class BookingPaymentServiceImpl implements BookingPaymentService {
     @Override
     @Transactional
     public void confirmPayment(Integer bookingId) {
-        Booking booking = findBooking(bookingId);
         Payment payment = paymentRepository.findByBooking_BookingId(bookingId)
-                .orElseThrow(() -> new IllegalStateException("Payment khong ton tai."));
+                .orElseThrow(() -> new IllegalStateException("Payment không tồn tại."));
+        PaymentCallbackResult result = confirmOnlinePayment(bookingId, safeAmount(payment));
+        if (result.accepted()) {
+            return;
+        }
+        throw new IllegalStateException(result.message());
+    }
+
+    @Override
+    @Transactional
+    public PaymentCallbackResult confirmOnlinePayment(Integer bookingId, long callbackAmount) {
+        Booking booking = bookingRepository.findById(bookingId).orElse(null);
+        if (booking == null) {
+            return result(Status.ORDER_NOT_FOUND, "Booking không tồn tại.");
+        }
+
+        Payment payment = paymentRepository.findByBooking_BookingId(bookingId).orElse(null);
+        if (payment == null) {
+            return result(Status.PAYMENT_NOT_FOUND, "Payment không tồn tại.");
+        }
+
+        long expectedAmount = safeAmount(payment);
+        long bookingAmount = discountedTotal(booking);
+        if (callbackAmount != expectedAmount && callbackAmount != bookingAmount) {
+            return result(Status.INVALID_AMOUNT, "Số tiền thanh toán không khớp.");
+        }
+
+        if (PAYMENT_COMPLETED.equals(payment.getStatus())) {
+            return result(Status.ALREADY_CONFIRMED, "Payment đã được xác nhận.");
+        }
+
         if (!PAYMENT_PENDING.equals(payment.getStatus())) {
-            throw new IllegalStateException("Payment khong con o trang thai cho thanh toan.");
+            return result(Status.INVALID_STATE, "Payment không còn ở trạng thái chờ thanh toán.");
         }
         if (isExpired(payment, LocalDateTime.now())) {
             expirePayment(payment);
-            throw new IllegalStateException("Payment da qua han thanh toan.");
+            return result(Status.EXPIRED, "Payment đã quá hạn thanh toán.");
         }
         payment.setAmount(discountedTotal(booking));
         booking.setStatus(BOOKING_CONFIRMED);
@@ -87,22 +118,39 @@ public class BookingPaymentServiceImpl implements BookingPaymentService {
         payment.setStatus(PAYMENT_COMPLETED);
         confirmFoodOrders(bookingId);
         awardLoyaltyPoints(booking, payment);
+        return result(Status.CONFIRMED, "Payment đã được xác nhận.");
     }
 
     @Override
     @Transactional
     public void failPayment(Integer bookingId) {
-        Booking booking = findBooking(bookingId);
+        Payment payment = paymentRepository.findByBooking_BookingId(bookingId).orElse(null);
+        failOnlinePayment(bookingId, safeAmount(payment));
+    }
+
+    @Override
+    @Transactional
+    public PaymentCallbackResult failOnlinePayment(Integer bookingId, long callbackAmount) {
+        Booking booking = bookingRepository.findById(bookingId).orElse(null);
+        if (booking == null) {
+            return result(Status.ORDER_NOT_FOUND, "Booking không tồn tại.");
+        }
         Optional<Payment> payment = paymentRepository.findByBooking_BookingId(bookingId);
         if (payment.isPresent()) {
+            long expectedAmount = safeAmount(payment.get());
+            long bookingAmount = discountedTotal(booking);
+            if (callbackAmount != expectedAmount && callbackAmount != bookingAmount) {
+                return result(Status.INVALID_AMOUNT, "Số tiền thanh toán không khớp.");
+            }
             if (PAYMENT_COMPLETED.equals(payment.get().getStatus())) {
-                return;
+                return result(Status.ALREADY_CONFIRMED, "Payment đã được xác nhận.");
             }
             expirePayment(payment.get());
-            return;
+            return result(Status.FAILED, "Payment đã được đánh dấu thất bại.");
         }
         cancelBooking(booking);
         cancelFoodOrders(bookingId);
+        return result(Status.FAILED, "Booking đã được hủy do thanh toán thất bại.");
     }
 
     @Override
@@ -124,7 +172,7 @@ public class BookingPaymentServiceImpl implements BookingPaymentService {
 
     private Booking findBooking(Integer bookingId) {
         return bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new IllegalArgumentException("Booking khong ton tai."));
+                .orElseThrow(() -> new IllegalArgumentException("Booking không tồn tại."));
     }
 
     private void expirePayment(Payment payment) {
@@ -185,6 +233,14 @@ public class BookingPaymentServiceImpl implements BookingPaymentService {
         return booking != null && booking.getTotalPrice() != null ? Math.max(0L, booking.getTotalPrice()) : 0L;
     }
 
+    private long safeAmount(Payment payment) {
+        return payment != null && payment.getAmount() != null ? Math.max(0L, payment.getAmount()) : 0L;
+    }
+
+    private PaymentCallbackResult result(Status status, String message) {
+        return new PaymentCallbackResult(status, message);
+    }
+
     private void awardLoyaltyPoints(Booking booking, Payment payment) {
         if (booking == null || booking.getBookingId() == null || booking.getUser() == null
                 || booking.getUser().getUserId() == null) {
@@ -203,6 +259,7 @@ public class BookingPaymentServiceImpl implements BookingPaymentService {
         loyaltyPoint.setUser(booking.getUser());
         loyaltyPoint.setPoints(earnedPoints);
         loyaltyPoint.setType(type);
+        loyaltyPointRepository.save(loyaltyPoint);
         loyaltyPointRepository.save(loyaltyPoint);
     }
 

@@ -6,11 +6,13 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.cinema.hyperCinema.model.Booking;
 import com.cinema.hyperCinema.service.booking.BookingService;
 import com.cinema.hyperCinema.service.payment.BookingPaymentService;
+import com.cinema.hyperCinema.service.payment.PaymentCallbackResult;
 import com.cinema.hyperCinema.service.payment.VNPayService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,46 +35,80 @@ public class VNPayController {
     @GetMapping({"/vnpay-return", "/api/payment/vnpay-return"})
     public String handleReturn(HttpServletRequest request, RedirectAttributes redirectAttributes) {
         Map<String, String> params = flattenParams(request);
-        Integer bookingId = parseBookingId(params.get("vnp_TxnRef"));
-        if (bookingId == null) {
-            redirectAttributes.addFlashAttribute("bookingError", "Khong tim thay ma booking tu VNPay.");
+        Integer bookingId = vnPayService.bookingId(params).orElse(null);
+        Long callbackAmount = vnPayService.callbackAmount(params).orElse(null);
+        if (bookingId == null || callbackAmount == null) {
+            redirectAttributes.addFlashAttribute("bookingError", "Không tìm thấy mã booking từ VNPay.");
             return "redirect:/my/dashboard";
         }
 
         Booking booking = bookingService.findById(bookingId).orElse(null);
         if (booking == null) {
-            redirectAttributes.addFlashAttribute("bookingError", "Booking khong ton tai.");
+            redirectAttributes.addFlashAttribute("bookingError", "Booking không tồn tại.");
             return "redirect:/my/dashboard";
         }
 
-        if (!vnPayService.isValidReturn(params)) {
-            bookingPaymentService.failPayment(bookingId);
-            redirectAttributes.addFlashAttribute("bookingError", "Xac thuc thanh toan VNPay that bai.");
+        if (!vnPayService.isValidCallback(params)) {
+            redirectAttributes.addFlashAttribute("bookingError", "Xác thực thanh toán VNPay thất bại.");
             return "redirect:/booking?showtimeId=" + booking.getShowtime().getShowtimeId();
         }
 
         if (vnPayService.isSuccessful(params)) {
-            try {
-                bookingPaymentService.confirmPayment(bookingId);
-                redirectAttributes.addFlashAttribute("bookingSuccess", "Thanh toan VNPay thanh cong.");
+            PaymentCallbackResult result = bookingPaymentService.confirmOnlinePayment(bookingId, callbackAmount);
+            if (result.accepted()) {
+                redirectAttributes.addFlashAttribute("bookingSuccess", "Thanh toán VNPay thành công.");
                 return "redirect:/my/bookings";
-            } catch (IllegalStateException ex) {
-                redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
-                return "redirect:/booking?showtimeId=" + booking.getShowtime().getShowtimeId();
             }
+            redirectAttributes.addFlashAttribute("bookingError", result.message());
+            return "redirect:/booking?showtimeId=" + booking.getShowtime().getShowtimeId();
         }
 
-        bookingPaymentService.failPayment(bookingId);
-        redirectAttributes.addFlashAttribute("bookingError", "Thanh toan VNPay chua hoan tat. Vui long chon lai ghe.");
+        PaymentCallbackResult result = bookingPaymentService.failOnlinePayment(bookingId, callbackAmount);
+        if (result.status() == PaymentCallbackResult.Status.INVALID_AMOUNT) {
+            redirectAttributes.addFlashAttribute("bookingError", result.message());
+            return "redirect:/booking?showtimeId=" + booking.getShowtime().getShowtimeId();
+        }
+        redirectAttributes.addFlashAttribute("bookingError", "Thanh toán VNPay chưa hoàn tất. Vui lòng chọn lại ghế.");
         return "redirect:/booking?showtimeId=" + booking.getShowtime().getShowtimeId();
     }
 
-    private Integer parseBookingId(String value) {
+    @GetMapping("/api/payment/vnpay-ipn")
+    @ResponseBody
+    public Map<String, String> handleIpn(HttpServletRequest request) {
         try {
-            return value == null ? null : Integer.valueOf(value);
-        } catch (NumberFormatException ex) {
-            return null;
+            Map<String, String> params = flattenParams(request);
+            if (!vnPayService.isValidCallback(params)) {
+                return ipnResponse("97", "Invalid Checksum");
+            }
+
+            Integer bookingId = vnPayService.bookingId(params).orElse(null);
+            if (bookingId == null) {
+                return ipnResponse("01", "Order not Found");
+            }
+
+            Long callbackAmount = vnPayService.callbackAmount(params).orElse(null);
+            if (callbackAmount == null) {
+                return ipnResponse("04", "Invalid Amount");
+            }
+
+            PaymentCallbackResult result = vnPayService.isSuccessful(params)
+                    ? bookingPaymentService.confirmOnlinePayment(bookingId, callbackAmount)
+                    : bookingPaymentService.failOnlinePayment(bookingId, callbackAmount);
+            return switch (result.status()) {
+                case CONFIRMED -> ipnResponse("00", "Confirm Success");
+                case ALREADY_CONFIRMED -> ipnResponse("02", "Order already confirmed");
+                case ORDER_NOT_FOUND, PAYMENT_NOT_FOUND -> ipnResponse("01", "Order not Found");
+                case INVALID_AMOUNT -> ipnResponse("04", "Invalid Amount");
+                case EXPIRED, INVALID_STATE -> ipnResponse("02", result.message());
+                case FAILED -> ipnResponse("00", "Confirm Success");
+            };
+        } catch (RuntimeException ex) {
+            return ipnResponse("99", "Unknown error");
         }
+    }
+
+    private Map<String, String> ipnResponse(String code, String message) {
+        return Map.of("RspCode", code, "Message", message);
     }
 
     private Map<String, String> flattenParams(HttpServletRequest request) {

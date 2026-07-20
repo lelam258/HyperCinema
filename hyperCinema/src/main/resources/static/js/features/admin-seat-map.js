@@ -55,6 +55,7 @@
         const empty = root.querySelector('[data-seat-empty]');
         const body = root.querySelector('[data-seat-editor-body]');
         const clearButton = root.querySelector('[data-seat-clear]');
+        const editor = root.querySelector('[data-seat-editor]');
         const label = root.querySelector('[data-seat-editor-label]');
         const badge = root.querySelector('[data-seat-editor-badge]');
         const updateForm = root.querySelector('[data-seat-update-form]');
@@ -80,6 +81,7 @@
             });
             if (empty) empty.hidden = false;
             if (body) body.hidden = true;
+            if (editor) editor.hidden = true;
         }
 
         function selectSeat(card) {
@@ -98,6 +100,7 @@
 
             if (empty) empty.hidden = true;
             if (body) body.hidden = false;
+            if (editor) editor.hidden = false;
             if (label) label.textContent = card.dataset.seatLabel || '--';
             setBadge(badge, seatType);
 
@@ -115,8 +118,8 @@
             }
             if (maintenanceText) {
                 maintenanceText.textContent = nextMaintenanceStatus === 'AVAILABLE'
-                    ? 'Bo bao tri'
-                    : 'Danh dau bao tri';
+                    ? 'Bỏ bảo trì'
+                    : 'Đánh dấu bảo trì';
             }
             if (deleteButton) {
                 deleteButton.disabled = hasActiveReference;
