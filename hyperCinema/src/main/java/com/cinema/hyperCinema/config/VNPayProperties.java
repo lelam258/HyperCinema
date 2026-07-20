@@ -11,6 +11,7 @@ public record VNPayProperties(
         String hashSecret,
         String payUrl,
         String returnUrl,
+        String ipnUrl,
         String version,
         String command,
         String orderType
@@ -21,6 +22,7 @@ public record VNPayProperties(
         hashSecret = normalize(hashSecret);
         payUrl = normalize(payUrl);
         returnUrl = normalize(returnUrl);
+        ipnUrl = normalize(ipnUrl);
         version = normalize(version);
         command = normalize(command);
         orderType = normalize(orderType);

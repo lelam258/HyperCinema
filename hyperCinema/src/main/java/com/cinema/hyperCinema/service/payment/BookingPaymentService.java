@@ -13,5 +13,9 @@ public interface BookingPaymentService {
 
     void failPayment(Integer bookingId);
 
+    PaymentCallbackResult confirmOnlinePayment(Integer bookingId, long callbackAmount);
+
+    PaymentCallbackResult failOnlinePayment(Integer bookingId, long callbackAmount);
+
     int expirePendingPayments(LocalDateTime now);
 }
