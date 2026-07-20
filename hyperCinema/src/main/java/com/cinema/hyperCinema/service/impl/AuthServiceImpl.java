@@ -1,5 +1,7 @@
 package com.cinema.hyperCinema.service.impl;
 
+import com.cinema.hyperCinema.dto.auth.ChangePasswordRequestDTO;
+import com.cinema.hyperCinema.dto.auth.PasswordPolicy;
 import com.cinema.hyperCinema.dto.auth.RegisterRequestDTO;
 import com.cinema.hyperCinema.dto.auth.ResetPasswordRequestDTO;
 import com.cinema.hyperCinema.model.Role;
@@ -84,8 +86,11 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void requestForgotPassword(String email) {
-        User user = userRepository.findByEmail(email.trim())
-                .orElseThrow(() -> new IllegalArgumentException("Email khong ton tai trong he thong"));
+        String normalizedEmail = email == null ? "" : email.trim();
+        User user = userRepository.findByEmail(normalizedEmail).orElse(null);
+        if (user == null) {
+            return;
+        }
 
         user.setForgotPasswordCode(generateCode());
         user.setForgotPasswordCodeExpire(LocalDateTime.now().plusMinutes(CODE_EXPIRE_MINUTES));
@@ -97,23 +102,60 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void resetPassword(ResetPasswordRequestDTO dto) {
-        if (!dto.getPassword().equals(dto.getConfirmPassword())) {
+        String email = dto.getEmail() == null ? "" : dto.getEmail().trim();
+        String code = dto.getCode() == null ? "" : dto.getCode().trim();
+        String password = dto.getPassword();
+
+        if (!PasswordPolicy.isValid(password)) {
+            throw new IllegalArgumentException(PasswordPolicy.MIN_LENGTH_MESSAGE);
+        }
+        if (!password.equals(dto.getConfirmPassword())) {
             throw new IllegalArgumentException("Mat khau xac nhan khong khop");
         }
 
-        User user = userRepository.findByEmail(dto.getEmail().trim())
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Email khong ton tai trong he thong"));
 
         if (user.getForgotPasswordCode() == null
-                || !user.getForgotPasswordCode().equals(dto.getCode())
+                || !user.getForgotPasswordCode().equals(code)
                 || user.getForgotPasswordCodeExpire() == null
                 || user.getForgotPasswordCodeExpire().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Ma xac nhan khong dung hoac da het han");
         }
+        if (passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new IllegalArgumentException("Mat khau moi phai khac mat khau hien tai");
+        }
 
-        user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        user.setPasswordHash(passwordEncoder.encode(password));
         user.setForgotPasswordCode(null);
         user.setForgotPasswordCodeExpire(null);
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(User actor, ChangePasswordRequestDTO dto) {
+        if (actor == null || actor.getUserId() == null) {
+            throw new IllegalArgumentException("Nguoi dung khong hop le");
+        }
+        User user = userRepository.findById(actor.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("Nguoi dung khong ton tai"));
+        String currentPassword = dto.getCurrentPassword();
+        String newPassword = dto.getNewPassword();
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("Mat khau hien tai khong dung");
+        }
+        if (!PasswordPolicy.isValid(newPassword)) {
+            throw new IllegalArgumentException(PasswordPolicy.MIN_LENGTH_MESSAGE);
+        }
+        if (!newPassword.equals(dto.getConfirmPassword())) {
+            throw new IllegalArgumentException("Mat khau xac nhan khong khop");
+        }
+        if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("Mat khau moi phai khac mat khau hien tai");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
 
