@@ -15,7 +15,6 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -31,16 +30,6 @@ public class DataInitializer implements CommandLineRunner {
     private static final int REPORT_COVERAGE_MAX_BOOKING_SEATS = 6;
     private static final int REPORT_FOOD_ORDER_SEED_TARGET = 60;
     private static final int REPORT_FOOD_ORDER_SEED_DAYS = 30;
-    private static final Map<String, String> DEFAULT_MOVIE_POSTERS = Map.ofEntries(
-            Map.entry("Lat Mat 8",
-                    "https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/l/m/lm8_-_470x700.jpg"),
-            Map.entry("Detective Conan: One-eyed Flashback",
-                    "https://upload.wikimedia.org/wikipedia/en/8/86/DetectiveConanOneeyedFlashback.jpg"),
-            Map.entry("Doraemon: Nobita's Art World Tales",
-                    "https://image.tmdb.org/t/p/w780/vncMpsAUDnL1JOb73e5q48gX32S.jpg"),
-            Map.entry("Mission: Impossible - The Final Reckoning",
-                    "https://image.tmdb.org/t/p/w780/AozMgdALZuR1hDPZt2a1aXiWmL4.jpg")
-    );
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
@@ -141,7 +130,6 @@ public class DataInitializer implements CommandLineRunner {
         List<Language> languages = ensureLanguages();
         List<Genre> currentGenres = ensureGenres();
         List<Movie> movies = ensureMovies(languages);
-        ensureMoviePosters(movies);
         ensureMovieGenres(movies, currentGenres);
         List<Hall> currentHalls = hallRepository.findAll();
         ensureSeats(currentHalls);
@@ -150,10 +138,9 @@ public class DataInitializer implements CommandLineRunner {
         ensureSeedBranchAssignments();
         ensureSeedCustomers();
         ensureMembershipData();
-        ensureBookingsAndPayments();
+        clearBookingData();
         userRepository.findByUsername("admin").ifPresent(this::seedInitialNotifications);
         seedReviews(movieRepository.findAll(), userRepository.findAll());
-        ensureReviewHistoryDemoData();
 
         System.out.println("=== DataInitializer: Hoàn tất seed dữ liệu mẫu ===");
     }
@@ -251,23 +238,6 @@ public class DataInitializer implements CommandLineRunner {
                 LocalDate.of(2024, 3, 29), "Ended", english));
 
         return movies;
-    }
-
-    /**
-     * Backfills posters for the demo movies without overwriting posters uploaded
-     * later by an administrator. This also repairs an already populated database,
-     * where {@link #seedMovies(List)} is intentionally skipped.
-     */
-    private void ensureMoviePosters(List<Movie> movies) {
-        List<Movie> moviesMissingPoster = movies.stream()
-                .filter(movie -> movie.getPosterUrl() == null || movie.getPosterUrl().isBlank())
-                .filter(movie -> DEFAULT_MOVIE_POSTERS.containsKey(movie.getTitle()))
-                .peek(movie -> movie.setPosterUrl(DEFAULT_MOVIE_POSTERS.get(movie.getTitle())))
-                .toList();
-
-        if (!moviesMissingPoster.isEmpty()) {
-            movieRepository.saveAll(moviesMissingPoster);
-        }
     }
 
     private Movie createMovie(String title, Integer duration, String description,
@@ -518,50 +488,61 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void ensureMembershipData() {
-        MembershipPlan silver = ensureMembershipPlan("Silver", "5.00", 99000, 30);
-        MembershipPlan gold = ensureMembershipPlan("Gold", "10.00", 199000, 60);
-        MembershipPlan platinum = ensureMembershipPlan("Platinum", "15.00", 399000, 90);
+        MembershipPlan silver = ensureMembershipPlan("Silver", "5.00", 500, 1);
+        MembershipPlan gold = ensureMembershipPlan("Gold", "10.00", 1000, 2);
+        MembershipPlan platinum = ensureMembershipPlan("Platinum", "15.00", 2000, 3);
 
-        ensureCustomerMembership("customer1", gold, LocalDate.now().minusDays(10), LocalDate.now().plusDays(50), 1200);
-        ensureCustomerMembership("customer2", silver, LocalDate.now().minusDays(5), LocalDate.now().plusDays(25), 650);
-        ensureCustomerMembership("customer3", platinum, LocalDate.now().minusDays(20), LocalDate.now().plusDays(70), 2600);
+        ensureCustomerMembership("customer1", gold, 1200);
+        ensureCustomerMembership("customer2", silver, 650);
+        ensureCustomerMembership("customer3", platinum, 2600);
         ensureCustomerPointsOnly("customer4", 320);
     }
 
-    private MembershipPlan ensureMembershipPlan(String name, String discountPercent, Integer price, Integer durationDays) {
+    private MembershipPlan ensureMembershipPlan(String name, String discountPercent, Integer requiredPoints, Integer level) {
         return membershipPlanRepository.findAll().stream()
                 .filter(plan -> plan.getName() != null && plan.getName().equalsIgnoreCase(name))
                 .findFirst()
+                .map(plan -> {
+                    plan.setDiscountPercent(new BigDecimal(discountPercent));
+                    plan.setPrice(requiredPoints);
+                    plan.setLevel(level);
+                    plan.setDurationDays(0);
+                    plan.setStatus("ACTIVE");
+                    return membershipPlanRepository.save(plan);
+                })
                 .orElseGet(() -> {
                     MembershipPlan plan = new MembershipPlan();
                     plan.setName(name);
                     plan.setDiscountPercent(new BigDecimal(discountPercent));
-                    plan.setPrice(price);
-                    plan.setDurationDays(durationDays);
+                    plan.setPrice(requiredPoints);
+                    plan.setLevel(level);
+                    plan.setDurationDays(0);
+                    plan.setStatus("ACTIVE");
                     return membershipPlanRepository.save(plan);
                 });
     }
 
-    private void ensureCustomerMembership(String username,
-                                          MembershipPlan plan,
-                                          LocalDate startDate,
-                                          LocalDate endDate,
-                                          int points) {
+    private void ensureCustomerMembership(String username, MembershipPlan plan, int points) {
         userRepository.findByUsername(username).ifPresent(user -> {
-            boolean hasActiveMembership = userMembershipRepository
+            UserMembership activeMembership = userMembershipRepository
                     .findActiveByUserIdWithPlan(user.getUserId(), "ACTIVE", LocalDate.now())
                     .stream()
-                    .anyMatch(existing -> existing.getPlan() != null
-                            && existing.getPlan().getName() != null
-                            && existing.getPlan().getName().equalsIgnoreCase(plan.getName()));
-            if (!hasActiveMembership) {
+                    .findFirst()
+                    .orElse(null);
+            if (activeMembership == null) {
                 UserMembership membership = new UserMembership();
                 membership.setUser(user);
                 membership.setPlan(plan);
-                membership.setStartDate(startDate);
-                membership.setEndDate(endDate);
+                membership.setStartDate(null);
+                membership.setEndDate(null);
                 membership.setStatus("ACTIVE");
                 userMembershipRepository.save(membership);
+            } else {
+                activeMembership.setPlan(plan);
+                activeMembership.setStartDate(null);
+                activeMembership.setEndDate(null);
+                activeMembership.setStatus("ACTIVE");
+                userMembershipRepository.save(activeMembership);
             }
             ensureCustomerPoints(user, points);
         });
@@ -728,35 +709,67 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     // ───────────────────── BOOKINGS + PAYMENTS ─────────────────────
-    private void ensureBookingsAndPayments() {
+    private void clearBookingData() {
         long existingBookings = bookingRepository.count();
         long existingTickets = ticketRepository.count();
+        long existingPayments = paymentRepository.count();
+        long linkedFoodOrders = countRows("SELECT COUNT(*) FROM food_order WHERE booking_id IS NOT NULL");
+        long linkedFoodOrderItems = countRows("""
+                SELECT COUNT(*)
+                FROM food_order_item
+                WHERE order_id IN (
+                    SELECT order_id
+                    FROM food_order
+                    WHERE booking_id IS NOT NULL
+                )
+                """);
+        long promotionUsages = countRows("SELECT COUNT(*) FROM promotion_usage WHERE booking_id IS NOT NULL");
+        long seatReservations = countRows("SELECT COUNT(*) FROM seat_reservation");
 
-        if (existingBookings > 0 && existingTickets == 0) {
-            System.out.println("=== DataInitializer: Database out of sync (Bookings: " + existingBookings + ", Tickets: " + existingTickets + "). Clearing and re-seeding... ===");
-            try {
-                jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
-                jdbcTemplate.execute("TRUNCATE TABLE food_order_item");
-                jdbcTemplate.execute("TRUNCATE TABLE food_order");
-                jdbcTemplate.execute("TRUNCATE TABLE payment");
-                jdbcTemplate.execute("TRUNCATE TABLE ticket");
-                jdbcTemplate.execute("TRUNCATE TABLE booking");
-                jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
-                existingBookings = 0;
-            } catch (Exception e) {
-                System.out.println("=== DataInitializer: Failed to truncate, deleting in batch instead ===");
-                try {
-                    foodOrderItemRepository.deleteAllInBatch();
-                    foodOrderRepository.deleteAllInBatch();
-                    paymentRepository.deleteAllInBatch();
-                    ticketRepository.deleteAllInBatch();
-                    bookingRepository.deleteAllInBatch();
-                    existingBookings = 0;
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
+        long existingBookingData = existingBookings
+                + existingTickets
+                + existingPayments
+                + linkedFoodOrders
+                + linkedFoodOrderItems
+                + promotionUsages
+                + seatReservations;
+
+        if (existingBookingData == 0) {
+            System.out.println("=== DataInitializer: Booking data already clean ===");
+            return;
         }
+
+        System.out.println("=== DataInitializer: Clearing booking data (Bookings: " + existingBookings
+                + ", Tickets: " + existingTickets
+                + ", Payments: " + existingPayments
+                + ", FoodOrders: " + linkedFoodOrders
+                + ", SeatReservations: " + seatReservations + ") ===");
+
+        jdbcTemplate.update("""
+                DELETE FROM food_order_item
+                WHERE order_id IN (
+                    SELECT order_id
+                    FROM food_order
+                    WHERE booking_id IS NOT NULL
+                )
+                """);
+        jdbcTemplate.update("DELETE FROM promotion_usage WHERE booking_id IS NOT NULL");
+        jdbcTemplate.update("DELETE FROM payment");
+        jdbcTemplate.update("DELETE FROM ticket");
+        jdbcTemplate.update("DELETE FROM food_order WHERE booking_id IS NOT NULL");
+        jdbcTemplate.update("DELETE FROM booking");
+        jdbcTemplate.update("DELETE FROM seat_reservation");
+
+        System.out.println("=== DataInitializer: Booking data cleared ===");
+    }
+
+    private long countRows(String sql) {
+        Long count = jdbcTemplate.queryForObject(sql, Long.class);
+        return count != null ? count : 0L;
+    }
+
+    private void ensureBookingsAndPayments() {
+        long existingBookings = bookingRepository.count();
 
         List<User> customers = userRepository.findAll().stream()
                 .filter(user -> user.getRole() != null && "Customer".equalsIgnoreCase(user.getRole().getName()))
@@ -781,12 +794,12 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         String[] bookingStatuses = {
-                "Confirmed", "Completed", "Pending", "Pending", "Cancelled", "Confirmed",
-                "Pending", "Completed", "Confirmed", "Pending", "Cancelled", "Completed"
+                "Confirmed", "Served", "Pending", "Pending", "Cancelled", "Paid",
+                "Confirmed", "Served", "Completed", "Pending", "Cancelled", "Confirmed"
         };
         String[] paymentStatuses = {
-                "Completed", "Completed", "Pending", "Pending", "Failed", "Completed",
-                "Pending", "Completed", "Completed", "Pending", "Failed", "Completed"
+                "Completed", "Completed", "Pending", "Pending", "Failed", "Paid",
+                "Completed", "Completed", "Completed", "Pending", "Failed", "Completed"
         };
         String[] paymentMethods = {"VNPay", "VietQR", "VNPay", "VietQR", "VNPay", "Cash"};
 
@@ -853,6 +866,8 @@ public class DataInitializer implements CommandLineRunner {
                 .filter(booking -> !booking.getCreatedAt().isBefore(rangeStart))
                 .filter(booking -> !booking.getCreatedAt().isAfter(rangeEnd))
                 .filter(booking -> "Confirmed".equalsIgnoreCase(booking.getStatus())
+                        || "Paid".equalsIgnoreCase(booking.getStatus())
+                        || "Served".equalsIgnoreCase(booking.getStatus())
                         || "Completed".equalsIgnoreCase(booking.getStatus()))
                 .sorted((left, right) -> right.getCreatedAt().compareTo(left.getCreatedAt()))
                 .toList();
@@ -992,7 +1007,7 @@ public class DataInitializer implements CommandLineRunner {
             ticket.setBooking(booking);
             ticket.setSeat(seats.get(i));
             ticket.setQrCode("SEED-" + booking.getBookingId() + "-" + (i + 1));
-            ticket.setStatus("Cancelled".equals(status) ? "Cancelled" : "Active");
+            ticket.setStatus(seedTicketStatus(status));
             ticketRepository.save(ticket);
         }
 
@@ -1059,7 +1074,7 @@ public class DataInitializer implements CommandLineRunner {
         FoodOrder order = new FoodOrder();
         order.setBooking(booking);
         order.setStatus(switch (booking.getStatus()) {
-            case "Confirmed", "Completed" -> "CONFIRMED";
+            case "Paid", "Confirmed", "Served", "Completed" -> "CONFIRMED";
             case "Cancelled" -> "CANCELLED";
             default -> "PENDING";
         });
@@ -1084,6 +1099,15 @@ public class DataInitializer implements CommandLineRunner {
         FoodItem item = foodItems.get(index % foodItems.size());
         int quantity = 1 + (index % 3);
         return item.getPrice() * quantity;
+    }
+
+    private String seedTicketStatus(String bookingStatus) {
+        return switch (bookingStatus) {
+            case "Pending" -> "Pending";
+            case "Cancelled" -> "Cancelled";
+            case "Served" -> "Served";
+            default -> "Active";
+        };
     }
 
     private LocalDateTime seedReportTimestamp(long index) {
@@ -1250,82 +1274,5 @@ public class DataInitializer implements CommandLineRunner {
         review.setComment(comment);
         review.setCreatedAt(LocalDateTime.now().minusDays(daysAgo).minusHours(random.nextInt(12)));
         return review;
-    }
-
-    private void ensureReviewHistoryDemoData() {
-        List<User> customers = userRepository.findAll().stream()
-                .filter(user -> user.getRole() != null
-                        && "Customer".equalsIgnoreCase(user.getRole().getName()))
-                .sorted((left, right) -> left.getUsername().compareTo(right.getUsername()))
-                .toList();
-        List<Movie> movies = movieRepository.findAll().stream()
-                .sorted((left, right) -> left.getMovieId().compareTo(right.getMovieId()))
-                .toList();
-        Hall hall = hallRepository.findAll().stream().findFirst().orElse(null);
-        if (customers.isEmpty() || movies.size() < 2 || hall == null) {
-            return;
-        }
-
-        List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hall.getHallId());
-        if (seats.isEmpty()) {
-            return;
-        }
-
-        Set<String> generatedReviewComments = Set.of(
-                "Phim rat hay, hinh anh dep va trai nghiem tai rap rat an tuong.",
-                "Noi dung cuon hut, dien xuat tot va am thanh trong rap rat da.",
-                "Mot bo phim dang xem, toi rat thich cach xay dung nhan vat.",
-                "Tiet tau hop ly, nhieu canh quay dep va ket thuc an tuong.",
-                "Trai nghiem giai tri tot, se gioi thieu bo phim nay cho ban be."
-        );
-        List<Review> generatedReviews = reviewRepository.findAll().stream()
-                .filter(review -> generatedReviewComments.contains(review.getComment()))
-                .toList();
-        if (!generatedReviews.isEmpty()) {
-            reviewRepository.deleteAll(generatedReviews);
-            reviewRepository.flush();
-        }
-
-        for (int customerIndex = 0; customerIndex < customers.size(); customerIndex++) {
-            User customer = customers.get(customerIndex);
-            for (int movieIndex = 0; movieIndex < movies.size(); movieIndex++) {
-                Movie movie = movies.get(movieIndex);
-                int daysAgo = 3 + movieIndex + (customerIndex % 4);
-                Seat seat = seats.get((customerIndex + movieIndex) % seats.size());
-                ensureEndedReviewBooking(customer, movie, hall, seat, daysAgo);
-            }
-        }
-    }
-
-    private void ensureEndedReviewBooking(User customer,
-                                          Movie movie,
-                                          Hall hall,
-                                          Seat seat,
-                                          int daysAgo) {
-        if (bookingRepository.hasEndedSuccessfulBookingForMovie(
-                customer.getUserId(), movie.getMovieId(), LocalDateTime.now())) {
-            return;
-        }
-
-        LocalDateTime startTime = LocalDate.of(2026, 7, 18)
-                .minusDays(daysAgo)
-                .atTime(19, 0);
-        Showtime showtime = new Showtime();
-        showtime.setMovie(movie);
-        showtime.setHall(hall);
-        showtime.setStartTime(startTime);
-        showtime.setEndTime(startTime.plusMinutes(movie.getDuration() != null ? movie.getDuration() : 120));
-        showtime.setPrice(ticketPriceFor(hall));
-        showtime.setStatus("COMPLETED");
-        showtime = showtimeRepository.save(showtime);
-
-        Booking booking = createSeedBooking(
-                customer,
-                showtime,
-                List.of(seat),
-                0,
-                "Completed",
-                startTime.minusDays(2));
-        createSeedPayment(booking, "VNPay", "Completed", daysAgo, startTime.minusDays(2));
     }
 }

@@ -8,8 +8,10 @@ import com.cinema.hyperCinema.repository.*;
 import com.cinema.hyperCinema.security.CustomUserDetails;
 import com.cinema.hyperCinema.service.booking.BookingService;
 import com.cinema.hyperCinema.service.movie.MovieService;
+import com.cinema.hyperCinema.service.payment.VNPayService;
 import com.cinema.hyperCinema.service.ui.BookingUiDataService;
 import com.cinema.hyperCinema.service.ui.WorkspaceUiDataService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -33,6 +35,7 @@ public class BookingPageController {
     private final WorkspaceUiDataService workspaceUiDataService;
     private final MovieService movieService;
     private final BookingService bookingService;
+    private final VNPayService vnPayService;
     private final ReviewRepository reviewRepository;
     private final ReviewInteractionRepository reviewInteractionRepository;
 
@@ -40,12 +43,14 @@ public class BookingPageController {
                                  WorkspaceUiDataService workspaceUiDataService,
                                  MovieService movieService,
                                  BookingService bookingService,
+                                 VNPayService vnPayService,
                                  ReviewRepository reviewRepository,
                                  ReviewInteractionRepository reviewInteractionRepository) {
         this.bookingUiDataService = bookingUiDataService;
         this.workspaceUiDataService = workspaceUiDataService;
         this.movieService = movieService;
         this.bookingService = bookingService;
+        this.vnPayService = vnPayService;
         this.reviewRepository = reviewRepository;
         this.reviewInteractionRepository = reviewInteractionRepository;
     }
@@ -171,15 +176,29 @@ public class BookingPageController {
                                 @RequestParam(name = "foodItemIds", required = false) List<Integer> foodItemIds,
                                 @RequestParam(name = "foodQuantities", required = false) List<Integer> foodQuantities,
                                 @RequestParam(name = "voucherCode", required = false) String voucherCode,
+                                @RequestParam(name = "paymentMethod", required = false) String paymentMethod,
+                                HttpServletRequest request,
                                 RedirectAttributes redirectAttributes) {
         User user = userDetails.getUser();
+        boolean vnPaySelected = customerFlow(userDetails) && "VNPay".equalsIgnoreCase(paymentMethod);
         try {
-            var savedBooking = bookingService.createPendingVietQrBooking(
-                    user, showtimeId, seatIds, foodItemIds, foodQuantities, voucherCode);
+            if (vnPaySelected) {
+                vnPayService.validatePaymentConfiguration();
+            }
+            var savedBooking = vnPaySelected
+                    ? bookingService.createPendingVNPayBooking(
+                            user, showtimeId, seatIds, foodItemIds, foodQuantities, voucherCode)
+                    : bookingService.createPendingVietQrBooking(
+                            user, showtimeId, seatIds, foodItemIds, foodQuantities, voucherCode);
+            if (vnPaySelected) {
+                return "redirect:" + vnPayService.createPaymentUrl(savedBooking, request);
+            }
             return "redirect:/payment/vietqr/" + savedBooking.getBookingId();
         } catch (IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
-            return customerFlow(userDetails) ? "redirect:/my/dashboard" : "redirect:/staff/booking";
+            return customerFlow(userDetails)
+                    ? "redirect:/booking?showtimeId=" + showtimeId
+                    : "redirect:/staff/booking";
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
             return customerFlow(userDetails)
