@@ -16,6 +16,8 @@ import com.cinema.hyperCinema.service.payment.PaymentCallbackResult;
 import com.cinema.hyperCinema.service.payment.VNPayService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.cinema.hyperCinema.security.CustomUserDetails;
 
 @Controller
 public class VNPayController {
@@ -33,43 +35,53 @@ public class VNPayController {
     }
 
     @GetMapping({"/vnpay-return", "/api/payment/vnpay-return"})
-    public String handleReturn(HttpServletRequest request, RedirectAttributes redirectAttributes) {
+    public String handleReturn(HttpServletRequest request,
+                               @AuthenticationPrincipal CustomUserDetails userDetails,
+                               RedirectAttributes redirectAttributes) {
         Map<String, String> params = flattenParams(request);
         Integer bookingId = vnPayService.bookingId(params).orElse(null);
         Long callbackAmount = vnPayService.callbackAmount(params).orElse(null);
+
+        boolean isCustomer = userDetails == null || userDetails.getAuthorities().stream()
+                .anyMatch(auth -> "ROLE_CUSTOMER".equals(auth.getAuthority()));
+
         if (bookingId == null || callbackAmount == null) {
             redirectAttributes.addFlashAttribute("bookingError", "Không tìm thấy mã booking từ VNPay.");
-            return "redirect:/my/dashboard";
+            return isCustomer ? "redirect:/my/dashboard" : "redirect:/staff/booking";
         }
 
         Booking booking = bookingService.findById(bookingId).orElse(null);
         if (booking == null) {
             redirectAttributes.addFlashAttribute("bookingError", "Booking không tồn tại.");
-            return "redirect:/my/dashboard";
+            return isCustomer ? "redirect:/my/dashboard" : "redirect:/staff/booking";
         }
+
+        String errorRedirect = isCustomer
+                ? "redirect:/booking?showtimeId=" + booking.getShowtime().getShowtimeId()
+                : "redirect:/staff/booking";
 
         if (!vnPayService.isValidCallback(params)) {
             redirectAttributes.addFlashAttribute("bookingError", "Xác thực thanh toán VNPay thất bại.");
-            return "redirect:/booking?showtimeId=" + booking.getShowtime().getShowtimeId();
+            return errorRedirect;
         }
 
         if (vnPayService.isSuccessful(params)) {
             PaymentCallbackResult result = bookingPaymentService.confirmOnlinePayment(bookingId, callbackAmount);
             if (result.accepted()) {
                 redirectAttributes.addFlashAttribute("bookingSuccess", "Thanh toán VNPay thành công.");
-                return "redirect:/my/bookings";
+                return isCustomer ? "redirect:/my/bookings" : "redirect:/staff/bookings";
             }
             redirectAttributes.addFlashAttribute("bookingError", result.message());
-            return "redirect:/booking?showtimeId=" + booking.getShowtime().getShowtimeId();
+            return errorRedirect;
         }
 
         PaymentCallbackResult result = bookingPaymentService.failOnlinePayment(bookingId, callbackAmount);
         if (result.status() == PaymentCallbackResult.Status.INVALID_AMOUNT) {
             redirectAttributes.addFlashAttribute("bookingError", result.message());
-            return "redirect:/booking?showtimeId=" + booking.getShowtime().getShowtimeId();
+            return errorRedirect;
         }
         redirectAttributes.addFlashAttribute("bookingError", "Thanh toán VNPay chưa hoàn tất. Vui lòng chọn lại ghế.");
-        return "redirect:/booking?showtimeId=" + booking.getShowtime().getShowtimeId();
+        return errorRedirect;
     }
 
     @GetMapping("/api/payment/vnpay-ipn")
