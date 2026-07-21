@@ -3,7 +3,7 @@
 <head th:replace="~{fragments/layout :: head('Thông báo của tôi - HyperCinema')}">
     <title>Thông báo của tôi - HyperCinema</title>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen" th:classappend="${userRole == 'CUSTOMER'} ? ' hc-customer' : ''">
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
 <th:block th:if="${userRole == 'ADMIN'}">
     <nav th:replace="~{fragments/layout :: adminSidebar('notifications')}"></nav>
