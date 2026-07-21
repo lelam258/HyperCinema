@@ -20,6 +20,7 @@ import com.cinema.hyperCinema.repository.FoodOrderItemRepository;
 import com.cinema.hyperCinema.repository.FoodOrderRepository;
 import com.cinema.hyperCinema.repository.LoyaltyPointRepository;
 import com.cinema.hyperCinema.repository.PaymentRepository;
+import com.cinema.hyperCinema.service.NotificationService;
 import com.cinema.hyperCinema.service.payment.BookingPaymentService;
 import com.cinema.hyperCinema.service.payment.PaymentCallbackResult;
 import com.cinema.hyperCinema.service.payment.PaymentCallbackResult.Status;
@@ -44,6 +45,7 @@ public class BookingPaymentServiceImpl implements BookingPaymentService {
     private final FoodOrderItemRepository foodOrderItemRepository;
     private final FoodItemRepository foodItemRepository;
     private final LoyaltyPointRepository loyaltyPointRepository;
+    private final NotificationService notificationService;
     private final long paymentTimeoutMinutes;
 
     public BookingPaymentServiceImpl(BookingRepository bookingRepository,
@@ -52,6 +54,7 @@ public class BookingPaymentServiceImpl implements BookingPaymentService {
                                      FoodOrderItemRepository foodOrderItemRepository,
                                      FoodItemRepository foodItemRepository,
                                      LoyaltyPointRepository loyaltyPointRepository,
+                                     NotificationService notificationService,
                                      @Value("${booking.payment.timeout-minutes:15}") long paymentTimeoutMinutes) {
         this.bookingRepository = bookingRepository;
         this.paymentRepository = paymentRepository;
@@ -59,6 +62,7 @@ public class BookingPaymentServiceImpl implements BookingPaymentService {
         this.foodOrderItemRepository = foodOrderItemRepository;
         this.foodItemRepository = foodItemRepository;
         this.loyaltyPointRepository = loyaltyPointRepository;
+        this.notificationService = notificationService;
         this.paymentTimeoutMinutes = paymentTimeoutMinutes;
     }
 
@@ -118,6 +122,12 @@ public class BookingPaymentServiceImpl implements BookingPaymentService {
         payment.setStatus(PAYMENT_COMPLETED);
         confirmFoodOrders(bookingId);
         awardLoyaltyPoints(booking, payment);
+        notificationService.sendToUser(
+                booking.getUser(),
+                "Đặt vé thành công",
+                "Đơn đặt vé #" + booking.getBookingId() + " đã thanh toán thành công. "
+                        + "Vé của bạn đã sẵn sàng trong mục Vé của tôi.",
+                "Booking");
         return result(Status.CONFIRMED, "Payment đã được xác nhận.");
     }
 
@@ -177,11 +187,20 @@ public class BookingPaymentServiceImpl implements BookingPaymentService {
 
     private void expirePayment(Payment payment) {
         Booking booking = payment.getBooking();
+        boolean wasPending = PAYMENT_PENDING.equals(payment.getStatus());
         if (booking != null) {
             cancelBooking(booking);
             cancelFoodOrders(booking.getBookingId());
         }
         payment.setStatus(PAYMENT_FAILED);
+        if (wasPending && booking != null && booking.getUser() != null) {
+            notificationService.sendToUser(
+                    booking.getUser(),
+                    "Thanh toán chưa thành công",
+                    "Đơn đặt vé #" + booking.getBookingId()
+                            + " đã bị hủy vì thanh toán thất bại hoặc quá hạn. Bạn có thể đặt lại vé.",
+                    "Payment");
+        }
     }
 
     private void cancelBooking(Booking booking) {

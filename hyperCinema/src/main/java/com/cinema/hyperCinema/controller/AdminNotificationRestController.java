@@ -105,11 +105,19 @@ public class AdminNotificationRestController {
                 }
             }
 
-            notificationService.sendNotification(title, message, type, segments, scheduledAt);
+            int recipientCount = notificationService.sendNotification(title, message, type, segments, scheduledAt);
+            if (recipientCount == 0) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Không tìm thấy người dùng phù hợp với nhóm đã chọn."
+                ));
+            }
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "message", scheduledAt != null ? "Notification successfully scheduled." : "Notification successfully broadcasted."
+                    "recipientCount", recipientCount,
+                    "message", scheduledAt != null
+                            ? "Đã lên lịch thông báo cho " + recipientCount + " người dùng."
+                            : "Đã gửi thông báo cho " + recipientCount + " người dùng."
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
