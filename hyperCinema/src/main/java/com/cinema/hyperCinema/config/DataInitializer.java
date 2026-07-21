@@ -15,6 +15,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -30,6 +31,16 @@ public class DataInitializer implements CommandLineRunner {
     private static final int REPORT_COVERAGE_MAX_BOOKING_SEATS = 6;
     private static final int REPORT_FOOD_ORDER_SEED_TARGET = 60;
     private static final int REPORT_FOOD_ORDER_SEED_DAYS = 30;
+    private static final Map<String, String> DEFAULT_MOVIE_POSTERS = Map.ofEntries(
+            Map.entry("Lat Mat 8",
+                    "https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/l/m/lm8_-_470x700.jpg"),
+            Map.entry("Detective Conan: One-eyed Flashback",
+                    "https://upload.wikimedia.org/wikipedia/en/8/86/DetectiveConanOneeyedFlashback.jpg"),
+            Map.entry("Doraemon: Nobita's Art World Tales",
+                    "https://image.tmdb.org/t/p/w780/vncMpsAUDnL1JOb73e5q48gX32S.jpg"),
+            Map.entry("Mission: Impossible - The Final Reckoning",
+                    "https://image.tmdb.org/t/p/w780/AozMgdALZuR1hDPZt2a1aXiWmL4.jpg")
+    );
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
@@ -130,6 +141,7 @@ public class DataInitializer implements CommandLineRunner {
         List<Language> languages = ensureLanguages();
         List<Genre> currentGenres = ensureGenres();
         List<Movie> movies = ensureMovies(languages);
+        ensureMoviePosters(movies);
         ensureMovieGenres(movies, currentGenres);
         List<Hall> currentHalls = hallRepository.findAll();
         ensureSeats(currentHalls);
@@ -1275,6 +1287,19 @@ public class DataInitializer implements CommandLineRunner {
         review.setComment(comment);
         review.setCreatedAt(LocalDateTime.now().minusDays(daysAgo).minusHours(random.nextInt(12)));
         return review;
+    }
+
+    /** Fill poster URLs for demo movies while preserving posters uploaded by administrators. */
+    private void ensureMoviePosters(List<Movie> movies) {
+        List<Movie> moviesMissingPoster = movies.stream()
+                .filter(movie -> movie.getPosterUrl() == null || movie.getPosterUrl().isBlank())
+                .filter(movie -> DEFAULT_MOVIE_POSTERS.containsKey(movie.getTitle()))
+                .peek(movie -> movie.setPosterUrl(DEFAULT_MOVIE_POSTERS.get(movie.getTitle())))
+                .toList();
+
+        if (!moviesMissingPoster.isEmpty()) {
+            movieRepository.saveAll(moviesMissingPoster);
+        }
     }
 
     private void ensureReviewHistoryDemoData() {
