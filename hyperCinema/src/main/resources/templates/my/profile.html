@@ -42,8 +42,13 @@
                               th:unless="${membershipProgress.active}">Chưa có ưu đãi</span>
                     </div>
                     <p class="mt-2 text-sm text-slate-400"
-                       th:if="${membershipProgress.active}"
+                       th:if="${membershipProgress.active and membershipProgress.startDate != null and membershipProgress.endDate != null}"
                        th:text="|Hiệu lực ${#temporals.format(membershipProgress.startDate, 'dd/MM/yyyy')} - ${#temporals.format(membershipProgress.endDate, 'dd/MM/yyyy')}|">Hiệu lực</p>
+                    <p class="mt-2 text-sm text-slate-400"
+                       th:if="${membershipProgress.active and membershipProgress.startDate != null and membershipProgress.endDate == null}"
+                       th:text="|Hiệu lực từ ${#temporals.format(membershipProgress.startDate, 'dd/MM/yyyy')} - Vĩnh viễn|">Hiệu lực</p>
+                    <p class="mt-2 text-sm text-slate-400"
+                       th:if="${membershipProgress.active and membershipProgress.startDate == null}">Hiệu lực vĩnh viễn</p>
                     <p class="mt-2 text-sm text-slate-400"
                        th:unless="${membershipProgress.active}">
                         Ưu đãi thành viên sẽ hiển thị trong đặt vé sau khi bạn có gói đang hoạt động.
