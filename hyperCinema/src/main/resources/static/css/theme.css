@@ -1815,10 +1815,18 @@ a {
 }
 
 .hc-floating-menu {
+    display: inline-flex;
     left: 1rem;
     position: fixed;
     top: 1rem;
     z-index: 50;
+}
+
+/* Keep the mobile menu trigger from overlapping the sidebar brand on desktop. */
+@media (min-width: 768px) {
+    .hc-icon-button.hc-floating-menu {
+        display: none;
+    }
 }
 
 .hc-panel,
@@ -3561,6 +3569,65 @@ body.hc-customer .hc-page .hc-footer {
     margin-left: 0;
 }
 
+.hc-cinema-home { overflow: hidden; }
+.hc-cinema-hero { min-height: 36rem; position: relative; display: flex; align-items: center; padding: 4rem clamp(1.5rem,5vw,5rem); }
+.hc-cinema-hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center 28%; filter: blur(2px) saturate(.85); transform: scale(1.04); opacity: .48; }
+.hc-cinema-hero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg,#070707 4%,rgba(7,7,7,.92) 34%,rgba(7,7,7,.3) 70%,#070707 100%),linear-gradient(0deg,#070707 0%,transparent 45%); }
+.hc-cinema-hero-content { position: relative; z-index: 2; max-width: 44rem; }
+.hc-cinema-eyebrow { color: var(--hc-accent); font-size: .72rem; font-weight: 800; letter-spacing: .2em; margin: 0 0 .75rem; text-transform: uppercase; }
+.hc-cinema-hero h1 { font-family: var(--hc-font-serif); font-size: clamp(3rem,6vw,5.5rem); line-height: .96; letter-spacing: -.035em; margin: 0; max-width: 13ch; text-wrap: balance; }
+.hc-cinema-meta { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.3rem 0; }
+.hc-cinema-meta span { border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #d9dee8; font-size: .78rem; padding: .35rem .7rem; }
+.hc-cinema-lead { color: #b5bdca; font-size: 1rem; line-height: 1.7; max-width: 32rem; }
+.hc-cinema-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.75rem; }
+.hc-cinema-primary,.hc-cinema-secondary { align-items: center; border-radius: 8px; display: inline-flex; font-size: .86rem; font-weight: 800; gap: .5rem; justify-content: center; min-height: 2.8rem; padding: .7rem 1.15rem; text-decoration: none; }
+.hc-cinema-primary { background: var(--hc-accent); color: #080808; }
+.hc-cinema-primary:hover { background: #ffd84d; color: #080808; }
+.hc-cinema-secondary { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.13); color: #fff; backdrop-filter: blur(10px); }
+.hc-cinema-primary svg,.hc-cinema-secondary svg,.hc-cinema-section header a svg { width: 1rem; height: 1rem; }
+.hc-cinema-featured-poster { position: absolute; z-index: 2; right: clamp(2rem,7vw,7rem); width: clamp(13rem,19vw,18rem); aspect-ratio: 2/3; border: 1px solid rgba(255,255,255,.22); border-radius: 10px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.7); transform: rotate(2deg); }
+.hc-cinema-featured-poster img { width: 100%; height: 100%; object-fit: cover; }
+.hc-cinema-content { max-width: 82rem; margin: 0 auto; padding: 0 2rem 3rem; }
+.hc-cinema-welcome { align-items: center; border-bottom: 1px solid #262626; display: flex; justify-content: space-between; padding: 2rem 0; }
+.hc-cinema-welcome h2,.hc-cinema-section h2,.hc-booking-banner h2 { margin: 0; }
+.hc-cinema-member-chip { align-items: end; background: #121212; border: 1px solid #2a2a2a; border-radius: 8px; display: flex; flex-direction: column; padding: .7rem 1rem; }
+.hc-cinema-member-chip span { color: var(--hc-accent); font-size: .72rem; font-weight: 800; text-transform: uppercase; }
+.hc-cinema-member-chip strong { font-size: .9rem; }
+.hc-cinema-section { padding: 3rem 0; }
+.hc-cinema-section header { align-items: end; display: flex; justify-content: space-between; margin-bottom: 1.25rem; }
+.hc-cinema-section header a { align-items: center; color: var(--hc-accent); display: inline-flex; font-size: .82rem; font-weight: 800; gap: .4rem; text-decoration: none; }
+.hc-cinema-grid { display: grid; gap: 1.15rem; grid-template-columns: repeat(4,minmax(0,1fr)); }
+.hc-cinema-card a { color: inherit; text-decoration: none; }
+.hc-cinema-poster { aspect-ratio: 2/3; background: #151515; border-radius: 8px; overflow: hidden; position: relative; }
+.hc-cinema-poster img { height: 100%; object-fit: cover; transition: transform .45s ease,filter .45s ease; width: 100%; }
+.hc-cinema-card:hover img { filter: brightness(.7); transform: scale(1.045); }
+.hc-cinema-card-action { position: absolute; inset: auto .75rem .75rem; align-items:center; background:var(--hc-accent); border-radius:7px; color:#080808; display:flex; font-size:.75rem; font-weight:900; gap:.4rem; justify-content:center; opacity:0; padding:.6rem; transform:translateY(.5rem); transition:.25s ease; }
+.hc-cinema-card:hover .hc-cinema-card-action { opacity:1; transform:none; }
+.hc-cinema-card-action svg { height:.9rem; width:.9rem; }
+.hc-cinema-card h3 { font-size:.95rem; line-height:1.35; margin:.8rem 0 .3rem; }
+.hc-cinema-card p { color:#8e99ad; font-size:.75rem; margin:0; }
+.hc-cinema-booking-banner { align-items:center; background:linear-gradient(110deg,#17120a,#121212 70%); border:1px solid rgba(245,197,24,.25); border-radius:10px; display:flex; justify-content:space-between; gap:2rem; padding:2rem; }
+.hc-cinema-booking-banner h2 { margin-bottom:.35rem; }
+.hc-cinema-booking-banner span { color:#9ba4b4; font-size:.86rem; }
+.hc-ticket-catalog { max-width:82rem; margin:0 auto; padding:3.5rem 2rem; }
+.hc-ticket-catalog-head { align-items:end; border-bottom:1px solid #282828; display:flex; justify-content:space-between; margin-bottom:2rem; padding-bottom:1.5rem; }
+.hc-ticket-catalog-head h1 { font-family:var(--hc-font-serif); font-size:clamp(2.4rem,5vw,4rem); line-height:1; margin:0 0 .65rem; }
+.hc-ticket-catalog-head span { color:#9da6b5; }
+.hc-ticket-count { align-items:end; display:flex; flex-direction:column; }
+.hc-ticket-count strong { color:var(--hc-accent); font-size:2rem; }
+.hc-ticket-count span { font-size:.75rem; text-transform:uppercase; }
+.hc-ticket-catalog-grid { display:grid; gap:1rem; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.hc-ticket-movie { background:#111; border:1px solid #292929; border-radius:9px; display:grid; grid-template-columns:9rem minmax(0,1fr); overflow:hidden; transition:.2s ease; }
+.hc-ticket-movie:hover { border-color:rgba(245,197,24,.5); transform:translateY(-2px); }
+.hc-ticket-movie>img { height:100%; min-height:14rem; object-fit:cover; width:100%; }
+.hc-ticket-movie-body { display:flex; flex-direction:column; justify-content:space-between; padding:1.15rem; }
+.hc-ticket-movie h2 { font-size:1.05rem; line-height:1.35; margin:.7rem 0 0; }
+.hc-ticket-movie p { color:#919bad; font-size:.78rem; margin:.75rem 0; }
+.hc-ticket-movie .hc-cinema-primary { align-self:flex-start; }
+
+@media(max-width:1000px){.hc-cinema-featured-poster{opacity:.35;right:2rem}.hc-cinema-hero-content{max-width:70%;}.hc-cinema-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.hc-ticket-catalog-grid{grid-template-columns:1fr;}}
+@media(max-width:640px){.hc-cinema-hero{min-height:34rem;padding:5rem 1rem 2rem}.hc-cinema-hero-content{max-width:100%}.hc-cinema-featured-poster{display:none}.hc-cinema-hero h1{font-size:2.8rem}.hc-cinema-content,.hc-ticket-catalog{padding-left:1rem;padding-right:1rem}.hc-cinema-grid{gap:1rem;grid-template-columns:repeat(2,minmax(0,1fr))}.hc-cinema-welcome,.hc-cinema-booking-banner,.hc-ticket-catalog-head{align-items:stretch;flex-direction:column}.hc-ticket-movie{grid-template-columns:7rem minmax(0,1fr)}.hc-ticket-movie>img{min-height:12rem}.hc-ticket-count{align-items:flex-start}}
+
 .hc-customer .hc-sidebar {
     background: #101010;
     border-color: #252525;
@@ -4393,9 +4460,11 @@ body.hc-customer .hc-page .hc-footer {
 
 .hc-booking-hero-copy h1 {
     font-family: var(--hc-font-serif);
-    font-size: clamp(2.25rem, 5vw, 4rem);
-    line-height: 1;
+    font-size: clamp(2.15rem, 4.25vw, 3.35rem);
+    line-height: 1.06;
     margin: 0;
+    max-width: 18ch;
+    text-wrap: balance;
 }
 
 .hc-booking-hero-copy p {
@@ -5162,6 +5231,15 @@ body.hc-customer .hc-page .hc-footer {
 }
 
 @media (max-width: 1100px) {
+    .hc-booking-hero-inner {
+        gap: 1.25rem;
+        padding: 1.5rem;
+    }
+
+    .hc-booking-hero-copy h1 {
+        font-size: clamp(2rem, 4.5vw, 2.8rem);
+    }
+
     .hc-seat-admin-layout {
         grid-template-columns: 1fr;
     }

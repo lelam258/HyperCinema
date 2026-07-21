@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Mua vé - HyperCinema')}"></head>
+<body class="min-h-screen hc-customer">
+<th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
+<nav th:replace="~{fragments/layout :: customerSidebar('booking')}"></nav>
+<main class="hc-page">
+    <div class="hc-ticket-catalog">
+        <header class="hc-ticket-catalog-head">
+            <div><p class="hc-cinema-eyebrow">Đặt vé trực tuyến</p><h1>Mua vé ngay</h1><span>Chọn một bộ phim để xem lịch chiếu và ghế trống.</span></div>
+            <div class="hc-ticket-count"><strong th:text="${nowShowingCount}">0</strong><span>phim đang chiếu</span></div>
+        </header>
+        <div class="hc-ticket-catalog-grid">
+            <article class="hc-ticket-movie" th:each="movie : ${movies}">
+                <img th:if="${movie.posterUrl != null}" th:src="${movie.posterUrl}" th:alt="${movie.title}">
+                <div class="hc-ticket-movie-body">
+                    <div><span class="hc-ticket-status">Đang chiếu</span><h2 th:text="${movie.title}">Tên phim</h2></div>
+                    <p><span th:text="${movie.duration != null ? movie.duration + ' phút' : 'Đang cập nhật'}">120 phút</span><span th:if="${movie.languageName != null}" th:text="| · ${movie.languageName}|"> · Vietnamese</span></p>
+                    <a th:href="@{/booking/movies/{id}(id=${movie.movieId})}" class="hc-cinema-primary">Chọn lịch chiếu <i data-lucide="arrow-right"></i></a>
+                </div>
+            </article>
+        </div>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</main>
+</body>
+</html>

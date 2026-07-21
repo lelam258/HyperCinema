@@ -150,7 +150,7 @@
     <div class="hc-sidebar-scroll">
         <div class="hc-nav-section">Khám phá</div>
         <a th:href="@{/my/dashboard}" th:classappend="${active == 'home'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="home"></i>Trang chủ Phim</a>
-        <a th:href="@{/my/dashboard#phim-dang-chieu}" th:classappend="${active == 'booking'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="ticket"></i>Mua vé ngay</a>
+        <a th:href="@{/my/movies}" th:classappend="${active == 'booking'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="ticket"></i>Mua vé ngay</a>
         <a th:href="@{/my/bookings}" th:classappend="${active == 'bookings'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="tickets"></i>Vé của tôi</a>
         <a th:href="@{/my/payments}" th:classappend="${active == 'payments'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="credit-card"></i>Giao dịch</a>
         <a th:href="@{/my/notifications}" th:classappend="${active == 'notifications'} ? ' is-active' : ''" class="sidebar-link"><i data-lucide="bell"></i>Thông báo</a>

@@ -50,6 +50,17 @@ public class CustomerDashboardController {
         return "my/dashboard";
     }
 
+    @GetMapping("/movies")
+    public String movies(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        CustomerDashboardView dashboard = workspaceUiDataService.getCustomerDashboard(userDetails.getUser());
+        List<MovieListItem> nowShowingMovies = findCustomerMovies();
+        addCustomerAttributes(model, dashboard);
+        model.addAttribute("lastUpdated", dashboard.getLastUpdated());
+        model.addAttribute("movies", nowShowingMovies);
+        model.addAttribute("nowShowingCount", nowShowingMovies.size());
+        return "my/movies";
+    }
+
     @GetMapping("/tai-khoan")
     public String account(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         CustomerDashboardView dashboard = workspaceUiDataService.getCustomerDashboard(userDetails.getUser());
