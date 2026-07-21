@@ -8,6 +8,7 @@ import com.cinema.hyperCinema.service.booking.BookingService;
 import com.cinema.hyperCinema.service.pricing.HallSeatTypePricingService;
 import com.cinema.hyperCinema.service.voucher.VoucherApplicationService;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -31,7 +32,7 @@ public class BookingServiceImpl implements BookingService {
     private static final String MAINTENANCE = "UNDER_MAINTENANCE";
     private static final String SHOWTIME_CANCELLED = "CANCELLED";
     private static final String PAYMENT_PENDING = "Pending";
-    private static final String PAYMENT_METHOD_VIETQR = "VietQR";
+    private static final String PAYMENT_METHOD_VNPAY = "VNPay";
     private static final String FOOD_ORDER_PENDING = "PENDING";
     private static final String ROLE_CUSTOMER = "Customer";
 
@@ -47,6 +48,7 @@ public class BookingServiceImpl implements BookingService {
     private final UserMembershipRepository userMembershipRepository;
     private final VoucherApplicationService voucherApplicationService;
     private final HallSeatTypePricingService hallSeatTypePricingService;
+    private final long paymentTimeoutMinutes;
 
     public BookingServiceImpl(BookingRepository bookingRepository,
                               ShowtimeRepository showtimeRepository,
@@ -59,7 +61,8 @@ public class BookingServiceImpl implements BookingService {
                               FoodOrderItemRepository foodOrderItemRepository,
                               UserMembershipRepository userMembershipRepository,
                               VoucherApplicationService voucherApplicationService,
-                              HallSeatTypePricingService hallSeatTypePricingService) {
+                              HallSeatTypePricingService hallSeatTypePricingService,
+                              @Value("${booking.payment.timeout-minutes:15}") long paymentTimeoutMinutes) {
         this.bookingRepository = bookingRepository;
         this.showtimeRepository = showtimeRepository;
         this.seatRepository = seatRepository;
@@ -72,6 +75,7 @@ public class BookingServiceImpl implements BookingService {
         this.userMembershipRepository = userMembershipRepository;
         this.voucherApplicationService = voucherApplicationService;
         this.hallSeatTypePricingService = hallSeatTypePricingService;
+        this.paymentTimeoutMinutes = paymentTimeoutMinutes;
     }
 
     @Override
@@ -119,12 +123,22 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public Booking createPendingVietQrBooking(User user,
-                                              Integer showtimeId,
-                                              List<Integer> seatIds,
-                                              List<Integer> foodItemIds,
-                                              List<Integer> foodQuantities,
-                                              String voucherCode) {
+    public Booking createPendingVNPayBooking(User user,
+                                             Integer showtimeId,
+                                             List<Integer> seatIds,
+                                             List<Integer> foodItemIds,
+                                             List<Integer> foodQuantities,
+                                             String voucherCode) {
+        return createPendingBooking(user, showtimeId, seatIds, foodItemIds, foodQuantities,
+                voucherCode);
+    }
+
+    private Booking createPendingBooking(User user,
+                                         Integer showtimeId,
+                                         List<Integer> seatIds,
+                                         List<Integer> foodItemIds,
+                                         List<Integer> foodQuantities,
+                                         String voucherCode) {
         if (seatIds == null || seatIds.isEmpty()) {
             throw new IllegalArgumentException("Vui long chon it nhat mot ghe.");
         }
@@ -192,9 +206,11 @@ public class BookingServiceImpl implements BookingService {
         Payment payment = new Payment();
         payment.setBooking(savedBooking);
         payment.setAmount(savedBooking.getTotalPrice());
-        payment.setMethod(PAYMENT_METHOD_VIETQR);
+        payment.setMethod(PAYMENT_METHOD_VNPAY);
         payment.setStatus(PAYMENT_PENDING);
-        paymentRepository.save(payment);
+        payment.setExpiresAt(now.plusMinutes(paymentTimeoutMinutes));
+        payment = paymentRepository.save(payment);
+        savedBooking.setPayment(payment);
 
         return savedBooking;
     }

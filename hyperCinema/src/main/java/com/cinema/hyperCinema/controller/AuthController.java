@@ -67,7 +67,7 @@ public class AuthController {
 
         try {
             authService.requestForgotPassword(dto.getEmail());
-            model.addAttribute("successMessage", "Ma dat lai mat khau da duoc gui den email cua ban.");
+            model.addAttribute("successMessage", "Neu email ton tai trong he thong, huong dan dat lai mat khau se duoc gui den email do.");
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {

@@ -66,9 +66,9 @@ public class VNPayService {
     public void validatePaymentConfiguration() {
         var missingKeys = properties.missingRequiredKeys();
         if (!missingKeys.isEmpty()) {
-            throw new IllegalStateException("Cấu hình VNPay chưa hoàn tất. Thiếu: "
+            throw new IllegalStateException("Cau hinh VNPay chua hoan tat. Thieu: "
                     + String.join(", ", missingKeys)
-                    + ". Vui lòng thử lại sau hoặc chọn VietQR.");
+                    + ". Vui long thu lai sau.");
         }
     }
 

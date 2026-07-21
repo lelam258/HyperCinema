@@ -44,7 +44,7 @@
                         <td class="font-mono font-semibold text-white" th:text="|#${order.orderId}|">#1</td>
                         <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">01/01/2026</td>
                         <td th:text="${order.customerPhone != null and !#strings.isEmpty(order.customerPhone) ? order.customerPhone : 'Khach le'}">Khach le</td>
-                        <td th:text="${order.paymentMethod != null ? order.paymentMethod : 'N/A'}">CASH</td>
+                        <td th:text="${order.paymentMethod != null ? order.paymentMethod : 'N/A'}">N/A</td>
                         <td><span class="hc-badge" th:text="${order.status}">CONFIRMED</span></td>
                         <td class="text-right tabular-nums" th:text="${#numbers.formatInteger(order.totalAmount != null ? order.totalAmount : 0, 0, 'POINT') + ' VND'}">0 VND</td>
                         <td class="text-right"><a th:href="@{|/staff/food-orders/${order.orderId}|}" class="hc-button hc-button-outline no-underline">Xem</a></td>

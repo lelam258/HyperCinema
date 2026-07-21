@@ -33,8 +33,6 @@
         const voucherClear = root.querySelector("[data-pos-voucher-clear]");
         const voucherSelected = root.querySelector("[data-pos-voucher-selected]");
         const voucherList = root.querySelector("[data-pos-voucher-list]");
-        const customerPhone = root.querySelector("[data-pos-customer-phone]");
-        const customerMessage = root.querySelector("[data-pos-customer-message]");
         const cartEmpty = root.querySelector("[data-pos-cart-empty]");
         const cartList = root.querySelector("[data-pos-cart-list]");
         const subtotalNode = root.querySelector("[data-pos-subtotal]");
@@ -51,7 +49,7 @@
             showtime: null,
             seats: [],
             food: new Map(),
-            paymentMethod: "",
+            paymentMethod: "VNPay",
             voucher: null,
             availableVouchers: [],
             voucherListLoadedFor: null,
@@ -584,31 +582,20 @@
             sync();
         });
 
-        root.querySelector("[data-pos-customer-search]")?.addEventListener("click", () => {
-            const phone = customerPhone?.value?.trim() || "";
-            if (customerMessage) {
-                customerMessage.textContent = phone
-                    ? "So dien thoai se duoc dung de gan thanh vien neu tim thay."
-                    : "Nhap so dien thoai truoc khi tim.";
-            }
-        });
-
         root.querySelector("[data-pos-clear]")?.addEventListener("click", () => {
             state.showtime = null;
             state.seats = [];
             state.food.clear();
-            state.paymentMethod = "";
+            state.paymentMethod = "VNPay";
             clearVoucher();
             resetVoucherList();
             closeSeatModal();
             timeButtons.forEach((button) => button.classList.remove("is-selected"));
-            paymentButtons.forEach((button) => button.classList.remove("is-selected"));
             foodItems.forEach((item) => {
                 const quantityNode = item.querySelector("[data-pos-food-quantity]");
                 if (quantityNode) quantityNode.textContent = "0";
             });
             if (voucherInput) voucherInput.value = "";
-            if (customerMessage) customerMessage.textContent = "";
             sync();
         });
 
