@@ -1,6 +1,7 @@
 package com.cinema.hyperCinema.service.booking.impl;
 
 import com.cinema.hyperCinema.dto.admin.voucher.response.VoucherPreview;
+import com.cinema.hyperCinema.dto.booking.CustomerBookingHistoryFilter;
 import com.cinema.hyperCinema.model.*;
 import com.cinema.hyperCinema.repository.*;
 import com.cinema.hyperCinema.service.booking.BookingPricingResult;
@@ -32,6 +33,7 @@ public class BookingServiceImpl implements BookingService {
     private static final String MAINTENANCE = "UNDER_MAINTENANCE";
     private static final String SHOWTIME_CANCELLED = "CANCELLED";
     private static final String PAYMENT_PENDING = "Pending";
+    private static final String PAYMENT_METHOD_VIETQR = "VietQR";
     private static final String PAYMENT_METHOD_VNPAY = "VNPay";
     private static final String FOOD_ORDER_PENDING = "PENDING";
     private static final String ROLE_CUSTOMER = "Customer";
@@ -86,6 +88,26 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public Page<Booking> findBookingsByUser(Integer userId, Pageable pageable) {
         Page<Integer> bookingIds = bookingRepository.findBookingIdsByUserId(userId, pageable);
+        return bookingPageFromIds(bookingIds, pageable);
+    }
+
+    @Override
+    public Page<Booking> findBookingsByUser(Integer userId, CustomerBookingHistoryFilter filter, Pageable pageable) {
+        CustomerBookingHistoryFilter safeFilter = filter != null ? filter : new CustomerBookingHistoryFilter();
+        Page<Integer> bookingIds = bookingRepository.findCustomerBookingIds(
+                userId,
+                blankToNull(safeFilter.getKeyword()),
+                blankToNull(safeFilter.getBookingStatus()),
+                blankToNull(safeFilter.getPaymentStatus()),
+                safeFilter.createdFromStart(),
+                safeFilter.createdToExclusive(),
+                safeFilter.showtimeFromStart(),
+                safeFilter.showtimeToExclusive(),
+                pageable);
+        return bookingPageFromIds(bookingIds, pageable);
+    }
+
+    private Page<Booking> bookingPageFromIds(Page<Integer> bookingIds, Pageable pageable) {
         if (bookingIds.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -123,6 +145,18 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
+    public Booking createPendingVietQrBooking(User user,
+                                              Integer showtimeId,
+                                              List<Integer> seatIds,
+                                              List<Integer> foodItemIds,
+                                              List<Integer> foodQuantities,
+                                              String voucherCode) {
+        return createPendingBooking(user, showtimeId, seatIds, foodItemIds, foodQuantities,
+                voucherCode, PAYMENT_METHOD_VIETQR);
+    }
+
+    @Override
+    @Transactional
     public Booking createPendingVNPayBooking(User user,
                                              Integer showtimeId,
                                              List<Integer> seatIds,
@@ -130,7 +164,7 @@ public class BookingServiceImpl implements BookingService {
                                              List<Integer> foodQuantities,
                                              String voucherCode) {
         return createPendingBooking(user, showtimeId, seatIds, foodItemIds, foodQuantities,
-                voucherCode);
+                voucherCode, PAYMENT_METHOD_VNPAY);
     }
 
     private Booking createPendingBooking(User user,
@@ -138,16 +172,17 @@ public class BookingServiceImpl implements BookingService {
                                          List<Integer> seatIds,
                                          List<Integer> foodItemIds,
                                          List<Integer> foodQuantities,
-                                         String voucherCode) {
+                                         String voucherCode,
+                                         String paymentMethod) {
         if (seatIds == null || seatIds.isEmpty()) {
-            throw new IllegalArgumentException("Vui long chon it nhat mot ghe.");
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất một ghế.");
         }
 
         Showtime showtime = findShowtimeWithDetails(showtimeId)
-                .orElseThrow(() -> new IllegalStateException("Suat chieu khong ton tai."));
+                .orElseThrow(() -> new IllegalStateException("Suất chiếu không tồn tại."));
 
         if (SHOWTIME_CANCELLED.equals(showtime.getStatus())) {
-            throw new IllegalStateException("Suat chieu khong ton tai.");
+            throw new IllegalStateException("Suất chiếu không tồn tại.");
         }
 
         List<Seat> seats = seatRepository.findAllById(seatIds);
@@ -155,7 +190,7 @@ public class BookingServiceImpl implements BookingService {
                 || seats.stream().anyMatch(seat -> !seat.getHall().getHallId().equals(showtime.getHall().getHallId()))
                 || seats.stream().anyMatch(seat -> MAINTENANCE.equals(seat.getMaintenanceStatus()))
                 || hasUnavailableSeats(showtimeId, seatIds)) {
-            throw new IllegalArgumentException("Ghe da duoc dat. Vui long chon lai.");
+            throw new IllegalArgumentException("Ghế đã được đặt. Vui lòng chọn lại.");
         }
 
         List<FoodSelection> foodSelections = selectedFood(foodItemIds, foodQuantities);
@@ -206,7 +241,7 @@ public class BookingServiceImpl implements BookingService {
         Payment payment = new Payment();
         payment.setBooking(savedBooking);
         payment.setAmount(savedBooking.getTotalPrice());
-        payment.setMethod(PAYMENT_METHOD_VNPAY);
+        payment.setMethod(paymentMethod);
         payment.setStatus(PAYMENT_PENDING);
         payment.setExpiresAt(now.plusMinutes(paymentTimeoutMinutes));
         payment = paymentRepository.save(payment);
@@ -291,6 +326,13 @@ public class BookingServiceImpl implements BookingService {
         return voucherCode.trim();
     }
 
+    private String blankToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
+    }
+
     private long percentageDiscount(long amount, BigDecimal percent) {
         return BigDecimal.valueOf(amount)
                 .multiply(percent)
@@ -307,7 +349,7 @@ public class BookingServiceImpl implements BookingService {
             return List.of();
         }
         if (foodQuantities == null || foodItemIds.size() != foodQuantities.size()) {
-            throw new IllegalArgumentException("Thong tin F&B khong hop le");
+            throw new IllegalArgumentException("Thông tin F&B không hợp lệ");
         }
 
         List<FoodSelection> selections = new ArrayList<>();
@@ -319,12 +361,12 @@ public class BookingServiceImpl implements BookingService {
             }
 
             FoodItem item = foodItemRepository.findById(itemId)
-                    .orElseThrow(() -> new IllegalArgumentException("San pham F&B khong ton tai."));
+                    .orElseThrow(() -> new IllegalArgumentException("Sản phẩm F&B không tồn tại."));
             if (!Boolean.TRUE.equals(item.getIsAvailable())) {
-                throw new IllegalArgumentException("San pham F&B hien khong con ban.");
+                throw new IllegalArgumentException("Sản phẩm F&B hiện không còn bán.");
             }
             if (item.getStock() == null || item.getStock() < quantity) {
-                throw new IllegalArgumentException("San pham F&B khong con ton kho.");
+                throw new IllegalArgumentException("Sản phẩm F&B không còn tồn kho.");
             }
             selections.add(new FoodSelection(item, quantity));
         }

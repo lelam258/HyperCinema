@@ -99,6 +99,62 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             """)
     Page<Integer> findBookingIdsByUserId(@Param("userId") Integer userId, Pageable pageable);
 
+    @Query(value = """
+            SELECT b.bookingId
+            FROM Booking b
+            LEFT JOIN b.showtime s
+            LEFT JOIN s.movie m
+            LEFT JOIN s.hall h
+            LEFT JOIN h.branch br
+            LEFT JOIN b.payment p
+            WHERE b.user.userId = :userId
+            AND (:keyword IS NULL
+                OR LOWER(CONCAT('', b.bookingId)) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(m.title, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(br.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(h.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(p.method, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            )
+            AND (:bookingStatus IS NULL OR b.status = :bookingStatus)
+            AND (:paymentStatus IS NULL OR p.status = :paymentStatus)
+            AND (:createdFrom IS NULL OR b.createdAt >= :createdFrom)
+            AND (:createdTo IS NULL OR b.createdAt < :createdTo)
+            AND (:showtimeFrom IS NULL OR s.startTime >= :showtimeFrom)
+            AND (:showtimeTo IS NULL OR s.startTime < :showtimeTo)
+            """,
+            countQuery = """
+            SELECT COUNT(b)
+            FROM Booking b
+            LEFT JOIN b.showtime s
+            LEFT JOIN s.movie m
+            LEFT JOIN s.hall h
+            LEFT JOIN h.branch br
+            LEFT JOIN b.payment p
+            WHERE b.user.userId = :userId
+            AND (:keyword IS NULL
+                OR LOWER(CONCAT('', b.bookingId)) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(m.title, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(br.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(h.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(p.method, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            )
+            AND (:bookingStatus IS NULL OR b.status = :bookingStatus)
+            AND (:paymentStatus IS NULL OR p.status = :paymentStatus)
+            AND (:createdFrom IS NULL OR b.createdAt >= :createdFrom)
+            AND (:createdTo IS NULL OR b.createdAt < :createdTo)
+            AND (:showtimeFrom IS NULL OR s.startTime >= :showtimeFrom)
+            AND (:showtimeTo IS NULL OR s.startTime < :showtimeTo)
+            """)
+    Page<Integer> findCustomerBookingIds(@Param("userId") Integer userId,
+                                         @Param("keyword") String keyword,
+                                         @Param("bookingStatus") String bookingStatus,
+                                         @Param("paymentStatus") String paymentStatus,
+                                         @Param("createdFrom") LocalDateTime createdFrom,
+                                         @Param("createdTo") LocalDateTime createdTo,
+                                         @Param("showtimeFrom") LocalDateTime showtimeFrom,
+                                         @Param("showtimeTo") LocalDateTime showtimeTo,
+                                         Pageable pageable);
+
     @EntityGraph(attributePaths = {
             "user",
             "showtime",
@@ -177,6 +233,45 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                             @Param("showtimeFrom") LocalDateTime showtimeFrom,
                                             @Param("showtimeTo") LocalDateTime showtimeTo,
                                             Pageable pageable);
+
+    @Query("""
+            SELECT COUNT(b),
+                   COALESCE(SUM(CASE WHEN UPPER(TRIM(COALESCE(b.status, ''))) = 'PENDING' THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(CASE WHEN UPPER(TRIM(COALESCE(b.status, ''))) IN ('PAID', 'CONFIRMED', 'SERVED', 'COMPLETED') THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(CASE WHEN UPPER(TRIM(COALESCE(b.status, ''))) = 'CANCELLED' THEN 1 ELSE 0 END), 0)
+            FROM Booking b
+            LEFT JOIN b.user u
+            LEFT JOIN b.showtime s
+            LEFT JOIN s.movie m
+            LEFT JOIN s.hall h
+            LEFT JOIN h.branch br
+            LEFT JOIN b.payment p
+            WHERE br.branchId = :branchId
+            AND (:bookingStatus IS NULL OR b.status = :bookingStatus)
+            AND (:paymentStatus IS NULL OR p.status = :paymentStatus)
+            AND (:movieId IS NULL OR m.movieId = :movieId)
+            AND (:createdFrom IS NULL OR b.createdAt >= :createdFrom)
+            AND (:createdTo IS NULL OR b.createdAt < :createdTo)
+            AND (:showtimeFrom IS NULL OR s.startTime >= :showtimeFrom)
+            AND (:showtimeTo IS NULL OR s.startTime < :showtimeTo)
+            AND (
+                :keyword IS NULL
+                OR LOWER(CONCAT('', b.bookingId)) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(u.fullName, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(u.username, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(u.email, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(m.title, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            )
+            """)
+    Object[] summarizeForBranchManagement(@Param("branchId") Integer branchId,
+                                          @Param("keyword") String keyword,
+                                          @Param("bookingStatus") String bookingStatus,
+                                          @Param("paymentStatus") String paymentStatus,
+                                          @Param("movieId") Integer movieId,
+                                          @Param("createdFrom") LocalDateTime createdFrom,
+                                          @Param("createdTo") LocalDateTime createdTo,
+                                          @Param("showtimeFrom") LocalDateTime showtimeFrom,
+                                          @Param("showtimeTo") LocalDateTime showtimeTo);
 
     @Query("""
             SELECT b

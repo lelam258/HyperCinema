@@ -46,7 +46,7 @@ public class VNPayService {
         params.put("vnp_TmnCode", properties.tmnCode());
         params.put("vnp_Amount", String.valueOf(paymentAmount(booking) * 100));
         params.put("vnp_CurrCode", "VND");
-        params.put("vnp_TxnRef", String.valueOf(booking.getBookingId()));
+        params.put("vnp_TxnRef", booking.getBookingId() + "_" + System.currentTimeMillis());
         params.put("vnp_OrderInfo", "Thanh toan ve HyperCinema #" + booking.getBookingId());
         params.put("vnp_OrderType", properties.orderType());
         params.put("vnp_Locale", "vn");
@@ -102,7 +102,13 @@ public class VNPayService {
     public Optional<Integer> bookingId(Map<String, String> requestParams) {
         try {
             String value = requestParams.get("vnp_TxnRef");
-            return value == null || value.isBlank() ? Optional.empty() : Optional.of(Integer.valueOf(value));
+            if (value == null || value.isBlank()) {
+                return Optional.empty();
+            }
+            if (value.contains("_")) {
+                value = value.split("_")[0];
+            }
+            return Optional.of(Integer.valueOf(value));
         } catch (NumberFormatException ex) {
             return Optional.empty();
         }
