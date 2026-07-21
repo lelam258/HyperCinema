@@ -1321,21 +1321,6 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        Set<String> generatedReviewComments = Set.of(
-                "Phim rat hay, hinh anh dep va trai nghiem tai rap rat an tuong.",
-                "Noi dung cuon hut, dien xuat tot va am thanh trong rap rat da.",
-                "Mot bo phim dang xem, toi rat thich cach xay dung nhan vat.",
-                "Tiet tau hop ly, nhieu canh quay dep va ket thuc an tuong.",
-                "Trai nghiem giai tri tot, se gioi thieu bo phim nay cho ban be."
-        );
-        List<Review> generatedReviews = reviewRepository.findAll().stream()
-                .filter(review -> generatedReviewComments.contains(review.getComment()))
-                .toList();
-        if (!generatedReviews.isEmpty()) {
-            reviewRepository.deleteAll(generatedReviews);
-            reviewRepository.flush();
-        }
-
         for (int customerIndex = 0; customerIndex < customers.size(); customerIndex++) {
             User customer = customers.get(customerIndex);
             for (int movieIndex = 0; movieIndex < movies.size(); movieIndex++) {
