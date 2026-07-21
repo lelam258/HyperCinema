@@ -12,5 +12,6 @@ public interface NotificationService {
     Notification getNotificationDetails(Integer notificationId, User user);
     Notification markAsRead(Integer notificationId, User user);
     Notification markAsUnread(Integer notificationId, User user);
-    void sendNotification(String title, String message, String type, List<String> segments, LocalDateTime scheduledAt);
+    int sendNotification(String title, String message, String type, List<String> segments, LocalDateTime scheduledAt);
+    Notification sendToUser(User user, String title, String message, String type);
 }
