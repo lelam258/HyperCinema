@@ -157,6 +157,62 @@ public class SeatManagementController {
         return "redirect:/admin/halls/" + hallId + "/seats";
     }
 
+    @PostMapping("/layout/rows")
+    public String addRow(@PathVariable Integer hallId,
+                         @RequestParam String type,
+                         @AuthenticationPrincipal CustomUserDetails principal,
+                         RedirectAttributes redirectAttributes) {
+        try {
+            seatService.addRow(hallId, type, principal.getUser());
+            redirectAttributes.addFlashAttribute("successKey", "seat.add.success");
+        } catch (SeatValidationException ex) {
+            redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
+        }
+        return "redirect:/admin/halls/" + hallId + "/seats";
+    }
+
+    @PostMapping("/layout/columns")
+    public String addColumn(@PathVariable Integer hallId,
+                            @RequestParam String type,
+                            @AuthenticationPrincipal CustomUserDetails principal,
+                            RedirectAttributes redirectAttributes) {
+        try {
+            seatService.addColumn(hallId, type, principal.getUser());
+            redirectAttributes.addFlashAttribute("successKey", "seat.add.success");
+        } catch (SeatValidationException ex) {
+            redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
+        }
+        return "redirect:/admin/halls/" + hallId + "/seats";
+    }
+
+    @PostMapping("/layout/column-aisles")
+    public String insertColumnAisle(@PathVariable Integer hallId,
+                                    @RequestParam Integer afterColumn,
+                                    @AuthenticationPrincipal CustomUserDetails principal,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            seatService.insertColumnAisle(hallId, afterColumn, principal.getUser());
+            redirectAttributes.addFlashAttribute("successKey", "seat.update.success");
+        } catch (SeatValidationException ex) {
+            redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
+        }
+        return "redirect:/admin/halls/" + hallId + "/seats";
+    }
+
+    @PostMapping("/layout/row-aisles")
+    public String insertRowAisle(@PathVariable Integer hallId,
+                                 @RequestParam String afterRow,
+                                 @AuthenticationPrincipal CustomUserDetails principal,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            seatService.insertRowAisle(hallId, afterRow, principal.getUser());
+            redirectAttributes.addFlashAttribute("successKey", "seat.update.success");
+        } catch (SeatValidationException ex) {
+            redirectAttributes.addFlashAttribute("errorKey", ex.getKey());
+        }
+        return "redirect:/admin/halls/" + hallId + "/seats";
+    }
+
     private void addContext(Model model, CustomUserDetails principal) {
         HallManagementContext context = hallService.managementContext(principal.getUser());
         model.addAttribute("hallContext", context);

@@ -28,4 +28,12 @@ public interface SeatService {
     void addSingleSeat(Integer hallId, SeatUpdateRequest request, User actor);
 
     void clearAllSeats(Integer hallId, User actor);
+
+    void addRow(Integer hallId, String type, User actor);
+
+    void addColumn(Integer hallId, String type, User actor);
+
+    void insertColumnAisle(Integer hallId, Integer afterColumn, User actor);
+
+    void insertRowAisle(Integer hallId, String afterRow, User actor);
 }
