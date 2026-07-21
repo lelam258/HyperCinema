@@ -179,7 +179,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private List<Language> seedLanguages() {
         List<Language> languages = new ArrayList<>();
-        for (String name : new String[]{"Vietnamese", "English", "Japanese", "Korean"}) {
+        for (String name : new String[]{"Tiếng Việt", "Tiếng Anh", "Tiếng Nhật", "Tiếng Hàn"}) {
             Language language = new Language();
             language.setName(name);
             languages.add(languageRepository.save(language));
@@ -225,29 +225,29 @@ public class DataInitializer implements CommandLineRunner {
         Language japanese = languages.size() > 2 ? languages.get(2) : vietnamese;
         Language korean = languages.size() > 3 ? languages.get(3) : vietnamese;
 
-        movies.add(createMovie("Lat Mat 8", 135,
-                "A Vietnamese family drama with action and comedy elements.",
+        movies.add(createMovie("Lật Mặt 8: Hành Trình Mới", 135,
+                "Một bộ phim tâm lý gia đình Việt Nam kết hợp các yếu tố hành động và hài hước.",
                 LocalDate.of(2025, 4, 30), "NowShowing", vietnamese));
-        movies.add(createMovie("Detective Conan: One-eyed Flashback", 110,
-                "A mystery case follows Conan and the police into a dangerous mountain incident.",
+        movies.add(createMovie("Thám Tử Lừng Danh Conan: Ký Ức Độc Nhãn", 110,
+                "Vụ án bí ẩn đưa Conan và cảnh sát vào một sự cố nguy hiểm trên núi.",
                 LocalDate.of(2025, 4, 18), "NowShowing", japanese));
-        movies.add(createMovie("Doraemon: Nobita's Art World Tales", 105,
-                "Nobita and friends enter a magical world hidden inside famous paintings.",
+        movies.add(createMovie("Doraemon: Nobita Và Câu Chuyện Thế Giới Nghệ Thuật", 105,
+                "Nobita và những người bạn bước vào thế giới phép thuật ẩn bên trong những bức tranh nổi tiếng.",
                 LocalDate.of(2025, 5, 23), "NowShowing", japanese));
-        movies.add(createMovie("Mission: Impossible - The Final Reckoning", 169,
-                "Ethan Hunt faces a final mission against a global AI threat.",
+        movies.add(createMovie("Nhiệm Vụ Khả Thi: Phán Quyết Cuối Cùng", 169,
+                "Ethan Hunt đối mặt với nhiệm vụ cuối cùng chống lại mối đe dọa AI toàn cầu.",
                 LocalDate.of(2025, 5, 21), "NowShowing", english));
-        movies.add(createMovie("How to Train Your Dragon", 125,
-                "A live-action fantasy adventure about Hiccup and Toothless.",
+        movies.add(createMovie("Bí Kíp Luyện Rồng", 125,
+                "Cuộc phiêu lưu giả tưởng phiên bản tả thực về Hiccup và Răng Sún.",
                 LocalDate.of(2025, 6, 13), "ComingSoon", english));
-        movies.add(createMovie("F1 The Movie", 155,
-                "A former driver returns to Formula 1 to mentor a young racing talent.",
+        movies.add(createMovie("Đua Xe F1: Bộ Phim", 155,
+                "Cựu tay đua trở lại đường đua Công thức 1 để dẫn dắt một tài năng trẻ.",
                 LocalDate.of(2025, 6, 27), "ComingSoon", english));
-        movies.add(createMovie("The Roundup: Punishment", 109,
-                "Detective Ma Seok-do hunts a criminal network across borders.",
+        movies.add(createMovie("Vây Hãm: Kẻ Trừng Phạt", 109,
+                "Thám tử Ma Seok-do săn lùng mạng lưới tội phạm xuyên biên giới.",
                 LocalDate.of(2024, 4, 24), "Ended", korean));
-        movies.add(createMovie("Godzilla x Kong: The New Empire", 115,
-                "Two titans face a hidden threat from deep within the Hollow Earth.",
+        movies.add(createMovie("Godzilla x Kong: Đế Chế Mới", 115,
+                "Hai siêu quái thú đối mặt với mối đe dọa ẩn giấu từ sâu trong Trái Đất Rỗng.",
                 LocalDate.of(2024, 3, 29), "Ended", english));
 
         return movies;
@@ -1257,19 +1257,18 @@ public class DataInitializer implements CommandLineRunner {
 
         for (Movie movie : movies) {
             String title = movie.getTitle();
-            if ("Avengers: Doomsday".equalsIgnoreCase(title)) {
-                reviews.add(createReview(customers.get(0 % customers.size()), movie, 5, "Phim rat dang xem, ky xao an tuong.", 1));
-                reviews.add(createReview(customers.get(1 % customers.size()), movie, 4, "Cot truyen loi cuon va ket thuc bat ngo.", 2));
-            } else if ("Lat Mat 8".equalsIgnoreCase(title) || "Lật Mặt 8".equalsIgnoreCase(title)) {
-                reviews.add(createReview(customers.get(2 % customers.size()), movie, 5, "Phim gia dinh cam dong va giai tri.", 1));
-                reviews.add(createReview(customers.get(3 % customers.size()), movie, 4, "Dien xuat tu nhien, rat phu hop xem cung gia dinh.", 4));
-            } else if ("Godzilla x Kong".equalsIgnoreCase(title)
-                    || "Godzilla x Kong: The New Empire".equalsIgnoreCase(title)) {
-                reviews.add(createReview(customers.get(4 % customers.size()), movie, 4, "Hanh dong da mat, am thanh tot.", 2));
-                reviews.add(createReview(customers.get(5 % customers.size()), movie, 5, "Trai nghiem rap rat cuon.", 6));
-            } else if ("Dune: Part Two".equalsIgnoreCase(title)) {
-                reviews.add(createReview(customers.get(6 % customers.size()), movie, 5, "Hinh anh dep va am nhac xuat sac.", 3));
-                reviews.add(createReview(customers.get(7 % customers.size()), movie, 4, "Phim dai nhung van giu duoc mach cam xuc.", 7));
+            if ("Nhiệm Vụ Khả Thi: Phán Quyết Cuối Cùng".equalsIgnoreCase(title)) {
+                reviews.add(createReview(customers.get(0 % customers.size()), movie, 5, "Phim rất đáng xem, kỹ xảo ấn tượng.", 1));
+                reviews.add(createReview(customers.get(1 % customers.size()), movie, 4, "Cốt truyện lôi cuốn và kết thúc bất ngờ.", 2));
+            } else if ("Lật Mặt 8: Hành Trình Mới".equalsIgnoreCase(title)) {
+                reviews.add(createReview(customers.get(2 % customers.size()), movie, 5, "Phim gia đình cảm động và giải trí.", 1));
+                reviews.add(createReview(customers.get(3 % customers.size()), movie, 4, "Diễn xuất tự nhiên, rất phù hợp xem cùng gia đình.", 4));
+            } else if ("Godzilla x Kong: Đế Chế Mới".equalsIgnoreCase(title)) {
+                reviews.add(createReview(customers.get(4 % customers.size()), movie, 4, "Hành động đã mắt, âm thanh tốt.", 2));
+                reviews.add(createReview(customers.get(5 % customers.size()), movie, 5, "Trải nghiệm rạp rất cuốn.", 6));
+            } else if ("Vây Hãm: Kẻ Trừng Phạt".equalsIgnoreCase(title)) {
+                reviews.add(createReview(customers.get(6 % customers.size()), movie, 5, "Hình ảnh đẹp và âm nhạc xuất sắc.", 3));
+                reviews.add(createReview(customers.get(7 % customers.size()), movie, 4, "Phim dài nhưng vẫn giữ được mạch cảm xúc.", 7));
             }
         }
 
@@ -1319,6 +1318,21 @@ public class DataInitializer implements CommandLineRunner {
         List<Seat> seats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hall.getHallId());
         if (seats.isEmpty()) {
             return;
+        }
+
+        Set<String> generatedReviewComments = Set.of(
+                "Phim rat hay, hinh anh dep va trai nghiem tai rap rat an tuong.",
+                "Noi dung cuon hut, dien xuat tot va am thanh trong rap rat da.",
+                "Mot bo phim dang xem, toi rat thich cach xay dung nhan vat.",
+                "Tiet tau hop ly, nhieu canh quay dep va ket thuc an tuong.",
+                "Trai nghiem giai tri tot, se gioi thieu bo phim nay cho ban be."
+        );
+        List<Review> generatedReviews = reviewRepository.findAll().stream()
+                .filter(review -> generatedReviewComments.contains(review.getComment()))
+                .toList();
+        if (!generatedReviews.isEmpty()) {
+            reviewRepository.deleteAll(generatedReviews);
+            reviewRepository.flush();
         }
 
         for (int customerIndex = 0; customerIndex < customers.size(); customerIndex++) {
