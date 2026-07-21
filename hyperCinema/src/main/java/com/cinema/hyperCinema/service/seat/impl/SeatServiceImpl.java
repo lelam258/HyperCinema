@@ -435,7 +435,7 @@ public class SeatServiceImpl implements SeatService {
 
         for (Seat seat : seatsToShift) {
             seat.setSeatNumber(seat.getSeatNumber() + 1);
-            seatRepository.save(seat);
+            seatRepository.saveAndFlush(seat);
         }
     }
 
@@ -465,7 +465,7 @@ public class SeatServiceImpl implements SeatService {
             } else {
                 seat.setSeatRow(currRow + "A");
             }
-            seatRepository.save(seat);
+            seatRepository.saveAndFlush(seat);
         }
     }
 
