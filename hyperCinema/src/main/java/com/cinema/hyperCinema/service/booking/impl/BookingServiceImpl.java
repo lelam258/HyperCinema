@@ -82,7 +82,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<Booking> findRecentBookingsByUser(Integer userId, int limit) {
-        return findBookingsByUser(userId, PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"))).getContent();
+        return findBookingsByUser(userId, PageRequest.of(0, limit,
+                Sort.by(Sort.Direction.DESC, "bookingId")
+                        .and(Sort.by(Sort.Direction.DESC, "createdAt")))).getContent();
     }
 
     @Override

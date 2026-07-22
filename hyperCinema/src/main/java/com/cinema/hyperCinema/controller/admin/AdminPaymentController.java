@@ -53,7 +53,9 @@ public class AdminPaymentController {
             branchId = user.getBranch() != null ? user.getBranch().getBranchId() : -1;
         }
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page, size,
+                Sort.by(Sort.Direction.DESC, "paymentId")
+                        .and(Sort.by(Sort.Direction.DESC, "createdAt")));
         Page<Payment> paymentPage = paymentService.getPaymentHistory(user, status, method, startDate, endDate, pageable);
 
         // Fetch branches for filter dropdown (only relevant for Admin/Manager)
