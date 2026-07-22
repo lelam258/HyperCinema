@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
@@ -65,6 +66,10 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                 break;
             }
         }
-        response.sendRedirect(targetUrl);
+        SavedRequestAwareAuthenticationSuccessHandler savedRequestHandler =
+                new SavedRequestAwareAuthenticationSuccessHandler();
+        savedRequestHandler.setDefaultTargetUrl(targetUrl);
+        savedRequestHandler.setAlwaysUseDefaultTargetUrl(false);
+        savedRequestHandler.onAuthenticationSuccess(request, response, authentication);
     }
 }

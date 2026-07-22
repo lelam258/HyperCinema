@@ -5,6 +5,10 @@ import com.cinema.hyperCinema.dto.auth.RegisterRequestDTO;
 import com.cinema.hyperCinema.dto.auth.ResetPasswordRequestDTO;
 import com.cinema.hyperCinema.service.AuthService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -23,7 +27,14 @@ public class AuthController {
     }
 
     @GetMapping("/login")
-    public String showLoginForm() {
+    public String showLoginForm(HttpServletRequest request,
+                                HttpServletResponse response,
+                                Model model) {
+        SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
+        boolean bookingRequired = savedRequest != null
+                && savedRequest.getRedirectUrl() != null
+                && savedRequest.getRedirectUrl().contains("/booking/movies/");
+        model.addAttribute("bookingRequired", bookingRequired);
         return "auth/login";
     }
 
