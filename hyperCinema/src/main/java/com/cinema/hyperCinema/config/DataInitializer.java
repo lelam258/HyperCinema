@@ -39,7 +39,15 @@ public class DataInitializer implements CommandLineRunner {
             Map.entry("Doraemon: Nobita's Art World Tales",
                     "https://image.tmdb.org/t/p/w780/vncMpsAUDnL1JOb73e5q48gX32S.jpg"),
             Map.entry("Mission: Impossible - The Final Reckoning",
-                    "https://image.tmdb.org/t/p/w780/AozMgdALZuR1hDPZt2a1aXiWmL4.jpg")
+                    "https://image.tmdb.org/t/p/w780/AozMgdALZuR1hDPZt2a1aXiWmL4.jpg"),
+            Map.entry("How to Train Your Dragon",
+                    "https://image.tmdb.org/t/p/w780/q5pXRYTycaeW6dEgsCrd4mYPmxM.jpg"),
+            Map.entry("Bí Kíp Luyện Rồng",
+                    "https://image.tmdb.org/t/p/w780/q5pXRYTycaeW6dEgsCrd4mYPmxM.jpg"),
+            Map.entry("F1: The Movie",
+                    "https://image.tmdb.org/t/p/w780/9PXZIUsSDh4alB80jheWX4fhZmy.jpg"),
+            Map.entry("Đua Xe F1: Bộ Phim",
+                    "https://image.tmdb.org/t/p/w780/9PXZIUsSDh4alB80jheWX4fhZmy.jpg")
     );
 
     private final RoleRepository roleRepository;
