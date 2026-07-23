@@ -8,6 +8,7 @@ import com.cinema.hyperCinema.model.*;
 import com.cinema.hyperCinema.repository.*;
 import com.cinema.hyperCinema.security.CustomUserDetails;
 import com.cinema.hyperCinema.service.movie.MovieService;
+import com.cinema.hyperCinema.service.review.ReviewSummaryService;
 import com.cinema.hyperCinema.service.seat.SeatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -40,6 +41,7 @@ public class MovieCustomerController {
     private final ReviewRepository reviewRepository;
     private final ReviewReplyRepository reviewReplyRepository;
     private final ReviewInteractionRepository reviewInteractionRepository;
+    private final ReviewSummaryService reviewSummaryService;
 
     @GetMapping
     public String list(@ModelAttribute("criteria") MovieSearchCriteria criteria, Model model) {
@@ -144,6 +146,16 @@ public class MovieCustomerController {
             return "customer/movies/detail :: reviews-list-fragment";
         }
         return "customer/movies/detail";
+    }
+
+    @GetMapping("/{movieId}/review-summary")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> reviewSummary(@PathVariable Integer movieId) {
+        try {
+            return org.springframework.http.ResponseEntity.ok(reviewSummaryService.summarize(movieId));
+        } catch (IllegalArgumentException exception) {
+            return org.springframework.http.ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping("/reviews/{reviewId}/like")

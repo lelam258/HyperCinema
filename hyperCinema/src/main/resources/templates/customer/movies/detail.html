@@ -135,7 +135,14 @@
 
         <!-- ███████████████████ REVIEWS SECTION ███████████████████ -->
         <div id="reviews-section" class="mt-16 border-t border-white/[0.06] pt-10">
-            <h2 class="text-2xl font-black text-white mb-6">Đánh giá từ khán giả</h2>
+            <div class="flex items-center justify-between gap-4 mb-6 flex-wrap">
+                <h2 class="text-2xl font-black text-white">Đánh giá từ khán giả</h2>
+                <button th:if="${reviewCount > 0}" type="button" onclick="openAiReviewSummary()"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white text-sm font-black shadow-lg shadow-fuchsia-500/20 hover:-translate-y-0.5 transition-all cursor-pointer border-0">
+                    <span aria-hidden="true">✦</span>
+                    AI Tổng hợp
+                </button>
+            </div>
 
             <!-- Flashes -->
             <div class="mb-6">
@@ -384,6 +391,40 @@
 
     </main>
 
+    <!-- AI review summary modal -->
+    <div id="ai-review-modal" class="hidden fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="ai-review-title">
+        <div class="max-w-3xl max-h-[90vh] overflow-y-auto mx-auto mt-[5vh] rounded-3xl border border-white/10 bg-[#101321] shadow-2xl">
+            <div class="sticky top-0 z-10 flex items-center justify-between px-6 py-5 bg-[#101321]/95 backdrop-blur border-b border-white/10">
+                <h2 id="ai-review-title" class="text-xl font-black text-white flex items-center gap-2"><span class="text-fuchsia-400">✦</span> AI Tổng hợp</h2>
+                <button type="button" onclick="closeAiReviewSummary()" class="text-2xl text-slate-400 hover:text-white bg-transparent border-0 cursor-pointer" aria-label="Đóng">×</button>
+            </div>
+            <div id="ai-summary-loading" class="py-20 text-center text-slate-400">
+                <div class="w-9 h-9 mx-auto mb-4 rounded-full border-2 border-fuchsia-400 border-t-transparent animate-spin"></div>
+                Đang phân tích các đánh giá...
+            </div>
+            <div id="ai-summary-error" class="hidden m-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300"></div>
+            <div id="ai-summary-content" class="hidden p-6 space-y-6">
+                <div id="ai-summary-tabs" class="flex gap-2 overflow-x-auto pb-2"></div>
+                <div class="h-3 flex overflow-hidden rounded-full bg-white/5">
+                    <div id="ai-positive-bar" class="bg-emerald-400 transition-all"></div>
+                    <div id="ai-neutral-bar" class="bg-slate-500 transition-all"></div>
+                    <div id="ai-negative-bar" class="bg-orange-400 transition-all"></div>
+                </div>
+                <div class="flex justify-between gap-4 text-sm">
+                    <span id="ai-positive-label" class="text-emerald-400 font-bold"></span>
+                    <span id="ai-negative-label" class="text-orange-400 font-bold"></span>
+                </div>
+                <div class="rounded-2xl p-[1px] bg-gradient-to-r from-fuchsia-500 via-violet-400 to-sky-400">
+                    <div class="rounded-[15px] bg-[#111625] p-5">
+                        <h3 id="ai-aspect-title" class="font-black text-white mb-2">Tổng thể</h3>
+                        <p id="ai-aspect-summary" class="text-slate-300 leading-relaxed"></p>
+                    </div>
+                </div>
+                <p id="ai-summary-source" class="text-xs text-slate-500 text-center"></p>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 
@@ -410,6 +451,76 @@
             } else {
                 iframe.parentElement.style.display = "none";
             }
+        });
+    </script>
+    <script th:inline="javascript">
+        const reviewSummaryMovieId = /*[[${movie.movieId}]]*/ 0;
+        let reviewSummaryData = null;
+
+        async function openAiReviewSummary() {
+            document.getElementById('ai-review-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            if (reviewSummaryData) return;
+            try {
+                const response = await fetch(`/movies/${reviewSummaryMovieId}/review-summary`);
+                if (!response.ok) throw new Error('Không thể tải bản tổng hợp lúc này.');
+                reviewSummaryData = await response.json();
+                renderReviewSummary(reviewSummaryData);
+            } catch (error) {
+                document.getElementById('ai-summary-loading').classList.add('hidden');
+                const errorBox = document.getElementById('ai-summary-error');
+                errorBox.textContent = error.message;
+                errorBox.classList.remove('hidden');
+            }
+        }
+
+        function closeAiReviewSummary() {
+            document.getElementById('ai-review-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function renderReviewSummary(data) {
+            const tabs = [{name: 'Tổng thể', reviewCount: data.reviewCount,
+                positivePercent: data.positivePercent, neutralPercent: data.neutralPercent,
+                negativePercent: data.negativePercent, summary: data.summary}, ...(data.aspects || [])];
+            const tabContainer = document.getElementById('ai-summary-tabs');
+            tabContainer.innerHTML = '';
+            tabs.forEach((tab, index) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'shrink-0 px-4 py-2 rounded-full border text-sm font-bold cursor-pointer transition-all';
+                button.textContent = `${tab.name} (${tab.reviewCount})`;
+                button.onclick = () => selectReviewSummaryTab(tab, button);
+                tabContainer.appendChild(button);
+                if (index === 0) selectReviewSummaryTab(tab, button);
+            });
+            document.getElementById('ai-summary-source').textContent = data.aiGenerated
+                ? 'Nội dung được AI tổng hợp từ đánh giá của khán giả.'
+                : 'Bản tổng hợp dự phòng từ điểm sao; cấu hình OPENAI_API_KEY để bật phân tích AI đầy đủ.';
+            document.getElementById('ai-summary-loading').classList.add('hidden');
+            document.getElementById('ai-summary-content').classList.remove('hidden');
+        }
+
+        function selectReviewSummaryTab(tab, activeButton) {
+            document.querySelectorAll('#ai-summary-tabs button').forEach(button => {
+                const active = button === activeButton;
+                button.className = 'shrink-0 px-4 py-2 rounded-full border text-sm font-bold cursor-pointer transition-all '
+                    + (active ? 'border-emerald-400 text-emerald-400 bg-emerald-400/10' : 'border-white/10 text-slate-300 bg-white/[0.03]');
+            });
+            document.getElementById('ai-positive-bar').style.width = `${tab.positivePercent}%`;
+            document.getElementById('ai-neutral-bar').style.width = `${tab.neutralPercent}%`;
+            document.getElementById('ai-negative-bar').style.width = `${tab.negativePercent}%`;
+            document.getElementById('ai-positive-label').textContent = `${tab.positivePercent}% Hài lòng`;
+            document.getElementById('ai-negative-label').textContent = `${tab.negativePercent}% Không hài lòng`;
+            document.getElementById('ai-aspect-title').textContent = tab.name;
+            document.getElementById('ai-aspect-summary').textContent = tab.summary;
+        }
+
+        document.getElementById('ai-review-modal')?.addEventListener('click', event => {
+            if (event.target.id === 'ai-review-modal') closeAiReviewSummary();
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') closeAiReviewSummary();
         });
     </script>
 

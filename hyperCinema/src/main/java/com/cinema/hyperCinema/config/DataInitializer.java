@@ -31,6 +31,46 @@ public class DataInitializer implements CommandLineRunner {
     private static final int REPORT_COVERAGE_MAX_BOOKING_SEATS = 6;
     private static final int REPORT_FOOD_ORDER_SEED_TARGET = 60;
     private static final int REPORT_FOOD_ORDER_SEED_DAYS = 30;
+    private static final Set<String> AI_SEED_REVIEW_COMMENTS = Set.of(
+            "Phim rất cuốn, nhịp phim tốt và xem ở rạp cực kỳ đã.",
+            "Kịch bản hấp dẫn, có nhiều tình tiết bất ngờ đáng nhớ.",
+            "Diễn xuất tự nhiên, nhân vật có chiều sâu và dễ đồng cảm.",
+            "Hình ảnh đẹp, màu phim chỉn chu và nhiều cảnh quay ấn tượng.",
+            "Âm thanh sống động, nhạc phim đẩy cảm xúc rất đúng lúc.",
+            "Một trải nghiệm giải trí trọn vẹn, chắc chắn sẽ giới thiệu bạn bè.",
+            "Phần hành động được dàn dựng tốt, căng thẳng và mãn nhãn.",
+            "Cốt truyện dễ theo dõi nhưng vẫn đủ lôi cuốn đến phút cuối.",
+            "Kỹ xảo đẹp và hợp lý, xem màn hình lớn rất xứng đáng.",
+            "Nhiều đoạn hài duyên dáng, cả rạp cười rất vui.",
+            "Phim ở mức ổn, có đoạn hay nhưng nhịp giữa hơi chậm.",
+            "Hình ảnh đẹp nhưng kịch bản khá an toàn và dễ đoán.",
+            "Diễn viên làm tròn vai, tuy nhiên nhân vật phụ chưa được khai thác nhiều.",
+            "Âm thanh tốt, nội dung giải trí vừa đủ nhưng chưa thật sự đột phá.",
+            "Nửa đầu hơi dài, nửa sau hấp dẫn hơn và kết thúc khá ổn.",
+            "Có vài cảnh đáng nhớ nhưng tổng thể chưa tạo nhiều cảm xúc.",
+            "Kỹ xảo ổn, một vài phân đoạn vẫn hơi thiếu tự nhiên.",
+            "Phim phù hợp xem thư giãn, không nên kỳ vọng cốt truyện quá phức tạp.",
+            "Nhạc phim dễ nghe nhưng chưa có giai điệu nào thật nổi bật.",
+            "Ý tưởng tốt, cách triển khai đôi chỗ còn vội.",
+            "Kịch bản rời rạc, nhiều tình tiết thiếu thuyết phục.",
+            "Nhịp phim chậm và dài, có nhiều đoạn khiến mình mất tập trung.",
+            "Nhân vật phát triển chưa tới nên khó đồng cảm.",
+            "Phần kết khá vội và chưa giải quyết thỏa đáng các nút thắt.",
+            "Kỹ xảo một số cảnh còn giả, chưa đạt kỳ vọng khi xem ở rạp.",
+            "Âm thanh đôi lúc quá lớn, lời thoại lại khó nghe.",
+            "Các mảng hài hơi gượng và lặp lại khá nhiều.",
+            "Nội dung dễ đoán, thiếu điểm nhấn so với trailer.",
+            "Diễn xuất chưa đồng đều, một vài đoạn cảm xúc còn cứng.",
+            "Trải nghiệm chưa tương xứng với thời lượng của phim.",
+            "Phim rất đáng xem, kỹ xảo ấn tượng.",
+            "Cốt truyện lôi cuốn và kết thúc bất ngờ.",
+            "Phim gia đình cảm động và giải trí.",
+            "Diễn xuất tự nhiên, rất phù hợp xem cùng gia đình.",
+            "Hành động đã mắt, âm thanh tốt.",
+            "Trải nghiệm rạp rất cuốn.",
+            "Hình ảnh đẹp và âm nhạc xuất sắc.",
+            "Phim dài nhưng vẫn giữ được mạch cảm xúc."
+    );
     private static final Map<String, String> DEFAULT_MOVIE_POSTERS = Map.ofEntries(
             Map.entry("Lat Mat 8",
                     "https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/l/m/lm8_-_470x700.jpg"),
@@ -157,6 +197,8 @@ public class DataInitializer implements CommandLineRunner {
         ensureFoodItems();
         ensureSeedBranchAssignments();
         ensureSeedCustomers();
+        ensureReviewSeedUsers();
+        migrateLegacySeedReviews();
         ensureMembershipData();
         ensureBookingsAndPayments();
         userRepository.findByUsername("admin").ifPresent(this::seedInitialNotifications);
@@ -496,15 +538,91 @@ public class DataInitializer implements CommandLineRunner {
                 "Do Quoc Bao", "Bui Thi Lan", "Ngo Van Duc", "Ho Thi Ngoc", "Duong Minh Khoi"
         };
         for (int i = 0; i < customerNames.length; i++) {
-            User customer = ensureSeedUser(customerNames[i],
+            String displayName = customerNames[i];
+            User customer = ensureSeedUser(displayName,
                     "customer" + (i + 1) + "@gmail.com",
                     "customer" + (i + 1),
                     encodedPw,
-                    "093000000" + i,
+                    String.format("093%07d", i),
                     customerRole);
             customer.setStatus("Active");
             customer.setEmailVerified(true);
             userRepository.save(customer);
+        }
+    }
+
+    /**
+     * Accounts reserved exclusively for sample reviews. Keeping these separate from
+     * customer1..customer10 ensures demo/real customer accounts can still submit
+     * their own review for every movie.
+     */
+    private void ensureReviewSeedUsers() {
+        Role customerRole = roleRepository.findAll().stream()
+                .filter(role -> "Customer".equalsIgnoreCase(role.getName()))
+                .findFirst()
+                .orElse(null);
+        if (customerRole == null) {
+            return;
+        }
+
+        String[] reviewerNames = {
+                "Minh Anh", "Hoàng Nam", "Thu Trang", "Quốc Bảo", "Khánh Linh",
+                "Đức Minh", "Ngọc Hân", "Tuấn Kiệt", "Phương Thảo", "Gia Huy",
+                "Thanh Mai", "Nhật Quang", "Bảo Ngọc", "Hải Đăng", "Yến Nhi",
+                "Trọng Nhân", "Thùy Dương", "Anh Khoa", "Diệu Linh", "Tiến Đạt",
+                "Mai Chi", "Quang Huy", "Hà My", "Đình Phong", "Kim Ngân",
+                "Xuân Trường", "Mỹ Duyên", "Thanh Tùng", "Ngọc Mai", "Văn Khánh",
+                "Lan Anh", "Đức Anh", "Tường Vy", "Hoài Nam", "Minh Thư",
+                "Thành Công", "Thảo Vy", "Quốc Hưng", "Nhã Phương", "Trung Kiên",
+                "Hương Giang", "Anh Tuấn", "Bích Ngọc", "Minh Quân", "Thanh Trúc",
+                "Đăng Khoa", "Uyên Phương", "Bảo Long", "Tú Anh", "Quỳnh Như"
+        };
+        String encodedPw = passwordEncoder.encode("review-seed-disabled");
+        for (int i = 1; i <= 50; i++) {
+            User reviewer = ensureSeedUser(
+                    reviewerNames[i - 1],
+                    "reviewer.seed." + i + "@hypercinema.invalid",
+                    "reviewer_seed_" + i,
+                    encodedPw,
+                    String.format("092%07d", i),
+                    customerRole);
+            // Also refresh display names for seed accounts created by older versions.
+            reviewer.setFullName(reviewerNames[i - 1]);
+            reviewer.setStatus("Inactive");
+            reviewer.setEmailVerified(true);
+            userRepository.save(reviewer);
+        }
+    }
+
+    /**
+     * Older versions attached generated reviews to customer1..customer10. Move only
+     * those known seed comments to reserved reviewer accounts so customer accounts
+     * regain the "Chưa đánh giá" movies without deleting review data.
+     */
+    private void migrateLegacySeedReviews() {
+        List<User> seedReviewers = userRepository.findAll().stream()
+                .filter(user -> user.getUsername() != null
+                        && user.getUsername().startsWith("reviewer_seed_"))
+                .sorted((left, right) -> left.getUsername().compareTo(right.getUsername()))
+                .toList();
+        if (seedReviewers.isEmpty()) {
+            return;
+        }
+
+        List<Review> legacyReviews = reviewRepository.findAll().stream()
+                .filter(review -> review.getUser() != null
+                        && review.getUser().getUsername() != null
+                        && review.getUser().getUsername().matches("customer\\d+"))
+                .filter(review -> AI_SEED_REVIEW_COMMENTS.contains(review.getComment()))
+                .toList();
+        for (int i = 0; i < legacyReviews.size(); i++) {
+            legacyReviews.get(i).setUser(seedReviewers.get(i % seedReviewers.size()));
+        }
+        if (!legacyReviews.isEmpty()) {
+            reviewRepository.saveAll(legacyReviews);
+            reviewRepository.flush();
+            System.out.println("=== DataInitializer: Restored "
+                    + legacyReviews.size() + " pending customer reviews ===");
         }
     }
 
@@ -1254,29 +1372,81 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedReviews(List<Movie> movies, List<User> users) {
-        if (reviewRepository.count() > 0) return;
-
         List<Review> reviews = new ArrayList<>();
         List<User> customers = users.stream()
                 .filter(u -> u.getRole() != null && "Customer".equalsIgnoreCase(u.getRole().getName()))
+                .filter(u -> u.getUsername() != null && u.getUsername().startsWith("reviewer_seed_"))
+                .sorted((left, right) -> left.getUsername().compareTo(right.getUsername()))
                 .toList();
 
         if (customers.isEmpty() || movies.isEmpty()) return;
 
+        String[] positiveComments = {
+                "Phim rất cuốn, nhịp phim tốt và xem ở rạp cực kỳ đã.",
+                "Kịch bản hấp dẫn, có nhiều tình tiết bất ngờ đáng nhớ.",
+                "Diễn xuất tự nhiên, nhân vật có chiều sâu và dễ đồng cảm.",
+                "Hình ảnh đẹp, màu phim chỉn chu và nhiều cảnh quay ấn tượng.",
+                "Âm thanh sống động, nhạc phim đẩy cảm xúc rất đúng lúc.",
+                "Một trải nghiệm giải trí trọn vẹn, chắc chắn sẽ giới thiệu bạn bè.",
+                "Phần hành động được dàn dựng tốt, căng thẳng và mãn nhãn.",
+                "Cốt truyện dễ theo dõi nhưng vẫn đủ lôi cuốn đến phút cuối.",
+                "Kỹ xảo đẹp và hợp lý, xem màn hình lớn rất xứng đáng.",
+                "Nhiều đoạn hài duyên dáng, cả rạp cười rất vui."
+        };
+        String[] neutralComments = {
+                "Phim ở mức ổn, có đoạn hay nhưng nhịp giữa hơi chậm.",
+                "Hình ảnh đẹp nhưng kịch bản khá an toàn và dễ đoán.",
+                "Diễn viên làm tròn vai, tuy nhiên nhân vật phụ chưa được khai thác nhiều.",
+                "Âm thanh tốt, nội dung giải trí vừa đủ nhưng chưa thật sự đột phá.",
+                "Nửa đầu hơi dài, nửa sau hấp dẫn hơn và kết thúc khá ổn.",
+                "Có vài cảnh đáng nhớ nhưng tổng thể chưa tạo nhiều cảm xúc.",
+                "Kỹ xảo ổn, một vài phân đoạn vẫn hơi thiếu tự nhiên.",
+                "Phim phù hợp xem thư giãn, không nên kỳ vọng cốt truyện quá phức tạp.",
+                "Nhạc phim dễ nghe nhưng chưa có giai điệu nào thật nổi bật.",
+                "Ý tưởng tốt, cách triển khai đôi chỗ còn vội."
+        };
+        String[] negativeComments = {
+                "Kịch bản rời rạc, nhiều tình tiết thiếu thuyết phục.",
+                "Nhịp phim chậm và dài, có nhiều đoạn khiến mình mất tập trung.",
+                "Nhân vật phát triển chưa tới nên khó đồng cảm.",
+                "Phần kết khá vội và chưa giải quyết thỏa đáng các nút thắt.",
+                "Kỹ xảo một số cảnh còn giả, chưa đạt kỳ vọng khi xem ở rạp.",
+                "Âm thanh đôi lúc quá lớn, lời thoại lại khó nghe.",
+                "Các mảng hài hơi gượng và lặp lại khá nhiều.",
+                "Nội dung dễ đoán, thiếu điểm nhấn so với trailer.",
+                "Diễn xuất chưa đồng đều, một vài đoạn cảm xúc còn cứng.",
+                "Trải nghiệm chưa tương xứng với thời lượng của phim."
+        };
+
         for (Movie movie : movies) {
-            String title = movie.getTitle();
-            if ("Nhiệm Vụ Khả Thi: Phán Quyết Cuối Cùng".equalsIgnoreCase(title)) {
-                reviews.add(createReview(customers.get(0 % customers.size()), movie, 5, "Phim rất đáng xem, kỹ xảo ấn tượng.", 1));
-                reviews.add(createReview(customers.get(1 % customers.size()), movie, 4, "Cốt truyện lôi cuốn và kết thúc bất ngờ.", 2));
-            } else if ("Lật Mặt 8: Hành Trình Mới".equalsIgnoreCase(title)) {
-                reviews.add(createReview(customers.get(2 % customers.size()), movie, 5, "Phim gia đình cảm động và giải trí.", 1));
-                reviews.add(createReview(customers.get(3 % customers.size()), movie, 4, "Diễn xuất tự nhiên, rất phù hợp xem cùng gia đình.", 4));
-            } else if ("Godzilla x Kong: Đế Chế Mới".equalsIgnoreCase(title)) {
-                reviews.add(createReview(customers.get(4 % customers.size()), movie, 4, "Hành động đã mắt, âm thanh tốt.", 2));
-                reviews.add(createReview(customers.get(5 % customers.size()), movie, 5, "Trải nghiệm rạp rất cuốn.", 6));
-            } else if ("Vây Hãm: Kẻ Trừng Phạt".equalsIgnoreCase(title)) {
-                reviews.add(createReview(customers.get(6 % customers.size()), movie, 5, "Hình ảnh đẹp và âm nhạc xuất sắc.", 3));
-                reviews.add(createReview(customers.get(7 % customers.size()), movie, 4, "Phim dài nhưng vẫn giữ được mạch cảm xúc.", 7));
+            List<Review> existing = reviewRepository.findByMovieIdWithUser(movie.getMovieId());
+            Set<Integer> reviewedUserIds = existing.stream()
+                    .map(review -> review.getUser().getUserId())
+                    .collect(java.util.stream.Collectors.toSet());
+            int needed = Math.max(0, 50 - existing.size());
+            int added = 0;
+            for (User customer : customers) {
+                if (added >= needed) break;
+                if (reviewedUserIds.contains(customer.getUserId())) continue;
+
+                int index = existing.size() + added;
+                int rating;
+                String comment;
+                if (index % 10 < 6) {
+                    rating = index % 3 == 0 ? 4 : 5;
+                    comment = positiveComments[(index + movie.getMovieId()) % positiveComments.length];
+                } else if (index % 10 < 8) {
+                    rating = 3;
+                    comment = neutralComments[(index + movie.getMovieId()) % neutralComments.length];
+                } else {
+                    rating = index % 2 == 0 ? 2 : 1;
+                    comment = negativeComments[(index + movie.getMovieId()) % negativeComments.length];
+                }
+                Review review = createReview(customer, movie, rating, comment, 1 + (index % 45));
+                review.setLikesCount(random.nextInt(18));
+                review.setDislikesCount(random.nextInt(5));
+                reviews.add(review);
+                added++;
             }
         }
 
@@ -1313,6 +1483,8 @@ public class DataInitializer implements CommandLineRunner {
         List<User> customers = userRepository.findAll().stream()
                 .filter(user -> user.getRole() != null
                         && "Customer".equalsIgnoreCase(user.getRole().getName()))
+                .filter(user -> user.getUsername() == null
+                        || !user.getUsername().startsWith("reviewer_seed_"))
                 .sorted((left, right) -> left.getUsername().compareTo(right.getUsername()))
                 .toList();
         List<Movie> movies = movieRepository.findAll().stream()
