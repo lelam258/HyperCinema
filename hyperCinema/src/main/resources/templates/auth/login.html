@@ -17,6 +17,9 @@
         <div th:if="${param.resetSuccess}" class="mb-4 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">Mật khẩu đã được cập nhật. Vui lòng đăng nhập lại.</div>
         <div th:if="${param.activated}" class="mb-4 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">Tài khoản đã được kích hoạt thành công.</div>
         <div th:if="${param.activationError}" class="mb-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">Mã kích hoạt không đúng hoặc đã hết hạn.</div>
+        <div th:if="${bookingRequired}" class="mb-4 rounded-lg border border-accent/30 bg-accent/10 px-4 py-3 text-sm text-accent">
+            Vui lòng đăng nhập hoặc đăng ký tài khoản để tiếp tục đặt vé. Sau khi đăng nhập, bạn sẽ được đưa trở lại lịch chiếu của phim.
+        </div>
 
         <form th:action="@{/login}" method="post" class="space-y-5">
             <div>
