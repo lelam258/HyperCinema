@@ -13,7 +13,7 @@ public interface BookingManagementService {
 
     Page<BookingListItemView> findBookings(User actor, BookingManagementFilter filter, Pageable pageable);
 
-    BookingManagementSummary summarize(Page<BookingListItemView> bookings);
+    BookingManagementSummary summarize(User actor, BookingManagementFilter filter);
 
     BookingDetailView findDetail(User actor, Integer bookingId);
 

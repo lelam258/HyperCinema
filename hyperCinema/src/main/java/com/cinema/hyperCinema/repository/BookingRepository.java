@@ -263,7 +263,7 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                 OR LOWER(COALESCE(m.title, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
             )
             """)
-    Object[] summarizeForBranchManagement(@Param("branchId") Integer branchId,
+    List<Object[]> summarizeForBranchManagement(@Param("branchId") Integer branchId,
                                           @Param("keyword") String keyword,
                                           @Param("bookingStatus") String bookingStatus,
                                           @Param("paymentStatus") String paymentStatus,

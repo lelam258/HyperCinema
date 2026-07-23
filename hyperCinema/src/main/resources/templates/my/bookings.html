@@ -15,10 +15,10 @@
 
         <form th:action="@{/my/bookings}" method="get"
               class="glass-card mb-6 grid grid-cols-1 gap-4 p-4 lg:grid-cols-6">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tổng số vé</p>
-                <p class="text-2xl font-bold text-white tabular-nums" th:text="${bookingCount}">0</p>
-            </div>
+<!--            <div>-->
+<!--                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tổng số vé</p>-->
+<!--                <p class="text-2xl font-bold text-white tabular-nums" th:text="${bookingCount}">0</p>-->
+<!--            </div>-->
             <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 lg:col-span-2">
                 Tìm kiếm
                 <input name="keyword" th:value="${filter.keyword}" placeholder="Mã đơn, phim, rạp, PTTT"

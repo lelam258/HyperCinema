@@ -15,7 +15,7 @@ import lombok.Setter;
 public class CustomerBookingHistoryFilter {
 
     public static final int DEFAULT_SIZE = 10;
-    public static final String DEFAULT_SORT = "createdAt";
+    public static final String DEFAULT_SORT = "bookingId";
     public static final String DEFAULT_DIRECTION = "desc";
 
     private static final Set<String> ALLOWED_DIRECTIONS = Set.of("asc", "desc");
@@ -68,7 +68,7 @@ public class CustomerBookingHistoryFilter {
         Sort.Direction sortDirection = sortDirection();
         Sort primary = Sort.by(sortDirection, field);
         if ("bookingId".equals(field)) {
-            return primary;
+            return primary.and(Sort.by(Sort.Direction.DESC, "createdAt"));
         }
         Sort.Direction tieBreakerDirection = "createdAt".equals(field) ? sortDirection : Sort.Direction.DESC;
         return primary.and(Sort.by(tieBreakerDirection, "bookingId"));

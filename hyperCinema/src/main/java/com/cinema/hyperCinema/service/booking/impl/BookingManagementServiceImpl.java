@@ -75,15 +75,44 @@ public class BookingManagementServiceImpl implements BookingManagementService {
     }
 
     @Override
-    public BookingManagementSummary summarize(Page<BookingListItemView> bookings) {
-        List<BookingListItemView> rows = bookings != null ? bookings.getContent() : List.of();
+    @Transactional(readOnly = true)
+    public BookingManagementSummary summarize(User actor, BookingManagementFilter filter) {
+        Integer branchId = actorBranchId(actor);
+        if (branchId == null) {
+            return BookingManagementSummary.builder().build();
+        }
+
+        BookingManagementFilter safeFilter = filter != null ? filter : new BookingManagementFilter();
+        List<Object[]> results = bookingRepository.summarizeForBranchManagement(
+                branchId,
+                blankToNull(safeFilter.getKeyword()),
+                blankToNull(safeFilter.getBookingStatus()),
+                blankToNull(safeFilter.getPaymentStatus()),
+                safeFilter.getMovieId(),
+                startOfDay(safeFilter.getCreatedFrom()),
+                dayAfter(safeFilter.getCreatedTo()),
+                startOfDay(safeFilter.getShowtimeFrom()),
+                dayAfter(safeFilter.getShowtimeTo()));
+
+        if (results == null || results.isEmpty()) {
+            return BookingManagementSummary.builder().build();
+        }
+
+        Object[] row = results.get(0);
+        if (row == null || row.length < 4) {
+            return BookingManagementSummary.builder().build();
+        }
+
+        long total = row[0] != null ? ((Number) row[0]).longValue() : 0L;
+        long pending = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+        long paid = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+        long cancelled = row[3] != null ? ((Number) row[3]).longValue() : 0L;
+
         return BookingManagementSummary.builder()
-                .total(bookings != null ? bookings.getTotalElements() : 0)
-                .pending(rows.stream().filter(row -> sameStatus(row.getBookingStatus(), STATUS_PENDING)).count())
-                .paid(rows.stream().filter(row -> sameStatus(row.getBookingStatus(), STATUS_PAID)
-                        || sameStatus(row.getBookingStatus(), STATUS_CONFIRMED)
-                        || sameStatus(row.getBookingStatus(), STATUS_SERVED)).count())
-                .cancelled(rows.stream().filter(row -> isCancelled(row.getBookingStatus())).count())
+                .total(total)
+                .pending(pending)
+                .paid(paid)
+                .cancelled(cancelled)
                 .build();
     }
 
