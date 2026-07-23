@@ -97,7 +97,22 @@ public class BookingPageController {
         addCustomerModel(user, model);
 
         MovieDetailView movie = movieService.findById(movieId);
-        LocalDate selectedDate = date != null ? date : LocalDate.now();
+        LocalDate today = LocalDate.now();
+        LocalDate selectedDate = date != null ? date : today;
+        if (selectedDate.isBefore(today)) {
+            selectedDate = today;
+        }
+
+        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(today, selectedDate);
+        long weekIndex = daysBetween / 7;
+        if (daysBetween < 0) {
+            weekIndex = 0;
+        }
+        LocalDate weekStartDate = today.plusDays(weekIndex * 7);
+        LocalDate prevWeekDate = weekStartDate.minusDays(7);
+        LocalDate nextWeekDate = weekStartDate.plusDays(7);
+        boolean hasPrevWeek = !weekStartDate.equals(today);
+
         List<Showtime> upcomingShowtimes = bookingService.findUpcomingShowtimesForMovie(movieId);
         List<String> cities = upcomingShowtimes.stream()
                 .map(showtime -> showtime.getHall().getBranch().getCity())
@@ -109,7 +124,7 @@ public class BookingPageController {
 
         List<BranchScheduleView> branchSchedules = groupBranchSchedules(
                 upcomingShowtimes, selectedDate, selectedCity);
-        List<DateTabView> dateTabs = buildDateTabs(movieId, selectedDate, selectedCity, upcomingShowtimes);
+        List<DateTabView> dateTabs = buildDateTabs(movieId, selectedDate, selectedCity, upcomingShowtimes, weekStartDate);
 
         model.addAttribute("movie", movie);
         model.addAttribute("dateTabs", dateTabs);
@@ -118,6 +133,9 @@ public class BookingPageController {
         model.addAttribute("selectedDate", selectedDate);
         model.addAttribute("branchSchedules", branchSchedules);
         model.addAttribute("hasShowtimes", !branchSchedules.isEmpty());
+        model.addAttribute("prevWeekDate", prevWeekDate);
+        model.addAttribute("nextWeekDate", nextWeekDate);
+        model.addAttribute("hasPrevWeek", hasPrevWeek);
 
         // Load reviews and stats for initial display
         java.util.Set<Integer> likedReviewIds = new java.util.HashSet<>();
@@ -228,14 +246,15 @@ public class BookingPageController {
     private List<DateTabView> buildDateTabs(Integer movieId,
                                             LocalDate selectedDate,
                                             String selectedCity,
-                                            List<Showtime> showtimes) {
+                                            List<Showtime> showtimes,
+                                            LocalDate weekStartDate) {
         LocalDate today = LocalDate.now();
         List<DateTabView> tabs = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            LocalDate tabDate = today.plusDays(i);
+            LocalDate tabDate = weekStartDate.plusDays(i);
             boolean hasShowtime = showtimes.stream()
                     .anyMatch(showtime -> tabDate.equals(showtime.getStartTime().toLocalDate()));
-            String label = i == 0 ? "Hom nay" : (i == 1 ? "Ngay mai" : dayLabel(tabDate));
+            String label = tabDate.equals(today) ? "Hôm nay" : (tabDate.equals(today.plusDays(1)) ? "Ngày mai" : dayLabel(tabDate));
             tabs.add(new DateTabView(
                     movieId,
                     tabDate,
