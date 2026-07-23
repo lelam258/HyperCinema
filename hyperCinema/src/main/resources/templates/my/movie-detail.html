@@ -90,7 +90,7 @@
                             <a th:each="slot : ${branch.showtimes}"
                                th:href="@{/booking(showtimeId=${slot.showtimeId})}"
                                class="hc-showtime-pill">
-                                <strong th:text="${#temporals.format(slot.startTime, 'HH:mm')}">10:00</strong>
+                                <strong th:text="|${#temporals.format(slot.startTime, 'HH:mm')} - ${#temporals.format(slot.endTime, 'HH:mm')}|">10:00 - 12:00</strong>
                                 <span>
                                     <span th:text="${slot.hallType}">2D</span>
                                     <span th:if="${slot.hallName != null}" th:text="| - ${slot.hallName}|"> - Phong 01</span>
@@ -119,7 +119,7 @@
                 </div>
 
                 <!-- Stats Summary -->
-                <div th:if="${reviewsListForStats != null and not #lists.isEmpty(reviewsListForStats)}" 
+                <div th:if="${reviewsListForStats != null and not #lists.isEmpty(reviewsListForStats)}"
                      th:with="
                         r5 = ${#lists.toList(reviewsListForStats).?[rating == 5].size()},
                         r4 = ${#lists.toList(reviewsListForStats).?[rating == 4].size()},
@@ -129,7 +129,7 @@
                         total = ${reviewsListForStats.size() > 0 ? reviewsListForStats.size() : 1}
                      "
                      class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-center bg-white/[0.02] border border-white/10 rounded-2xl p-6">
-                    
+
                     <!-- Average Rating Card -->
                     <div class="flex flex-col items-center justify-center text-center md:border-r border-white/10 py-4">
                         <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Đánh giá trung bình</span>
@@ -203,15 +203,15 @@
                 </div>
 
                 <!-- Reviews ToolBar (Sort & Filter) -->
-                <div th:if="${reviewsListForStats != null and not #lists.isEmpty(reviewsListForStats)}" 
+                <div th:if="${reviewsListForStats != null and not #lists.isEmpty(reviewsListForStats)}"
                      class="flex justify-between items-center flex-wrap gap-4 mb-6 border-b border-white/[0.08] pb-4">
                     <h3 class="text-lg font-bold text-white">Bình luận từ người xem</h3>
-                    
+
                     <div class="flex items-center gap-4 flex-wrap text-xs">
                         <!-- Filter by Star -->
                         <div class="flex items-center gap-2">
                             <span class="text-slate-400">Lọc sao:</span>
-                            <select id="ratingFilterSelect" onchange="applyReviewFilterSort()" 
+                            <select id="ratingFilterSelect" onchange="applyReviewFilterSort()"
                                     class="bg-[#111625] border border-white/10 rounded-xl px-3 py-1.5 text-slate-300 focus:outline-none focus:border-primary">
                                 <option value="" th:selected="${ratingFilter == null}">Tất cả sao</option>
                                 <option value="5" th:selected="${ratingFilter == 5}">5 sao</option>
@@ -221,11 +221,11 @@
                                 <option value="1" th:selected="${ratingFilter == 1}">1 sao</option>
                             </select>
                         </div>
-                        
+
                         <!-- Sort reviews -->
                         <div class="flex items-center gap-2">
                             <span class="text-slate-400">Sắp xếp:</span>
-                            <select id="sortSelect" onchange="applyReviewFilterSort()" 
+                            <select id="sortSelect" onchange="applyReviewFilterSort()"
                                     class="bg-[#111625] border border-white/10 rounded-xl px-3 py-1.5 text-slate-300 focus:outline-none focus:border-primary">
                                 <option value="newest" th:selected="${sort == 'newest'}">Mới nhất</option>
                                 <option value="rating_desc" th:selected="${sort == 'rating_desc'}">Điểm cao nhất</option>
@@ -240,9 +240,9 @@
                 <div id="reviews-list-container" th:fragment="reviews-list-fragment">
                     <!-- Reviews List -->
                     <div th:unless="${reviews == null or #lists.isEmpty(reviews)}" class="space-y-6">
-                        <div th:each="item : ${reviews}" 
+                        <div th:each="item : ${reviews}"
                              class="glass-card p-6 flex flex-col sm:flex-row gap-5 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 relative group">
-                            
+
                             <!-- Avatar & User Info -->
                             <div class="flex sm:flex-col items-center sm:items-start gap-4 shrink-0 sm:w-44 border-b sm:border-b-0 sm:border-r border-white/[0.06] pb-4 sm:pb-0 sm:pr-4">
                                 <!-- Gradient Avatar Circle -->
@@ -250,7 +250,7 @@
                                     <div class="w-full h-full bg-[#111625] rounded-[15px] flex items-center justify-center text-primary font-black text-lg uppercase"
                                          th:text="${item.user.fullName != null and not #strings.isEmpty(item.user.fullName) ? #strings.substring(item.user.fullName, 0, 1) : 'U'}">U</div>
                                 </div>
-                                
+
                                 <div class="flex flex-col min-w-0 sm:space-y-1">
                                     <span class="font-black text-slate-200 text-sm truncate" th:text="${item.user.fullName != null ? item.user.fullName : 'Khách hàng'}">Khách hàng</span>
                                     <div class="flex items-center gap-1.5">
@@ -274,7 +274,7 @@
                                     </div>
                                     <span class="text-slate-500 text-xs tabular-nums font-mono" th:text="${#temporals.format(item.createdAt, 'HH:mm dd/MM/yyyy')}">12:34 02/07/2026</span>
                                 </div>
-                                
+
                                 <div class="relative">
                                     <span class="absolute -top-3 -left-3 text-5xl text-white/5 font-serif leading-none select-none pointer-events-none">“</span>
                                     <p class="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap pl-3 relative z-10 italic" th:text="${item.comment}">Nội dung đánh giá...</p>
@@ -288,14 +288,14 @@
                                         <svg class="w-4 h-4 fill-none stroke-current" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75A2.25 2.25 0 0116.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602M5.904 18.75c-.343-.85-.562-1.756-.653-2.696m.653 2.696h-1.85m1.85 0L4.25 18.75m1.2-2.696a11.953 11.953 0 01-.653-2.696m.653 2.696h-1.85m1.85 0L4.25 16.054m1.2-2.696a11.95 11.95 0 010-5.392m0 5.392h-1.85M5.45 10.662h-1.85m1.85 0L4.25 9.308m1.2-1.35a11.95 11.95 0 01.653-2.696m-.653 2.696h-1.85M5.45 7.958L4.25 6.604M6.103 5.262h-1.85m1.85 0L4.25 3.908"/></svg>
                                         <span th:text="${item.likesCount}" class="font-bold tabular-nums likes-count">0</span>
                                     </button>
-                                    
+
                                     <button type="button" th:onclick="|dislikeReview(event, ${item.reviewId}, this)|"
                                             th:classappend="${dislikedReviewIds != null and dislikedReviewIds.contains(item.reviewId)} ? 'text-red-500 font-bold' : 'text-slate-400'"
                                             class="flex items-center gap-1.5 hover:text-red-400 transition-colors cursor-pointer focus:outline-none bg-transparent border-0 p-0 dislike-btn">
                                         <svg class="w-4 h-4 fill-none stroke-current" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 13.5A2.25 2.25 0 005.25 15.75m0 0v1.5a2.25 2.25 0 002.25 2.25h9.126c1.026 0 1.945-.694 2.054-1.715.045-.422.068-.85.068-1.285a11.95 11.95 0 00-2.649-7.521c-.388-.482-.987-.729-1.605-.729H13.48c-.483 0-.964.078-1.423.23l-3.114-1.04a4.5 4.5 0 00-1.423-.23H5.904M14.25 15h2.25M5.904 5.25c.083-.205.173-.405.27-.602M5.904 5.25c-.343.85-.562 1.756-.653 2.696m.653-2.696h-1.85m1.85 0L4.25 5.25m1.2 2.696a11.953 11.953 0 00-.653 2.696m.653-2.696h-1.85m1.85 0L4.25 7.946m1.2 2.696a11.95 11.95 0 000 5.392m0-5.392h-1.85M5.45 13.338h-1.85M5.45 13.338L4.25 14.692m1.2 1.35a11.95 11.95 0 00.653 2.696m-.653-2.696h-1.85M5.45 16.042L4.25 17.396M6.103 18.738h-1.85m1.85 0L4.25 20.092"/></button>
                                     </button>
-                                    
-                                    <button type="button" th:onclick="|toggleReplyForm(${item.reviewId})|" 
+
+                                    <button type="button" th:onclick="|toggleReplyForm(${item.reviewId})|"
                                             class="flex items-center gap-1.5 text-slate-400 hover:text-primary transition-colors cursor-pointer focus:outline-none bg-transparent border-0 p-0">
                                         <svg class="w-4 h-4 fill-none stroke-current" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 10.742l4.318 4.317M12.916 10.742l-4.318 4.317M19 10.5c0 3.59-4.03 6.5-9 6.5a9.92 9.92 0 01-3.666-.69L3 18l1.3-3.9A6.064 6.064 0 013 10.5C3 6.91 7.03 4 12 4s9 2.91 9 6.5z"/></svg>
                                         <span>Phản hồi</span>
@@ -332,26 +332,26 @@
 
                     <!-- Pagination (Audience Reviews list) -->
                     <div th:if="${totalPages > 1}" class="flex items-center justify-center gap-2 mt-8">
-                        <button type="button" th:onclick="|fetchReviews(${currentPage - 1})|" 
-                           th:if="${currentPage > 0}"
-                           class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-slate-300 hover:bg-white/10 transition-all font-semibold cursor-pointer">
+                        <button type="button" th:onclick="|fetchReviews(${currentPage - 1})|"
+                                th:if="${currentPage > 0}"
+                                class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-slate-300 hover:bg-white/10 transition-all font-semibold cursor-pointer">
                             Trước
                         </button>
-                        
+
                         <th:block th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}">
                             <button type="button" th:onclick="|fetchReviews(${pageNum})|"
-                               th:text="${pageNum + 1}"
-                               th:class="${pageNum == currentPage} 
+                                    th:text="${pageNum + 1}"
+                                    th:class="${pageNum == currentPage}
                                         ? 'px-4 py-2 bg-primary rounded-xl text-xs text-white font-bold cursor-pointer' 
                                         : 'px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-slate-300 hover:bg-white/10 transition-all cursor-pointer'"
-                               class="tabular-nums">
+                                    class="tabular-nums">
                                 1
                             </button>
                         </th:block>
-                        
-                        <button type="button" th:onclick="|fetchReviews(${currentPage + 1})|" 
-                           th:if="${currentPage < totalPages - 1}"
-                           class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-slate-300 hover:bg-white/10 transition-all font-semibold cursor-pointer">
+
+                        <button type="button" th:onclick="|fetchReviews(${currentPage + 1})|"
+                                th:if="${currentPage < totalPages - 1}"
+                                class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-slate-300 hover:bg-white/10 transition-all font-semibold cursor-pointer">
                             Sau
                         </button>
                     </div>
@@ -408,16 +408,16 @@
         }
         const ratingSelect = document.getElementById('ratingFilterSelect');
         const sortSelect = document.getElementById('sortSelect');
-        
+
         const rating = ratingSelect ? ratingSelect.value : '';
         const sort = sortSelect ? sortSelect.value : 'newest';
         const movieId = "[[${movie.movieId}]]";
-        
+
         let url = `/movies/${movieId}?ajax=true&page=${currentPage}&sort=${sort}`;
         if (rating) {
             url += `&rating=${rating}`;
         }
-        
+
         fetch(url)
             .then(response => response.text())
             .then(html => {
@@ -459,54 +459,54 @@
 
     function likeReview(event, reviewId, button) {
         if (event) event.preventDefault();
-        fetch(`/movies/reviews/${reviewId}/like`, { 
+        fetch(`/movies/reviews/${reviewId}/like`, {
             method: 'POST',
             headers: {
                 [csrfHeader]: csrfToken
             }
         })
-        .then(res => {
-            if (res.status === 403) {
-                alert("Vui lòng đăng nhập với tài khoản Khách hàng để thực hiện!");
-                return;
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (data) {
-                const parent = button.parentElement;
-                if (parent) {
-                    updateLikeDislikeUI(parent, data.userLikeState, data.likesCount, data.dislikesCount);
+            .then(res => {
+                if (res.status === 403) {
+                    alert("Vui lòng đăng nhập với tài khoản Khách hàng để thực hiện!");
+                    return;
                 }
-            }
-        })
-        .catch(err => console.error("Error liking review:", err));
+                return res.json();
+            })
+            .then(data => {
+                if (data) {
+                    const parent = button.parentElement;
+                    if (parent) {
+                        updateLikeDislikeUI(parent, data.userLikeState, data.likesCount, data.dislikesCount);
+                    }
+                }
+            })
+            .catch(err => console.error("Error liking review:", err));
     }
 
     function dislikeReview(event, reviewId, button) {
         if (event) event.preventDefault();
-        fetch(`/movies/reviews/${reviewId}/dislike`, { 
+        fetch(`/movies/reviews/${reviewId}/dislike`, {
             method: 'POST',
             headers: {
                 [csrfHeader]: csrfToken
             }
         })
-        .then(res => {
-            if (res.status === 403) {
-                alert("Vui lòng đăng nhập với tài khoản Khách hàng để thực hiện!");
-                return;
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (data) {
-                const parent = button.parentElement;
-                if (parent) {
-                    updateLikeDislikeUI(parent, data.userLikeState, data.likesCount, data.dislikesCount);
+            .then(res => {
+                if (res.status === 403) {
+                    alert("Vui lòng đăng nhập với tài khoản Khách hàng để thực hiện!");
+                    return;
                 }
-            }
-        })
-        .catch(err => console.error("Error disliking review:", err));
+                return res.json();
+            })
+            .then(data => {
+                if (data) {
+                    const parent = button.parentElement;
+                    if (parent) {
+                        updateLikeDislikeUI(parent, data.userLikeState, data.likesCount, data.dislikesCount);
+                    }
+                }
+            })
+            .catch(err => console.error("Error disliking review:", err));
     }
 
     function submitReply(event, reviewId, form) {
@@ -526,18 +526,18 @@
             },
             body: formData
         })
-        .then(res => {
-            if (res.status === 403) {
-                alert("Vui lòng đăng nhập với tài khoản Khách hàng để thực hiện!");
-                return;
-            }
-            if (res.ok) {
-                contentInput.value = '';
-                toggleReplyForm(reviewId);
-                fetchReviews(currentPage);
-            }
-        })
-        .catch(err => console.error("Error submitting reply:", err));
+            .then(res => {
+                if (res.status === 403) {
+                    alert("Vui lòng đăng nhập với tài khoản Khách hàng để thực hiện!");
+                    return;
+                }
+                if (res.ok) {
+                    contentInput.value = '';
+                    toggleReplyForm(reviewId);
+                    fetchReviews(currentPage);
+                }
+            })
+            .catch(err => console.error("Error submitting reply:", err));
     }
 
     function toggleReplyForm(reviewId) {
@@ -546,7 +546,7 @@
             form.classList.toggle('hidden');
         }
     }
-    
+
     function applyReviewFilterSort() {
         fetchReviews(0);
     }

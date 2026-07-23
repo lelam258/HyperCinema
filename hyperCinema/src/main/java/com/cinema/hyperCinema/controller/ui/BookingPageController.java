@@ -230,12 +230,32 @@ public class BookingPageController {
                                             String selectedCity,
                                             List<Showtime> showtimes) {
         LocalDate today = LocalDate.now();
+        Set<LocalDate> tabDates = new TreeSet<>();//-//
+        tabDates.add(today);
+        tabDates.add(selectedDate);
+        for (Showtime showtime : showtimes) { //quet toan bo ngay trong khonag thoi gian bat dau va kêt thuc
+            LocalDate start = showtime.getStartTime().toLocalDate();
+            LocalDate end = showtime.getEndTime().toLocalDate();
+            LocalDate current = start;
+            while (!current.isAfter(end)) {
+                tabDates.add(current);
+                current = current.plusDays(1);
+            }
+        }
+
         List<DateTabView> tabs = new ArrayList<>();
-        for (int i = 0; i < 7; i++) {
-            LocalDate tabDate = today.plusDays(i);
+        for (LocalDate tabDate : tabDates) {
             boolean hasShowtime = showtimes.stream()
-                    .anyMatch(showtime -> tabDate.equals(showtime.getStartTime().toLocalDate()));
-            String label = i == 0 ? "Hom nay" : (i == 1 ? "Ngay mai" : dayLabel(tabDate));
+                    .anyMatch(showtime -> !tabDate.isBefore(showtime.getStartTime().toLocalDate())// kiem tra theo khoang thoi gian
+                            && !tabDate.isAfter(showtime.getEndTime().toLocalDate()));
+            String label;
+            if (tabDate.equals(today)) {
+                label = "Hom nay";
+            } else if (tabDate.equals(today.plusDays(1))) {
+                label = "Ngay mai";
+            } else {
+                label = dayLabel(tabDate);
+            }
             tabs.add(new DateTabView(
                     movieId,
                     tabDate,
@@ -253,7 +273,8 @@ public class BookingPageController {
                                                           String selectedCity) {
         Map<Integer, BranchScheduleView> grouped = new LinkedHashMap<>();
         showtimes.stream()
-                .filter(showtime -> selectedDate.equals(showtime.getStartTime().toLocalDate()))
+                .filter(showtime -> !selectedDate.isBefore(showtime.getStartTime().toLocalDate())
+                        && !selectedDate.isAfter(showtime.getEndTime().toLocalDate()))
                 .filter(showtime -> selectedCity == null
                         || selectedCity.equals(showtime.getHall().getBranch().getCity()))
                 .sorted(Comparator.comparing(Showtime::getStartTime))
