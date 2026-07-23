@@ -97,22 +97,7 @@ public class BookingPageController {
         addCustomerModel(user, model);
 
         MovieDetailView movie = movieService.findById(movieId);
-        LocalDate today = LocalDate.now();
-        LocalDate selectedDate = date != null ? date : today;
-        if (selectedDate.isBefore(today)) {
-            selectedDate = today;
-        }
-
-        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(today, selectedDate);
-        long weekIndex = daysBetween / 7;
-        if (daysBetween < 0) {
-            weekIndex = 0;
-        }
-        LocalDate weekStartDate = today.plusDays(weekIndex * 7);
-        LocalDate prevWeekDate = weekStartDate.minusDays(7);
-        LocalDate nextWeekDate = weekStartDate.plusDays(7);
-        boolean hasPrevWeek = !weekStartDate.equals(today);
-
+        LocalDate selectedDate = date != null ? date : LocalDate.now();
         List<Showtime> upcomingShowtimes = bookingService.findUpcomingShowtimesForMovie(movieId);
         List<String> cities = upcomingShowtimes.stream()
                 .map(showtime -> showtime.getHall().getBranch().getCity())
@@ -124,7 +109,7 @@ public class BookingPageController {
 
         List<BranchScheduleView> branchSchedules = groupBranchSchedules(
                 upcomingShowtimes, selectedDate, selectedCity);
-        List<DateTabView> dateTabs = buildDateTabs(movieId, selectedDate, selectedCity, upcomingShowtimes, weekStartDate);
+        List<DateTabView> dateTabs = buildDateTabs(movieId, selectedDate, selectedCity, upcomingShowtimes);
 
         model.addAttribute("movie", movie);
         model.addAttribute("dateTabs", dateTabs);
@@ -133,9 +118,6 @@ public class BookingPageController {
         model.addAttribute("selectedDate", selectedDate);
         model.addAttribute("branchSchedules", branchSchedules);
         model.addAttribute("hasShowtimes", !branchSchedules.isEmpty());
-        model.addAttribute("prevWeekDate", prevWeekDate);
-        model.addAttribute("nextWeekDate", nextWeekDate);
-        model.addAttribute("hasPrevWeek", hasPrevWeek);
 
         // Load reviews and stats for initial display
         java.util.Set<Integer> likedReviewIds = new java.util.HashSet<>();
@@ -246,15 +228,34 @@ public class BookingPageController {
     private List<DateTabView> buildDateTabs(Integer movieId,
                                             LocalDate selectedDate,
                                             String selectedCity,
-                                            List<Showtime> showtimes,
-                                            LocalDate weekStartDate) {
+                                            List<Showtime> showtimes) {
         LocalDate today = LocalDate.now();
+        Set<LocalDate> tabDates = new TreeSet<>();//-//
+        tabDates.add(today);
+        tabDates.add(selectedDate);
+        for (Showtime showtime : showtimes) { //quet toan bo ngay trong khonag thoi gian bat dau va kêt thuc
+            LocalDate start = showtime.getStartTime().toLocalDate();
+            LocalDate end = showtime.getEndTime().toLocalDate();
+            LocalDate current = start;
+            while (!current.isAfter(end)) {
+                tabDates.add(current);
+                current = current.plusDays(1);
+            }
+        }
+
         List<DateTabView> tabs = new ArrayList<>();
-        for (int i = 0; i < 7; i++) {
-            LocalDate tabDate = weekStartDate.plusDays(i);
+        for (LocalDate tabDate : tabDates) {
             boolean hasShowtime = showtimes.stream()
-                    .anyMatch(showtime -> tabDate.equals(showtime.getStartTime().toLocalDate()));
-            String label = tabDate.equals(today) ? "Hôm nay" : (tabDate.equals(today.plusDays(1)) ? "Ngày mai" : dayLabel(tabDate));
+                    .anyMatch(showtime -> !tabDate.isBefore(showtime.getStartTime().toLocalDate())// kiem tra theo khoang thoi gian
+                            && !tabDate.isAfter(showtime.getEndTime().toLocalDate()));
+            String label;
+            if (tabDate.equals(today)) {
+                label = "Hom nay";
+            } else if (tabDate.equals(today.plusDays(1))) {
+                label = "Ngay mai";
+            } else {
+                label = dayLabel(tabDate);
+            }
             tabs.add(new DateTabView(
                     movieId,
                     tabDate,
@@ -272,7 +273,8 @@ public class BookingPageController {
                                                           String selectedCity) {
         Map<Integer, BranchScheduleView> grouped = new LinkedHashMap<>();
         showtimes.stream()
-                .filter(showtime -> selectedDate.equals(showtime.getStartTime().toLocalDate()))
+                .filter(showtime -> !selectedDate.isBefore(showtime.getStartTime().toLocalDate())
+                        && !selectedDate.isAfter(showtime.getEndTime().toLocalDate()))
                 .filter(showtime -> selectedCity == null
                         || selectedCity.equals(showtime.getHall().getBranch().getCity()))
                 .sorted(Comparator.comparing(Showtime::getStartTime))

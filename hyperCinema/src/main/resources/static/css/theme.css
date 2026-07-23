@@ -2331,8 +2331,8 @@ a {
     align-items: center;
     aspect-ratio: 2 / 3;
     background:
-        linear-gradient(180deg, rgba(245, 197, 24, 0.08), rgba(229, 9, 20, 0.08)),
-        var(--hc-panel-soft);
+            linear-gradient(180deg, rgba(245, 197, 24, 0.08), rgba(229, 9, 20, 0.08)),
+            var(--hc-panel-soft);
     border: 1px solid var(--hc-border);
     border-radius: 8px;
     display: flex;
@@ -3561,8 +3561,8 @@ body.hc-customer {
 
 body.hc-customer .hc-page {
     background:
-        linear-gradient(180deg, rgba(245, 197, 24, 0.04), rgba(7, 7, 7, 0) 16rem),
-        #070707;
+            linear-gradient(180deg, rgba(245, 197, 24, 0.04), rgba(7, 7, 7, 0) 16rem),
+            #070707;
 }
 
 body.hc-customer .hc-page .hc-footer {
@@ -3851,8 +3851,8 @@ body.hc-customer .hc-page .hc-footer {
 .hc-customer-overview-card {
     align-items: center;
     background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0)),
-        #111111;
+            linear-gradient(135deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0)),
+            #111111;
     border: 1px solid #2d3440;
     border-radius: 8px;
     color: #ffffff;
@@ -3866,8 +3866,8 @@ body.hc-customer .hc-page .hc-footer {
 
 .hc-customer-overview-card.is-member {
     background:
-        linear-gradient(135deg, rgba(245, 197, 24, 0.16), rgba(139, 92, 246, 0.12)),
-        #111111;
+            linear-gradient(135deg, rgba(245, 197, 24, 0.16), rgba(139, 92, 246, 0.12)),
+            #111111;
 }
 
 .hc-customer-overview-link:hover,
@@ -4409,8 +4409,8 @@ body.hc-customer .hc-page .hc-footer {
 
 .hc-booking-hero-shade {
     background:
-        linear-gradient(90deg, rgba(7, 7, 7, 0.94), rgba(7, 7, 7, 0.38), rgba(7, 7, 7, 0.9)),
-        linear-gradient(180deg, rgba(7, 7, 7, 0.1), #070707 92%);
+            linear-gradient(90deg, rgba(7, 7, 7, 0.94), rgba(7, 7, 7, 0.38), rgba(7, 7, 7, 0.9)),
+            linear-gradient(180deg, rgba(7, 7, 7, 0.1), #070707 92%);
 }
 
 .hc-booking-hero-inner {
@@ -4535,6 +4535,10 @@ body.hc-customer .hc-page .hc-footer {
     padding: 2rem;
 }
 
+.hc-booking-detail-layout .hc-stack {
+    min-width: 0;
+}
+
 .hc-booking-panel h2,
 .hc-booking-section-head h2,
 .hc-movie-about h2 {
@@ -4552,11 +4556,19 @@ body.hc-customer .hc-page .hc-footer {
     color: var(--hc-accent);
 }
 
+.hc-booking-panel {
+    min-width: 0;
+}
+
 .hc-date-strip {
     display: flex;
     gap: 0.75rem;
     overflow-x: auto;
     padding-bottom: 0.25rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
 }
 
 .hc-date-pill {
