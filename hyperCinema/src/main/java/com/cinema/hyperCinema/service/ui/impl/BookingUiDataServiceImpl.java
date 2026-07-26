@@ -31,7 +31,8 @@ import com.cinema.hyperCinema.repository.SeatRepository;
 import com.cinema.hyperCinema.repository.SeatReservationRepository;
 import com.cinema.hyperCinema.repository.ShowtimeRepository;
 import com.cinema.hyperCinema.repository.TicketRepository;
-import com.cinema.hyperCinema.service.pricing.HallSeatTypePricingService;
+import com.cinema.hyperCinema.service.pricing.TicketPriceBreakdown;
+import com.cinema.hyperCinema.service.pricing.TicketPricingService;
 import com.cinema.hyperCinema.service.ui.BookingUiDataService;
 import com.cinema.hyperCinema.service.voucher.VoucherApplicationService;
 import com.cinema.hyperCinema.util.UiDisplayMapper;
@@ -54,7 +55,7 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
     private final PromotionRepository promotionRepository;
     private final VoucherApplicationService voucherApplicationService;
     private final UiDisplayMapper displayMapper;
-    private final HallSeatTypePricingService hallSeatTypePricingService;
+    private final TicketPricingService ticketPricingService;
 
     public BookingUiDataServiceImpl(ShowtimeRepository showtimeRepository,
                                     SeatRepository seatRepository,
@@ -64,7 +65,7 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
                                     PromotionRepository promotionRepository,
                                     VoucherApplicationService voucherApplicationService,
                                     UiDisplayMapper displayMapper,
-                                    HallSeatTypePricingService hallSeatTypePricingService) {
+                                    TicketPricingService ticketPricingService) {
         this.showtimeRepository = showtimeRepository;
         this.seatRepository = seatRepository;
         this.ticketRepository = ticketRepository;
@@ -73,7 +74,7 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
         this.promotionRepository = promotionRepository;
         this.voucherApplicationService = voucherApplicationService;
         this.displayMapper = displayMapper;
-        this.hallSeatTypePricingService = hallSeatTypePricingService;
+        this.ticketPricingService = ticketPricingService;
     }
 
     @Override
@@ -179,6 +180,8 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
                 .endTime(showtime.getEndTime())
                 .basePrice(minTicketPriceFor(showtime))
                 .displayPrice(displayMapper.currency(minTicketPriceFor(showtime)))
+                .weekendPricing(ticketPricingService.hasWeekendPricing(showtime))
+                .pricingLabel(ticketPricingService.hasWeekendPricing(showtime) ? "Gia cuoi tuan" : null)
                 .available(showtime.getStartTime() != null && showtime.getStartTime().isAfter(LocalDateTime.now()))
                 .build();
     }
@@ -199,15 +202,17 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
             state = "reserved";
             selectable = false;
         }
-        Integer price = hallSeatTypePricingService.priceForSeat(showtime.getHall(), seat);
+        TicketPriceBreakdown price = ticketPricingService.priceForSeat(showtime, seat);
         return SeatAvailabilityView.builder()
                 .seatId(seat.getSeatId())
                 .row(seat.getSeatRow())
                 .number(seat.getSeatNumber())
                 .label(seat.getSeatRow() + seat.getSeatNumber())
                 .type(com.cinema.hyperCinema.util.SeatPricing.normalizeType(seat.getType()))
-                .price(price)
-                .displayPrice(displayMapper.currency(price))
+                .price(price.effectivePrice())
+                .displayPrice(displayMapper.currency(price.effectivePrice()))
+                .weekendPricing(price.weekendAdjusted())
+                .pricingLabel(price.adjustmentLabel())
                 .state(state)
                 .selectable(selectable)
                 .build();
@@ -273,11 +278,6 @@ public class BookingUiDataServiceImpl implements BookingUiDataService {
         if (showtime == null || showtime.getHall() == null) {
             return 0;
         }
-        return hallSeatTypePricingService.priceTable(showtime.getHall().getHallId(), showtime.getHall().getTicketPrice())
-                .stream()
-                .map(com.cinema.hyperCinema.dto.admin.hall.response.SeatTypePriceView::getPrice)
-                .filter(price -> price != null && price > 0)
-                .min(Integer::compareTo)
-                .orElse(0);
+        return ticketPricingService.minPriceForShowtime(showtime);
     }
 }

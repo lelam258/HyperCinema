@@ -13,6 +13,8 @@ import com.cinema.hyperCinema.exception.seat.SeatValidationException;
 import com.cinema.hyperCinema.model.*;
 import com.cinema.hyperCinema.repository.*;
 import com.cinema.hyperCinema.service.pricing.HallSeatTypePricingService;
+import com.cinema.hyperCinema.service.pricing.TicketPriceBreakdown;
+import com.cinema.hyperCinema.service.pricing.TicketPricingService;
 import com.cinema.hyperCinema.service.seat.SeatService;
 import com.cinema.hyperCinema.util.SeatPricing;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,7 @@ public class SeatServiceImpl implements SeatService {
     private final SeatReservationRepository seatReservationRepository;
     private final UserRepository userRepository;
     private final HallSeatTypePricingService hallSeatTypePricingService;
+    private final TicketPricingService ticketPricingService;
 
     private static final String SHOWTIME_CANCELLED = "CANCELLED";
 
@@ -112,13 +115,16 @@ public class SeatServiceImpl implements SeatService {
                 status = "RESERVED";
             }
 
+            TicketPriceBreakdown price = ticketPricingService.priceForSeat(showtime, seat);
             return ShowtimeSeatView.builder()
                     .seatId(seat.getSeatId())
                     .seatRow(seat.getSeatRow())
                     .seatNumber(seat.getSeatNumber())
                     .type(SeatPricing.normalizeType(seat.getType()))
                     .status(status)
-                    .finalPrice(hallSeatTypePricingService.priceForSeat(hall, seat))
+                    .finalPrice(price.effectivePrice())
+                    .weekendPricing(price.weekendAdjusted())
+                    .pricingLabel(price.adjustmentLabel())
                     .build();
         }).toList();
     }
@@ -273,17 +279,15 @@ public class SeatServiceImpl implements SeatService {
         }
 
         Seat seat = existingSeat.orElseGet(() -> {
-                    Seat newSeat = new Seat();
-                    newSeat.setHall(hall);
-                    newSeat.setSeatRow(rowStr);
-                    newSeat.setSeatNumber(num);
-                    return newSeat;
-                });
+            Seat newSeat = new Seat();
+            newSeat.setHall(hall);
+            newSeat.setSeatRow(rowStr);
+            newSeat.setSeatNumber(num);
+            return newSeat;
+        });
         seat.setType(SeatPricing.normalizeType(request.getType()));
         seat.setMaintenanceStatus(MaintenanceStatus.AVAILABLE.name());
         seatRepository.save(seat);
-
-        // Tăng sức chứa thực tế
 
         // Tăng sức chứa thực tế
         int capacityChange = SeatPricing.SupportedSeatType.COUPLE.name().equals(SeatPricing.normalizeType(request.getType())) ? 2 : 1;
@@ -305,168 +309,6 @@ public class SeatServiceImpl implements SeatService {
         seatRepository.updateMaintenanceStatusByHallId(hallId, MaintenanceStatus.UNDER_MAINTENANCE.name());
         hall.setCapacity(0);
         hallRepository.save(hall);
-    }
-
-    @Override
-    public void addRow(Integer hallId, String type, User actor) {
-        User current = loadActor(actor);
-        Hall hall = hallRepository.findById(hallId)
-                .orElseThrow(() -> new HallNotFoundException(hallId));
-        assertCanManageBranch(current, hallBranchId(hall));
-
-        if (showtimeRepository.existsByHall_HallId(hallId)) {
-            throw new SeatValidationException("seat.cannot_modify_with_showtimes");
-        }
-
-        List<Seat> existingSeats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId);
-        
-        // Xác định nhãn hàng mới
-        String nextRowLabel = "A";
-        if (!existingSeats.isEmpty()) {
-            Set<String> rows = existingSeats.stream()
-                    .map(Seat::getSeatRow)
-                    .collect(Collectors.toSet());
-            Optional<String> maxRow = rows.stream().max(String::compareTo);
-            if (maxRow.isPresent()) {
-                String lastLabel = maxRow.get();
-                if (lastLabel.length() == 1) {
-                    char nextChar = (char) (lastLabel.charAt(0) + 1);
-                    nextRowLabel = String.valueOf(nextChar);
-                } else {
-                    nextRowLabel = lastLabel + "A";
-                }
-            }
-        }
-
-        // Lấy danh sách các số cột hiện có để tạo cho hàng mới
-        Set<Integer> colNumbers = existingSeats.stream()
-                .map(Seat::getSeatNumber)
-                .collect(Collectors.toSet());
-        
-        if (colNumbers.isEmpty()) {
-            for (int i = 1; i <= 10; i++) {
-                colNumbers.add(i);
-            }
-        }
-
-        int capacityIncrease = 0;
-        String normalizedType = SeatPricing.normalizeType(type);
-        int seatVal = SeatPricing.SupportedSeatType.COUPLE.name().equals(normalizedType) ? 2 : 1;
-
-        for (Integer col : colNumbers) {
-            Seat seat = new Seat();
-            seat.setHall(hall);
-            seat.setSeatRow(nextRowLabel);
-            seat.setSeatNumber(col);
-            seat.setType(normalizedType);
-            seat.setMaintenanceStatus(MaintenanceStatus.AVAILABLE.name());
-            seatRepository.save(seat);
-            capacityIncrease += seatVal;
-        }
-
-        hall.setCapacity(hall.getCapacity() + capacityIncrease);
-        hallRepository.save(hall);
-    }
-
-    @Override
-    public void addColumn(Integer hallId, String type, User actor) {
-        User current = loadActor(actor);
-        Hall hall = hallRepository.findById(hallId)
-                .orElseThrow(() -> new HallNotFoundException(hallId));
-        assertCanManageBranch(current, hallBranchId(hall));
-
-        if (showtimeRepository.existsByHall_HallId(hallId)) {
-            throw new SeatValidationException("seat.cannot_modify_with_showtimes");
-        }
-
-        List<Seat> existingSeats = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId);
-        int nextColNumber = 1;
-        if (!existingSeats.isEmpty()) {
-            int maxCol = existingSeats.stream()
-                    .mapToInt(Seat::getSeatNumber)
-                    .max()
-                    .orElse(0);
-            nextColNumber = maxCol + 1;
-        }
-
-        // Lấy tất cả các hàng ghế hiện có
-        Set<String> rows = existingSeats.stream()
-                .map(Seat::getSeatRow)
-                .collect(Collectors.toSet());
-
-        if (rows.isEmpty()) {
-            rows.add("A");
-        }
-
-        int capacityIncrease = 0;
-        String normalizedType = SeatPricing.normalizeType(type);
-        int seatVal = SeatPricing.SupportedSeatType.COUPLE.name().equals(normalizedType) ? 2 : 1;
-
-        for (String row : rows) {
-            Seat seat = new Seat();
-            seat.setHall(hall);
-            seat.setSeatRow(row);
-            seat.setSeatNumber(nextColNumber);
-            seat.setType(normalizedType);
-            seat.setMaintenanceStatus(MaintenanceStatus.AVAILABLE.name());
-            seatRepository.save(seat);
-            capacityIncrease += seatVal;
-        }
-
-        hall.setCapacity(hall.getCapacity() + capacityIncrease);
-        hallRepository.save(hall);
-    }
-
-    @Override
-    public void insertColumnAisle(Integer hallId, Integer afterColumn, User actor) {
-        User current = loadActor(actor);
-        Hall hall = hallRepository.findById(hallId)
-                .orElseThrow(() -> new HallNotFoundException(hallId));
-        assertCanManageBranch(current, hallBranchId(hall));
-
-        if (showtimeRepository.existsByHall_HallId(hallId)) {
-            throw new SeatValidationException("seat.cannot_modify_with_showtimes");
-        }
-
-        List<Seat> seatsToShift = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId).stream()
-                .filter(s -> s.getSeatNumber() > afterColumn)
-                .sorted((s1, s2) -> s2.getSeatNumber().compareTo(s1.getSeatNumber()))
-                .toList();
-
-        for (Seat seat : seatsToShift) {
-            seat.setSeatNumber(seat.getSeatNumber() + 1);
-            seatRepository.saveAndFlush(seat);
-        }
-    }
-
-    @Override
-    public void insertRowAisle(Integer hallId, String afterRow, User actor) {
-        User current = loadActor(actor);
-        Hall hall = hallRepository.findById(hallId)
-                .orElseThrow(() -> new HallNotFoundException(hallId));
-        assertCanManageBranch(current, hallBranchId(hall));
-
-        if (showtimeRepository.existsByHall_HallId(hallId)) {
-            throw new SeatValidationException("seat.cannot_modify_with_showtimes");
-        }
-
-        String targetRow = afterRow.trim().toUpperCase();
-
-        List<Seat> seatsToShift = seatRepository.findByHall_HallIdOrderBySeatRowAscSeatNumberAsc(hallId).stream()
-                .filter(s -> s.getSeatRow().compareTo(targetRow) > 0)
-                .sorted((s1, s2) -> s2.getSeatRow().compareTo(s1.getSeatRow()))
-                .toList();
-
-        for (Seat seat : seatsToShift) {
-            String currRow = seat.getSeatRow();
-            if (currRow.length() == 1) {
-                char nextChar = (char) (currRow.charAt(0) + 1);
-                seat.setSeatRow(String.valueOf(nextChar));
-            } else {
-                seat.setSeatRow(currRow + "A");
-            }
-            seatRepository.saveAndFlush(seat);
-        }
     }
 
     private void upsertSeat(Hall hall,

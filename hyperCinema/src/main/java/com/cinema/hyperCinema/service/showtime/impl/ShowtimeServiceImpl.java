@@ -2,9 +2,7 @@ package com.cinema.hyperCinema.service.showtime.impl;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.ArrayList;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -41,6 +39,7 @@ import com.cinema.hyperCinema.repository.ShowtimeRepository;
 import com.cinema.hyperCinema.repository.TicketRepository;
 import com.cinema.hyperCinema.repository.UserRepository;
 import com.cinema.hyperCinema.service.pricing.HallSeatTypePricingService;
+import com.cinema.hyperCinema.service.pricing.TicketPricingService;
 import com.cinema.hyperCinema.service.showtime.ShowtimeService;
 
 import lombok.RequiredArgsConstructor;
@@ -65,6 +64,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
     private final HallSeatTypePricingService hallSeatTypePricingService;
+    private final TicketPricingService ticketPricingService;
 
     @Override
     @Transactional(readOnly = true)
@@ -113,64 +113,16 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         ensureHallActive(hall);
         Integer branchId = resolveTargetBranchId(request.getBranchId(), hall, current);
         validateMovieAssignment(movie.getMovieId(), branchId);
+        validateCreateOrUpdate(null, hall.getHallId(), request.getStartTime(), request.getEndTime());
 
-        LocalDateTime requestedStart = request.getStartTime();
-        LocalDateTime requestedEnd = request.getEndTime();
-        if (requestedStart == null || requestedEnd == null) {
-            throw new ShowtimeValidationException("showtime.start.required");
-        }
-        if (!requestedEnd.isAfter(requestedStart)) {
-            throw new ShowtimeValidationException("showtime.time.invalid");
-        }
-
-        int durationMinutes = movie.getDuration() != null ? movie.getDuration() : 120;
-        int cleanupMinutes = 15;
-
-        LocalDate startDate = requestedStart.toLocalDate();
-        LocalDate endDate = requestedEnd.toLocalDate();
-        java.time.LocalTime dailyStartTime = requestedStart.toLocalTime();
-        java.time.LocalTime dailyEndTime = requestedEnd.toLocalTime();
-
-        List<Showtime> showtimesToSave = new ArrayList<>();
-        boolean hasOverlap = false;
-
-        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-            LocalDateTime currentStart = date.atTime(dailyStartTime);
-            LocalDateTime dailyEndThreshold = date.atTime(dailyEndTime);
-
-            while (true) {
-                LocalDateTime currentEnd = currentStart.plusMinutes(durationMinutes);
-                if (currentEnd.isAfter(dailyEndThreshold)) {
-                    break;
-                }
-
-                boolean overlap = showtimeRepository.existsOverlap(hall.getHallId(), currentStart, currentEnd);
-                if (overlap) {
-                    hasOverlap = true;
-                } else {
-                    Showtime showtime = new Showtime();
-                    showtime.setMovie(movie);
-                    showtime.setHall(hall);
-                    showtime.setStartTime(currentStart);
-                    showtime.setEndTime(currentEnd);
-                    showtime.setPrice(ticketPriceFor(hall));
-                    showtime.setStatus(SHOWTIME_ACTIVE);
-                    showtimesToSave.add(showtime);
-                }
-
-                currentStart = currentEnd.plusMinutes(cleanupMinutes);
-            }
-        }
-
-        if (showtimesToSave.isEmpty()) {
-            if (hasOverlap) {
-                throw new ShowtimeValidationException("showtime.time.overlap");
-            }
-            throw new ShowtimeValidationException("showtime.time.invalid");
-        }
-
-        List<Showtime> saved = showtimeRepository.saveAll(showtimesToSave);
-        return toDetailView(saved.get(0));
+        Showtime showtime = new Showtime();
+        showtime.setMovie(movie);
+        showtime.setHall(hall);
+        showtime.setStartTime(request.getStartTime());
+        showtime.setEndTime(request.getEndTime());
+        showtime.setPrice(ticketPriceFor(hall));
+        showtime.setStatus(SHOWTIME_ACTIVE);
+        return toDetailView(showtimeRepository.save(showtime));
     }
 
     @Override
@@ -419,6 +371,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .endTime(detail.getEndTime())
                 .price(detail.getPrice())
                 .priceRange(detail.getPriceRange())
+                .weekendPricing(detail.isWeekendPricing())
+                .pricingLabel(detail.getPricingLabel())
                 .seatTypePrices(detail.getSeatTypePrices())
                 .bookingCount(detail.getBookingCount())
                 .ticketCount(detail.getTicketCount())
@@ -441,9 +395,11 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         boolean past = showtime.getStartTime() != null && showtime.getStartTime().isBefore(LocalDateTime.now());
         boolean cancelled = SHOWTIME_CANCELLED.equals(showtime.getStatus());
         boolean hasDependencies = bookingCount > 0 || ticketCount > 0 || reservationCount > 0 || paymentCount > 0;
-        List<SeatTypePriceView> seatTypePrices = hall == null
+        List<SeatTypePriceView> baseSeatTypePrices = hall == null
                 ? List.of()
                 : hallSeatTypePricingService.priceTable(hall.getHallId(), hall.getTicketPrice());
+        boolean weekendPricing = ticketPricingService.hasWeekendPricing(showtime);
+        List<SeatTypePriceView> displaySeatTypePrices = effectiveSeatTypePrices(showtime, baseSeatTypePrices);
         return ShowtimeDetailView.builder()
                 .showtimeId(showtimeId)
                 .movieId(movie == null ? null : movie.getMovieId())
@@ -456,8 +412,10 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .startTime(showtime.getStartTime())
                 .endTime(showtime.getEndTime())
                 .price(ticketPriceFor(hall))
-                .priceRange(priceRange(seatTypePrices))
-                .seatTypePrices(seatTypePrices)
+                .priceRange(priceRange(displaySeatTypePrices))
+                .weekendPricing(weekendPricing)
+                .pricingLabel(weekendPricing ? "Gia cuoi tuan" : null)
+                .seatTypePrices(displaySeatTypePrices)
                 .bookingCount(bookingCount)
                 .ticketCount(ticketCount)
                 .reservationCount(reservationCount)
@@ -490,6 +448,19 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .capacity(hall.getCapacity())
                 .status(hall.getStatus())
                 .build();
+    }
+
+    private List<SeatTypePriceView> effectiveSeatTypePrices(Showtime showtime, List<SeatTypePriceView> basePrices) {
+        if (!ticketPricingService.hasWeekendPricing(showtime)) {
+            return basePrices;
+        }
+        return basePrices.stream()
+                .map(price -> SeatTypePriceView.builder()
+                        .seatType(price.getSeatType())
+                        .label(price.getLabel())
+                        .price(ticketPricingService.adjustedPriceForSeatType(showtime, price.getSeatType(), price.getPrice()))
+                        .build())
+                .toList();
     }
 
     private MovieOption toMovieOption(Movie movie) {

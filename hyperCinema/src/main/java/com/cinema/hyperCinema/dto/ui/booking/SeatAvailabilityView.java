@@ -22,6 +22,9 @@ public class SeatAvailabilityView {
     private Integer price;
 
     private String displayPrice;
+    private boolean weekendPricing;
+
+    private String pricingLabel;
 
     private String state;
 

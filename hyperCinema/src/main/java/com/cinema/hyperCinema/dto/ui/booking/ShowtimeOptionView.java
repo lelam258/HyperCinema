@@ -29,5 +29,9 @@ public class ShowtimeOptionView {
 
     private String displayPrice;
 
+    private boolean weekendPricing;
+
+    private String pricingLabel;
+
     private boolean available;
 }
