@@ -42,11 +42,7 @@
                         </select>
                         <span th:if="${#fields.hasErrors('hallType')}" th:errors="*{hallType}" class="mt-1 block text-xs text-danger"></span>
                     </div>
-                    <div>
-                        <label for="ticketPrice" class="hc-label">Giá fallback</label>
-                        <input class="hc-input" type="number" id="ticketPrice" th:field="*{ticketPrice}" th:classappend="${#fields.hasErrors('ticketPrice')} ? ' border-danger!' : ''" min="1" step="1000" required>
-                        <span th:if="${#fields.hasErrors('ticketPrice')}" th:errors="*{ticketPrice}" class="mt-1 block text-xs text-danger"></span>
-                    </div>
+                    <input type="hidden" id="ticketPrice" th:field="*{ticketPrice}">
                     <div th:if="${mode == 'edit'}">
                         <label for="capacity" class="hc-label">Sức chứa</label>
                         <input class="hc-input" type="number" id="capacity" th:field="*{capacity}" th:classappend="${#fields.hasErrors('capacity')} ? ' border-danger!' : ''" min="1" required>
@@ -162,5 +158,19 @@
 </main>
 
 <script defer th:src="@{/js/features/hall-form.js(v=1.0)}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const standardPriceInput = document.getElementById("standardPrice");
+        const ticketPriceInput = document.getElementById("ticketPrice");
+        if (standardPriceInput && ticketPriceInput) {
+            const form = standardPriceInput.closest("form");
+            if (form) {
+                form.addEventListener("submit", function() {
+                    ticketPriceInput.value = standardPriceInput.value || "80000";
+                });
+            }
+        }
+    });
+</script>
 </body>
 </html>
