@@ -31,6 +31,17 @@ public class HallDetailView {
     private Integer ticketPrice;
 
     private List<SeatTypePriceView> seatTypePrices;
+    private boolean weekendPricingActive;
+
+    private Integer weekendStandardPrice;
+
+    private Integer weekendVipPrice;
+
+    private Integer weekendCouplePrice;
+
+    private Integer weekendDisabledPrice;
+
+    private String weekendPricingLabel;
 
     private Integer capacity;
 

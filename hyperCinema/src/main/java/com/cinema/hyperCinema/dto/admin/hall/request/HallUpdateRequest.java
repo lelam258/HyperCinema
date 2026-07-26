@@ -37,6 +37,15 @@ public class HallUpdateRequest {
     private Integer couplePrice;
 
     private Integer disabledPrice = 0;
+    private Boolean weekendPricingActive = false;
+
+    private Integer weekendStandardPrice;
+
+    private Integer weekendVipPrice;
+
+    private Integer weekendCouplePrice;
+
+    private Integer weekendDisabledPrice = 0;
 
     @NotNull(message = "Suc chua khong duoc de trong")
     @Positive(message = "Suc chua phai lon hon 0")

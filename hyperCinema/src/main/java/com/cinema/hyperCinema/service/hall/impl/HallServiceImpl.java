@@ -3,6 +3,7 @@ package com.cinema.hyperCinema.service.hall.impl;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.cinema.hyperCinema.dto.admin.hall.request.HallSearchCriteria;
 import com.cinema.hyperCinema.model.Branch;
@@ -12,6 +13,7 @@ import com.cinema.hyperCinema.model.Role;
 import com.cinema.hyperCinema.model.Seat;
 import com.cinema.hyperCinema.model.SeatType;
 import com.cinema.hyperCinema.model.User;
+import com.cinema.hyperCinema.model.WeekendTicketPricing;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +38,7 @@ import com.cinema.hyperCinema.repository.HallSpecifications;
 import com.cinema.hyperCinema.repository.SeatRepository;
 import com.cinema.hyperCinema.repository.ShowtimeRepository;
 import com.cinema.hyperCinema.repository.UserRepository;
+import com.cinema.hyperCinema.repository.WeekendTicketPricingRepository;
 import com.cinema.hyperCinema.service.hall.HallService;
 import com.cinema.hyperCinema.service.pricing.HallSeatTypePricingService;
 
@@ -55,6 +58,7 @@ public class HallServiceImpl implements HallService {
     private final ShowtimeRepository showtimeRepository;
     private final UserRepository userRepository;
     private final HallSeatTypePricingService hallSeatTypePricingService;
+    private final WeekendTicketPricingRepository weekendTicketPricingRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -107,6 +111,10 @@ public class HallServiceImpl implements HallService {
         Hall saved = hallRepository.save(hall);
         saveSeatTypePrices(saved, request.getStandardPrice(), request.getVipPrice(),
                 request.getCouplePrice(), request.getDisabledPrice(), ticketPrice);
+        saveWeekendPricing(saved, request.getWeekendPricingActive(), request.getWeekendStandardPrice(),
+                request.getWeekendVipPrice(), request.getWeekendCouplePrice(), request.getWeekendDisabledPrice(),
+                request.getStandardPrice(), request.getVipPrice(), request.getCouplePrice(),
+                request.getDisabledPrice(), ticketPrice);
         seatRepository.saveAll(buildInitialSeats(saved, rowCount, columnCount, status));
         return toDetailView(saved);
     }
@@ -151,6 +159,10 @@ public class HallServiceImpl implements HallService {
         Hall saved = hallRepository.save(hall);
         saveSeatTypePrices(saved, request.getStandardPrice(), request.getVipPrice(),
                 request.getCouplePrice(), request.getDisabledPrice(), ticketPrice);
+        saveWeekendPricing(saved, request.getWeekendPricingActive(), request.getWeekendStandardPrice(),
+                request.getWeekendVipPrice(), request.getWeekendCouplePrice(), request.getWeekendDisabledPrice(),
+                request.getStandardPrice(), request.getVipPrice(), request.getCouplePrice(),
+                request.getDisabledPrice(), ticketPrice);
         syncSeatMaintenanceStatus(saved.getHallId(), saved.getStatus());
         return toDetailView(saved);
     }
@@ -178,8 +190,8 @@ public class HallServiceImpl implements HallService {
         }
         List<BranchOption> branches = admin
                 ? branchRepository.findByStatusIgnoreCase("Active", Sort.by(Sort.Direction.ASC, "name")).stream()
-                        .map(this::toBranchOption)
-                        .toList()
+                .map(this::toBranchOption)
+                .toList()
                 : List.of();
         return HallManagementContext.builder()
                 .admin(admin)
@@ -258,6 +270,7 @@ public class HallServiceImpl implements HallService {
         long seatCount = seatRepository.countByHall_HallId(hallId);
         long showtimeCount = showtimeRepository.countByHall_HallId(hallId);
         Branch branch = hall.getBranch();
+        Optional<WeekendTicketPricing> weekendPricing = weekendPricing(hall);
         return HallListItem.builder()
                 .hallId(hallId)
                 .name(hall.getName())
@@ -268,6 +281,8 @@ public class HallServiceImpl implements HallService {
                 .ticketPrice(hall.getTicketPrice())
                 .priceRange(priceRange(seatTypePrices(hall)))
                 .seatTypePrices(seatTypePrices(hall))
+                .weekendPricingActive(weekendPricing.map(pricing -> Boolean.TRUE.equals(pricing.getActive())).orElse(false))
+                .weekendPricingLabel(weekendPricing.map(this::weekendPricingLabel).orElse(""))
                 .capacity(hall.getCapacity())
                 .status(hall.getStatus())
                 .seatCount(seatCount)
@@ -282,6 +297,7 @@ public class HallServiceImpl implements HallService {
         long seatCount = seatRepository.countByHall_HallId(hallId);
         long showtimeCount = showtimeRepository.countByHall_HallId(hallId);
         Branch branch = hall.getBranch();
+        Optional<WeekendTicketPricing> weekendPricing = weekendPricing(hall);
         return HallDetailView.builder()
                 .hallId(hallId)
                 .name(hall.getName())
@@ -292,6 +308,12 @@ public class HallServiceImpl implements HallService {
                 .hallType(hall.getHallType())
                 .ticketPrice(hall.getTicketPrice())
                 .seatTypePrices(seatTypePrices(hall))
+                .weekendPricingActive(weekendPricing.map(pricing -> Boolean.TRUE.equals(pricing.getActive())).orElse(false))
+                .weekendStandardPrice(weekendPricing.map(WeekendTicketPricing::getStandardPrice).orElse(null))
+                .weekendVipPrice(weekendPricing.map(WeekendTicketPricing::getVipPrice).orElse(null))
+                .weekendCouplePrice(weekendPricing.map(WeekendTicketPricing::getCouplePrice).orElse(null))
+                .weekendDisabledPrice(weekendPricing.map(WeekendTicketPricing::getDisabledPrice).orElse(0))
+                .weekendPricingLabel(weekendPricing.map(this::weekendPricingLabel).orElse(""))
                 .capacity(hall.getCapacity())
                 .status(hall.getStatus())
                 .seatCount(seatCount)
@@ -359,6 +381,58 @@ public class HallServiceImpl implements HallService {
         } catch (IllegalArgumentException ex) {
             throw new HallValidationException("hall.seat_type_price.invalid");
         }
+    }
+
+    private void saveWeekendPricing(Hall hall,
+                                    Boolean active,
+                                    Integer standardPrice,
+                                    Integer vipPrice,
+                                    Integer couplePrice,
+                                    Integer disabledPrice,
+                                    Integer baseStandardPrice,
+                                    Integer baseVipPrice,
+                                    Integer baseCouplePrice,
+                                    Integer baseDisabledPrice,
+                                    Integer fallbackTicketPrice) {
+        Integer normalizedStandard = normalizeWeekendPrice(standardPrice, baseStandardPrice, fallbackTicketPrice, false);
+        Integer normalizedVip = normalizeWeekendPrice(vipPrice, baseVipPrice, fallbackTicketPrice, false);
+        Integer normalizedCouple = normalizeWeekendPrice(couplePrice, baseCouplePrice, fallbackTicketPrice, false);
+        Integer normalizedDisabled = normalizeWeekendPrice(disabledPrice, baseDisabledPrice, 0, true);
+        WeekendTicketPricing pricing = weekendTicketPricingRepository.findByHall_HallId(hall.getHallId())
+                .orElseGet(() -> {
+                    WeekendTicketPricing created = new WeekendTicketPricing();
+                    created.setHall(hall);
+                    return created;
+                });
+        pricing.setHall(hall);
+        pricing.setName("Weekend pricing - " + hall.getName());
+        pricing.setDaysOfWeek("SATURDAY,SUNDAY");
+        pricing.setStandardPrice(normalizedStandard);
+        pricing.setVipPrice(normalizedVip);
+        pricing.setCouplePrice(normalizedCouple);
+        pricing.setDisabledPrice(normalizedDisabled);
+        pricing.setActive(Boolean.TRUE.equals(active));
+        weekendTicketPricingRepository.save(pricing);
+    }
+
+    private Optional<WeekendTicketPricing> weekendPricing(Hall hall) {
+        Integer hallId = hall == null ? null : hall.getHallId();
+        return hallId == null ? Optional.empty() : weekendTicketPricingRepository.findByHall_HallId(hallId);
+    }
+
+    private static Integer normalizeWeekendPrice(Integer price, Integer basePrice, Integer fallback, boolean allowZero) {
+        Integer normalized = price != null ? price : (basePrice != null ? basePrice : fallback);
+        if (normalized == null || normalized < 0 || (!allowZero && normalized == 0)) {
+            throw new HallValidationException("hall.weekend_pricing.value.invalid");
+        }
+        return normalized;
+    }
+
+    private String weekendPricingLabel(WeekendTicketPricing pricing) {
+        if (pricing == null || !Boolean.TRUE.equals(pricing.getActive())) {
+            return "";
+        }
+        return "Gia cuoi tuan";
     }
 
     private List<SeatTypePriceView> seatTypePrices(Hall hall) {

@@ -40,6 +40,9 @@ public class ShowtimeDetailView {
     private Integer price;
 
     private String priceRange;
+    private boolean weekendPricing;
+
+    private String pricingLabel;
 
     private List<SeatTypePriceView> seatTypePrices;
 
