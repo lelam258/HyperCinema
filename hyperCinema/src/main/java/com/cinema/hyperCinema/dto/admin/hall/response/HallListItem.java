@@ -31,6 +31,9 @@ public class HallListItem {
     private String priceRange;
 
     private List<SeatTypePriceView> seatTypePrices;
+    private boolean weekendPricingActive;
+
+    private String weekendPricingLabel;
 
     private Integer capacity;
 

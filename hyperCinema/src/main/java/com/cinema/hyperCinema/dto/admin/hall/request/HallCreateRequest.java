@@ -37,6 +37,15 @@ public class HallCreateRequest {
     private Integer couplePrice;
 
     private Integer disabledPrice = 0;
+    private Boolean weekendPricingActive = false;
+
+    private Integer weekendStandardPrice;
+
+    private Integer weekendVipPrice;
+
+    private Integer weekendCouplePrice;
+
+    private Integer weekendDisabledPrice = 0;
 
     private Integer capacity;
 
