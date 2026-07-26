@@ -408,7 +408,7 @@
                 button.dataset.seatPrice = seat.price || 0;
                 button.dataset.seatType = seat.type || "";
                 button.textContent = seat.number || seat.label || "";
-                button.title = `${seat.label || ""} - ${seat.displayPrice || currency(seat.price)}`;
+                button.title = `${seat.label || ""} - ${seat.displayPrice || currency(seat.price)}${seat.weekendPricing ? " - Gia cuoi tuan" : ""}`;
                 if (rows.length > 0 && seat.row && seat.number) {
                     button.style.gridRow = String(rowIndexFor(seat.row, rows));
                     button.style.gridColumn = String(Number(seat.number) + 1);
@@ -428,6 +428,7 @@
                             id: seat.seatId,
                             label: seat.label,
                             price: seat.price,
+                            pricingLabel: seat.pricingLabel || null,
                         });
                     } else {
                         modalState.seats = modalState.seats.filter((selectedSeat) => String(selectedSeat.id) !== String(seat.seatId));

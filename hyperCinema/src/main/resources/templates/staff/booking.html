@@ -63,7 +63,7 @@
                                     th:data-pos-showtime-format="${s.formatLabel}"
                                     th:data-pos-showtime-hall="${s.hallName}"
                                     th:data-pos-showtime-time="${#temporals.format(s.startTime, 'HH:mm dd/MM')}"
-                                    th:title="|${s.hallName} - ${s.displayPrice}|"
+                                    th:title="|${s.hallName} - ${s.displayPrice}${s.weekendPricing ? ' - Gia cuoi tuan' : ''}|"
                                     th:text="${#temporals.format(s.startTime, 'HH:mm')}">
                                 10:00
                             </button>
@@ -174,6 +174,7 @@
                         <strong data-pos-total>0 VND</strong>
                     </div>
                 </div>
+                <input type="hidden" name="paymentMethod" value="VNPay" data-pos-payment-input>
 
                 <button type="submit" class="hc-staff-pos-submit" data-pos-submit disabled>
                     Thanh toán

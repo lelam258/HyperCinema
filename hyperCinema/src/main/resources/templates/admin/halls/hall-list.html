@@ -89,7 +89,10 @@
                         <td><a th:href="@{|/admin/halls/${item.hallId}|}" th:text="${item.name}" class="font-semibold text-white no-underline hover:text-accent">Hall</a></td>
                         <td th:text="${item.branchName}">Branch</td>
                         <td th:text="${item.hallType}">2D</td>
-                        <td class="text-right tabular-nums" th:text="${item.priceRange} + ' đ'">80.000 - 160.000 đ</td>
+                        <td class="text-right tabular-nums">
+                            <span th:text="${item.priceRange} + ' đ'">80.000 - 160.000 đ</span>
+                            <span th:if="${item.weekendPricingActive}" class="hc-badge ml-2" th:text="${item.weekendPricingLabel}">Weekend</span>
+                        </td>
                         <td><span th:replace="~{fragments/components :: statusBadge(${item.status})}"></span></td>
                         <td th:text="${item.city}">City</td>
                         <td class="text-right tabular-nums" th:text="${item.capacity}">0</td>

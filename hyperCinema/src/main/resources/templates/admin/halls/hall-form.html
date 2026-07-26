@@ -79,6 +79,37 @@
                     </div>
                 </section>
 
+                <section class="hc-subcard p-4">
+                    <div class="mb-3 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div>
+                            <h2 class="text-base font-semibold text-white">Giá vé cuối tuần</h2>
+                            <p class="text-xs text-cinema-muted">Áp dụng cho Thứ 7 và Chủ nhật của các suất chiếu trong phòng này.</p>
+                        </div>
+                        <label class="inline-flex items-center gap-2 text-sm font-semibold text-white">
+                            <input type="checkbox" th:field="*{weekendPricingActive}" class="h-4 w-4 rounded border-cinema-border bg-cinema-panel text-accent">
+                            Bật giá cuối tuần
+                        </label>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+                        <div>
+                            <label for="weekendStandardPrice" class="hc-label">Thường</label>
+                            <input class="hc-input" type="number" id="weekendStandardPrice" th:field="*{weekendStandardPrice}" min="1" step="1000" placeholder="90000">
+                        </div>
+                        <div>
+                            <label for="weekendVipPrice" class="hc-label">VIP</label>
+                            <input class="hc-input" type="number" id="weekendVipPrice" th:field="*{weekendVipPrice}" min="1" step="1000" placeholder="120000">
+                        </div>
+                        <div>
+                            <label for="weekendCouplePrice" class="hc-label">Ghế đôi</label>
+                            <input class="hc-input" type="number" id="weekendCouplePrice" th:field="*{weekendCouplePrice}" min="1" step="1000" placeholder="180000">
+                        </div>
+                        <div>
+                            <label for="weekendDisabledPrice" class="hc-label">Khuyết tật</label>
+                            <input class="hc-input" type="number" id="weekendDisabledPrice" th:field="*{weekendDisabledPrice}" min="0" step="1000" placeholder="0">
+                        </div>
+                    </div>
+                </section>
+
                 <div th:if="${mode == 'create'}" class="grid grid-cols-1 gap-4 md:grid-cols-3" data-hall-layout-form>
                     <div>
                         <label for="rowCount" class="hc-label">Số hàng ghế</label>
