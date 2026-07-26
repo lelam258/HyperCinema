@@ -1,7 +1,9 @@
 package com.cinema.hyperCinema.service.showtime.impl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -113,16 +115,65 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         ensureHallActive(hall);
         Integer branchId = resolveTargetBranchId(request.getBranchId(), hall, current);
         validateMovieAssignment(movie.getMovieId(), branchId);
-        validateCreateOrUpdate(null, hall.getHallId(), request.getStartTime(), request.getEndTime());
 
-        Showtime showtime = new Showtime();
-        showtime.setMovie(movie);
-        showtime.setHall(hall);
-        showtime.setStartTime(request.getStartTime());
-        showtime.setEndTime(request.getEndTime());
-        showtime.setPrice(ticketPriceFor(hall));
-        showtime.setStatus(SHOWTIME_ACTIVE);
-        return toDetailView(showtimeRepository.save(showtime));
+        LocalDateTime requestedStart = request.getStartTime();
+        LocalDateTime requestedEnd = request.getEndTime();
+        if (requestedStart == null || requestedEnd == null) {
+            throw new ShowtimeValidationException("showtime.start.required");
+        }
+        if (!requestedEnd.isAfter(requestedStart)) {
+            throw new ShowtimeValidationException("showtime.time.invalid");
+        }
+
+        int durationMinutes = movie.getDuration() != null ? movie.getDuration() : 120;
+        int cleanupMinutes = 15;
+
+        LocalDate startDate = requestedStart.toLocalDate();
+        LocalDate endDate = requestedEnd.toLocalDate();
+        java.time.LocalTime dailyStartTime = requestedStart.toLocalTime();
+        java.time.LocalTime dailyEndTime = requestedEnd.toLocalTime();
+
+        List<Showtime> showtimesToSave = new ArrayList<>();
+        boolean hasOverlap = false;
+
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            LocalDateTime currentStart = date.atTime(dailyStartTime);
+            LocalDateTime dailyEndThreshold = date.atTime(dailyEndTime);
+
+            while (true) {
+                LocalDateTime currentEnd = currentStart.plusMinutes(durationMinutes);
+                if (currentEnd.isAfter(dailyEndThreshold)) {
+                    break;
+                }
+
+                // Check overlap using the target validation method
+                try {
+                    validateCreateOrUpdate(null, hall.getHallId(), currentStart, currentEnd);
+                    Showtime showtime = new Showtime();
+                    showtime.setMovie(movie);
+                    showtime.setHall(hall);
+                    showtime.setStartTime(currentStart);
+                    showtime.setEndTime(currentEnd);
+                    showtime.setPrice(ticketPriceFor(hall));
+                    showtime.setStatus(SHOWTIME_ACTIVE);
+                    showtimesToSave.add(showtime);
+                } catch (ShowtimeValidationException ex) {
+                    hasOverlap = true;
+                }
+
+                currentStart = currentEnd.plusMinutes(cleanupMinutes);
+            }
+        }
+
+        if (showtimesToSave.isEmpty()) {
+            if (hasOverlap) {
+                throw new ShowtimeValidationException("showtime.time.overlap");
+            }
+            throw new ShowtimeValidationException("showtime.time.invalid");
+        }
+
+        List<Showtime> saved = showtimeRepository.saveAll(showtimesToSave);
+        return toDetailView(saved.get(0));
     }
 
     @Override

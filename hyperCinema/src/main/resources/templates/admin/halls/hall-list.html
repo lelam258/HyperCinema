@@ -112,6 +112,31 @@
                     </tbody>
                 </table>
             </div>
+            <div class="pagination-bar flex flex-col gap-3 px-5 py-4 text-sm text-cinema-muted sm:flex-row sm:items-center sm:justify-between" th:if="${page != null}">
+                <div>
+                    <span th:if="${page.totalElements > 0}"
+                          th:text="|${page.number * page.size + 1}-${((page.number + 1) * page.size > page.totalElements ? page.totalElements : (page.number + 1) * page.size)} / ${page.totalElements} phòng chiếu|">1-10 / 10 phòng chiếu</span>
+                    <span th:if="${page.totalElements == 0}">Không tìm thấy phòng chiếu nào</span>
+                </div>
+                <div class="pagination-controls flex flex-wrap items-center gap-2" th:if="${page.totalPages > 1}">
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:if="${!page.first}"
+                       th:href="@{/admin/halls(keyword=${criteria.keyword},branchId=${criteria.branchId},city=${criteria.city},hallType=${criteria.hallType},status=${criteria.status},page=0,size=${criteria.size},sort=${criteria.sort},direction=${criteria.direction})}">Đầu</a>
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:if="${!page.first}"
+                       th:href="@{/admin/halls(keyword=${criteria.keyword},branchId=${criteria.branchId},city=${criteria.city},hallType=${criteria.hallType},status=${criteria.status},page=${page.number - 1},size=${criteria.size},sort=${criteria.sort},direction=${criteria.direction})}">Trước</a>
+                    <span class="hc-btn px-3 py-1.5" th:each="pageNo : ${#numbers.sequence(0, page.totalPages - 1)}"
+                          th:if="${pageNo >= page.number - 2 and pageNo <= page.number + 2}"
+                          th:classappend="${pageNo == page.number} ? ' hc-btn-primary' : ''">
+                        <span th:if="${pageNo == page.number}" th:text="${pageNo + 1}">1</span>
+                        <a th:if="${pageNo != page.number}" class="text-white no-underline"
+                           th:href="@{/admin/halls(keyword=${criteria.keyword},branchId=${criteria.branchId},city=${criteria.city},hallType=${criteria.hallType},status=${criteria.status},page=${pageNo},size=${criteria.size},sort=${criteria.sort},direction=${criteria.direction})}"
+                           th:text="${pageNo + 1}">2</a>
+                    </span>
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:if="${!page.last}"
+                       th:href="@{/admin/halls(keyword=${criteria.keyword},branchId=${criteria.branchId},city=${criteria.city},hallType=${criteria.hallType},status=${criteria.status},page=${page.number + 1},size=${criteria.size},sort=${criteria.sort},direction=${criteria.direction})}">Sau</a>
+                    <a class="hc-btn px-3 py-1.5 no-underline" th:if="${!page.last}"
+                       th:href="@{/admin/halls(keyword=${criteria.keyword},branchId=${criteria.branchId},city=${criteria.city},hallType=${criteria.hallType},status=${criteria.status},page=${page.totalPages - 1},size=${criteria.size},sort=${criteria.sort},direction=${criteria.direction})}">Cuối</a>
+                </div>
+            </div>
         </section>
     </div>
     <footer th:replace="~{fragments/layout :: footer}"></footer>
