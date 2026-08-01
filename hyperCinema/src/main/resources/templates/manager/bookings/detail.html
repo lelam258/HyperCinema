@@ -52,15 +52,15 @@
             <section class="hc-card p-6">
                 <h2 class="mb-4 text-lg font-semibold text-white">Thanh toán</h2>
                 <dl class="hc-summary-list">
-                    <div><dt>Booking</dt><dd th:text="${booking.bookingStatus}">Pending</dd></div>
-                    <div><dt>Payment</dt><dd th:text="${booking.paymentStatus != null and !#strings.isEmpty(booking.paymentStatus) ? booking.paymentStatus : 'N/A'}">Pending</dd></div>
+                    <div><dt>Trạng thái booking</dt><dd th:text="${booking.bookingStatus}">Pending</dd></div>
+                    <div><dt>Trạng thái thanh toán</dt><dd th:text="${booking.paymentStatus != null and !#strings.isEmpty(booking.paymentStatus) ? booking.paymentStatus : 'N/A'}">Pending</dd></div>
                     <div><dt>Phương thức</dt><dd th:text="${booking.paymentMethod != null and !#strings.isEmpty(booking.paymentMethod) ? booking.paymentMethod : 'N/A'}">VietQR</dd></div>
-                    <div><dt>Tam tinh</dt><dd th:text="${#numbers.formatInteger(booking.orderSubtotal != null ? booking.orderSubtotal : booking.totalPrice, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                    <div><dt>Tạm tính</dt><dd th:text="${#numbers.formatInteger(booking.orderSubtotal != null ? booking.orderSubtotal : booking.totalPrice, 0, 'POINT') + ' VNĐ'}">0 VNĐ</dd></div>
                     <div th:if="${booking.promotionName != null and !#strings.isEmpty(booking.promotionName)}"><dt>Voucher</dt><dd th:text="${booking.promotionName}">CODE</dd></div>
-                    <div th:if="${booking.voucherDiscountAmount != null and booking.voucherDiscountAmount > 0}"><dt>Giam voucher</dt><dd th:text="${'-' + #numbers.formatInteger(booking.voucherDiscountAmount, 0, 'POINT') + ' VND'}">0 VND</dd></div>
-                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}"><dt th:text="${booking.membershipPlanName != null and !#strings.isEmpty(booking.membershipPlanName) ? 'Membership ' + booking.membershipPlanName + (booking.membershipDiscountPercent != null ? ' (' + booking.membershipDiscountPercent + '%)' : '') : 'Membership'}">Membership</dt><dd th:text="${'-' + #numbers.formatInteger(booking.membershipDiscountAmount, 0, 'POINT') + ' VND'}">0 VND</dd></div>
-                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}"><dt>Base membership</dt><dd th:text="${#numbers.formatInteger(booking.membershipDiscountBase != null ? booking.membershipDiscountBase : 0, 0, 'POINT') + ' VND'}">0 VND</dd></div>
-                    <div class="hc-summary-total"><dt>Tổng</dt><dd th:text="${#numbers.formatInteger(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'POINT') + ' VND'}">0 VND</dd></div>
+                    <div th:if="${booking.voucherDiscountAmount != null and booking.voucherDiscountAmount > 0}"><dt>Giảm voucher</dt><dd th:text="${'-' + #numbers.formatInteger(booking.voucherDiscountAmount, 0, 'POINT') + ' VNĐ'}">0 VNĐ</dd></div>
+                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}"><dt th:text="${booking.membershipPlanName != null and !#strings.isEmpty(booking.membershipPlanName) ? 'Membership ' + booking.membershipPlanName + (booking.membershipDiscountPercent != null ? ' (' + booking.membershipDiscountPercent + '%)' : '') : 'Membership'}">Membership</dt><dd th:text="${'-' + #numbers.formatInteger(booking.membershipDiscountAmount, 0, 'POINT') + ' VNĐ'}">0 VNĐ</dd></div>
+                    <div th:if="${booking.membershipDiscountAmount != null and booking.membershipDiscountAmount > 0}"><dt>Gốc tính giảm giá</dt><dd th:text="${#numbers.formatInteger(booking.membershipDiscountBase != null ? booking.membershipDiscountBase : 0, 0, 'POINT') + ' VNĐ'}">0 VNĐ</dd></div>
+                    <div class="hc-summary-total"><dt>Tổng</dt><dd th:text="${#numbers.formatInteger(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'POINT') + ' VNĐ'}">0 VNĐ</dd></div>
                 </dl>
             </section>
         </div>
@@ -94,7 +94,7 @@
                     <tr th:each="order : ${booking.foodOrders}">
                         <td th:text="|#${order.orderId}|">#1</td>
                         <td><span class="hc-badge" th:text="${order.status}">PENDING</span></td>
-                        <td class="text-right" th:text="${#numbers.formatInteger(order.totalAmount != null ? order.totalAmount : 0, 0, 'POINT') + ' VND'}">0 VND</td>
+                        <td class="text-right" th:text="${#numbers.formatInteger(order.totalAmount != null ? order.totalAmount : 0, 0, 'POINT') + ' VNĐ'}">0 VNĐ</td>
                         <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">date</td>
                     </tr>
                     </tbody>

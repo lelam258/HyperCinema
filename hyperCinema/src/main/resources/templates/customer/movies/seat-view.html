@@ -86,7 +86,7 @@
                                  th:onclick="${isLoggedInCustomer} ? 'toggleSeatSelection(this)' : null"
                                  th:classappend="${seat.status == 'BOOKED'} ? 'bg-slate-800 border-slate-700/50 text-slate-600 cursor-not-allowed' : (${seat.status == 'RESERVED'} ? 'bg-amber-500/20 border-amber-500/40 text-amber-500/30 cursor-not-allowed' : (${seat.type == 'VIP'} ? 'border-primary/40 bg-primary/10 text-amber-200' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-primary/20' : '') : (${seat.type == 'COUPLE'} ? 'col-span-2 w-14 border-pink-500/40 bg-pink-500/10 text-pink-200' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-pink-500/20' : '') : 'border-slate-500/30 bg-slate-700/10 text-slate-400' + (${isLoggedInCustomer} ? ' cursor-pointer hover:bg-slate-700/30' : ''))))"
                                  class="w-6.5 h-6.5 rounded flex items-center justify-center text-[9px] font-bold border select-none"
-                                 th:title="|Hàng ${seat.seatRow} - Ghế ${seat.seatNumber} (${seat.type}) - ${seat.status}${seat.weekendPricing ? ' - Gia cuoi tuan' : ''}|">
+                                 th:title="|Hàng ${seat.seatRow} - Ghế ${seat.seatNumber} (${seat.type}) - ${seat.status}${seat.weekendPricing ? ' - Giá cuối tuần' : ''}|">
                                 <span th:text="${seat.seatNumber}">1</span>
                             </div>
                         </div>
@@ -138,7 +138,7 @@
 
                 <div class="border-t border-white/5 pt-4 space-y-2">
                     <div class="flex items-center justify-between text-xs text-slate-400">
-                        <span th:text="${seats != null and !#lists.isEmpty(seats) and seats[0].weekendPricing ? 'Gia ve cuoi tuan tu:' : 'Gia ve co ban:'}">Gia ve co ban:</span>
+                        <span th:text="${seats != null and !#lists.isEmpty(seats) and seats[0].weekendPricing ? 'Giá vé cuối tuần từ:' : 'Giá vé cơ bản:'}">Giá vé cơ bản:</span>
                         <span class="font-semibold text-white tabular-nums" th:text="${#numbers.formatDecimal(showtime.hall.ticketPrice, 0, 'POINT', 0, 'POINT')} + ' đ'">80.000 đ</span>
                     </div>
                     <div class="flex items-center justify-between text-sm border-t border-white/5 pt-2">
@@ -149,10 +149,10 @@
 
                 <form th:action="@{'/my/booking/' + ${showtime.showtimeId} + '/checkout'}" method="post" id="checkoutForm" class="pt-2">
                     <input type="hidden" id="selectedSeatsInput" name="seatIds" value="">
-                    <label for="receiverName" class="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Receiver Name</label>
+                    <label for="receiverName" class="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Tên người nhận vé</label>
                     <input type="text" id="receiverName" name="receiverName" th:value="${customerName}" required maxlength="100" autocomplete="name"
                            class="w-full mb-4 px-3 py-2.5 text-sm text-white bg-white/[0.04] border border-white/10 rounded-xl outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10"
-                           placeholder="Enter receiver name">
+                           placeholder="Nhập tên người nhận vé">
                     <button type="submit" id="submitBtn" disabled class="w-full py-3 text-sm font-bold text-white bg-gradient-to-r from-primary to-amber-500 rounded-xl transition-all duration-300 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-primary/20 cursor-pointer">
                         Thanh toán qua cổng VNPay
                     </button>

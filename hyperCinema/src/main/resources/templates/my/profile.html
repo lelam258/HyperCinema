@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Tai khoan - HyperCinema')}"></head>
+<head th:replace="~{fragments/layout :: head('Tài khoản - HyperCinema')}"></head>
 <body class="min-h-screen hc-customer">
 
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
@@ -9,9 +9,9 @@
 <main class="md:ml-64 min-h-screen">
     <div class="max-w-5xl mx-auto px-6 py-8">
         <div class="mb-8 font-sans">
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Tai khoan</p>
-            <h1 class="text-3xl font-bold text-white tracking-tight mb-1" th:text="${customerName}">Khach hang</h1>
-            <p class="text-sm text-slate-400">Thong tin ca nhan va tien do membership cua ban.</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Tài khoản</p>
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-1" th:text="${customerName}">Khách hàng</h1>
+            <p class="text-sm text-slate-400">Thông tin cá nhân và tiến độ thành viên của bạn.</p>
         </div>
 
         <div class="grid grid-cols-1 gap-5 md:grid-cols-3 mb-8">
@@ -20,11 +20,11 @@
                 <strong class="mt-2 block text-white break-all" th:text="${email}">customer@gmail.com</strong>
             </section>
             <section class="glass-card p-5">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Dien thoai</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Điện thoại</p>
                 <strong class="mt-2 block text-white" th:text="${phone}">0900000000</strong>
             </section>
             <section class="glass-card p-5">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Diem tich luy</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Điểm tích lũy</p>
                 <strong class="mt-2 block text-2xl text-white tabular-nums" th:text="${#numbers.formatInteger(rewardPoints, 0, 'POINT')}">0</strong>
             </section>
         </div>

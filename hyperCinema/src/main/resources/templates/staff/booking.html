@@ -63,7 +63,7 @@
                                     th:data-pos-showtime-format="${s.formatLabel}"
                                     th:data-pos-showtime-hall="${s.hallName}"
                                     th:data-pos-showtime-time="${#temporals.format(s.startTime, 'HH:mm dd/MM')}"
-                                    th:title="|${s.hallName} - ${s.displayPrice}${s.weekendPricing ? ' - Gia cuoi tuan' : ''}|"
+                                    th:title="|${s.hallName} - ${s.displayPrice}${s.weekendPricing ? ' - Giá cuối tuần' : ''}|"
                                     th:text="${#temporals.format(s.startTime, 'HH:mm')}">
                                 10:00
                             </button>
@@ -90,7 +90,7 @@
                         <div>
                             <small th:text="${food.categoryName}">Combo</small>
                             <strong th:text="${food.name}">Combo bắp nước</strong>
-                            <span class="hc-staff-pos-fnb-category" th:text="${food.displayPrice}">85.000 VND</span>
+                            <span class="hc-staff-pos-fnb-category" th:text="${food.displayPrice}">85.000 VNĐ</span>
                         </div>
                         <div class="hc-staff-pos-stepper">
                             <button type="button" data-pos-food-decrease aria-label="Giảm số lượng">-</button>
@@ -142,11 +142,11 @@
                     <dl>
                         <div>
                             <dt>Tạm tính</dt>
-                            <dd data-pos-subtotal>0 VND</dd>
+                            <dd data-pos-subtotal>0 VNĐ</dd>
                         </div>
                         <div>
                             <dt>Giảm giá</dt>
-                            <dd class="is-discount" data-pos-discount>0 VND</dd>
+                            <dd class="is-discount" data-pos-discount>0 VNĐ</dd>
                         </div>
                     </dl>
                     <div class="hc-staff-pos-voucher">
@@ -171,10 +171,23 @@
                     <span class="hc-staff-pos-inline-message" data-pos-voucher-message></span>
                     <div class="hc-staff-pos-grand-total">
                         <span>Tổng cộng</span>
-                        <strong data-pos-total>0 VND</strong>
+                        <strong data-pos-total>0 VNĐ</strong>
                     </div>
                 </div>
 
+                <div class="hc-staff-pos-payment-selector" style="margin: 1rem 0; padding: 0 1rem;">
+                    <span style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Phương thức thanh toán</span>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                        <button type="button" class="hc-staff-pos-time is-selected" data-pos-payment="VNPay" style="width: 100%; justify-content: center; height: auto; padding: 0.75rem 0.5rem; border-radius: 0.375rem; display: flex; align-items: center; gap: 0.25rem;">
+                            <i data-lucide="credit-card" style="width: 16px; height: 16px;"></i>
+                            VNPay
+                        </button>
+                        <button type="button" class="hc-staff-pos-time" data-pos-payment="VietQR" style="width: 100%; justify-content: center; height: auto; padding: 0.75rem 0.5rem; border-radius: 0.375rem; display: flex; align-items: center; gap: 0.25rem;">
+                            <i data-lucide="qr-code" style="width: 16px; height: 16px;"></i>
+                            Tiền mặt / CK
+                        </button>
+                    </div>
+                </div>
 
                 <button type="submit" class="hc-staff-pos-submit" data-pos-submit disabled>
                     Thanh toán
