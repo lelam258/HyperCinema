@@ -180,17 +180,22 @@ public class BookingPageController {
                                 HttpServletRequest request,
                                 RedirectAttributes redirectAttributes) {
         User user = userDetails.getUser();
+        boolean customer = customerFlow(userDetails);
         boolean vnPaySelected = "VNPay".equalsIgnoreCase(paymentMethod);
         try {
-            if (!vnPaySelected) {
-                throw new IllegalArgumentException("Hien chi ho tro thanh toan VNPay.");
+            if (customer && !vnPaySelected) {
+                throw new IllegalArgumentException("Khách hàng hiện chỉ hỗ trợ thanh toán VNPay.");
             }
             if (vnPaySelected) {
                 vnPayService.validatePaymentConfiguration();
+                var savedBooking = bookingService.createPendingVNPayBooking(
+                        user, showtimeId, seatIds, foodItemIds, foodQuantities, voucherCode);
+                return "redirect:" + vnPayService.createPaymentUrl(savedBooking, request);
+            } else {
+                var savedBooking = bookingService.createPendingVietQrBooking(
+                        user, showtimeId, seatIds, foodItemIds, foodQuantities, voucherCode);
+                return "redirect:/payment/vietqr/" + savedBooking.getBookingId();
             }
-            var savedBooking = bookingService.createPendingVNPayBooking(
-                    user, showtimeId, seatIds, foodItemIds, foodQuantities, voucherCode);
-            return "redirect:" + vnPayService.createPaymentUrl(savedBooking, request);
         } catch (IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
             return customerFlow(userDetails)
@@ -201,6 +206,54 @@ public class BookingPageController {
             return customerFlow(userDetails)
                     ? "redirect:/booking?showtimeId=" + showtimeId
                     : "redirect:/staff/booking";
+        }
+    }
+
+    @GetMapping("/payment/resume/{bookingId}")
+    public String resumePayment(@PathVariable Integer bookingId,
+                                @AuthenticationPrincipal CustomUserDetails userDetails,
+                                HttpServletRequest request,
+                                RedirectAttributes redirectAttributes) {
+        if (userDetails == null || userDetails.getUser() == null) {
+            return "redirect:/auth/login";
+        }
+        Booking booking = bookingService.findById(bookingId).orElse(null);
+        if (booking == null) {
+            redirectAttributes.addFlashAttribute("bookingError", "Không tìm thấy booking cần thanh toán.");
+            return customerFlow(userDetails) ? "redirect:/my/bookings" : "redirect:/staff/booking";
+        }
+
+        boolean isCustomer = customerFlow(userDetails);
+        boolean isAuthorized = false;
+        if (isCustomer) {
+            isAuthorized = booking.getUser() != null && booking.getUser().getUserId().equals(userDetails.getUser().getUserId());
+        } else {
+            isAuthorized = true;
+        }
+
+        if (!isAuthorized) {
+            redirectAttributes.addFlashAttribute("bookingError", "Bạn không có quyền thanh toán booking này.");
+            return isCustomer ? "redirect:/my/bookings" : "redirect:/staff/booking";
+        }
+
+        if (!"Pending".equalsIgnoreCase(booking.getStatus())) {
+            redirectAttributes.addFlashAttribute("bookingError", "Đơn đặt vé này không ở trạng thái chờ thanh toán hoặc đã quá hạn.");
+            return isCustomer ? "redirect:/my/bookings" : "redirect:/staff/booking";
+        }
+
+        Payment payment = booking.getPayment();
+        String method = (payment != null) ? payment.getMethod() : "VNPay";
+
+        if ("VNPay".equalsIgnoreCase(method)) {
+            try {
+                vnPayService.validatePaymentConfiguration();
+                return "redirect:" + vnPayService.createPaymentUrl(booking, request);
+            } catch (IllegalStateException ex) {
+                redirectAttributes.addFlashAttribute("bookingError", ex.getMessage());
+                return isCustomer ? "redirect:/my/bookings" : "redirect:/staff/booking";
+            }
+        } else {
+            return "redirect:/payment/vietqr/" + booking.getBookingId();
         }
     }
 

@@ -592,6 +592,9 @@
             resetVoucherList();
             closeSeatModal();
             timeButtons.forEach((button) => button.classList.remove("is-selected"));
+            paymentButtons.forEach((btn) => {
+                btn.classList.toggle("is-selected", btn.dataset.posPayment === "VNPay");
+            });
             foodItems.forEach((item) => {
                 const quantityNode = item.querySelector("[data-pos-food-quantity]");
                 if (quantityNode) quantityNode.textContent = "0";

@@ -52,6 +52,11 @@ public class VietQrPaymentController {
             return redirectForDeniedAccess(principal);
         }
 
+        if (!"Pending".equalsIgnoreCase(booking.getStatus())) {
+            redirectAttributes.addFlashAttribute("bookingError", "Đơn đặt vé này không ở trạng thái chờ thanh toán hoặc đã quá hạn.");
+            return redirectForDeniedAccess(principal);
+        }
+
         String transferContent = transferContent(bookingId);
         model.addAttribute("booking", booking);
         model.addAttribute("payment", bookingPaymentService.findPaymentByBookingId(bookingId).orElse(null));
@@ -93,7 +98,7 @@ public class VietQrPaymentController {
             return false;
         }
         if (isCustomer(principal)) {
-            return false;
+            return ownerMatches(booking, principal);
         }
         if (isStaff(principal) || isManager(principal)) {
             return ownerMatches(booking, principal) || sameBranch(booking, principal);

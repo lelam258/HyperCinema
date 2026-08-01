@@ -110,7 +110,7 @@
                             <span class="text-xs text-cinema-muted" th:text="${booking.showtimeStart != null ? #temporals.format(booking.showtimeStart, 'dd/MM/yyyy HH:mm') : 'N/A'}">Time</span>
                         </td>
                         <td th:text="${booking.seats != null and !#lists.isEmpty(booking.seats) ? #strings.listJoin(booking.seats, ', ') : booking.ticketCount}">A1</td>
-                        <td class="text-right tabular-nums" th:text="${#numbers.formatInteger(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'POINT') + ' VND'}">0 VND</td>
+                        <td class="text-right tabular-nums" th:text="${#numbers.formatInteger(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'POINT') + ' VNĐ'}">0 VNĐ</td>
                         <td><span class="hc-badge" th:text="${booking.bookingStatus}">Pending</span></td>
                         <td><span class="hc-badge" th:text="${booking.paymentStatus != null and !#strings.isEmpty(booking.paymentStatus) ? booking.paymentStatus : 'N/A'}">Pending</span></td>
                         <td th:text="${booking.paymentMethod != null and !#strings.isEmpty(booking.paymentMethod) ? booking.paymentMethod : 'N/A'}">N/A</td>

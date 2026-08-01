@@ -57,7 +57,7 @@
                         <strong th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT')}">0</strong>
                     </div>
                     <i data-lucide="badge-dollar-sign"></i>
-                    <small>VND đã thanh toán</small>
+                    <small>VNĐ đã thanh toán</small>
                 </article>
                 <article class="hc-metric-card">
                     <div>
@@ -108,7 +108,7 @@
                         <strong th:text="${#numbers.formatDecimal(report.coverageSummary.potentialTicketRevenue, 0, 'COMMA', 0, 'POINT')}">0</strong>
                     </div>
                     <i data-lucide="circle-dollar-sign"></i>
-                    <small>VND nếu phủ kín</small>
+                    <small>VNĐ nếu phủ kín</small>
                 </article>
                 <article class="hc-metric-card">
                     <div>
@@ -144,7 +144,7 @@
                         <tr th:each="point : ${report.trend}">
                             <td th:text="${point.label}">01/01</td>
                             <td class="text-end" th:text="${point.paidBookingCount}">0</td>
-                            <td class="text-end" th:text="${#numbers.formatDecimal(point.revenue, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</td>
+                            <td class="text-end" th:text="${#numbers.formatDecimal(point.revenue, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
                         </tr>
                         </tbody>
                     </table>

@@ -1,62 +1,62 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Chi tiet don F&B - HyperCinema')}"></head>
+<head th:replace="~{fragments/layout :: head('Chi tiết đơn F&B - HyperCinema')}"></head>
 <body class="min-h-screen">
 <th:block th:replace="~{fragments/layout :: mobileToggle}"></th:block>
 <nav th:replace="~{fragments/layout :: staffSidebar('booking')}"></nav>
 
 <main class="hc-page">
     <div class="hc-page-inner max-w-5xl">
-        <a th:href="@{/staff/booking}" class="mb-4 inline-flex text-sm text-cinema-muted no-underline hover:text-accent">Quay lai POS</a>
+        <a th:href="@{/staff/booking}" class="mb-4 inline-flex text-sm text-cinema-muted no-underline hover:text-accent">Quay lại POS</a>
 
         <div th:replace="~{fragments/components :: flashes}"></div>
 
         <section class="hc-card mb-6 p-6">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                    <h1 class="hc-page-title" th:text="'Don F&B #' + ${order.orderId}">Don F&B #1</h1>
-                    <p class="hc-page-subtitle" th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm:ss') : 'N/A'}">Ngay tao</p>
+                    <h1 class="hc-page-title" th:text="'Đơn F&B #' + ${order.orderId}">Đơn F&B #1</h1>
+                    <p class="hc-page-subtitle" th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm:ss') : 'N/A'}">Ngày tạo</p>
                 </div>
                 <span class="hc-badge border-success/50 bg-success/10 text-success" th:text="${order.status}">CONFIRMED</span>
             </div>
         </section>
 
-        <section class="hc-card mb-6 p-6" aria-label="Thong tin don F&B">
-            <h2 class="mb-4 text-lg font-semibold text-white">Thong tin don</h2>
+        <section class="hc-card mb-6 p-6" aria-label="Thông tin đơn F&B">
+            <h2 class="mb-4 text-lg font-semibold text-white">Thông tin đơn</h2>
             <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div><dt class="hc-label mb-1">Chi nhanh</dt><dd class="text-white" th:text="${order.branchName != null ? order.branchName : 'N/A'}">HyperCinema</dd></div>
-                <div><dt class="hc-label mb-1">Nhan vien</dt><dd class="text-white" th:text="${order.staffName != null ? order.staffName : 'N/A'}">Staff</dd></div>
-                <div><dt class="hc-label mb-1">SDT khach</dt><dd class="text-white" th:text="${order.customerPhone != null and !#strings.isEmpty(order.customerPhone) ? order.customerPhone : 'N/A'}">N/A</dd></div>
-                <div><dt class="hc-label mb-1">Thanh toan</dt><dd class="text-white" th:text="${order.paymentMethod + ' / ' + order.paymentStatus}">CASH / PAID</dd></div>
+                <div><dt class="hc-label mb-1">Chi nhánh</dt><dd class="text-white" th:text="${order.branchName != null ? order.branchName : 'N/A'}">HyperCinema</dd></div>
+                <div><dt class="hc-label mb-1">Nhân viên</dt><dd class="text-white" th:text="${order.staffName != null ? order.staffName : 'N/A'}">Staff</dd></div>
+                <div><dt class="hc-label mb-1">SĐT khách</dt><dd class="text-white" th:text="${order.customerPhone != null and !#strings.isEmpty(order.customerPhone) ? order.customerPhone : 'N/A'}">N/A</dd></div>
+                <div><dt class="hc-label mb-1">Thanh toán</dt><dd class="text-white" th:text="${order.paymentMethod + ' / ' + order.paymentStatus}">CASH / PAID</dd></div>
             </dl>
         </section>
 
-        <section class="hc-card overflow-hidden" aria-label="Chi tiet mat hang">
+        <section class="hc-card overflow-hidden" aria-label="Chi tiết mặt hàng">
             <div class="border-b border-cinema-border p-5">
-                <h2 class="text-lg font-semibold text-white">Mat hang</h2>
+                <h2 class="text-lg font-semibold text-white">Mặt hàng</h2>
             </div>
             <div class="overflow-x-auto">
                 <table class="hc-table">
                     <thead>
                     <tr>
-                        <th>Mat hang</th>
-                        <th class="text-right">Don gia</th>
-                        <th class="text-center">So luong</th>
-                        <th class="text-right">Thanh tien</th>
+                        <th>Mặt hàng</th>
+                        <th class="text-right">Đơn giá</th>
+                        <th class="text-center">Số lượng</th>
+                        <th class="text-right">Thành tiền</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="item : ${order.items}">
-                        <td th:text="${item.itemName}" class="font-semibold text-white">Bap rang</td>
-                        <td class="text-right tabular-nums" th:text="${#numbers.formatInteger(item.unitPrice, 0, 'POINT') + ' VND'}">50.000 VND</td>
+                        <td th:text="${item.itemName}" class="font-semibold text-white">Bắp rang</td>
+                        <td class="text-right tabular-nums" th:text="${#numbers.formatInteger(item.unitPrice, 0, 'POINT') + ' VNĐ'}">50.000 VNĐ</td>
                         <td class="text-center tabular-nums" th:text="${item.quantity}">2</td>
-                        <td class="text-right font-semibold text-white tabular-nums" th:text="${#numbers.formatInteger(item.subtotal, 0, 'POINT') + ' VND'}">100.000 VND</td>
+                        <td class="text-right font-semibold text-white tabular-nums" th:text="${#numbers.formatInteger(item.subtotal, 0, 'POINT') + ' VNĐ'}">100.000 VNĐ</td>
                     </tr>
                     </tbody>
                     <tfoot>
                     <tr class="border-t border-cinema-border">
-                        <td colspan="3" class="px-5 py-4 text-right font-medium text-cinema-muted">Tong cong</td>
-                        <td class="px-5 py-4 text-right text-lg font-bold text-accent tabular-nums" th:text="${#numbers.formatInteger(order.totalAmount, 0, 'POINT') + ' VND'}">100.000 VND</td>
+                        <td colspan="3" class="px-5 py-4 text-right font-medium text-cinema-muted">Tổng cộng</td>
+                        <td class="px-5 py-4 text-right text-lg font-bold text-accent tabular-nums" th:text="${#numbers.formatInteger(order.totalAmount, 0, 'POINT') + ' VNĐ'}">100.000 VNĐ</td>
                     </tr>
                     </tfoot>
                 </table>

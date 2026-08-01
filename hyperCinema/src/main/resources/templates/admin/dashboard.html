@@ -53,7 +53,7 @@
                         <strong th:text="${todayBookings}">0</strong>
                     </div>
                     <i data-lucide="ticket-check"></i>
-                    <small th:text="${#numbers.formatDecimal(todayRevenue, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</small>
+                    <small th:text="${#numbers.formatDecimal(todayRevenue, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</small>
                 </article>
             </section>
 
@@ -80,7 +80,7 @@
                             </tr>
                             <tr th:each="value, iter : ${revenueValues}">
                                 <td th:text="${revenueLabels[iter.index]}">Ngày</td>
-                                <td class="text-end" th:text="${#numbers.formatDecimal(value, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</td>
+                                <td class="text-end" th:text="${#numbers.formatDecimal(value, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
                             </tr>
                             </tbody>
                         </table>
